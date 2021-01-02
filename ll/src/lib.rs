@@ -3,8 +3,8 @@
 //!
 //! This is a low-level (ll) crate, specifically limited in scope to register
 //! accessors only.
-//! Higher level funcitonality (such as socket operations) should be built
-//! ontop of what is provided here.
+//! Higher level functionality (such as socket operations) should be built
+//! on-top of what is provided here.
 //!
 //! [Wiznet W5500]: https://www.wiznet.io/product-item/w5500/
 #![doc(html_root_url = "https://docs.rs/w5500-ll/0.1.0")]
@@ -286,7 +286,7 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, Registers, Mode};
+    /// use w5500_ll::{blocking::W5500, Mode, Registers};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// let mode: Mode = w5500.mr()?;
@@ -313,7 +313,7 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, Registers, Mode};
+    /// use w5500_ll::{blocking::W5500, Mode, Registers};
     ///
     /// let mut mode: Mode = Mode::default();
     /// mode.enable_wol();
@@ -339,7 +339,7 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, Registers, net::Ipv4Addr};
+    /// use w5500_ll::{blocking::W5500, net::Ipv4Addr, Registers};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// let gar = w5500.gar()?;
@@ -366,7 +366,7 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, Registers, net::Ipv4Addr};
+    /// use w5500_ll::{blocking::W5500, net::Ipv4Addr, Registers};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// w5500.set_gar(&Ipv4Addr::new(192, 168, 0, 1))?;
@@ -390,7 +390,7 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, Registers, net::Ipv4Addr};
+    /// use w5500_ll::{blocking::W5500, net::Ipv4Addr, Registers};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// let subr = w5500.subr()?;
@@ -417,7 +417,7 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, Registers, net::Ipv4Addr};
+    /// use w5500_ll::{blocking::W5500, net::Ipv4Addr, Registers};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// w5500.set_subr(&Ipv4Addr::new(255, 255, 255, 0))?;
@@ -441,7 +441,7 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, Registers, net::Eui48Addr};
+    /// use w5500_ll::{blocking::W5500, net::Eui48Addr, Registers};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// let shar = w5500.shar()?;
@@ -468,7 +468,7 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, Registers, net::Eui48Addr};
+    /// use w5500_ll::{blocking::W5500, net::Eui48Addr, Registers};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// w5500.set_shar(&Eui48Addr::new(0x12, 0x34, 0x00, 0x00, 0x00, 0x00))?;
@@ -492,7 +492,7 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, Registers, net::Ipv4Addr};
+    /// use w5500_ll::{blocking::W5500, net::Ipv4Addr, Registers};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// let sipr = w5500.sipr()?;
@@ -519,7 +519,7 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, Registers, net::Ipv4Addr};
+    /// use w5500_ll::{blocking::W5500, net::Ipv4Addr, Registers};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// w5500.set_sipr(&Ipv4Addr::new(192, 168, 0, 150))?;
@@ -612,7 +612,7 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, Registers, Interrupt};
+    /// use w5500_ll::{blocking::W5500, Interrupt, Registers};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// let ir: Interrupt = w5500.ir()?;
@@ -645,7 +645,7 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, Registers, Interrupt};
+    /// use w5500_ll::{blocking::W5500, Interrupt, Registers};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// let ir: Interrupt = w5500.ir()?;
@@ -672,7 +672,7 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, Registers, Interrupt};
+    /// use w5500_ll::{blocking::W5500, Interrupt, Registers};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// let imr: Interrupt = w5500.imr()?;
@@ -696,7 +696,7 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// use w5500_ll::{blocking::W5500, Registers, Interrupt};
+    /// use w5500_ll::{blocking::W5500, Interrupt, Registers};
     /// # use embedded_hal_mock as hal;
     /// # let spi = hal::spi::Mock::new(&[
     /// #   hal::spi::Transaction::write(vec![0x00, 0x16, 0x04]),
@@ -744,7 +744,7 @@ pub trait Registers {
     /// // clear all socket interrupts
     /// for socket in SOCKETS.iter() {
     ///     if 1 << (*socket as u8) & sir != 0 {
-    ///         let sn_ir  = w5500.sn_ir(*socket)?;
+    ///         let sn_ir = w5500.sn_ir(*socket)?;
     ///         w5500.set_sn_ir(*socket, sn_ir)?;
     ///     }
     /// }
@@ -817,14 +817,14 @@ pub trait Registers {
 
     /// Get the retry time.
     ///
-    /// RTR configures the retransmission timeout period.
+    /// RTR configures the re-transmission timeout period.
     /// The unit of timeout period is 100us and the default of RTR is `0x07D0`
     /// or `2000`.
     /// And so the default timeout period is 200ms (100us X 2000).
     /// During the time configured by RTR, the W5500 waits for the peer response
     /// to the packet that is transmitted by Sn_CR (CONNECT, DISCON, CLOSE,
     /// SEND, SEND_MAC, SEND_KEEP command).
-    /// If the peer does not respond within the RTR time, the W5500 retransmits
+    /// If the peer does not respond within the RTR time, the W5500 re-transmits
     /// the packet or issues a timeout.
     ///
     /// # Example
@@ -880,8 +880,8 @@ pub trait Registers {
 
     /// Get the retry count.
     ///
-    /// RCR configured the number of retransmission attempts.
-    /// When the number of retransmission equals RCR + 1 the socket timeout
+    /// RCR configured the number of re-transmission attempts.
+    /// When the number of re-transmission equals RCR + 1 the socket timeout
     /// interrupt is raised.
     ///
     /// There is a LOT more information in the data sheet,
@@ -1063,7 +1063,7 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, Registers, net::Eui48Addr};
+    /// use w5500_ll::{blocking::W5500, net::Eui48Addr, Registers};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// let phar = w5500.phar()?;
@@ -1090,7 +1090,7 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, Registers, net::Eui48Addr};
+    /// use w5500_ll::{blocking::W5500, net::Eui48Addr, Registers};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// w5500.set_phar(&Eui48Addr::new(0x12, 0x34, 0x00, 0x00, 0x00, 0x00))?;
@@ -1213,7 +1213,7 @@ pub trait Registers {
 
     /// Get the unreachable IP address.
     ///
-    /// This awkward wording is taken directly from the datasheet:
+    /// This awkward wording is taken directly from the data-sheet:
     ///
     /// W5500 receives an ICMP packet (destination port unreachable)
     /// when data is sent to a port number which socket is not open and
@@ -1232,7 +1232,7 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, Registers, net::Ipv4Addr};
+    /// use w5500_ll::{blocking::W5500, net::Ipv4Addr, Registers};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// let uipr = w5500.uipr()?;
@@ -1287,7 +1287,7 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, Registers, PhyCfg};
+    /// use w5500_ll::{blocking::W5500, PhyCfg, Registers};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// let phy_cfg: PhyCfg = w5500.phycfgr()?;
@@ -1314,7 +1314,7 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, Registers, PhyCfg, OperationMode};
+    /// use w5500_ll::{blocking::W5500, OperationMode, PhyCfg, Registers};
     ///
     /// let mut phy_cfg: PhyCfg = PhyCfg::default();
     /// phy_cfg.set_opmdc(OperationMode::Auto);
@@ -1399,7 +1399,7 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, Registers, Socket, SocketMode, Protocol};
+    /// use w5500_ll::{blocking::W5500, Protocol, Registers, Socket, SocketMode};
     ///
     /// let mut socket_mode = SocketMode::default();
     /// socket_mode.set_protocol(Protocol::Tcp);
@@ -1624,7 +1624,7 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, Registers, Socket, net::Eui48Addr};
+    /// use w5500_ll::{blocking::W5500, net::Eui48Addr, Registers, Socket};
     ///
     /// let dhar = Eui48Addr::new(0x12, 0x34, 0x00, 0x00, 0x00, 0x00);
     /// let mut w5500 = W5500::new(spi, pin);
@@ -1662,7 +1662,7 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, Registers, Socket, net::Ipv4Addr};
+    /// use w5500_ll::{blocking::W5500, net::Ipv4Addr, Registers, Socket};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// let dipr = w5500.sn_dipr(Socket::Socket0)?;
@@ -1691,7 +1691,7 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, Registers, Socket, net::Ipv4Addr};
+    /// use w5500_ll::{blocking::W5500, net::Ipv4Addr, Registers, Socket};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// w5500.set_sn_dipr(Socket::Socket0, &Ipv4Addr::new(192, 168, 0, 11))?;
@@ -1989,7 +1989,7 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
     /// use core::convert::TryFrom;
-    /// use w5500_ll::{blocking::W5500, Registers, Socket, BufferSize};
+    /// use w5500_ll::{blocking::W5500, BufferSize, Registers, Socket};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// let sn_rxbuf_size_raw: u8 = w5500.sn_rxbuf_size(Socket::Socket0)?;
@@ -2019,7 +2019,7 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
     /// use core::convert::TryFrom;
-    /// use w5500_ll::{blocking::W5500, Registers, Socket, BufferSize};
+    /// use w5500_ll::{blocking::W5500, BufferSize, Registers, Socket};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// w5500.set_sn_rxbuf_size(Socket::Socket0, BufferSize::KB1)?;
@@ -2048,7 +2048,7 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
     /// use core::convert::TryFrom;
-    /// use w5500_ll::{blocking::W5500, Registers, Socket, BufferSize};
+    /// use w5500_ll::{blocking::W5500, BufferSize, Registers, Socket};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// let sn_txbuf_size_raw: u8 = w5500.sn_txbuf_size(Socket::Socket0)?;
@@ -2078,7 +2078,7 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
     /// use core::convert::TryFrom;
-    /// use w5500_ll::{blocking::W5500, Registers, Socket, BufferSize};
+    /// use w5500_ll::{blocking::W5500, BufferSize, Registers, Socket};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// w5500.set_sn_txbuf_size(Socket::Socket0, BufferSize::KB1)?;
@@ -2231,7 +2231,7 @@ pub trait Registers {
     ///
     /// This register indicates the data size received and saved in the socket
     /// RX buffer.
-    /// This reigster does not exceed the configured size
+    /// This register does not exceed the configured size
     /// ([`Registers::set_sn_rxbuf_size`]) and is calculated as the difference
     /// between [`Registers::sn_rx_wr`] and [`Registers::sn_rx_rd`].
     ///

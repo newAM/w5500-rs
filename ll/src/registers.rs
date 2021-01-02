@@ -65,7 +65,7 @@ impl Mode {
 
     /// Wake on LAN.
     ///
-    /// If WOL mode is enabled and the recived magic packet over
+    /// If WOL mode is enabled and the received magic packet over
     /// UDP has been normally processed, the interrupt pin (INTn) asserts to low.
     pub fn wol_enabled(&self) -> bool {
         self.0 & Self::WOL_MASK != 0
@@ -324,7 +324,7 @@ impl PhyCfg {
     /// # Example
     ///
     /// ```
-    /// use w5500_ll::{PhyCfg, OperationMode};
+    /// use w5500_ll::{OperationMode, PhyCfg};
     ///
     /// let phy_cfg = PhyCfg::default();
     /// assert_eq!(phy_cfg.opmdc(), Ok(OperationMode::Auto));
@@ -341,7 +341,7 @@ impl PhyCfg {
     /// # Example
     ///
     /// ```
-    /// use w5500_ll::{PhyCfg, OperationMode};
+    /// use w5500_ll::{OperationMode, PhyCfg};
     ///
     /// let mut phy_cfg = PhyCfg::default();
     /// assert!(!phy_cfg.opmd());
@@ -362,7 +362,7 @@ impl PhyCfg {
     /// # Example
     ///
     /// ```
-    /// use w5500_ll::{PhyCfg, DuplexStatus};
+    /// use w5500_ll::{DuplexStatus, PhyCfg};
     ///
     /// let phy_cfg = PhyCfg::default();
     /// assert_eq!(phy_cfg.dpx(), DuplexStatus::Half);
@@ -390,7 +390,7 @@ impl PhyCfg {
     /// # Example
     ///
     /// ```
-    /// use w5500_ll::{PhyCfg, LinkStatus};
+    /// use w5500_ll::{LinkStatus, PhyCfg};
     ///
     /// let phy_cfg = PhyCfg::default();
     /// assert_eq!(phy_cfg.lnk(), LinkStatus::Down);
@@ -486,7 +486,7 @@ impl SocketMode {
     /// # Example
     ///
     /// ```
-    /// use w5500_ll::{SocketMode, Protocol};
+    /// use w5500_ll::{Protocol, SocketMode};
     ///
     /// let mode: SocketMode = SocketMode::default();
     /// assert_eq!(mode.protocol(), Ok(Protocol::Closed));
@@ -500,7 +500,7 @@ impl SocketMode {
     /// # Example
     ///
     /// ```
-    /// use w5500_ll::{SocketMode, Protocol};
+    /// use w5500_ll::{Protocol, SocketMode};
     ///
     /// let mut mode: SocketMode = SocketMode::default();
     /// mode.set_protocol(Protocol::Tcp);
@@ -703,7 +703,7 @@ impl SocketMode {
 /// Socket Interrupt Register.
 ///
 /// Indicated the socket status, such as connection, termination,
-/// recieving data, and timeout.
+/// receiving data, and timeout.
 ///
 /// This is used by the [`crate::Registers::sn_ir`] and
 /// [`crate::Registers::set_sn_ir`] methods.

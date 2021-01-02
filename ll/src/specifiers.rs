@@ -5,7 +5,7 @@ use core::convert::TryFrom;
 /// Errors that occur upon converting `u8` to an enumeration.
 #[derive(Debug, Eq, PartialEq, Copy, Clone, Ord, PartialOrd, Hash)]
 pub struct ValueError {
-    /// Errenous value.
+    /// Erroneous value.
     pub val: u8,
 }
 
@@ -69,7 +69,7 @@ pub enum SocketStatus {
     /// (Sn_MR(P\[3:0\]) = `0010`).
     /// It changes to SOCK_UDP when Sn_MR(P\[3:0\]) = `0010` and
     /// the OPEN command is ordered.
-    /// Unlike TCP mode, data can be transfered without the
+    /// Unlike TCP mode, data can be transferred without the
     /// connection-process.
     Udp = 0x22,
     /// This indicates socket 0 is opened in MACRAW mode and is valid only
@@ -185,7 +185,7 @@ pub enum SocketCommand {
     /// ("Active close" or "Passive close").
     ///
     /// * **Active close** it transmits disconnect-request(FIN packet)
-    ///   to theconnected peer.
+    ///   to the connected peer.
     /// * **Passive close** when FIN packet is received from peer,
     ///   a FIN packet is replied back to the peer.
     ///

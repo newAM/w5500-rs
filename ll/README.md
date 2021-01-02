@@ -10,7 +10,7 @@ chip.
 
 This is a low-level (ll) crate, specifically limited in scope to register
 accessors only.
-Higher level funcitonality (such as socket operations) should be built
-ontop of what is provided here.
+Higher level functionality (such as socket operations) should be built
+on-top of what is provided here.
 
 [Wiznet W5500]: https://www.wiznet.io/product-item/w5500/
