@@ -1,0 +1,22 @@
+[package]
+name = "w5500-ll"
+version = "0.1.0"
+authors = ["Alex M. <alexmgit@protonmail.com>"]
+edition = "2018"
+repository = "https://github.com/newAM/w5500-ll-rs"
+license = "MIT"
+description = "Driver for the Wiznet W5500 internet offload chip."
+readme = "README.md"
+keywords = ["spi", "driver", "embedded-hal-driver", "W5500", "wiznet"]
+categories = ["embedded", "hardware-support", "no-std"]
+homepage = "https://github.com/newAM/w5500-ll-rs"
+
+[badges]
+maintenance = { status = "experimental" }
+
+[dependencies]
+embedded-hal = "0.2.4"
+
+[dev-dependencies]
+embedded-hal-mock = "0.7"
+version-sync = "0.9.1"
