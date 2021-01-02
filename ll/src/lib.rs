@@ -1557,7 +1557,7 @@ pub trait Registers {
     /// # use embedded_hal_mock as hal;
     /// # let spi = hal::spi::Mock::new(&[
     /// #   hal::spi::Transaction::write(vec![0x00, 0x04, 0x08 | 0x04]),
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x50]),
+    /// #   hal::spi::Transaction::write(vec![0x00, 68]),
     /// # ]);
     /// # let pin = hal::pin::Mock::new(&[
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
@@ -1566,7 +1566,7 @@ pub trait Registers {
     /// use w5500_ll::{blocking::W5500, Registers, Socket};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
-    /// w5500.set_sn_port(Socket::Socket0, 80)?;
+    /// w5500.set_sn_port(Socket::Socket0, 68)?;
     /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
     /// ```
     fn set_sn_port(&mut self, socket: Socket, port: u16) -> Result<(), Self::Error> {
@@ -1722,7 +1722,7 @@ pub trait Registers {
     /// ```
     /// # use embedded_hal_mock as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x04, 0x08]),
+    /// #   hal::spi::Transaction::write(vec![0x00, 0x10, 0x08]),
     /// #   hal::spi::Transaction::transfer(vec![0, 0], vec![0, 0]),
     /// # ]);
     /// # let pin = hal::pin::Mock::new(&[
@@ -1732,12 +1732,12 @@ pub trait Registers {
     /// use w5500_ll::{blocking::W5500, Registers, Socket, SocketMode};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
-    /// let socket_port: u16 = w5500.sn_port(Socket::Socket0)?;
+    /// let socket_destination_port: u16 = w5500.sn_dport(Socket::Socket0)?;
     /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
     /// ```
     fn sn_dport(&mut self, socket: Socket) -> Result<u16, Self::Error> {
         let mut reg: [u8; 2] = [0; 2];
-        self.read(reg::SN_PORT, socket.block(), &mut reg)?;
+        self.read(reg::SN_DPORT, socket.block(), &mut reg)?;
         Ok(u16::from_be_bytes(reg))
     }
 
@@ -1750,8 +1750,8 @@ pub trait Registers {
     /// ```
     /// # use embedded_hal_mock as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x04, 0x08 | 0x04]),
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x50]),
+    /// #   hal::spi::Transaction::write(vec![0x00, 0x10, 0x08 | 0x04]),
+    /// #   hal::spi::Transaction::write(vec![0x00, 67]),
     /// # ]);
     /// # let pin = hal::pin::Mock::new(&[
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
@@ -1760,11 +1760,11 @@ pub trait Registers {
     /// use w5500_ll::{blocking::W5500, Registers, Socket};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
-    /// w5500.set_sn_port(Socket::Socket0, 80)?;
+    /// w5500.set_sn_dport(Socket::Socket0, 67)?;
     /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
     /// ```
     fn set_sn_dport(&mut self, socket: Socket, port: u16) -> Result<(), Self::Error> {
-        self.write(reg::SN_PORT, socket.block(), &u16::to_be_bytes(port))
+        self.write(reg::SN_DPORT, socket.block(), &u16::to_be_bytes(port))
     }
 
     /// Get the socket maximum segment size.
