@@ -20,65 +20,97 @@ impl ValueError {
 #[derive(Copy, Clone, Eq, PartialEq, Debug, PartialOrd, Ord, Hash)]
 #[repr(u8)]
 pub enum SocketStatus {
-    /// This indicates that Socket n is released.
-    /// When DISCON, CLOSE command is ordered, or when a timeout occurs,
-    /// it is changed to SOCK_CLOSED regardless of previous status.
+    /// Socket closed, this is the reset state of all sockets.
+    ///
+    /// This state can be set by a [`SocketCommand::Disconnect`] or
+    /// [`SocketCommand::Close`] command.
+    ///
+    /// This state will also be set automatically if a timeout occurs.
     Closed = 0x00,
-    /// This indicates Socket n is opened with TCP mode.
-    /// It is changed to SOCK_INIT when Sn_MR (P\[3:0\]) = `0b0001` and
-    /// OPEN command is ordered.After SOCK_INIT,
-    /// user can use LISTEN / CONNECT command.
+    /// The socket is opened in TCP mode.
+    ///
+    /// This state is set when the socket protocol is [`Protocol::Tcp`], and a
+    /// [`SocketCommand::Open`] command is sent.
+    ///
+    /// In this state you can use the [`SocketCommand::Listen`] and
+    /// [`SocketCommand::Connect`] commands.
     Init = 0x13,
-    /// This indicates Socket n is operating as "TCP server" mode and
-    /// waiting for connection-request (SYN  packet) from a peer
-    /// ("TCP client").
-    /// It will change to SOCK_ESTALBLISHED when the connection-request is
-    /// successfully accepted.
-    /// Otherwise it will change to SOCK_CLOSED after TCP<sub>TO</sub>
-    /// occurred (Sn_IR(TIMEOUT) = `1`).
+    /// The socket is listening, operating as a TCP server.
+    ///
+    /// The socket will wait for a connextion-request (SYN packet) from a
+    /// peer (TCP client).
+    ///
+    /// The state will change to [`SocketStatus::Established`] when the
+    /// connection-request is successfully accepted.
+    /// Otherwise the state will change to [`SocketStatus::Closed`] after the
+    /// TCP timeout duration set by
+    /// [`crate::Registers::rcr`] and [`crate::Registers::rtr`].
     Listen = 0x14,
-    /// Temporary status between status transitions.
+    /// Connection request (SYN packet) has been sent to a peer.
+    ///
+    /// This is temporarily displayed between the [`SocketStatus::Init`] and
+    /// [`SocketStatus::Established`] states, after a [`SocketCommand::Connect`]
+    /// command has been sent.
+    ///
+    /// If the SYN/ACK is received from the peer the state changes to
+    /// [`SocketStatus::Established`], otherwise the state changes to
+    /// [`SocketStatus::Closed`] after the TCP timeout duration set by
+    /// [`crate::Registers::rcr`] and [`crate::Registers::rtr`].
     SynSent = 0x15,
-    /// Temporary status between status transitions.
+    /// Connection request (SYN packet) has been received from a peer.
+    ///
+    /// If the socket sends the response (SYN/ACK packet) to the peer
+    /// successfully the state changes to [`SocketStatus::Established`],
+    /// otherwise the state changes to [`SocketStatus::Closed`] after the TCP
+    /// timeout duration set by [`crate::Registers::rcr`] and
+    /// [`crate::Registers::rtr`].
     SynRecv = 0x16,
-    /// This indicates the status of the connection of Socket n.
-    /// It changes to SOCK_ESTABLISHED when the "TCP SERVER" processed the
-    /// SYN packet from the "TCP CLIENT" during SOCK_LISTEN, or when the
-    /// CONNECT command is successful.
-    /// During SOCK_ESTABLISHED, DATA packet can be transferred using
-    /// SEND or RECV command.
+    /// TCP connection is established.
+    ///
+    /// When operating as a TCP client this state is set after the TCP server
+    /// accepts the SYN packet, which is sent by the client after issuing a
+    /// [`SocketCommand::Connect`].
+    ///
+    /// When operating as a TCP server this state is set after a client
+    /// connects when in the [`SocketStatus::Listen`] state.
+    ///
+    /// While in this state data can be transfered with the
+    /// [`SocketCommand::Send`] and [`SocketCommand::Recv`] commands.
     Established = 0x17,
     /// Temporary status between status transitions.
+    ///
+    /// This indicates the socket is closing.
     FinWait = 0x18,
     /// Temporary status between status transitions.
+    ///
+    /// This indicates the socket is closing.
     Closing = 0x1A,
     /// Temporary status between status transitions.
+    ///
+    /// This indicates the socket is closing.
     TimeWait = 0x1B,
-    /// This indicates Socket n received the disconnect-request (FIN packet)
-    /// from the connected peer.
+    /// The socket has received the disconnect-request (FIN pakcet) from the
+    /// connected peer.
     ///
     /// This is half-closing status, and data can be transferred.
     ///
-    /// For full-closing the DISCON command is used.
+    /// For full-closing the [`SocketCommand::Disconnect`] command is used.
     ///
-    /// For just-closing the CLOSE command is used.
+    /// For just-closing the [`SocketCommand::Close`] command is used.
     CloseWait = 0x1C,
     /// Temporary status between status transitions.
     LastAck = 0x1D,
-    /// This indicates Socket n is opened in UDP mode
-    /// (Sn_MR(P\[3:0\]) = `0010`).
-    /// It changes to SOCK_UDP when Sn_MR(P\[3:0\]) = `0010` and
-    /// the OPEN command is ordered.
-    /// Unlike TCP mode, data can be transferred without the
-    /// connection-process.
-    Udp = 0x22,
-    /// This indicates socket 0 is opened in MACRAW mode and is valid only
-    /// in socket 0.
-    /// It changes to SOCK_MACRAW when S0_MR(P\[3:0\] = `0100`) and the
-    /// OPEN command is ordered.
+    /// Socket is opened in UDP mode.
     ///
-    /// The MACRAW mode can transfer a MAC packet (Ethernet frame) without
-    /// the connection-process.
+    /// This state is set when the socket protocol is [`Protocol::Udp`], and a
+    /// [`SocketCommand::Open`] command is sent.
+    Udp = 0x22,
+    /// Socket is opened in MACRAW mode.
+    ///
+    /// This is valid only for socket 0.
+    ///
+    /// This state is set when the socket protocol is [`Protocol::Macraw`], and
+    /// a [`SocketCommand::Open`] command is sent.
     Macraw = 0x42,
 }
 impl From<SocketStatus> for u8 {
