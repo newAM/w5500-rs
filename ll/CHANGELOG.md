@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Changed
 - Improve `SocketStatus` documentation.
+- Improve `SocketCommand` documentation.
 
 ### Fixed
 - Fixed `sn_dport` and `set_sn_dport` register address.

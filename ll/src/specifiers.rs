@@ -162,59 +162,58 @@ pub enum SocketCommand {
     /// The command register clears to this state once a command has been
     /// accepted.
     Accepted = 0x00,
-    /// Socket n is initialized and opened according to the protocol
-    /// selected in [Sn_MR].
+    /// The socket is initialized and opened according to the protocol
+    /// selected in [`crate::Registers::sn_mr`].
     ///
-    /// | [Sn_MR]        | [Sn_SR]       |
-    /// |----------------|---------------|
-    /// | [Sn_MR_CLOSE]  | -             |
-    /// | [Sn_MR_TCP]    | [SOCK_INIT]   |
-    /// | [Sn_MR_UDP]    | [SOCK_UDP]    |
-    /// | [S0_MR_MACRAW] | [SOCK_MACRAW] |
-    ///
-    /// [Sn_MR]: crate::Registers::sn_mr
-    /// [Sn_Sr]: crate::Registers::sn_sr
-    /// [Sn_MR_CLOSE]: enum.Protocol.html#variant.Closed
-    /// [Sn_MR_TCP]: enum.Protocol.html#variant.Tcp
-    /// [Sn_MR_UDP]: enum.Protocol.html#variant.Udp
-    /// [S0_MR_MACRAW]: enum.Protocol.html#variant.Macraw
-    /// [SOCK_INIT]: enum.SocketStatus.html#variant.Init
-    /// [SOCK_UDP]: enum.SocketStatus.html#variant.Udp
-    /// [SOCK_MACRAW]: enum.SocketStatus.html#variant.Macraw
+    /// | [`crate::Registers::sn_mr`] | [`crate::Registers::sn_sr`] |
+    /// |-----------------------------|-----------------------------|
+    /// | [`Protocol::Closed`]        | -                           |
+    /// | [`Protocol::Tcp`]           | [`SocketStatus::Init`]      |
+    /// | [`Protocol::Udp`]           | [`SocketStatus::Udp`]       |
+    /// | [`Protocol::Macraw`]        | [`SocketStatus::Macraw`]    |
     Open = 0x01,
-    /// Socket n operates as a "TCP server" and waits for connection-request
-    /// (SYN packet) from any "TCP client".
-    /// The Sn_SR changes the state from SOCK_INIT to SOCKET_LISTEN.
+    /// Operate the socket as a TCP server.
     ///
-    /// When a "TCP client" connection request is successfully established,
-    /// the Sn_SR changes from SOCK_LISTEN to SOCK_ESTABLISHED and the
-    /// Sn_IR(0) becomes `1`.
-    /// But when a "TCP client" connection request is failed,
-    /// Sn_IR(3) becomes `1` and the status of Sn_SR changes to SOCK_CLOSED.
+    /// This will change the socket state from [`SocketStatus::Init`] to
+    /// [`SocketStatus::Listen`], and the socket will listen for a
+    /// connection-request (SYN packet) from any TCP client.
     ///
-    /// Only valid in [TCP](enum.Protocol.html#variant.Tcp) mode.
+    /// When a TCP client connection request is successfully established,
+    /// the socket state changes from [`SocketStatus::Listen`] to
+    /// [`SocketStatus::Established`] and the `CON` socket interrupt is raised
+    /// ([`crate::SocketInterrupt::con_raised`]).
+    ///
+    /// When a TCP client connection request fails the `TIMEOUT` socket
+    /// interrupt is set ([`crate::SocketInterrupt::timeout_raised`]) and the
+    /// socket status changes to [`SocketStatus::Closed`].
+    ///
+    /// Only valid in [`Protocol::Tcp`] mode.
     Listen = 0x02,
-    /// To connect, a connect-request (SYN packet) is sent to "TCP server"
-    /// configured by Sn_DIPR & Sn_DPORT (destination address & port).
-    /// If the connect-request is successful, the Sn_SR is changed to
-    /// SOCK_ESTABLISHED and the Sn_IR(0) becomes `1`.
+    /// Connect to a TCP server.
+    ///
+    /// A connect-request (SYN packet) is sent to the TCP server configured by
+    /// [`crate::Registers::sn_dipr`] and [`crate::Registers::sn_dport`]
+    /// (destination IPv4 address and port).
+    ///
+    /// If the connect-request is successful, the socket state changes to
+    /// [`SocketStatus::Established`] and the `CON` socket interrupt is raised
+    /// ([`crate::SocketInterrupt::con_raised`]).
     ///
     /// The connect-request fails in the following three cases:
-    /// 1. When a ARP<sub>TO</sub> occurs (Sn_IR(3)=`1`) because the
+    /// 1. When a ARP<sub>TO</sub> occurs
+    ///    ([`crate::SocketInterrupt::con_raised`]) because the
     ///    destination hardware address is not acquired through the
     ///    ARP-process.
-    /// 2. When a SYN/ACK packet is not received and TCP<sub>TO</sub>
-    ///   (Sn_IR(3)= `1`)
+    /// 2. When a SYN/ACK packet is not received within the TCP timeout duration
+    ///    set by [`crate::Registers::rcr`] and [`crate::Registers::rtr`]
+    ///    ([`crate::SocketInterrupt::timeout_raised`]).
     /// 3. When a RST packet is received instead of a SYN/ACK packet.
     ///
-    /// In these cases, Sn_SR is changed to SOCK_CLOSED.
+    /// In these cases the socket state changes to [`SocketStatus::Closed`].
     ///
-    /// Only valid in [TCP](enum.Protocol.html#variant.Tcp) mode when acting
-    /// as a "TCP client".
+    /// Only valid in [`Protocol::Tcp`] mode when acting as a TCP client.
     Connect = 0x04,
-    /// Regardless  of "TCP  server" or "TCP  client", the DISCON command
-    /// processes the disconnect-process
-    /// ("Active close" or "Passive close").
+    /// Start the disconnect process.
     ///
     /// * **Active close** it transmits disconnect-request(FIN packet)
     ///   to the connected peer.
@@ -223,41 +222,51 @@ pub enum SocketCommand {
     ///
     /// When the disconnect-process is successful
     /// (that is, FIN/ACK packet is received successfully),
-    /// Sn_SR is changed to SOCK_CLOSED.
-    /// Otherwise, TCP<sub>TO</sub>occurs (Sn_IR(3)=`1`) and then Sn_SR is
-    /// changed to SOCK_CLOSED.
+    /// the socket state changes to [`SocketStatus::Closed`].
+    /// Otherwise, TCP timeout occurs
+    /// ([`crate::SocketInterrupt::timeout_raised`]) and then
+    /// the socket state changes to [`SocketStatus::Closed`].
     ///
-    /// If CLOSE is used instead of DISCON, only Sn_SR is changed to
-    /// SOCK_CLOSED without disconnect-process.
-    /// If a RST packet is received from a peer during communication, Sn_SR
-    /// is unconditionally changed to SOCK_CLOSED.
+    /// If [`SocketCommand::Close`] is used instead of
+    /// [`SocketCommand::Disconnect`], the socket state is changes to
+    /// [`SocketStatus::Closed`] without the disconnect process.
     ///
-    /// Only valid in [TCP](enum.Protocol.html#variant.Tcp) mode.
+    /// If a RST packet is received from a peer during communication the socket
+    /// status is unconditionally changed to [`SocketStatus::Closed`].
+    ///
+    /// Only valid in [`Protocol::Tcp`] mode.
     Disconnect = 0x08,
-    /// Close socket n.
+    /// Close the socket.
     ///
-    /// Sn_SR is changed to SOCK_CLOSED.
+    /// The socket status is changed to [`SocketStatus::Closed`].
     Close = 0x10,
-    /// Transmits all the data in the Socket n TX buffer.
+    /// Transmits all the data in the socket TX buffer.
     Send = 0x20,
-    /// The basic operation is same as SEND.
-    /// Normally SEND transmits data after destination hardware address is
-    /// acquired by the automatic ARP-process (Address Resolution Protocol).
-    /// But SEND_MAC transmits data without the automatic ARP-process.
-    /// In this case, the destination hardware address is acquired from
-    /// Sn_DHAR configured by host, instead of APR-process.
+    /// The basic operation is same as [`SocketCommand::Send`].
     ///
-    /// Only valid in [UDP](enum.Protocol.html#variant.Udp) mode.
+    /// Normally [`SocketCommand::Send`] transmits data after destination
+    /// hardware address is acquired by the automatic ARP-process
+    /// (Address Resolution Protocol).
+    /// [`SocketCommand::SendMac`] transmits data without the automatic
+    /// ARP-process.
+    /// In this case, the destination hardware address is acquired from
+    /// [`crate::Registers::sn_dhar`] configured by the host, instead of the ARP
+    /// process.
+    ///
+    /// Only valid in [`Protocol::Udp`] mode.
     SendMac = 0x21,
-    /// Checks the connection status by sending a 1 byte keep-alive packet.
+    /// Sends a 1 byte keep-alive packet.
+    ///
     /// If the peer cannot respond to the keep-alive packet during timeout
     /// time, the connection is terminated and the timeout interrupt will
-    /// occur.
+    /// occur ([`crate::SocketInterrupt::timeout_raised`]).
     ///
-    /// Only valid in [TCP](enum.Protocol.html#variant.Tcp) mode.
+    /// Only valid in [`Protocol::Tcp`] mode.
     SendKeep = 0x22,
-    /// RECV completes the processing of the received data in Socket n RX
-    /// Buffer by using a RX read pointer register (Sn_RX_RD).
+    /// RECV completes the processing of the received data in socket RX
+    /// buffer.
+    ///
+    /// See [`crate::Registers::sn_rx_buf`] for an example.
     Recv = 0x40,
 }
 impl From<SocketCommand> for u8 {
