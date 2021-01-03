@@ -868,7 +868,7 @@ impl SocketMode {
 
     /// Disable unicast blocking.
     ///
-    /// See [`SocketMode::mip6b_enabled] for more information.
+    /// See [`SocketMode::mip6b_enabled`] for more information.
     pub fn disable_mip6b(&mut self) {
         self.0 &= !Self::MIP6B_MASK
     }
