@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Added missing method to read from `sn_cr`.
 - Added methods to `PhyCfg` to set `opmd`.
 
 ### Changed

@@ -1411,6 +1411,48 @@ pub trait Registers {
         self.write(reg::SN_MR, socket.block(), &[mode.into()])
     }
 
+    /// Get the socket command.
+    ///
+    /// The only use for reading this register is to check if a socket command
+    /// has been accepted.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use embedded_hal_mock as hal;
+    /// # let spi = hal::spi::Mock::new(&[
+    /// #   hal::spi::Transaction::write(vec![0x00, 0x01, 0x08 | 0x04]),
+    /// #   hal::spi::Transaction::write(vec![0x01]),
+    /// #   hal::spi::Transaction::write(vec![0x00, 0x01, 0x08]),
+    /// #   hal::spi::Transaction::transfer(vec![0], vec![1]),
+    /// #   hal::spi::Transaction::write(vec![0x00, 0x01, 0x08]),
+    /// #   hal::spi::Transaction::transfer(vec![0], vec![0]),
+    /// # ]);
+    /// # let pin = hal::pin::Mock::new(&[
+    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
+    /// #    hal::pin::Transaction::set(hal::pin::State::High),
+    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
+    /// #    hal::pin::Transaction::set(hal::pin::State::High),
+    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
+    /// #    hal::pin::Transaction::set(hal::pin::State::High),
+    /// # ]);
+    /// use w5500_ll::{blocking::W5500, Registers, Socket, SocketCommand};
+    ///
+    /// let mut w5500 = W5500::new(spi, pin);
+    /// w5500.set_sn_cr(Socket::Socket0, SocketCommand::Open)?;
+    /// loop {
+    ///     if w5500.sn_cr(Socket::Socket0)? == SocketCommand::Accepted.into() {
+    ///         break;
+    ///     }
+    /// }
+    /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
+    /// ```
+    fn sn_cr(&mut self, socket: Socket) -> Result<u8, Self::Error> {
+        let mut reg: [u8; 1] = [0];
+        self.read(reg::SN_CR, socket.block(), &mut reg)?;
+        Ok(reg[0])
+    }
+
     /// Set the socket command.
     ///
     /// # Example
