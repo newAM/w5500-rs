@@ -20,6 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `SocketInterruptMask::discon_masked`, `SocketInterruptMask::recv_masked`,
   `SocketInterruptMask::timeout_masked`, and `SocketInterruptMask::sendok_masked`.
 - Fixed `SocketInterrupt::clear_discon` operating on the incorrect field.
+- Fixed `SocketMode::enable_mip6b` and `SocketMode::disable_mip6b` operating on
+  the incorrect field.
 
 ## [0.1.0] - 2021-01-02
 - Initial release

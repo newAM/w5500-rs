@@ -65,6 +65,17 @@ impl Mode {
     ///
     /// If WOL mode is enabled and the received magic packet over
     /// UDP has been normally processed, the interrupt pin (INTn) asserts to low.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// let mut mr = w5500_ll::Mode::default();
+    /// assert!(!mr.wol_enabled());
+    /// mr.enable_wol();
+    /// assert!(mr.wol_enabled());
+    /// mr.disable_wol();
+    /// assert!(!mr.wol_enabled());
+    /// ```
     pub fn wol_enabled(&self) -> bool {
         self.0 & Self::WOL_MASK != 0
     }
@@ -82,6 +93,17 @@ impl Mode {
     /// Ping block mode.
     ///
     /// If enabled it blocks responses to ping requests.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// let mut mr = w5500_ll::Mode::default();
+    /// assert!(!mr.pb_enabled());
+    /// mr.enable_pb();
+    /// assert!(mr.pb_enabled());
+    /// mr.disable_pb();
+    /// assert!(!mr.pb_enabled());
+    /// ```
     pub fn pb_enabled(&self) -> bool {
         self.0 & Self::PB_MASK != 0
     }
@@ -99,6 +121,17 @@ impl Mode {
     /// PPPoE mode.
     ///
     /// If you use ADSL this should be enabled.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// let mut mr = w5500_ll::Mode::default();
+    /// assert!(!mr.pppoe_enabled());
+    /// mr.enable_pppoe();
+    /// assert!(mr.pppoe_enabled());
+    /// mr.disable_pppoe();
+    /// assert!(!mr.pppoe_enabled());
+    /// ```
     pub fn pppoe_enabled(&self) -> bool {
         self.0 & Self::PPPOE_MASK != 0
     }
@@ -116,6 +149,17 @@ impl Mode {
     /// Force ARP.
     ///
     /// When enabled it forces sending ARP request whenever data is sent.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// let mut mr = w5500_ll::Mode::default();
+    /// assert!(!mr.farp_enabled());
+    /// mr.enable_farp();
+    /// assert!(mr.farp_enabled());
+    /// mr.disable_farp();
+    /// assert!(!mr.farp_enabled());
+    /// ```
     pub fn farp_enabled(&self) -> bool {
         self.0 & Self::FARP_MASK != 0
     }
@@ -182,6 +226,17 @@ impl Interrupt {
     ///
     /// This interrupt is set when our source IP is the same as the sender IP
     /// in the received ARP request.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// let mut ir = w5500_ll::Interrupt::default();
+    /// assert!(!ir.conflict());
+    /// ir.set_conflict();
+    /// assert!(ir.conflict());
+    /// ir.clear_conflict();
+    /// assert!(!ir.conflict());
+    /// ```
     pub const fn conflict(&self) -> bool {
         self.0 & Self::CONFLICT_MASK != 0
     }
@@ -204,6 +259,17 @@ impl Interrupt {
     /// When this interrupt is set destination information such as the IP
     /// address and port number may be checked with the corresponding UIPR &
     /// UPORTR.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// let mut ir = w5500_ll::Interrupt::default();
+    /// assert!(!ir.unreach());
+    /// ir.set_unreach();
+    /// assert!(ir.unreach());
+    /// ir.clear_unreach();
+    /// assert!(!ir.unreach());
+    /// ```
     pub const fn unreach(&self) -> bool {
         self.0 & Self::UNREACH_MASK != 0
     }
@@ -221,6 +287,17 @@ impl Interrupt {
     /// Get the PPPoE connection close interrupt.
     ///
     /// This interrupt is set when PPPoE is disconnected during PPPoE.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// let mut ir = w5500_ll::Interrupt::default();
+    /// assert!(!ir.pppoe());
+    /// ir.set_pppoe();
+    /// assert!(ir.pppoe());
+    /// ir.clear_pppoe();
+    /// assert!(!ir.pppoe());
+    /// ```
     pub const fn pppoe(&self) -> bool {
         self.0 & Self::PPPOE_MASK != 0
     }
@@ -239,6 +316,17 @@ impl Interrupt {
     ///
     /// This interrupt is set when wake on LAN is enabled, and the magic packet
     /// is received.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// let mut ir = w5500_ll::Interrupt::default();
+    /// assert!(!ir.mp());
+    /// ir.set_mp();
+    /// assert!(ir.mp());
+    /// ir.clear_mp();
+    /// assert!(!ir.mp());
+    /// ```
     pub const fn mp(&self) -> bool {
         self.0 & Self::MP_MASK != 0
     }
@@ -515,6 +603,17 @@ impl SocketMode {
     /// To use multicasting [`crate::Registers::sn_dipr`] and [`crate::Registers::sn_dport`]
     /// should be configured with the multicast group IP and port number
     /// before the socket is opened.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// let mut sn_mr = w5500_ll::SocketMode::default();
+    /// assert!(!sn_mr.multi_enabled());
+    /// sn_mr.enable_multi();
+    /// assert!(sn_mr.multi_enabled());
+    /// sn_mr.disable_multi();
+    /// assert!(!sn_mr.multi_enabled());
+    /// ```
     pub const fn multi_enabled(&self) -> bool {
         self.0 & Self::MULTI_MASK != 0
     }
@@ -543,6 +642,17 @@ impl SocketMode {
     /// If you want to implement a hybrid TCP/IP stack it is recommended that
     /// this is enabled for reducing host overhead to process all the received
     /// packets.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// let mut sn_mr = w5500_ll::SocketMode::default();
+    /// assert!(!sn_mr.mfen_enabled());
+    /// sn_mr.enable_mfen();
+    /// assert!(sn_mr.mfen_enabled());
+    /// sn_mr.disable_mfen();
+    /// assert!(!sn_mr.mfen_enabled());
+    /// ```
     pub const fn mfen_enabled(&self) -> bool {
         self.0 & Self::MFEN_MASK != 0
     }
@@ -564,6 +674,17 @@ impl SocketMode {
     /// Broadcast blocking.
     ///
     /// This applies only for a socket with the MACRAW or UDP protocol.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// let mut sn_mr = w5500_ll::SocketMode::default();
+    /// assert!(!sn_mr.bcastb_enabled());
+    /// sn_mr.enable_bcastb();
+    /// assert!(sn_mr.bcastb_enabled());
+    /// sn_mr.disable_bcastb();
+    /// assert!(!sn_mr.bcastb_enabled());
+    /// ```
     pub const fn bcastb_enabled(&self) -> bool {
         self.0 & Self::BCASTB_MASK != 0
     }
@@ -590,6 +711,17 @@ impl SocketMode {
     /// packet is received from a peer.
     /// When disabled the ACK packet is sent after waiting for the time
     /// configured by [`crate::Registers::rtr`].
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// let mut sn_mr = w5500_ll::SocketMode::default();
+    /// assert!(!sn_mr.nd_enabled());
+    /// sn_mr.enable_nd();
+    /// assert!(sn_mr.nd_enabled());
+    /// sn_mr.disable_nd();
+    /// assert!(!sn_mr.nd_enabled());
+    /// ```
     pub const fn nd_enabled(&self) -> bool {
         self.0 & Self::ND_MASK != 0
     }
@@ -616,6 +748,17 @@ impl SocketMode {
     ///
     /// * `false` IGMP version 2
     /// * `true` IGMP version 1
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// let mut sn_mr = w5500_ll::SocketMode::default();
+    /// assert!(!sn_mr.mc());
+    /// sn_mr.set_igmp_v1();
+    /// assert!(sn_mr.mc());
+    /// sn_mr.set_igmp_v2();
+    /// assert!(!sn_mr.mc());
+    /// ```
     pub const fn mc(&self) -> bool {
         self.0 & Self::MC_MASK != 0
     }
@@ -637,6 +780,17 @@ impl SocketMode {
     /// Multicast blocking.
     ///
     /// This applies only for a socket with the MACRAW protocol.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// let mut sn_mr = w5500_ll::SocketMode::default();
+    /// assert!(!sn_mr.mmb_enabled());
+    /// sn_mr.enable_mmb();
+    /// assert!(sn_mr.mmb_enabled());
+    /// sn_mr.disable_mmb();
+    /// assert!(!sn_mr.mmb_enabled());
+    /// ```
     pub const fn mmb_enabled(&self) -> bool {
         self.0 & Self::MMB_MASK != 0
     }
@@ -658,6 +812,17 @@ impl SocketMode {
     /// Unicast blocking enabled.
     ///
     /// This applies only for a socket with the UDP protocol.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// let mut sn_mr = w5500_ll::SocketMode::default();
+    /// assert!(!sn_mr.ucastb_enabled());
+    /// sn_mr.enable_ucastb();
+    /// assert!(sn_mr.ucastb_enabled());
+    /// sn_mr.disable_ucastb();
+    /// assert!(!sn_mr.ucastb_enabled());
+    /// ```
     pub const fn ucastb_enabled(&self) -> bool {
         self.0 & Self::UCASTB_MASK != 0
     }
@@ -679,6 +844,17 @@ impl SocketMode {
     /// IPV6 packet blocking.
     ///
     /// This applies only for a socket with the MACRAW protocol.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// let mut sn_mr = w5500_ll::SocketMode::default();
+    /// assert!(!sn_mr.mip6b_enabled());
+    /// sn_mr.enable_mip6b();
+    /// assert!(sn_mr.mip6b_enabled());
+    /// sn_mr.disable_mip6b();
+    /// assert!(!sn_mr.mip6b_enabled());
+    /// ```
     pub const fn mip6b_enabled(&self) -> bool {
         self.0 & Self::MIP6B_MASK != 0
     }
@@ -687,14 +863,14 @@ impl SocketMode {
     ///
     /// See [`SocketMode::mip6b_enabled`] for more information.
     pub fn enable_mip6b(&mut self) {
-        self.0 |= Self::UCASTB_MASK
+        self.0 |= Self::MIP6B_MASK
     }
 
     /// Disable unicast blocking.
     ///
     /// See [`SocketMode::mip6b_enabled] for more information.
     pub fn disable_mip6b(&mut self) {
-        self.0 &= !Self::UCASTB_MASK
+        self.0 &= !Self::MIP6B_MASK
     }
 }
 
