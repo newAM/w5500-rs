@@ -24,7 +24,7 @@ use net::{Eui48Addr, Ipv4Addr};
 pub use registers::{Interrupt, Mode, PhyCfg, SocketInterrupt, SocketInterruptMask, SocketMode};
 pub use specifiers::{
     BufferSize, DuplexStatus, LinkStatus, OperationMode, Protocol, SocketCommand, SocketStatus,
-    SpeedStatus, ValueError,
+    SpeedStatus,
 };
 
 /// Socket spacing between blocks.
@@ -226,8 +226,8 @@ impl From<Socket> for u8 {
 }
 
 impl TryFrom<u8> for Socket {
-    type Error = ValueError;
-    fn try_from(val: u8) -> Result<Socket, ValueError> {
+    type Error = u8;
+    fn try_from(val: u8) -> Result<Socket, u8> {
         match val {
             0 => Ok(Socket::Socket0),
             1 => Ok(Socket::Socket1),
@@ -237,7 +237,7 @@ impl TryFrom<u8> for Socket {
             5 => Ok(Socket::Socket5),
             6 => Ok(Socket::Socket6),
             7 => Ok(Socket::Socket7),
-            x => Err(ValueError::new(x)),
+            x => Err(x),
         }
     }
 }

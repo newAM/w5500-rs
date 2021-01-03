@@ -1,8 +1,6 @@
 //! Register enumerations and structures.
 
-use crate::specifiers::{
-    DuplexStatus, LinkStatus, OperationMode, Protocol, SpeedStatus, ValueError,
-};
+use crate::specifiers::{DuplexStatus, LinkStatus, OperationMode, Protocol, SpeedStatus};
 use core::convert::TryFrom;
 
 macro_rules! impl_u8_for {
@@ -329,7 +327,7 @@ impl PhyCfg {
     /// let phy_cfg = PhyCfg::default();
     /// assert_eq!(phy_cfg.opmdc(), Ok(OperationMode::Auto));
     /// ```
-    pub fn opmdc(&self) -> Result<OperationMode, ValueError> {
+    pub fn opmdc(&self) -> Result<OperationMode, u8> {
         OperationMode::try_from((self.0 & Self::OPMDC_MASK) >> Self::OPMDC_OFFSET)
     }
 
@@ -480,8 +478,8 @@ impl SocketMode {
 
     /// Get the protocol.
     ///
-    /// This returns a `ValueError` if the protocol bits do not match a valid
-    /// protocol.
+    /// This returns a `Err(u8)` with the protocol bits if the protocol bits
+    /// do not match a valid protocol.
     ///
     /// # Example
     ///
@@ -491,7 +489,7 @@ impl SocketMode {
     /// let mode: SocketMode = SocketMode::default();
     /// assert_eq!(mode.protocol(), Ok(Protocol::Closed));
     /// ```
-    pub fn protocol(&self) -> Result<Protocol, ValueError> {
+    pub fn protocol(&self) -> Result<Protocol, u8> {
         Protocol::try_from(self.0 & Self::PROTOCOL_MASK)
     }
 

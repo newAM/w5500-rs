@@ -2,20 +2,6 @@
 
 use core::convert::TryFrom;
 
-/// Errors that occur upon converting `u8` to an enumeration.
-#[derive(Debug, Eq, PartialEq, Copy, Clone, Ord, PartialOrd, Hash)]
-pub struct ValueError {
-    /// Erroneous value.
-    pub val: u8,
-}
-
-impl ValueError {
-    /// Create a new `ValueError`.
-    pub const fn new(val: u8) -> ValueError {
-        ValueError { val }
-    }
-}
-
 /// Socket status.
 #[derive(Copy, Clone, Eq, PartialEq, Debug, PartialOrd, Ord, Hash)]
 #[repr(u8)]
@@ -119,8 +105,8 @@ impl From<SocketStatus> for u8 {
     }
 }
 impl TryFrom<u8> for SocketStatus {
-    type Error = ValueError;
-    fn try_from(val: u8) -> Result<SocketStatus, ValueError> {
+    type Error = u8;
+    fn try_from(val: u8) -> Result<SocketStatus, u8> {
         match val {
             x if x == SocketStatus::Closed as u8 => Ok(SocketStatus::Closed),
             x if x == SocketStatus::Init as u8 => Ok(SocketStatus::Init),
@@ -135,7 +121,7 @@ impl TryFrom<u8> for SocketStatus {
             x if x == SocketStatus::LastAck as u8 => Ok(SocketStatus::LastAck),
             x if x == SocketStatus::Udp as u8 => Ok(SocketStatus::Udp),
             x if x == SocketStatus::Macraw as u8 => Ok(SocketStatus::Macraw),
-            _ => Err(ValueError::new(val)),
+            _ => Err(val),
         }
     }
 }
@@ -303,14 +289,14 @@ impl Default for Protocol {
     }
 }
 impl TryFrom<u8> for Protocol {
-    type Error = ValueError;
-    fn try_from(val: u8) -> Result<Protocol, ValueError> {
+    type Error = u8;
+    fn try_from(val: u8) -> Result<Protocol, u8> {
         match val {
             x if x == Protocol::Closed as u8 => Ok(Protocol::Closed),
             x if x == Protocol::Tcp as u8 => Ok(Protocol::Tcp),
             x if x == Protocol::Udp as u8 => Ok(Protocol::Udp),
             x if x == Protocol::Macraw as u8 => Ok(Protocol::Macraw),
-            _ => Err(ValueError::new(val)),
+            _ => Err(val),
         }
     }
 }
@@ -340,8 +326,8 @@ impl From<OperationMode> for u8 {
     }
 }
 impl TryFrom<u8> for OperationMode {
-    type Error = ValueError;
-    fn try_from(val: u8) -> Result<OperationMode, ValueError> {
+    type Error = u8;
+    fn try_from(val: u8) -> Result<OperationMode, u8> {
         match val {
             x if x == OperationMode::HalfDuplex10bt as u8 => Ok(OperationMode::HalfDuplex10bt),
             x if x == OperationMode::FullDuplex10bt as u8 => Ok(OperationMode::FullDuplex10bt),
@@ -352,7 +338,7 @@ impl TryFrom<u8> for OperationMode {
             }
             x if x == OperationMode::PowerDown as u8 => Ok(OperationMode::PowerDown),
             x if x == OperationMode::Auto as u8 => Ok(OperationMode::Auto),
-            _ => Err(ValueError::new(val)),
+            _ => Err(val),
         }
     }
 }
@@ -460,8 +446,8 @@ impl From<BufferSize> for u8 {
     }
 }
 impl TryFrom<u8> for BufferSize {
-    type Error = ValueError;
-    fn try_from(val: u8) -> Result<BufferSize, ValueError> {
+    type Error = u8;
+    fn try_from(val: u8) -> Result<BufferSize, u8> {
         match val {
             x if x == BufferSize::KB0 as u8 => Ok(BufferSize::KB0),
             x if x == BufferSize::KB1 as u8 => Ok(BufferSize::KB1),
@@ -469,7 +455,7 @@ impl TryFrom<u8> for BufferSize {
             x if x == BufferSize::KB4 as u8 => Ok(BufferSize::KB0),
             x if x == BufferSize::KB8 as u8 => Ok(BufferSize::KB0),
             x if x == BufferSize::KB16 as u8 => Ok(BufferSize::KB0),
-            _ => Err(ValueError::new(val)),
+            _ => Err(val),
         }
     }
 }

@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Improve `SocketStatus` documentation.
 - Improve `SocketCommand` documentation.
+- Removed the `ValueError` layer of abstraction.
+  Functions that previously returned `Result<T, ValueError>` now return
+  `Result<T, u8>`
 
 ### Fixed
 - Fixed `Registers::sn_dport` and `Registers::set_sn_dport` register address.
