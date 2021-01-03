@@ -746,6 +746,15 @@ impl SocketInterrupt {
     /// Get the value of the `CON` interrupt.
     ///
     /// This is issued once when the connection with the peer is successful.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// let mut sir = w5500_ll::SocketInterrupt::default();
+    /// assert!(!sir.con_raised());
+    /// # sir.clear_con();
+    /// # assert!(sir.con_raised());
+    /// ```
     pub const fn con_raised(&self) -> bool {
         self.0 & Self::CON_MASK != 0
     }
@@ -758,18 +767,36 @@ impl SocketInterrupt {
     /// Get the value of the `DISCON` interrupt.
     ///
     /// This is issued when FIN or FIN/ACK packet is received from a peer.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// let mut sir = w5500_ll::SocketInterrupt::default();
+    /// assert!(!sir.discon_raised());
+    /// # sir.clear_discon();
+    /// # assert!(sir.discon_raised());
+    /// ```
     pub const fn discon_raised(&self) -> bool {
         self.0 & Self::DISCON_MASK != 0
     }
 
     /// Clear the `DISCON` interrupt by writing `1`.
     pub fn clear_discon(&mut self) {
-        self.0 |= Self::CON_MASK
+        self.0 |= Self::DISCON_MASK
     }
 
     /// Get the value of the `RECV` interrupt.
     ///
     /// This is issued whenever data is received from a peer.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// let mut sir = w5500_ll::SocketInterrupt::default();
+    /// assert!(!sir.recv_raised());
+    /// # sir.clear_recv();
+    /// # assert!(sir.recv_raised());
+    /// ```
     pub const fn recv_raised(&self) -> bool {
         self.0 & Self::RECV_MASK != 0
     }
@@ -782,6 +809,15 @@ impl SocketInterrupt {
     /// Get the value of the `TIMEOUT` interrupt.
     ///
     /// This is issued when ARP<sub>TO</sub> or TCP<sub>TO</sub> occurs.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// let mut sir = w5500_ll::SocketInterrupt::default();
+    /// assert!(!sir.timeout_raised());
+    /// # sir.clear_timeout();
+    /// # assert!(sir.timeout_raised());
+    /// ```
     pub const fn timeout_raised(&self) -> bool {
         self.0 & Self::TIMEOUT_MASK != 0
     }
@@ -794,6 +830,15 @@ impl SocketInterrupt {
     /// Get the value of the `SENDOK` interrupt.
     ///
     /// This is issued when SEND command is completed.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// let mut sir = w5500_ll::SocketInterrupt::default();
+    /// assert!(!sir.sendok_raised());
+    /// # sir.clear_sendok();
+    /// # assert!(sir.sendok_raised());
+    /// ```
     pub fn sendok_raised(&self) -> bool {
         self.0 & Self::SENDOK_MASK != 0
     }

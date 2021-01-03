@@ -10,10 +10,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improve `SocketCommand` documentation.
 
 ### Fixed
-- Fixed `sn_dport` and `set_sn_dport` register address.
-- Fixed `unmask_discon` and `mask_discon` operating on the incorrect field.
-- Fixed logic inversion on `con_masked`, `discon_masked`, `recv_masked`,
-  `timeout_masked`, and `sendok_masked`.
+- Fixed `Registers::sn_dport` and `Registers::set_sn_dport` register address.
+- Fixed `SocketInterruptMask::unmask_discon` and
+  `SocketInterruptMask::mask_discon` operating on the incorrect field.
+- Fixed logic inversion on `SocketInterruptMask::con_masked`,
+  `SocketInterruptMask::discon_masked`, `SocketInterruptMask::recv_masked`,
+  `SocketInterruptMask::timeout_masked`, and `SocketInterruptMask::sendok_masked`.
+- Fixed `SocketInterrupt::clear_discon` operating on the incorrect field.
 
 ## [0.1.0] - 2021-01-02
 - Initial release
