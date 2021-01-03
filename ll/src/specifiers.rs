@@ -3,6 +3,8 @@
 use core::convert::TryFrom;
 
 /// Socket status.
+///
+/// This is used with [`crate::Registers::sn_sr`].
 #[derive(Copy, Clone, Eq, PartialEq, Debug, PartialOrd, Ord, Hash)]
 #[repr(u8)]
 pub enum SocketStatus {
@@ -302,6 +304,9 @@ impl TryFrom<u8> for Protocol {
 }
 
 /// PHY operation mode.
+///
+/// This is used by [`crate::PhyCfg`] for the
+/// [`crate::Registers::set_phycfgr`] and [`crate::Registers::phycfgr`] methods.
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Debug, Hash)]
 #[repr(u8)]
 pub enum OperationMode {
@@ -349,6 +354,9 @@ impl Default for OperationMode {
 }
 
 /// PHY link status.
+///
+/// This is used by [`crate::PhyCfg`] for the
+/// [`crate::Registers::set_phycfgr`] and [`crate::Registers::phycfgr`] methods.
 #[derive(Copy, Clone, Eq, PartialEq, Debug, PartialOrd, Ord, Hash)]
 #[repr(u8)]
 pub enum LinkStatus {
@@ -373,6 +381,9 @@ impl From<LinkStatus> for u8 {
 }
 
 /// PHY speed status.
+///
+/// This is used by [`crate::PhyCfg`] for the
+/// [`crate::Registers::set_phycfgr`] and [`crate::Registers::phycfgr`] methods.
 #[derive(Copy, Clone, Eq, PartialEq, Debug, PartialOrd, Ord, Hash)]
 #[repr(u8)]
 pub enum SpeedStatus {
@@ -397,6 +408,9 @@ impl From<SpeedStatus> for u8 {
 }
 
 /// PHY duplex status.
+///
+/// This is used by [`crate::PhyCfg`] for the
+/// [`crate::Registers::set_phycfgr`] and [`crate::Registers::phycfgr`] methods.
 #[derive(Copy, Clone, Eq, PartialEq, Debug, PartialOrd, Ord, Hash)]
 #[repr(u8)]
 pub enum DuplexStatus {
@@ -473,7 +487,13 @@ impl BufferSize {
     ///
     /// ```
     /// use w5500_ll::BufferSize;
-    /// assert_eq!(BufferSize::KB2.size_in_bytes(), 2048);
+    ///
+    /// assert_eq!(BufferSize::KB0.size_in_bytes(), 0);
+    /// assert_eq!(BufferSize::KB1.size_in_bytes(), 1 * 1024);
+    /// assert_eq!(BufferSize::KB2.size_in_bytes(), 2 * 1024);
+    /// assert_eq!(BufferSize::KB4.size_in_bytes(), 4 * 1024);
+    /// assert_eq!(BufferSize::KB8.size_in_bytes(), 8 * 1024);
+    /// assert_eq!(BufferSize::KB16.size_in_bytes(), 16 * 1024);
     /// ```
     pub const fn size_in_bytes(&self) -> usize {
         match self {

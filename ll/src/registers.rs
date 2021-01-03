@@ -405,6 +405,40 @@ impl PhyCfg {
         self.0 & Self::OPMD_MASK != 0
     }
 
+    /// Enable hardware configuration of the PHY operation mode.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use w5500_ll::{OperationMode, PhyCfg};
+    ///
+    /// let mut phy_cfg = PhyCfg::default();
+    /// assert!(!phy_cfg.opmd());
+    /// phy_cfg.software_op();
+    /// assert!(phy_cfg.opmd());
+    /// phy_cfg.hardware_op();
+    /// assert!(!phy_cfg.opmd());
+    /// ```
+    pub fn hardware_op(&mut self) {
+        self.0 &= !Self::OPMD_MASK;
+    }
+
+    /// Enable software configuration of the PHY operation mode.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use w5500_ll::{OperationMode, PhyCfg};
+    ///
+    /// let mut phy_cfg = PhyCfg::default();
+    /// assert!(!phy_cfg.opmd());
+    /// phy_cfg.software_op();
+    /// assert!(phy_cfg.opmd());
+    /// ```
+    pub fn software_op(&mut self) {
+        self.0 |= Self::OPMD_MASK;
+    }
+
     /// Get the operation mode.
     ///
     /// # Example
@@ -421,8 +455,8 @@ impl PhyCfg {
 
     /// Set the PHY operation mode.
     ///
-    /// Setting this will also set [`PhyCfg::opmd`] to enable PHY configuration
-    /// with the value in this register.
+    /// Setting this will also call [`PhyCfg::software_op`] to enable the PHY
+    /// configuration with the value stored in this register.
     ///
     /// # Example
     ///
@@ -438,7 +472,7 @@ impl PhyCfg {
     /// assert_eq!(phy_cfg.opmdc(), Ok(OperationMode::Auto));
     /// ```
     pub fn set_opmdc(&mut self, mode: OperationMode) {
-        self.0 |= Self::OPMD_MASK;
+        self.software_op();
         self.0 &= !Self::OPMDC_MASK;
         self.0 |= u8::from(mode) << Self::OPMDC_OFFSET;
     }
