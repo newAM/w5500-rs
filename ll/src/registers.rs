@@ -823,11 +823,33 @@ impl SocketInterruptMask {
     pub const RESET: u8 = 0xFF;
 
     /// Mask all socket interrupts.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use w5500_ll::SocketInterruptMask;
+    /// assert!(SocketInterruptMask::ALL_MASKED.con_masked());
+    /// assert!(SocketInterruptMask::ALL_MASKED.discon_masked());
+    /// assert!(SocketInterruptMask::ALL_MASKED.recv_masked());
+    /// assert!(SocketInterruptMask::ALL_MASKED.timeout_masked());
+    /// assert!(SocketInterruptMask::ALL_MASKED.sendok_masked());
+    /// ```
     pub const ALL_MASKED: SocketInterruptMask = SocketInterruptMask(0xE0);
 
     /// Check if the `CON` interrupt is masked.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// let mut simr = w5500_ll::SocketInterruptMask::default();
+    /// assert!(!simr.con_masked());
+    /// simr.mask_con();
+    /// assert!(simr.con_masked());
+    /// simr.unmask_con();
+    /// assert!(!simr.con_masked());
+    /// ```
     pub const fn con_masked(&self) -> bool {
-        self.0 & SocketInterrupt::CON_MASK != 0
+        self.0 & SocketInterrupt::CON_MASK == 0
     }
 
     /// Unmask the `CON` interrupt.
@@ -841,23 +863,45 @@ impl SocketInterruptMask {
     }
 
     /// Check if the `DISCON` interrupt is masked.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// let mut simr = w5500_ll::SocketInterruptMask::default();
+    /// assert!(!simr.discon_masked());
+    /// simr.mask_discon();
+    /// assert!(simr.discon_masked());
+    /// simr.unmask_discon();
+    /// assert!(!simr.discon_masked());
+    /// ```
     pub const fn discon_masked(&self) -> bool {
-        self.0 & SocketInterrupt::DISCON_MASK != 0
+        self.0 & SocketInterrupt::DISCON_MASK == 0
     }
 
     /// Unmask the `DISCON` interrupt.
     pub fn unmask_discon(&mut self) {
-        self.0 |= SocketInterrupt::CON_MASK
+        self.0 |= SocketInterrupt::DISCON_MASK
     }
 
     /// Mask the `DISCON` interrupt.
     pub fn mask_discon(&mut self) {
-        self.0 &= !SocketInterrupt::CON_MASK
+        self.0 &= !SocketInterrupt::DISCON_MASK
     }
 
     /// Check if the `RECV` interrupt is masked.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// let mut simr = w5500_ll::SocketInterruptMask::default();
+    /// assert!(!simr.recv_masked());
+    /// simr.mask_recv();
+    /// assert!(simr.recv_masked());
+    /// simr.unmask_recv();
+    /// assert!(!simr.recv_masked());
+    /// ```
     pub const fn recv_masked(&self) -> bool {
-        self.0 & SocketInterrupt::RECV_MASK != 0
+        self.0 & SocketInterrupt::RECV_MASK == 0
     }
 
     /// Unmask the `RECV` interrupt.
@@ -871,8 +915,19 @@ impl SocketInterruptMask {
     }
 
     /// Check if the `TIMEOUT` interrupt is masked.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// let mut simr = w5500_ll::SocketInterruptMask::default();
+    /// assert!(!simr.timeout_masked());
+    /// simr.mask_timeout();
+    /// assert!(simr.timeout_masked());
+    /// simr.unmask_timeout();
+    /// assert!(!simr.timeout_masked());
+    /// ```
     pub const fn timeout_masked(&self) -> bool {
-        self.0 & SocketInterrupt::TIMEOUT_MASK != 0
+        self.0 & SocketInterrupt::TIMEOUT_MASK == 0
     }
 
     /// Unmask the `TIMEOUT` interrupt.
@@ -886,8 +941,19 @@ impl SocketInterruptMask {
     }
 
     /// Check if the `SENDOK` interrupt is masked.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// let mut simr = w5500_ll::SocketInterruptMask::default();
+    /// assert!(!simr.sendok_masked());
+    /// simr.mask_sendok();
+    /// assert!(simr.sendok_masked());
+    /// simr.unmask_sendok();
+    /// assert!(!simr.sendok_masked());
+    /// ```
     pub fn sendok_masked(&self) -> bool {
-        self.0 & SocketInterrupt::SENDOK_MASK != 0
+        self.0 & SocketInterrupt::SENDOK_MASK == 0
     }
 
     /// Unmask the `SENDOK` interrupt.

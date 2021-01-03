@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Fixed `sn_dport` and `set_sn_dport` register address.
+- Fixed `unmask_discon` and `mask_discon` operating on the incorrect field.
+- Fixed logic inversion on `con_masked`, `discon_masked`, `recv_masked`,
+  `timeout_masked`, and `sendok_masked`.
 
 ## [0.1.0] - 2021-01-02
 - Initial release
