@@ -139,7 +139,7 @@ pub const SPI_MODE: spi::Mode = spi::Mode {
     phase: Phase::CaptureOnFirstTransition,
 };
 
-/// WW5500 sockets.
+/// W5500 sockets.
 #[repr(u8)]
 #[allow(missing_docs)]
 #[derive(PartialEq, Eq, PartialOrd, Ord, Copy, Clone, Debug)]
