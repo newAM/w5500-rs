@@ -7,7 +7,7 @@
 //! on-top of what is provided here.
 //!
 //! [Wiznet W5500]: https://www.wiznet.io/product-item/w5500/
-#![doc(html_root_url = "https://docs.rs/w5500-ll/0.2.0")]
+#![doc(html_root_url = "https://docs.rs/w5500-ll/0.2.1")]
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
 #![no_std]
