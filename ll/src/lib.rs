@@ -2598,10 +2598,9 @@ pub trait Registers {
     /// // panics if the buffer size exceeds free size
     /// assert!(free_size >= data_len, "TX buffer overflow free size: {}, data size: {}", free_size, data_len);
     ///
-    /// let mut ptr: u16 = w5500.sn_tx_wr(THE_SOCKET)?;
+    /// let ptr: u16 = w5500.sn_tx_wr(THE_SOCKET)?;
     /// w5500.set_sn_tx_buf(THE_SOCKET, ptr, &data)?;
-    /// ptr += data_len; // wrapping on overflow is intentional
-    /// w5500.set_sn_tx_wr(THE_SOCKET, ptr)?;
+    /// w5500.set_sn_tx_wr(THE_SOCKET, ptr.wrapping_add(data_len))?;
     /// w5500.set_sn_cr(THE_SOCKET, SocketCommand::Send)?;
     /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
     /// ```
@@ -2657,10 +2656,9 @@ pub trait Registers {
     /// // panics if the recieve data is larger than the local buffer
     /// assert!(BUF_LEN >= usize::from(rsr), "RX buffer overflow buffer len: {}, rsr: {}", BUF_LEN, rsr);
     ///
-    /// let mut ptr: u16 = w5500.sn_rx_rd(THE_SOCKET)?;
+    /// let ptr: u16 = w5500.sn_rx_rd(THE_SOCKET)?;
     /// w5500.sn_rx_buf(THE_SOCKET, ptr, &mut buf[..rsr.into()])?;
-    /// ptr += rsr; // wrapping on overflow is intentional
-    /// w5500.set_sn_rx_rd(THE_SOCKET, ptr)?;
+    /// w5500.set_sn_rx_rd(THE_SOCKET, ptr.wrapping_add(rsr))?;
     /// w5500.set_sn_cr(THE_SOCKET, SocketCommand::Recv)?;
     /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
     /// ```

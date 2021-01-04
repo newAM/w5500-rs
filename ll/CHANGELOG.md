@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Fixed
+- Fixed an overflow error that could occur in the `sn_rx_buf` and
+  `set_sn_tx_buf` example code.
+
 ## [0.2.0] - 2021-01-03
 ### Added
 - Added missing method to read from `sn_cr`.
