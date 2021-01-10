@@ -2651,7 +2651,7 @@ pub trait Registers {
     /// let mut buf: [u8; BUF_LEN] = [0; BUF_LEN];
     ///
     /// let rsr: u16 = w5500.sn_rx_rsr(THE_SOCKET)?;
-    /// // panics if we incorrectly though there was data to read
+    /// // panics if we incorrectly thought there was data to read
     /// debug_assert_ne!(rsr, 0);
     /// // panics if the recieve data is larger than the local buffer
     /// assert!(BUF_LEN >= usize::from(rsr), "RX buffer overflow buffer len: {}, rsr: {}", BUF_LEN, rsr);
