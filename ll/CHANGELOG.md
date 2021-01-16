@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Added
+- Added additional methods to `w5500_ll::net::Ipv4Addr` from `std::net::Ipv4Addr`.
+
 ## [0.2.1] - 2021-01-03
 ### Fixed
 - Fixed an overflow error that could occur in the `sn_rx_buf` and
