@@ -14,11 +14,11 @@
 
 pub mod blocking;
 pub mod net;
+pub mod spi;
 
 mod registers;
 mod specifiers;
 use core::convert::TryFrom;
-use embedded_hal::spi::{self, Phase, Polarity};
 use net::{Eui48Addr, Ipv4Addr};
 
 pub use registers::{Interrupt, Mode, PhyCfg, SocketInterrupt, SocketInterruptMask, SocketMode};
@@ -27,10 +27,10 @@ pub use specifiers::{
     SpeedStatus,
 };
 
+/// Common register block address offset.
+pub const COMMON_BLOCK_OFFSET: u8 = 0x00;
 /// Socket spacing between blocks.
 const SOCKET_SPACING: u8 = 0x04;
-/// Common register block address offset.
-const COMMON_BLOCK_OFFSET: u8 = 0x00;
 /// Socket common block select bits offset.
 const SOCKET_BLOCK_OFFSET: u8 = 0x01;
 /// Socket TX block select bits offset
@@ -131,18 +131,10 @@ pub mod reg {
     pub const SN_KPALVTR: u16 = 0x002F;
 }
 
-/// Recommended W5500 SPI mode.
-///
-/// The W5500 may operate in SPI mode 0 or SPI mode 3.
-pub const SPI_MODE: spi::Mode = spi::Mode {
-    polarity: Polarity::IdleLow,
-    phase: Phase::CaptureOnFirstTransition,
-};
-
 /// W5500 sockets.
 #[repr(u8)]
 #[allow(missing_docs)]
-#[derive(PartialEq, Eq, PartialOrd, Ord, Copy, Clone, Debug)]
+#[derive(PartialEq, Eq, PartialOrd, Ord, Copy, Clone, Debug, Hash)]
 pub enum Socket {
     Socket0 = 0,
     Socket1 = 1,
@@ -286,12 +278,12 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, Mode, Registers};
+    /// use w5500_ll::{blocking::vdm::W5500, Mode, Registers};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// let mode: Mode = w5500.mr()?;
     /// assert_eq!(mode, Mode::default());
-    /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn mr(&mut self) -> Result<Mode, Self::Error> {
         let mut reg: [u8; 1] = [0];
@@ -313,13 +305,13 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, Mode, Registers};
+    /// use w5500_ll::{blocking::vdm::W5500, Mode, Registers};
     ///
     /// let mut mode: Mode = Mode::default();
     /// mode.enable_wol();
     /// let mut w5500 = W5500::new(spi, pin);
     /// w5500.set_mr(mode)?;
-    /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn set_mr(&mut self, mode: Mode) -> Result<(), Self::Error> {
         self.write(reg::MR, COMMON_BLOCK_OFFSET, &[mode.into()])
@@ -339,12 +331,12 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, net::Ipv4Addr, Registers};
+    /// use w5500_ll::{blocking::vdm::W5500, net::Ipv4Addr, Registers};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// let gar = w5500.gar()?;
     /// assert_eq!(gar, Ipv4Addr::UNSPECIFIED);
-    /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn gar(&mut self) -> Result<Ipv4Addr, Self::Error> {
         let mut gar = Ipv4Addr::UNSPECIFIED;
@@ -366,11 +358,11 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, net::Ipv4Addr, Registers};
+    /// use w5500_ll::{blocking::vdm::W5500, net::Ipv4Addr, Registers};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// w5500.set_gar(&Ipv4Addr::new(192, 168, 0, 1))?;
-    /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn set_gar(&mut self, gar: &Ipv4Addr) -> Result<(), Self::Error> {
         self.write(reg::GAR, COMMON_BLOCK_OFFSET, &gar.octets)
@@ -390,12 +382,12 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, net::Ipv4Addr, Registers};
+    /// use w5500_ll::{blocking::vdm::W5500, net::Ipv4Addr, Registers};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// let subr = w5500.subr()?;
     /// assert_eq!(subr, Ipv4Addr::UNSPECIFIED);
-    /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn subr(&mut self) -> Result<Ipv4Addr, Self::Error> {
         let mut subr = Ipv4Addr::UNSPECIFIED;
@@ -417,11 +409,11 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, net::Ipv4Addr, Registers};
+    /// use w5500_ll::{blocking::vdm::W5500, net::Ipv4Addr, Registers};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// w5500.set_subr(&Ipv4Addr::new(255, 255, 255, 0))?;
-    /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn set_subr(&mut self, subr: &Ipv4Addr) -> Result<(), Self::Error> {
         self.write(reg::SUBR, COMMON_BLOCK_OFFSET, &subr.octets)
@@ -441,12 +433,12 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, net::Eui48Addr, Registers};
+    /// use w5500_ll::{blocking::vdm::W5500, net::Eui48Addr, Registers};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// let shar = w5500.shar()?;
     /// assert_eq!(shar, Eui48Addr::UNSPECIFIED);
-    /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn shar(&mut self) -> Result<Eui48Addr, Self::Error> {
         let mut shar = Eui48Addr::UNSPECIFIED;
@@ -468,11 +460,11 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, net::Eui48Addr, Registers};
+    /// use w5500_ll::{blocking::vdm::W5500, net::Eui48Addr, Registers};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// w5500.set_shar(&Eui48Addr::new(0x12, 0x34, 0x00, 0x00, 0x00, 0x00))?;
-    /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn set_shar(&mut self, shar: &Eui48Addr) -> Result<(), Self::Error> {
         self.write(reg::SHAR, COMMON_BLOCK_OFFSET, &shar.octets)
@@ -492,12 +484,12 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, net::Ipv4Addr, Registers};
+    /// use w5500_ll::{blocking::vdm::W5500, net::Ipv4Addr, Registers};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// let sipr = w5500.sipr()?;
     /// assert_eq!(sipr, Ipv4Addr::UNSPECIFIED);
-    /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn sipr(&mut self) -> Result<Ipv4Addr, Self::Error> {
         let mut sipr = Ipv4Addr::UNSPECIFIED;
@@ -519,11 +511,11 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, net::Ipv4Addr, Registers};
+    /// use w5500_ll::{blocking::vdm::W5500, net::Ipv4Addr, Registers};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// w5500.set_sipr(&Ipv4Addr::new(192, 168, 0, 150))?;
-    /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn set_sipr(&mut self, sipr: &Ipv4Addr) -> Result<(), Self::Error> {
         self.write(reg::SIPR, COMMON_BLOCK_OFFSET, &sipr.octets)
@@ -557,12 +549,12 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, Registers};
+    /// use w5500_ll::{blocking::vdm::W5500, Registers};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// let intlevel: u16 = w5500.intlevel()?;
     /// assert_eq!(intlevel, 0x00);
-    /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn intlevel(&mut self) -> Result<u16, Self::Error> {
         let mut buf: [u8; 2] = [0; 2];
@@ -586,11 +578,11 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, Registers};
+    /// use w5500_ll::{blocking::vdm::W5500, Registers};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// w5500.set_intlevel(0x1234)?;
-    /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn set_intlevel(&mut self, intlevel: u16) -> Result<(), Self::Error> {
         self.write(reg::INTLEVEL, COMMON_BLOCK_OFFSET, &intlevel.to_be_bytes())
@@ -612,12 +604,12 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, Interrupt, Registers};
+    /// use w5500_ll::{blocking::vdm::W5500, Interrupt, Registers};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// let ir: Interrupt = w5500.ir()?;
     /// assert_eq!(ir, Interrupt::default());
-    /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn ir(&mut self) -> Result<Interrupt, Self::Error> {
         let mut reg: [u8; 1] = [0];
@@ -645,12 +637,12 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, Interrupt, Registers};
+    /// use w5500_ll::{blocking::vdm::W5500, Interrupt, Registers};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// let ir: Interrupt = w5500.ir()?;
     /// w5500.set_ir(ir)?;
-    /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn set_ir(&mut self, interrupt: Interrupt) -> Result<(), Self::Error> {
         self.write(reg::IR, COMMON_BLOCK_OFFSET, &[interrupt.into()])
@@ -672,12 +664,12 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, Interrupt, Registers};
+    /// use w5500_ll::{blocking::vdm::W5500, Interrupt, Registers};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// let imr: Interrupt = w5500.imr()?;
     /// assert_eq!(imr, Interrupt::default());
-    /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn imr(&mut self) -> Result<Interrupt, Self::Error> {
         let mut reg: [u8; 1] = [0];
@@ -696,7 +688,7 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// use w5500_ll::{blocking::W5500, Interrupt, Registers};
+    /// use w5500_ll::{blocking::vdm::W5500, Interrupt, Registers};
     /// # use embedded_hal_mock as hal;
     /// # let spi = hal::spi::Mock::new(&[
     /// #   hal::spi::Transaction::write(vec![0x00, 0x16, 0x04]),
@@ -712,7 +704,7 @@ pub trait Registers {
     /// imr.set_mp();
     /// let mut w5500 = W5500::new(spi, pin);
     /// w5500.set_imr(imr)?;
-    /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn set_imr(&mut self, mask: Interrupt) -> Result<(), Self::Error> {
         self.write(reg::IMR, COMMON_BLOCK_OFFSET, &[mask.into()])
@@ -737,7 +729,7 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, Registers, SOCKETS};
+    /// use w5500_ll::{blocking::vdm::W5500, Registers, SOCKETS};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// let sir = w5500.sir()?;
@@ -748,7 +740,7 @@ pub trait Registers {
     ///         w5500.set_sn_ir(*socket, sn_ir)?;
     ///     }
     /// }
-    /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn sir(&mut self) -> Result<u8, Self::Error> {
         let mut reg: [u8; 1] = [0];
@@ -776,11 +768,11 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, Registers};
+    /// use w5500_ll::{blocking::vdm::W5500, Registers};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// let simr: u8 = w5500.simr()?;
-    /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn simr(&mut self) -> Result<u8, Self::Error> {
         let mut reg: [u8; 1] = [0];
@@ -804,12 +796,12 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, Registers};
+    /// use w5500_ll::{blocking::vdm::W5500, Registers};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// // enable all socket interrupts
     /// w5500.set_simr(0xFF)?;
-    /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn set_simr(&mut self, simr: u8) -> Result<(), Self::Error> {
         self.write(reg::SIMR, COMMON_BLOCK_OFFSET, &[simr])
@@ -839,12 +831,12 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, Registers};
+    /// use w5500_ll::{blocking::vdm::W5500, Registers};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// let rtr: u16 = w5500.rtr()?;
     /// assert_eq!(rtr, 0x07D0);
-    /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn rtr(&mut self) -> Result<u16, Self::Error> {
         let mut buf: [u8; 2] = [0; 2];
@@ -868,11 +860,11 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, Registers};
+    /// use w5500_ll::{blocking::vdm::W5500, Registers};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// w5500.set_rtr(0x1234)?;
-    /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn set_rtr(&mut self, rtr: u16) -> Result<(), Self::Error> {
         self.write(reg::RTR, COMMON_BLOCK_OFFSET, &rtr.to_be_bytes())
@@ -899,11 +891,11 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, Registers};
+    /// use w5500_ll::{blocking::vdm::W5500, Registers};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// let rcr: u8 = w5500.rcr()?;
-    /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn rcr(&mut self) -> Result<u8, Self::Error> {
         let mut reg: [u8; 1] = [0];
@@ -927,11 +919,11 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, Registers};
+    /// use w5500_ll::{blocking::vdm::W5500, Registers};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// w5500.set_rcr(0x0A)?;
-    /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn set_rcr(&mut self, rcr: u8) -> Result<(), Self::Error> {
         self.write(reg::RCR, COMMON_BLOCK_OFFSET, &[rcr])
@@ -956,11 +948,11 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, Registers};
+    /// use w5500_ll::{blocking::vdm::W5500, Registers};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// let ptimer: u8 = w5500.ptimer()?;
-    /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn ptimer(&mut self) -> Result<u8, Self::Error> {
         let mut reg: [u8; 1] = [0];
@@ -984,11 +976,11 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, Registers};
+    /// use w5500_ll::{blocking::vdm::W5500, Registers};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// w5500.set_ptimer(200)?;
-    /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn set_ptimer(&mut self, ptimer: u8) -> Result<(), Self::Error> {
         self.write(reg::PTIMER, COMMON_BLOCK_OFFSET, &[ptimer])
@@ -1011,11 +1003,11 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, Registers};
+    /// use w5500_ll::{blocking::vdm::W5500, Registers};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// let pmagic: u8 = w5500.pmagic()?;
-    /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn pmagic(&mut self) -> Result<u8, Self::Error> {
         let mut reg: [u8; 1] = [0];
@@ -1039,11 +1031,11 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, Registers};
+    /// use w5500_ll::{blocking::vdm::W5500, Registers};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// w5500.set_pmagic(0x01)?;
-    /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn set_pmagic(&mut self, pmagic: u8) -> Result<(), Self::Error> {
         self.write(reg::PMAGIC, COMMON_BLOCK_OFFSET, &[pmagic])
@@ -1063,12 +1055,12 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, net::Eui48Addr, Registers};
+    /// use w5500_ll::{blocking::vdm::W5500, net::Eui48Addr, Registers};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// let phar = w5500.phar()?;
     /// assert_eq!(phar, Eui48Addr::UNSPECIFIED);
-    /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn phar(&mut self) -> Result<Eui48Addr, Self::Error> {
         let mut phar = Eui48Addr::UNSPECIFIED;
@@ -1090,11 +1082,11 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, net::Eui48Addr, Registers};
+    /// use w5500_ll::{blocking::vdm::W5500, net::Eui48Addr, Registers};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// w5500.set_phar(&Eui48Addr::new(0x12, 0x34, 0x00, 0x00, 0x00, 0x00))?;
-    /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn set_phar(&mut self, phar: &Eui48Addr) -> Result<(), Self::Error> {
         self.write(reg::PHAR, COMMON_BLOCK_OFFSET, &phar.octets)
@@ -1117,12 +1109,12 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, Registers};
+    /// use w5500_ll::{blocking::vdm::W5500, Registers};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// let psid: u16 = w5500.psid()?;
     /// assert_eq!(psid, 0x0000);
-    /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn psid(&mut self) -> Result<u16, Self::Error> {
         let mut buf: [u8; 2] = [0; 2];
@@ -1146,11 +1138,11 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, Registers};
+    /// use w5500_ll::{blocking::vdm::W5500, Registers};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// w5500.set_psid(0x1234)?;
-    /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn set_psid(&mut self, psid: u16) -> Result<(), Self::Error> {
         self.write(reg::PSID, COMMON_BLOCK_OFFSET, &psid.to_be_bytes())
@@ -1172,12 +1164,12 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, Registers};
+    /// use w5500_ll::{blocking::vdm::W5500, Registers};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// let pmru: u16 = w5500.pmru()?;
     /// assert_eq!(pmru, 0x0000);
-    /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn pmru(&mut self) -> Result<u16, Self::Error> {
         let mut buf: [u8; 2] = [0; 2];
@@ -1201,11 +1193,11 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, Registers};
+    /// use w5500_ll::{blocking::vdm::W5500, Registers};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// w5500.set_pmru(0x1234)?;
-    /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn set_pmru(&mut self, pmru: u16) -> Result<(), Self::Error> {
         self.write(reg::PMRU, COMMON_BLOCK_OFFSET, &pmru.to_be_bytes())
@@ -1232,12 +1224,12 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, net::Ipv4Addr, Registers};
+    /// use w5500_ll::{blocking::vdm::W5500, net::Ipv4Addr, Registers};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// let uipr = w5500.uipr()?;
     /// assert_eq!(uipr, Ipv4Addr::UNSPECIFIED);
-    /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn uipr(&mut self) -> Result<Ipv4Addr, Self::Error> {
         let mut uipr = Ipv4Addr::UNSPECIFIED;
@@ -1261,11 +1253,11 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, Registers};
+    /// use w5500_ll::{blocking::vdm::W5500, Registers};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// let uportr = w5500.uportr()?;
-    /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn uportr(&mut self) -> Result<u16, Self::Error> {
         let mut buf: [u8; 2] = [0; 2];
@@ -1287,12 +1279,12 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, PhyCfg, Registers};
+    /// use w5500_ll::{blocking::vdm::W5500, PhyCfg, Registers};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// let phy_cfg: PhyCfg = w5500.phycfgr()?;
     /// assert_eq!(phy_cfg, PhyCfg::default());
-    /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn phycfgr(&mut self) -> Result<PhyCfg, Self::Error> {
         let mut reg: [u8; 1] = [0];
@@ -1314,13 +1306,13 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, OperationMode, PhyCfg, Registers};
+    /// use w5500_ll::{blocking::vdm::W5500, OperationMode, PhyCfg, Registers};
     ///
     /// let mut phy_cfg: PhyCfg = PhyCfg::default();
     /// phy_cfg.set_opmdc(OperationMode::Auto);
     /// let mut w5500 = W5500::new(spi, pin);
     /// w5500.set_phycfgr(phy_cfg)?;
-    /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn set_phycfgr(&mut self, phycfg: PhyCfg) -> Result<(), Self::Error> {
         self.write(reg::PHYCFGR, COMMON_BLOCK_OFFSET, &[phycfg.into()])
@@ -1345,12 +1337,12 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, Registers};
+    /// use w5500_ll::{blocking::vdm::W5500, Registers};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// let version = w5500.version()?;
     /// assert_eq!(version, 0x04);
-    /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn version(&mut self) -> Result<u8, Self::Error> {
         let mut reg: [u8; 1] = [0];
@@ -1372,12 +1364,12 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, Registers, Socket, SocketMode};
+    /// use w5500_ll::{blocking::vdm::W5500, Registers, Socket, SocketMode};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// let socket_mode = w5500.sn_mr(Socket::Socket0)?;
     /// assert_eq!(socket_mode, SocketMode::default());
-    /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn sn_mr(&mut self, socket: Socket) -> Result<SocketMode, Self::Error> {
         let mut reg: [u8; 1] = [0];
@@ -1399,13 +1391,13 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, Protocol, Registers, Socket, SocketMode};
+    /// use w5500_ll::{blocking::vdm::W5500, Protocol, Registers, Socket, SocketMode};
     ///
     /// let mut socket_mode = SocketMode::default();
     /// socket_mode.set_protocol(Protocol::Tcp);
     /// let mut w5500 = W5500::new(spi, pin);
     /// w5500.set_sn_mr(Socket::Socket0, socket_mode)?;
-    /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn set_sn_mr(&mut self, socket: Socket, mode: SocketMode) -> Result<(), Self::Error> {
         self.write(reg::SN_MR, socket.block(), &[mode.into()])
@@ -1436,7 +1428,7 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, Registers, Socket, SocketCommand};
+    /// use w5500_ll::{blocking::vdm::W5500, Registers, Socket, SocketCommand};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// w5500.set_sn_cr(Socket::Socket0, SocketCommand::Open)?;
@@ -1445,7 +1437,7 @@ pub trait Registers {
     ///         break;
     ///     }
     /// }
-    /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn sn_cr(&mut self, socket: Socket) -> Result<u8, Self::Error> {
         let mut reg: [u8; 1] = [0];
@@ -1467,11 +1459,11 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, Registers, Socket, SocketCommand};
+    /// use w5500_ll::{blocking::vdm::W5500, Registers, Socket, SocketCommand};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// w5500.set_sn_cr(Socket::Socket0, SocketCommand::Open)?;
-    /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn set_sn_cr(&mut self, socket: Socket, cmd: SocketCommand) -> Result<(), Self::Error> {
         self.write(reg::SN_CR, socket.block(), &[cmd.into()])
@@ -1491,11 +1483,11 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, Registers, Socket};
+    /// use w5500_ll::{blocking::vdm::W5500, Registers, Socket};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// let socket_interrupts = w5500.sn_ir(Socket::Socket0)?;
-    /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn sn_ir(&mut self, socket: Socket) -> Result<SocketInterrupt, Self::Error> {
         let mut reg: [u8; 1] = [0];
@@ -1521,12 +1513,12 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, Registers, Socket};
+    /// use w5500_ll::{blocking::vdm::W5500, Registers, Socket};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// let socket_interrupts = w5500.sn_ir(Socket::Socket0)?;
     /// w5500.set_sn_ir(Socket::Socket0, socket_interrupts)?;
-    /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn set_sn_ir(&mut self, socket: Socket, sn_ir: SocketInterrupt) -> Result<(), Self::Error> {
         self.write(reg::SN_IR, socket.block(), &[sn_ir.into()])
@@ -1547,12 +1539,12 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
     /// use core::convert::TryFrom;
-    /// use w5500_ll::{blocking::W5500, Registers, Socket, SocketStatus};
+    /// use w5500_ll::{blocking::vdm::W5500, Registers, Socket, SocketStatus};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// let sn_sr_raw: u8 = w5500.sn_sr(Socket::Socket0)?;
     /// let sn_sr: SocketStatus = SocketStatus::try_from(sn_sr_raw).unwrap_or_default();
-    /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn sn_sr(&mut self, socket: Socket) -> Result<u8, Self::Error> {
         let mut reg: [u8; 1] = [0];
@@ -1577,11 +1569,11 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, Registers, Socket, SocketMode};
+    /// use w5500_ll::{blocking::vdm::W5500, Registers, Socket, SocketMode};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// let socket_port: u16 = w5500.sn_port(Socket::Socket0)?;
-    /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn sn_port(&mut self, socket: Socket) -> Result<u16, Self::Error> {
         let mut reg: [u8; 2] = [0; 2];
@@ -1605,11 +1597,11 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, Registers, Socket};
+    /// use w5500_ll::{blocking::vdm::W5500, Registers, Socket};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// w5500.set_sn_port(Socket::Socket0, 68)?;
-    /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn set_sn_port(&mut self, socket: Socket, port: u16) -> Result<(), Self::Error> {
         self.write(reg::SN_PORT, socket.block(), &u16::to_be_bytes(port))
@@ -1636,11 +1628,11 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, Registers, Socket};
+    /// use w5500_ll::{blocking::vdm::W5500, Registers, Socket};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// let dhar = w5500.sn_dhar(Socket::Socket0)?;
-    /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn sn_dhar(&mut self, socket: Socket) -> Result<Eui48Addr, Self::Error> {
         let mut dhar: Eui48Addr = Eui48Addr::UNSPECIFIED;
@@ -1666,12 +1658,12 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, net::Eui48Addr, Registers, Socket};
+    /// use w5500_ll::{blocking::vdm::W5500, net::Eui48Addr, Registers, Socket};
     ///
     /// let dhar = Eui48Addr::new(0x12, 0x34, 0x00, 0x00, 0x00, 0x00);
     /// let mut w5500 = W5500::new(spi, pin);
     /// w5500.set_sn_dhar(Socket::Socket0, &dhar)?;
-    /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn set_sn_dhar(&mut self, socket: Socket, dhar: &Eui48Addr) -> Result<(), Self::Error> {
         self.write(reg::SN_DHAR, socket.block(), &dhar.octets)
@@ -1704,12 +1696,12 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, net::Ipv4Addr, Registers, Socket};
+    /// use w5500_ll::{blocking::vdm::W5500, net::Ipv4Addr, Registers, Socket};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// let dipr = w5500.sn_dipr(Socket::Socket0)?;
     /// assert_eq!(dipr, Ipv4Addr::UNSPECIFIED);
-    /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn sn_dipr(&mut self, socket: Socket) -> Result<Ipv4Addr, Self::Error> {
         let mut dipr: Ipv4Addr = Ipv4Addr::UNSPECIFIED;
@@ -1733,11 +1725,11 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, net::Ipv4Addr, Registers, Socket};
+    /// use w5500_ll::{blocking::vdm::W5500, net::Ipv4Addr, Registers, Socket};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// w5500.set_sn_dipr(Socket::Socket0, &Ipv4Addr::new(192, 168, 0, 11))?;
-    /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn set_sn_dipr(&mut self, socket: Socket, dipr: &Ipv4Addr) -> Result<(), Self::Error> {
         self.write(reg::SN_DIPR, socket.block(), &dipr.octets)
@@ -1771,11 +1763,11 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, Registers, Socket, SocketMode};
+    /// use w5500_ll::{blocking::vdm::W5500, Registers, Socket, SocketMode};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// let socket_destination_port: u16 = w5500.sn_dport(Socket::Socket0)?;
-    /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn sn_dport(&mut self, socket: Socket) -> Result<u16, Self::Error> {
         let mut reg: [u8; 2] = [0; 2];
@@ -1799,11 +1791,11 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, Registers, Socket};
+    /// use w5500_ll::{blocking::vdm::W5500, Registers, Socket};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// w5500.set_sn_dport(Socket::Socket0, 67)?;
-    /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn set_sn_dport(&mut self, socket: Socket, port: u16) -> Result<(), Self::Error> {
         self.write(reg::SN_DPORT, socket.block(), &u16::to_be_bytes(port))
@@ -1855,11 +1847,11 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, Registers, Socket};
+    /// use w5500_ll::{blocking::vdm::W5500, Registers, Socket};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// let sn__mssr: u16 = w5500.sn_mssr(Socket::Socket0)?;
-    /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn sn_mssr(&mut self, socket: Socket) -> Result<u16, Self::Error> {
         let mut reg: [u8; 2] = [0; 2];
@@ -1883,11 +1875,11 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, Registers, Socket};
+    /// use w5500_ll::{blocking::vdm::W5500, Registers, Socket};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// w5500.set_sn_mssr(Socket::Socket0, 1460)?;
-    /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn set_sn_mssr(&mut self, socket: Socket, mssr: u16) -> Result<(), Self::Error> {
         self.write(reg::SN_MSSR, socket.block(), &u16::to_be_bytes(mssr))
@@ -1915,11 +1907,11 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, Registers, Socket};
+    /// use w5500_ll::{blocking::vdm::W5500, Registers, Socket};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// let tos: u8 = w5500.sn_tos(Socket::Socket0)?;
-    /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn sn_tos(&mut self, socket: Socket) -> Result<u8, Self::Error> {
         let mut reg: [u8; 1] = [0];
@@ -1943,11 +1935,11 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, Registers, Socket};
+    /// use w5500_ll::{blocking::vdm::W5500, Registers, Socket};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// w5500.set_sn_tos(Socket::Socket0, 1)?;
-    /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn set_sn_tos(&mut self, socket: Socket, tos: u8) -> Result<(), Self::Error> {
         self.write(reg::SN_TOS, socket.block(), &[tos])
@@ -1974,11 +1966,11 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, Registers, Socket};
+    /// use w5500_ll::{blocking::vdm::W5500, Registers, Socket};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// let ttl: u8 = w5500.sn_ttl(Socket::Socket0)?;
-    /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn sn_ttl(&mut self, socket: Socket) -> Result<u8, Self::Error> {
         let mut reg: [u8; 1] = [0];
@@ -2002,11 +1994,11 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, Registers, Socket};
+    /// use w5500_ll::{blocking::vdm::W5500, Registers, Socket};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// w5500.set_sn_ttl(Socket::Socket0, 0x80)?;
-    /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn set_sn_ttl(&mut self, socket: Socket, ttl: u8) -> Result<(), Self::Error> {
         self.write(reg::SN_TTL, socket.block(), &[ttl])
@@ -2031,12 +2023,12 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
     /// use core::convert::TryFrom;
-    /// use w5500_ll::{blocking::W5500, BufferSize, Registers, Socket};
+    /// use w5500_ll::{blocking::vdm::W5500, BufferSize, Registers, Socket};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// let sn_rxbuf_size_raw: u8 = w5500.sn_rxbuf_size(Socket::Socket0)?;
     /// assert_eq!(BufferSize::try_from(sn_rxbuf_size_raw), Ok(BufferSize::KB2));
-    /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn sn_rxbuf_size(&mut self, socket: Socket) -> Result<u8, Self::Error> {
         let mut reg: [u8; 1] = [0];
@@ -2061,11 +2053,11 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
     /// use core::convert::TryFrom;
-    /// use w5500_ll::{blocking::W5500, BufferSize, Registers, Socket};
+    /// use w5500_ll::{blocking::vdm::W5500, BufferSize, Registers, Socket};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// w5500.set_sn_rxbuf_size(Socket::Socket0, BufferSize::KB1)?;
-    /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn set_sn_rxbuf_size(&mut self, socket: Socket, size: BufferSize) -> Result<(), Self::Error> {
         self.write(reg::SN_RXBUF_SIZE, socket.block(), &[size.into()])
@@ -2090,12 +2082,12 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
     /// use core::convert::TryFrom;
-    /// use w5500_ll::{blocking::W5500, BufferSize, Registers, Socket};
+    /// use w5500_ll::{blocking::vdm::W5500, BufferSize, Registers, Socket};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// let sn_txbuf_size_raw: u8 = w5500.sn_txbuf_size(Socket::Socket0)?;
     /// assert_eq!(BufferSize::try_from(sn_txbuf_size_raw), Ok(BufferSize::KB2));
-    /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn sn_txbuf_size(&mut self, socket: Socket) -> Result<u8, Self::Error> {
         let mut reg: [u8; 1] = [0];
@@ -2120,11 +2112,11 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
     /// use core::convert::TryFrom;
-    /// use w5500_ll::{blocking::W5500, BufferSize, Registers, Socket};
+    /// use w5500_ll::{blocking::vdm::W5500, BufferSize, Registers, Socket};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// w5500.set_sn_txbuf_size(Socket::Socket0, BufferSize::KB1)?;
-    /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn set_sn_txbuf_size(&mut self, socket: Socket, size: BufferSize) -> Result<(), Self::Error> {
         self.write(reg::SN_TXBUF_SIZE, socket.block(), &[size.into()])
@@ -2166,11 +2158,11 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, Registers, Socket, SocketMode};
+    /// use w5500_ll::{blocking::vdm::W5500, Registers, Socket, SocketMode};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// let sn_tx_fsr: u16 = w5500.sn_tx_fsr(Socket::Socket0)?;
-    /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn sn_tx_fsr(&mut self, socket: Socket) -> Result<u16, Self::Error> {
         let mut reg: [u8; 2] = [0; 2];
@@ -2209,11 +2201,11 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, Registers, Socket, SocketMode};
+    /// use w5500_ll::{blocking::vdm::W5500, Registers, Socket, SocketMode};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// let sn_tx_rd: u16 = w5500.sn_tx_rd(Socket::Socket0)?;
-    /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn sn_tx_rd(&mut self, socket: Socket) -> Result<u16, Self::Error> {
         let mut reg: [u8; 2] = [0; 2];
@@ -2248,11 +2240,11 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, Registers, Socket};
+    /// use w5500_ll::{blocking::vdm::W5500, Registers, Socket};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// let sn_tx_wr: u16 = w5500.sn_tx_wr(Socket::Socket0)?;
-    /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn sn_tx_wr(&mut self, socket: Socket) -> Result<u16, Self::Error> {
         let mut reg: [u8; 2] = [0; 2];
@@ -2289,11 +2281,11 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, Registers, Socket};
+    /// use w5500_ll::{blocking::vdm::W5500, Registers, Socket};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// let sn_rx_rsr: u16 = w5500.sn_rx_rsr(Socket::Socket0)?;
-    /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn sn_rx_rsr(&mut self, socket: Socket) -> Result<u16, Self::Error> {
         let mut reg: [u8; 2] = [0; 2];
@@ -2327,11 +2319,11 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, Registers, Socket};
+    /// use w5500_ll::{blocking::vdm::W5500, Registers, Socket};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// let sn_rx_rd: u16 = w5500.sn_rx_rd(Socket::Socket0)?;
-    /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn sn_rx_rd(&mut self, socket: Socket) -> Result<u16, Self::Error> {
         let mut reg: [u8; 2] = [0; 2];
@@ -2364,11 +2356,11 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, Registers, Socket};
+    /// use w5500_ll::{blocking::vdm::W5500, Registers, Socket};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// let sn_rx_wr: u16 = w5500.sn_rx_wr(Socket::Socket0)?;
-    /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn sn_rx_wr(&mut self, socket: Socket) -> Result<u16, Self::Error> {
         let mut reg: [u8; 2] = [0; 2];
@@ -2390,12 +2382,12 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, Registers, Socket, SocketInterruptMask};
+    /// use w5500_ll::{blocking::vdm::W5500, Registers, Socket, SocketInterruptMask};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// let sn_imr: SocketInterruptMask = w5500.sn_imr(Socket::Socket0)?;
     /// assert_eq!(sn_imr, SocketInterruptMask::default());
-    /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn sn_imr(&mut self, socket: Socket) -> Result<SocketInterruptMask, Self::Error> {
         let mut reg: [u8; 1] = [0];
@@ -2417,11 +2409,11 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, Registers, Socket, SocketInterruptMask};
+    /// use w5500_ll::{blocking::vdm::W5500, Registers, Socket, SocketInterruptMask};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// w5500.set_sn_imr(Socket::Socket0, SocketInterruptMask::ALL_MASKED)?;
-    /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn set_sn_imr(&mut self, socket: Socket, mask: SocketInterruptMask) -> Result<(), Self::Error> {
         self.write(reg::SN_IMR, socket.block(), &[mask.into()])
@@ -2443,12 +2435,12 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, Registers, Socket};
+    /// use w5500_ll::{blocking::vdm::W5500, Registers, Socket};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// let frag: u16 = w5500.sn_frag(Socket::Socket0)?;
     /// assert_eq!(frag, 0x4000);
-    /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn sn_frag(&mut self, socket: Socket) -> Result<u16, Self::Error> {
         let mut buf: [u8; 2] = [0; 2];
@@ -2472,11 +2464,11 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, Registers, Socket};
+    /// use w5500_ll::{blocking::vdm::W5500, Registers, Socket};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// w5500.set_sn_frag(Socket::Socket0, 0)?;
-    /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn set_sn_frag(&mut self, socket: Socket, frag: u16) -> Result<(), Self::Error> {
         self.write(reg::SN_FRAG, socket.block(), &u16::to_be_bytes(frag))
@@ -2514,11 +2506,11 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, Registers, Socket};
+    /// use w5500_ll::{blocking::vdm::W5500, Registers, Socket};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// let sn_kpalvtr: u8 = w5500.sn_kpalvtr(Socket::Socket0)?;
-    /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn sn_kpalvtr(&mut self, socket: Socket) -> Result<u8, Self::Error> {
         let mut buf: [u8; 1] = [0];
@@ -2542,12 +2534,12 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::W5500, Registers, Socket};
+    /// use w5500_ll::{blocking::vdm::W5500, Registers, Socket};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// // 50s keep alive timer
     /// w5500.set_sn_kpalvtr(Socket::Socket0, 10)?;
-    /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn set_sn_kpalvtr(&mut self, socket: Socket, kpalvtr: u8) -> Result<(), Self::Error> {
         self.write(reg::SN_KPALVTR, socket.block(), &[kpalvtr])
@@ -2559,7 +2551,7 @@ pub trait Registers {
     ///
     /// ```
     /// use core::convert::TryFrom;
-    /// use w5500_ll::{blocking::W5500, Registers, Socket, SocketCommand};
+    /// use w5500_ll::{blocking::vdm::W5500, Registers, Socket, SocketCommand};
     /// # use embedded_hal_mock as hal;
     /// # let spi = hal::spi::Mock::new(&[
     /// #   hal::spi::Transaction::write(vec![0x00, w5500_ll::reg::SN_TX_FSR as u8, 0x08]),
@@ -2602,7 +2594,7 @@ pub trait Registers {
     /// w5500.set_sn_tx_buf(THE_SOCKET, ptr, &data)?;
     /// w5500.set_sn_tx_wr(THE_SOCKET, ptr.wrapping_add(data_len))?;
     /// w5500.set_sn_cr(THE_SOCKET, SocketCommand::Send)?;
-    /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn set_sn_tx_buf(&mut self, socket: Socket, ptr: u16, buf: &[u8]) -> Result<(), Self::Error> {
         self.write(ptr, socket.tx_block(), buf)
@@ -2614,7 +2606,7 @@ pub trait Registers {
     ///
     /// ```
     /// use core::convert::TryFrom;
-    /// use w5500_ll::{blocking::W5500, Registers, Socket, SocketCommand};
+    /// use w5500_ll::{blocking::vdm::W5500, Registers, Socket, SocketCommand};
     /// # use embedded_hal_mock as hal;
     /// # let spi = hal::spi::Mock::new(&[
     /// #   hal::spi::Transaction::write(vec![0x00, w5500_ll::reg::SN_RX_RSR as u8, 0x08]),
@@ -2660,7 +2652,7 @@ pub trait Registers {
     /// w5500.sn_rx_buf(THE_SOCKET, ptr, &mut buf[..rsr.into()])?;
     /// w5500.set_sn_rx_rd(THE_SOCKET, ptr.wrapping_add(rsr))?;
     /// w5500.set_sn_cr(THE_SOCKET, SocketCommand::Recv)?;
-    /// # Ok::<(), w5500_ll::blocking::Error<_, _>>(())
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn sn_rx_buf(&mut self, socket: Socket, ptr: u16, buf: &mut [u8]) -> Result<(), Self::Error> {
         self.read(ptr, socket.rx_block(), buf)

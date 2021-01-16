@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Added additional methods to `w5500_ll::net::Ipv4Addr` from `std::net::Ipv4Addr`.
+- Added `derive(hash)` to `Socket`.
+- Added a public `spi` module with helpers and types for W5500 SPI transfers.
+- Added a fixed data length implementation, `w5500_ll::blocking::fdm::W5500`.
+
+### Changed
+- Moved `w5500_ll::SPI_MODE` to `w5500_ll::spi::MODE`.
+- `COMMON_BLOCK_OFFSET` is now public.
+- Moved `w5500_ll::blocking::W5500` to `w5500_ll::blocking::vdm::W5500`
 
 ## [0.2.1] - 2021-01-03
 ### Fixed

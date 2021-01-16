@@ -1,35 +1,17 @@
-//! Implementation of the W5500 [`crate::Registers`] trait using the
-//! [`embedded-hal`] blocking SPI traits.
+//! Variable data length implementation of the [`crate::Registers`] trait using
+//! the [`embedded-hal`] blocking SPI traits.
+//!
+//! This uses the W5500 variable data length mode (VDM).
+//! In VDM mode the SPI frame data length is determined by the chip select pin.
+//! This is the preferred blocking implementation if your W5500 has a chip
+//! select pin.
 //!
 //! [`embedded-hal`]: https://github.com/rust-embedded/embedded-hal
 
+use crate::spi::{vdm_header, AccessMode};
 use embedded_hal::digital::v2::OutputPin;
 
-/// SPI Access Modes.
-#[repr(u8)]
-enum AccessMode {
-    /// Read access.
-    Read = 0,
-    /// Write access.
-    Write = 1,
-}
-impl From<AccessMode> for u8 {
-    fn from(val: AccessMode) -> Self {
-        val as u8
-    }
-}
-
-/// Helper to generate a SPI header.
-#[inline(always)]
-const fn spi_header(address: u16, block: u8, mode: AccessMode) -> [u8; 3] {
-    [
-        (address >> 8) as u8,
-        address as u8,
-        (block << 3) | ((mode as u8) << 2),
-    ]
-}
-
-/// W5500 blocking implementation.
+/// W5500 blocking variable data length implementation.
 pub struct W5500<SPI, CS> {
     /// SPI bus.
     spi: SPI,
@@ -61,7 +43,7 @@ where
     /// # use embedded_hal_mock as hal;
     /// # let spi = hal::spi::Mock::new(&[]);
     /// # let pin = hal::pin::Mock::new(&[]);
-    /// use w5500_ll::blocking::W5500;
+    /// use w5500_ll::blocking::vdm::W5500;
     ///
     /// let mut w5500: W5500<_, _> = W5500::new(spi, pin);
     /// ```
@@ -71,14 +53,13 @@ where
 
     /// Free the SPI bus and CS pin from the W5500.
     ///
-    ///
     /// # Example
     ///
     /// ```
     /// # use embedded_hal_mock as hal;
     /// # let spi = hal::spi::Mock::new(&[]);
     /// # let pin = hal::pin::Mock::new(&[]);
-    /// use w5500_ll::blocking::W5500;
+    /// use w5500_ll::blocking::vdm::W5500;
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// let (spi, pin) = w5500.free();
@@ -112,7 +93,7 @@ where
     /// Read from the W5500.
     #[inline(always)]
     fn read(&mut self, address: u16, block: u8, data: &mut [u8]) -> Result<(), Self::Error> {
-        let header = spi_header(address, block, AccessMode::Read);
+        let header = vdm_header(address, block, AccessMode::Read);
         self.with_chip_enable(|spi| {
             spi.write(&header).map_err(Error::Spi)?;
             spi.transfer(data).map_err(Error::Spi)?;
@@ -123,38 +104,11 @@ where
     /// Write to the W5500.
     #[inline(always)]
     fn write(&mut self, address: u16, block: u8, data: &[u8]) -> Result<(), Self::Error> {
-        let header = spi_header(address, block, AccessMode::Write);
+        let header = vdm_header(address, block, AccessMode::Write);
         self.with_chip_enable(|spi| {
             spi.write(&header).map_err(Error::Spi)?;
             spi.write(&data).map_err(Error::Spi)?;
             Ok(())
         })
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::Socket;
-
-    macro_rules! spi_header_tests {
-        ($($name:ident: $value:expr,)*) => {
-        $(
-            #[test]
-            fn $name() {
-                let ((address, block, mode), expected) = $value;
-                assert_eq!(spi_header(address, block, mode), expected);
-            }
-        )*
-        }
-    }
-
-    spi_header_tests! {
-        spi_header_0: ((0, 0, AccessMode::Read), [0, 0, 0]),
-        spi_header_1: ((0x1234, 0, AccessMode::Read), [0x12, 0x34, 0]),
-        spi_header_2: ((0, Socket::Socket0.block(), AccessMode::Read), [0, 0, 8]),
-        spi_header_3: ((0, Socket::Socket7.tx_block(), AccessMode::Read), [0, 0, 0b11110 << 3]),
-        spi_header_4: ((0, Socket::Socket7.rx_block(), AccessMode::Read), [0, 0, 0b11111 << 3]),
-        spi_header_5: ((0, 0, AccessMode::Write), [0, 0, 4]),
     }
 }

@@ -1,4 +1,4 @@
-//! Register enumerations and structures.
+//! Register structures.
 
 use crate::specifiers::{DuplexStatus, LinkStatus, OperationMode, Protocol, SpeedStatus};
 use core::convert::TryFrom;
