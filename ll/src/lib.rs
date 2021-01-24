@@ -19,7 +19,7 @@ pub mod spi;
 mod registers;
 mod specifiers;
 use core::convert::TryFrom;
-use net::{Eui48Addr, Ipv4Addr};
+use net::{Eui48Addr, Ipv4Addr, SocketAddrV4};
 
 pub use registers::{Interrupt, Mode, PhyCfg, SocketInterrupt, SocketInterruptMask, SocketMode};
 pub use specifiers::{
@@ -214,6 +214,12 @@ impl Socket {
 impl From<Socket> for u8 {
     fn from(s: Socket) -> Self {
         s as u8
+    }
+}
+
+impl From<Socket> for usize {
+    fn from(s: Socket) -> Self {
+        usize::from(u8::from(s))
     }
 }
 
@@ -1799,6 +1805,85 @@ pub trait Registers {
     /// ```
     fn set_sn_dport(&mut self, socket: Socket, port: u16) -> Result<(), Self::Error> {
         self.write(reg::SN_DPORT, socket.block(), &u16::to_be_bytes(port))
+    }
+
+    /// Get the socket destination IPv4 and port.
+    ///
+    /// This is a compound which performs [`Registers::sn_dipr`] and
+    /// [`Registers::sn_dport`] together.
+    ///
+    /// The `sn_dipr` and `sn_dport` registers are contiguous in memory, which
+    /// allows this function to do one read cycle to read both registers.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use embedded_hal_mock as hal;
+    /// # let spi = hal::spi::Mock::new(&[
+    /// #   hal::spi::Transaction::write(vec![0x00, 0x0C, 0x08]),
+    /// #   hal::spi::Transaction::transfer(vec![0, 0, 0, 0, 0, 0], vec![0, 0, 0, 0, 0, 0]),
+    /// # ]);
+    /// # let pin = hal::pin::Mock::new(&[
+    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
+    /// #    hal::pin::Transaction::set(hal::pin::State::High),
+    /// # ]);
+    /// use w5500_ll::{blocking::vdm::W5500, net::SocketAddrV4, Registers, Socket};
+    ///
+    /// let mut w5500 = W5500::new(spi, pin);
+    /// let addr = w5500.sn_dest(Socket::Socket0)?;
+    /// assert_eq!(addr, SocketAddrV4::default());
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// ```
+    fn sn_dest(&mut self, socket: Socket) -> Result<SocketAddrV4, Self::Error> {
+        let mut buf: [u8; 6] = [0; 6];
+        self.read(reg::SN_DIPR, socket.block(), &mut buf)?;
+        Ok(SocketAddrV4::new(
+            Ipv4Addr::new(buf[0], buf[1], buf[2], buf[3]),
+            u16::from_be_bytes([buf[4], buf[5]]),
+        ))
+    }
+
+    /// Set the socket destination IPv4 and port.
+    ///
+    /// This is a compound operation which performs
+    /// [`Registers::set_sn_dipr`] and [`Registers::set_sn_dport`] together.
+    ///
+    /// The `sn_dipr` and `sn_dport` registers are contiguous in memory, which
+    /// allows this function to do one write cycle to write both registers.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use embedded_hal_mock as hal;
+    /// # let spi = hal::spi::Mock::new(&[
+    /// #   hal::spi::Transaction::write(vec![0x00, 0x0C, 0x08 | 0x04]),
+    /// #   hal::spi::Transaction::write(vec![192, 168, 0, 11, 0, 67]),
+    /// # ]);
+    /// # let pin = hal::pin::Mock::new(&[
+    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
+    /// #    hal::pin::Transaction::set(hal::pin::State::High),
+    /// # ]);
+    /// use w5500_ll::{
+    ///     blocking::vdm::W5500,
+    ///     net::{Ipv4Addr, SocketAddrV4},
+    ///     Registers, Socket,
+    /// };
+    ///
+    /// let addr: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::new(192, 168, 0, 11), 67);
+    /// let mut w5500 = W5500::new(spi, pin);
+    /// w5500.set_sn_dest(Socket::Socket0, &addr)?;
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// ```
+    fn set_sn_dest(&mut self, socket: Socket, addr: &SocketAddrV4) -> Result<(), Self::Error> {
+        let buf: [u8; 6] = [
+            addr.ip().octets[0],
+            addr.ip().octets[1],
+            addr.ip().octets[2],
+            addr.ip().octets[3],
+            (addr.port() >> 8) as u8,
+            addr.port() as u8,
+        ];
+        self.write(reg::SN_DIPR, socket.block(), &buf)
     }
 
     /// Get the socket maximum segment size.
