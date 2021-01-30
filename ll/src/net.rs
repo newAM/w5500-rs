@@ -133,6 +133,7 @@ impl Ipv4Addr {
     /// assert_eq!(Ipv4Addr::new(192, 168, 0, 2).is_private(), true);
     /// assert_eq!(Ipv4Addr::new(192, 169, 0, 2).is_private(), false);
     /// ```
+    #[allow(clippy::manual_range_contains)]
     pub const fn is_private(&self) -> bool {
         match self.octets {
             [10, ..] => true,
@@ -219,6 +220,7 @@ impl Ipv4Addr {
     /// assert_eq!(Ipv4Addr::new(203, 0, 113, 6).is_documentation(), true);
     /// assert_eq!(Ipv4Addr::new(193, 34, 17, 19).is_documentation(), false);
     /// ```
+    #[allow(clippy::match_like_matches_macro)]
     pub const fn is_documentation(&self) -> bool {
         match self.octets {
             [192, 0, 2, _] => true,

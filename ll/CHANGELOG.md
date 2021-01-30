@@ -10,6 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `sn_dest` and `set_sn_dest` methods.
 - Added `net::SocketAddrV4`.
 
+### Changed
+- Changed `Registers::sn_sr` to return `Result<Result<SocketStatus, u8>, Self::Error>` instead of `Result<u8, Self::Error>` that would then need to be converted into a `SocketStatus`.
+- Changed `Registers::sn_txbuf_size` and `Registers::sn_rxbuf_size` to return `Result<Result<BufferSize, u8>, Self::Error>` instead of `Result<u8, Self::Error>` that would then need to be converted into a `BufferSize`.
+
 ## [0.3.0] - 2021-01-16
 ### Added
 - Added additional methods to `w5500_ll::net::Ipv4Addr` from `std::net::Ipv4Addr`.
@@ -24,8 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.2.1] - 2021-01-03
 ### Fixed
-- Fixed an overflow error that could occur in the `sn_rx_buf` and
-  `set_sn_tx_buf` example code.
+- Fixed an overflow error that could occur in the `sn_rx_buf` and `set_sn_tx_buf` example code.
 
 ## [0.2.0] - 2021-01-03
 ### Added
@@ -35,20 +38,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Improve `SocketStatus` documentation.
 - Improve `SocketCommand` documentation.
-- Removed the `ValueError` layer of abstraction.
-  Functions that previously returned `Result<T, ValueError>` now return
-  `Result<T, u8>`.
+- Removed the `ValueError` layer of abstraction. Functions that previously returned `Result<T, ValueError>` now return `Result<T, u8>`.
 
 ### Fixed
 - Fixed `Registers::sn_dport` and `Registers::set_sn_dport` register address.
 - Fixed `SocketInterruptMask::unmask_discon` and
   `SocketInterruptMask::mask_discon` operating on the incorrect field.
-- Fixed logic inversion on `SocketInterruptMask::con_masked`,
-  `SocketInterruptMask::discon_masked`, `SocketInterruptMask::recv_masked`,
-  `SocketInterruptMask::timeout_masked`, and `SocketInterruptMask::sendok_masked`.
+- Fixed logic inversion on `SocketInterruptMask::con_masked`, `SocketInterruptMask::discon_masked`, `SocketInterruptMask::recv_masked`, `SocketInterruptMask::timeout_masked`, and `SocketInterruptMask::sendok_masked`.
 - Fixed `SocketInterrupt::clear_discon` operating on the incorrect field.
-- Fixed `SocketMode::enable_mip6b` and `SocketMode::disable_mip6b` operating on
-  the incorrect field.
+- Fixed `SocketMode::enable_mip6b` and `SocketMode::disable_mip6b` operating on the incorrect field.
 
 ## [0.1.0] - 2021-01-02
 - Initial release

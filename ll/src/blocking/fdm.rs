@@ -50,6 +50,7 @@ where
     type Error = SpiError;
 
     /// Read from the W5500.
+    #[allow(clippy::while_let_on_iterator)]
     fn read(&mut self, mut address: u16, block: u8, data: &mut [u8]) -> Result<(), Self::Error> {
         let mut chunks = data.chunks_exact_mut(4);
         while let Some(chunk) = chunks.next() {
@@ -77,6 +78,7 @@ where
     }
 
     /// Write to the W5500.
+    #[allow(clippy::while_let_on_iterator)]
     fn write(&mut self, mut address: u16, block: u8, data: &[u8]) -> Result<(), Self::Error> {
         let mut chunks = data.chunks_exact(4);
         while let Some(chunk) = chunks.next() {

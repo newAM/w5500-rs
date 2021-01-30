@@ -1532,6 +1532,19 @@ pub trait Registers {
 
     /// Get the socket status.
     ///
+    /// **Note:** This method returns a nested [`core::result::Result`].
+    ///
+    /// The outermost `Result` is for handling bus errors, similar to most of
+    /// the other methods in this trait.
+    ///
+    /// The innermost `Result<SocketStatus, u8>` is the result of a `u8` to
+    /// [`SocketStatus`] conversion because not every value of `u8` corresponds
+    /// to a valid [`SocketStatus`].
+    /// * `u8` values that have a corresponding [`SocketStatus`] will be
+    ///   converted and returned in the [`Ok`] variant of the inner `Result`.
+    /// * `u8` values that do not corresponding [`SocketStatus`] will have the
+    ///   raw `u8` byte returned in the [`Err`] variant of the inner `Result`.
+    ///
     /// # Example
     ///
     /// ```
@@ -1548,14 +1561,17 @@ pub trait Registers {
     /// use w5500_ll::{blocking::vdm::W5500, Registers, Socket, SocketStatus};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
-    /// let sn_sr_raw: u8 = w5500.sn_sr(Socket::Socket0)?;
-    /// let sn_sr: SocketStatus = SocketStatus::try_from(sn_sr_raw).unwrap_or_default();
+    /// let sn_sr = w5500.sn_sr(Socket::Socket0)?;
+    /// assert_eq!(sn_sr, Ok(SocketStatus::Closed));
     /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
-    fn sn_sr(&mut self, socket: Socket) -> Result<u8, Self::Error> {
+    ///
+    /// [`Ok`]: https://doc.rust-lang.org/core/result/enum.Result.html#variant.Ok
+    /// [`Err`]: https://doc.rust-lang.org/core/result/enum.Result.html#variant.Err
+    fn sn_sr(&mut self, socket: Socket) -> Result<Result<SocketStatus, u8>, Self::Error> {
         let mut reg: [u8; 1] = [0];
         self.read(reg::SN_SR, socket.block(), &mut reg)?;
-        Ok(reg[0])
+        Ok(SocketStatus::try_from(reg[0]))
     }
 
     /// Get the socket source port.
@@ -1813,7 +1829,7 @@ pub trait Registers {
     /// [`Registers::sn_dport`] together.
     ///
     /// The `sn_dipr` and `sn_dport` registers are contiguous in memory, which
-    /// allows this function to do one read cycle to read both registers.
+    /// allows this function to do one read transfer to read both registers.
     ///
     /// # Example
     ///
@@ -1849,7 +1865,7 @@ pub trait Registers {
     /// [`Registers::set_sn_dipr`] and [`Registers::set_sn_dport`] together.
     ///
     /// The `sn_dipr` and `sn_dport` registers are contiguous in memory, which
-    /// allows this function to do one write cycle to write both registers.
+    /// allows this function to do one write transfer to write both registers.
     ///
     /// # Example
     ///
@@ -2111,14 +2127,14 @@ pub trait Registers {
     /// use w5500_ll::{blocking::vdm::W5500, BufferSize, Registers, Socket};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
-    /// let sn_rxbuf_size_raw: u8 = w5500.sn_rxbuf_size(Socket::Socket0)?;
-    /// assert_eq!(BufferSize::try_from(sn_rxbuf_size_raw), Ok(BufferSize::KB2));
+    /// let sn_rxbuf_size = w5500.sn_rxbuf_size(Socket::Socket0)?;
+    /// assert_eq!(sn_rxbuf_size, Ok(BufferSize::KB2));
     /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
-    fn sn_rxbuf_size(&mut self, socket: Socket) -> Result<u8, Self::Error> {
+    fn sn_rxbuf_size(&mut self, socket: Socket) -> Result<Result<BufferSize, u8>, Self::Error> {
         let mut reg: [u8; 1] = [0];
         self.read(reg::SN_RXBUF_SIZE, socket.block(), &mut reg)?;
-        Ok(reg[0])
+        Ok(BufferSize::try_from(reg[0]))
     }
 
     /// Set the socket RX buffer size.
@@ -2170,14 +2186,14 @@ pub trait Registers {
     /// use w5500_ll::{blocking::vdm::W5500, BufferSize, Registers, Socket};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
-    /// let sn_txbuf_size_raw: u8 = w5500.sn_txbuf_size(Socket::Socket0)?;
-    /// assert_eq!(BufferSize::try_from(sn_txbuf_size_raw), Ok(BufferSize::KB2));
+    /// let sn_txbuf_size = w5500.sn_txbuf_size(Socket::Socket0)?;
+    /// assert_eq!(sn_txbuf_size, Ok(BufferSize::KB2));
     /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
-    fn sn_txbuf_size(&mut self, socket: Socket) -> Result<u8, Self::Error> {
+    fn sn_txbuf_size(&mut self, socket: Socket) -> Result<Result<BufferSize, u8>, Self::Error> {
         let mut reg: [u8; 1] = [0];
         self.read(reg::SN_TXBUF_SIZE, socket.block(), &mut reg)?;
-        Ok(reg[0])
+        Ok(BufferSize::try_from(reg[0]))
     }
 
     /// Set the socket TX buffer size.
