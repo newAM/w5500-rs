@@ -7,7 +7,7 @@
 //! on-top of what is provided here.
 //!
 //! [Wiznet W5500]: https://www.wiznet.io/product-item/w5500/
-#![doc(html_root_url = "https://docs.rs/w5500-ll/0.3.0")]
+#![doc(html_root_url = "https://docs.rs/w5500-ll/0.4.0")]
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
 #![no_std]
@@ -2111,6 +2111,19 @@ pub trait Registers {
     ///
     /// The sum of all the socket RX buffers cannot exceed 16 KiB.
     ///
+    /// **Note:** This method returns a nested [`core::result::Result`].
+    ///
+    /// The outermost `Result` is for handling bus errors, similar to most of
+    /// the other methods in this trait.
+    ///
+    /// The innermost `Result<BufferSize, u8>` is the result of a `u8` to
+    /// [`BufferSize`] conversion because not every value of `u8` corresponds
+    /// to a valid [`BufferSize`].
+    /// * `u8` values that have a corresponding [`BufferSize`] will be
+    ///   converted and returned in the [`Ok`] variant of the inner `Result`.
+    /// * `u8` values that do not corresponding [`BufferSize`] will have the
+    ///   raw `u8` byte returned in the [`Err`] variant of the inner `Result`.
+    ///
     /// # Example
     ///
     /// ```
@@ -2131,6 +2144,9 @@ pub trait Registers {
     /// assert_eq!(sn_rxbuf_size, Ok(BufferSize::KB2));
     /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
+    ///
+    /// [`Ok`]: https://doc.rust-lang.org/core/result/enum.Result.html#variant.Ok
+    /// [`Err`]: https://doc.rust-lang.org/core/result/enum.Result.html#variant.Err
     fn sn_rxbuf_size(&mut self, socket: Socket) -> Result<Result<BufferSize, u8>, Self::Error> {
         let mut reg: [u8; 1] = [0];
         self.read(reg::SN_RXBUF_SIZE, socket.block(), &mut reg)?;
@@ -2170,6 +2186,19 @@ pub trait Registers {
     ///
     /// The sum of all the socket TX buffers cannot exceed 16 KiB.
     ///
+    /// **Note:** This method returns a nested [`core::result::Result`].
+    ///
+    /// The outermost `Result` is for handling bus errors, similar to most of
+    /// the other methods in this trait.
+    ///
+    /// The innermost `Result<BufferSize, u8>` is the result of a `u8` to
+    /// [`BufferSize`] conversion because not every value of `u8` corresponds
+    /// to a valid [`BufferSize`].
+    /// * `u8` values that have a corresponding [`BufferSize`] will be
+    ///   converted and returned in the [`Ok`] variant of the inner `Result`.
+    /// * `u8` values that do not corresponding [`BufferSize`] will have the
+    ///   raw `u8` byte returned in the [`Err`] variant of the inner `Result`.
+    ///
     /// # Example
     ///
     /// ```
@@ -2190,6 +2219,9 @@ pub trait Registers {
     /// assert_eq!(sn_txbuf_size, Ok(BufferSize::KB2));
     /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
+    ///
+    /// [`Ok`]: https://doc.rust-lang.org/core/result/enum.Result.html#variant.Ok
+    /// [`Err`]: https://doc.rust-lang.org/core/result/enum.Result.html#variant.Err
     fn sn_txbuf_size(&mut self, socket: Socket) -> Result<Result<BufferSize, u8>, Self::Error> {
         let mut reg: [u8; 1] = [0];
         self.read(reg::SN_TXBUF_SIZE, socket.block(), &mut reg)?;
@@ -2651,6 +2683,7 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
+    /// use core::cmp::min;
     /// use core::convert::TryFrom;
     /// use w5500_ll::{blocking::vdm::W5500, Registers, Socket, SocketCommand};
     /// # use embedded_hal_mock as hal;
@@ -2683,17 +2716,20 @@ pub trait Registers {
     /// // the socket should already be opened at this point
     /// const THE_SOCKET: Socket = Socket::Socket0;
     ///
-    /// let data: [u8; 5] = [0x12, 0x34, 0x56, 0x78, 0x9A];
-    /// // panics if the data length exceeds u16 capacity
-    /// let data_len: u16 = u16::try_from(data.len()).expect("data length exceeds u16::MAX");
+    /// let buf: [u8; 5] = [0x12, 0x34, 0x56, 0x78, 0x9A];
     ///
-    /// let free_size: u16 = w5500.sn_tx_fsr(THE_SOCKET)?;
-    /// // panics if the buffer size exceeds free size
-    /// assert!(free_size >= data_len, "TX buffer overflow free size: {}, data size: {}", free_size, data_len);
+    /// // transmit as many bytes as possible
+    /// // for large buffers this may not transmit all the available data
+    /// let tx_bytes: u16 = {
+    ///     min(w5500.sn_tx_fsr(THE_SOCKET)?, u16::try_from(buf.len()).unwrap_or(u16::MAX))
+    /// };
+    /// if tx_bytes == 0 {
+    ///     return Ok(());
+    /// }
     ///
     /// let ptr: u16 = w5500.sn_tx_wr(THE_SOCKET)?;
-    /// w5500.set_sn_tx_buf(THE_SOCKET, ptr, &data)?;
-    /// w5500.set_sn_tx_wr(THE_SOCKET, ptr.wrapping_add(data_len))?;
+    /// w5500.set_sn_tx_buf(THE_SOCKET, ptr, &buf[..usize::from(tx_bytes)])?;
+    /// w5500.set_sn_tx_wr(THE_SOCKET, ptr.wrapping_add(tx_bytes))?;
     /// w5500.set_sn_cr(THE_SOCKET, SocketCommand::Send)?;
     /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
@@ -2706,6 +2742,7 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
+    /// use core::cmp::min;
     /// use core::convert::TryFrom;
     /// use w5500_ll::{blocking::vdm::W5500, Registers, Socket, SocketCommand};
     /// # use embedded_hal_mock as hal;
@@ -2740,18 +2777,19 @@ pub trait Registers {
     /// const THE_SOCKET: Socket = Socket::Socket0;
     ///
     /// // in reality you will need a larger buffer for most protocols
-    /// const BUF_LEN: usize = 8;
+    /// const BUF_LEN: usize = 16;
     /// let mut buf: [u8; BUF_LEN] = [0; BUF_LEN];
     ///
-    /// let rsr: u16 = w5500.sn_rx_rsr(THE_SOCKET)?;
-    /// // panics if we incorrectly thought there was data to read
-    /// debug_assert_ne!(rsr, 0);
-    /// // panics if the recieve data is larger than the local buffer
-    /// assert!(BUF_LEN >= usize::from(rsr), "RX buffer overflow buffer len: {}, rsr: {}", BUF_LEN, rsr);
+    /// let rx_bytes: u16 = {
+    ///     min(w5500.sn_rx_rsr(THE_SOCKET)?, u16::try_from(buf.len()).unwrap_or(u16::MAX))
+    /// };
+    /// if rx_bytes == 0 {
+    ///     return Ok(());
+    /// }
     ///
     /// let ptr: u16 = w5500.sn_rx_rd(THE_SOCKET)?;
-    /// w5500.sn_rx_buf(THE_SOCKET, ptr, &mut buf[..rsr.into()])?;
-    /// w5500.set_sn_rx_rd(THE_SOCKET, ptr.wrapping_add(rsr))?;
+    /// w5500.sn_rx_buf(THE_SOCKET, ptr, &mut buf[..usize::from(rx_bytes)])?;
+    /// w5500.set_sn_rx_rd(THE_SOCKET, ptr.wrapping_add(rx_bytes))?;
     /// w5500.set_sn_cr(THE_SOCKET, SocketCommand::Recv)?;
     /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```

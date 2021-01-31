@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.4.0] - 2021-01-30
 ### Added
 - Added `impl From<Socket> for usize`.
 - Added `sn_dest` and `set_sn_dest` methods.
@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Changed `Registers::sn_sr` to return `Result<Result<SocketStatus, u8>, Self::Error>` instead of `Result<u8, Self::Error>` that would then need to be converted into a `SocketStatus`.
 - Changed `Registers::sn_txbuf_size` and `Registers::sn_rxbuf_size` to return `Result<Result<BufferSize, u8>, Self::Error>` instead of `Result<u8, Self::Error>` that would then need to be converted into a `BufferSize`.
+- Improved `set_sn_tx_buf` and `sn_rx_buf` examples.
 
 ## [0.3.0] - 2021-01-16
 ### Added
@@ -51,7 +52,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.0] - 2021-01-02
 - Initial release
 
-[Unreleased]: https://github.com/newAM/w5500-ll-rs/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/newAM/w5500-ll-rs/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/newAM/w5500-ll-rs/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/newAM/w5500-ll-rs/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/newAM/w5500-ll-rs/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/newAM/w5500-ll-rs/compare/v0.1.0...v0.2.0
