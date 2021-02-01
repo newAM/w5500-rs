@@ -1,8 +1,30 @@
 [package]
 name = "w5500-hl"
-version = "0.1.0"
+version = "0.1.0-alpha.1"
 authors = ["Alex M. <alexmgit@protonmail.com>"]
 edition = "2018"
+repository = "https://github.com/newAM/w5500-hl-rs"
+license = "MIT"
+description = "Driver for the Wiznet W5500 internet offload chip."
+readme = "README.md"
+keywords = ["spi", "driver", "embedded-hal-driver", "W5500", "wiznet"]
+categories = ["embedded", "hardware-support", "no-std"]
+homepage = "https://github.com/newAM/w5500-hl-rs"
+
+[badges]
+maintenance = { status = "experimental" }
 
 [dependencies]
-w5500-ll = "0.2"
+nb = "1"
+w5500-ll = "0.4"
+
+[dev-dependencies]
+trust-dns-client = "0.20"
+embedded-hal-mock = "0.7"
+w5500-regsim = "0.1.0-alpha.1"
+version-sync = "0.9"
+stderrlog = "0.5"
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
