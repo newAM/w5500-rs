@@ -88,7 +88,7 @@ use std::{
     cmp::min,
     convert::TryFrom,
     io::{self, Read, Write},
-    net::{SocketAddrV4, TcpStream, UdpSocket},
+    net::{SocketAddrV4, TcpListener, TcpStream, UdpSocket},
 };
 
 pub use w5500_ll::{self, Registers};
@@ -125,7 +125,7 @@ const RO_SOCKET_REGS: &[u16] = &[
 
 enum SocketType {
     Udp(UdpSocket),
-    // TcpListener(TcpListener),
+    TcpListener(TcpListener),
     TcpStream(TcpStream),
 }
 
@@ -196,6 +196,7 @@ pub struct W5500 {
     tx_buf: [Vec<u8>; NUM_SOCKETS],
     rx_buf: [Vec<u8>; NUM_SOCKETS],
     sockets: [Option<SocketType>; NUM_SOCKETS],
+    clients: [Option<TcpStream>; NUM_SOCKETS],
 }
 
 impl W5500 {
@@ -233,6 +234,7 @@ impl W5500 {
                 vec![0; DEFAULT_BUF_SIZE],
             ],
             sockets: [None, None, None, None, None, None, None, None],
+            clients: [None, None, None, None, None, None, None, None],
         };
         device.reset();
         device
@@ -305,6 +307,18 @@ impl W5500 {
         std::net::SocketAddrV4::new(std::net::Ipv4Addr::from(ip.octets), port)
     }
 
+    fn socket_assert_state_init(&self, socket: Socket, command: SocketCommand) {
+        let sn_sr =
+            SocketStatus::try_from(self.socket_regs[usize::from(socket)][usize::from(reg::SN_SR)]);
+
+        if sn_sr != Ok(SocketStatus::Init) {
+            panic!(
+                "You should only send the {:?} command after initializing {:?} as TCP",
+                command, socket
+            )
+        }
+    }
+
     fn socket_cmd_open(&mut self, socket: Socket) -> io::Result<()> {
         match self
             .sn_mr(socket)
@@ -353,18 +367,7 @@ impl W5500 {
     }
 
     fn socket_cmd_connect(&mut self, socket: Socket) -> io::Result<()> {
-        if self
-            .sn_sr(socket)
-            .unwrap()
-            .expect("Invalid socket status bits")
-            != SocketStatus::Init
-        {
-            panic!(
-                "You should only send {:?} after initializing {:?} as TCP",
-                SocketCommand::Connect,
-                socket
-            )
-        }
+        self.socket_assert_state_init(socket, SocketCommand::Connect);
         let addr = self.std_sn_dest(socket);
         log::info!("[{:?}] Opening a TCP stream to {}", socket, addr);
 
@@ -378,9 +381,35 @@ impl W5500 {
             }
             Err(e) => {
                 log::warn!("[{:?}] TCP stream to {} failed: {}", socket, addr, e);
-                self.socket_regs[usize::from(socket)][usize::from(reg::SN_IR)] =
-                    SocketInterrupt::DISCON_MASK;
+                self.raise_sn_ir(socket, SocketInterrupt::DISCON_MASK);
                 self.set_sn_sr(socket, SocketStatus::Closed);
+            }
+        }
+
+        Ok(())
+    }
+
+    fn socket_cmd_listen(&mut self, socket: Socket) -> io::Result<()> {
+        self.socket_assert_state_init(socket, SocketCommand::Listen);
+        let port: u16 = self.nolog_sn_port(socket);
+        let addr = std::net::SocketAddrV4::new(std::net::Ipv4Addr::LOCALHOST, port);
+        log::info!("[{:?}] Opening a TCP listener on port {}", socket, addr);
+        match TcpListener::bind(addr) {
+            Ok(listener) => {
+                log::info!("[{:?}] Bound listener on {}", socket, addr);
+                listener.set_nonblocking(true)?;
+                self.sockets[usize::from(socket)] = Some(SocketType::TcpListener(listener));
+                self.set_sn_sr(socket, SocketStatus::Listen);
+            }
+            Err(e) => {
+                log::warn!(
+                    "[{:?}] TCP listener failed to bind to {}: {}",
+                    socket,
+                    addr,
+                    e
+                );
+                self.set_sn_sr(socket, SocketStatus::Closed);
+                self.raise_sn_ir(socket, SocketInterrupt::TIMEOUT_MASK);
             }
         }
 
@@ -443,11 +472,18 @@ impl W5500 {
         match (&mut self.sockets[usize::from(socket)]).as_mut() {
             Some(SocketType::TcpStream(ref mut stream)) => {
                 stream.write_all(&local_tx_buf)?;
+                stream.flush()?;
             }
             Some(SocketType::Udp(ref mut udp)) => {
                 log::info!("[{:?}] sending to {}", socket, dest);
                 let num: usize = udp.send_to(&local_tx_buf, &dest)?;
                 assert_eq!(num, local_tx_buf.len());
+            }
+            Some(SocketType::TcpListener(_)) => {
+                if let Some(ref mut stream) = self.clients[usize::from(socket)] {
+                    stream.write_all(&local_tx_buf)?;
+                    stream.flush()?;
+                }
             }
             None => {
                 panic!("Unable to send data, {:?} is closed", socket)
@@ -462,16 +498,24 @@ impl W5500 {
         Ok(())
     }
 
-    /// Private RSR accessor to prevent logging "internal" IO.
-    fn priv_sn_rx_rsr(&self, socket: Socket) -> u16 {
+    /// sn_port accessor without logging IO.
+    fn nolog_sn_port(&self, socket: Socket) -> u16 {
+        u16::from_be_bytes([
+            self.socket_regs[usize::from(socket)][usize::from(reg::SN_PORT)],
+            self.socket_regs[usize::from(socket)][usize::from(reg::SN_PORT + 1)],
+        ])
+    }
+
+    /// sn_rx_rsr accessor without logging IO.
+    fn nolog_sn_rx_rsr(&self, socket: Socket) -> u16 {
         u16::from_be_bytes([
             self.socket_regs[usize::from(socket)][usize::from(reg::SN_RX_RSR)],
             self.socket_regs[usize::from(socket)][usize::from(reg::SN_RX_RSR + 1)],
         ])
     }
 
-    /// Private RSR accessor to prevent logging "internal" IO.
-    fn priv_sn_rx_wr(&self, socket: Socket) -> u16 {
+    /// sn_rx_wr accessor without logging IO.
+    fn nolog_sn_rx_wr(&self, socket: Socket) -> u16 {
         u16::from_be_bytes([
             self.socket_regs[usize::from(socket)][usize::from(reg::SN_RX_WR)],
             self.socket_regs[usize::from(socket)][usize::from(reg::SN_RX_WR + 1)],
@@ -479,7 +523,7 @@ impl W5500 {
     }
 
     fn set_sn_rx_rsr(&mut self, socket: Socket, rsr: u16) {
-        let current_rsr = self.priv_sn_rx_rsr(socket);
+        let current_rsr = self.nolog_sn_rx_rsr(socket);
         log::debug!(
             "[{:?}] Updating SN_RX_RSR 0x{:04X} -> 0x{:04X}",
             socket,
@@ -492,7 +536,7 @@ impl W5500 {
     }
 
     fn set_sn_rx_wr(&mut self, socket: Socket, wr: u16) {
-        let current_wr = self.priv_sn_rx_wr(socket);
+        let current_wr = self.nolog_sn_rx_wr(socket);
         log::debug!(
             "[{:?}] Updating SN_RX_WR 0x{:04X} -> 0x{:04X}",
             socket,
@@ -504,8 +548,8 @@ impl W5500 {
     }
 
     fn write_rx_buf(&mut self, socket: Socket, data: &[u8]) {
-        let mut rsr = self.priv_sn_rx_rsr(socket);
-        let mut wr = self.priv_sn_rx_wr(socket);
+        let mut rsr = self.nolog_sn_rx_rsr(socket);
+        let mut wr = self.nolog_sn_rx_wr(socket);
 
         let buf = self.buf_from_block(socket.rx_block());
         for byte in data.iter() {
@@ -570,8 +614,8 @@ impl W5500 {
                     _ => return Err(e),
                 },
             },
-            Some(SocketType::TcpStream(ref mut tcp)) => match tcp.read(&mut buf) {
-                Ok(num) => {
+            Some(SocketType::TcpStream(ref mut stream)) => match stream.read(&mut buf) {
+                Ok(num @ 1..=usize::MAX) => {
                     log::info!("[{:?}] recv {} bytes", socket, num);
                     self.write_rx_buf(socket, &buf[..num]);
                     self.raise_sn_ir(socket, SocketInterrupt::RECV_MASK);
@@ -580,8 +624,38 @@ impl W5500 {
                     io::ErrorKind::WouldBlock => {}
                     _ => return Err(e),
                 },
+                _ => {}
             },
-
+            Some(SocketType::TcpListener(ref mut listener)) => {
+                if let Some(ref mut stream) = self.clients[usize::from(socket)] {
+                    match stream.read(&mut buf) {
+                        Ok(num @ 1..=usize::MAX) => {
+                            log::info!("[{:?}] recv {} bytes", socket, num);
+                            self.write_rx_buf(socket, &buf[..num]);
+                            self.raise_sn_ir(socket, SocketInterrupt::RECV_MASK);
+                        }
+                        Err(e) => match e.kind() {
+                            io::ErrorKind::WouldBlock => {}
+                            _ => return Err(e),
+                        },
+                        _ => {}
+                    }
+                } else {
+                    match listener.accept() {
+                        Ok((stream, addr)) => {
+                            log::info!("[{:?}] Accepted a new stream from {}", socket, addr);
+                            self.raise_sn_ir(socket, SocketInterrupt::CON_MASK);
+                            self.set_sn_sr(socket, SocketStatus::Established);
+                            stream.set_nonblocking(true)?;
+                            self.clients[usize::from(socket)] = Some(stream);
+                        }
+                        Err(e) => match e.kind() {
+                            io::ErrorKind::WouldBlock => {}
+                            _ => return Err(e),
+                        },
+                    }
+                }
+            }
             None => {}
         };
         Ok(())
@@ -659,6 +733,7 @@ impl Registers for W5500 {
             SocketCommand::Close => self.socket_cmd_close(socket),
             SocketCommand::Send => self.socket_cmd_send(socket)?,
             SocketCommand::Recv => self.socket_cmd_recv(socket)?,
+            SocketCommand::Listen => self.socket_cmd_listen(socket)?,
             _ => unimplemented!("Socket command {:?} sent to {:?}", cmd, socket),
         }
         Ok(())
@@ -682,6 +757,44 @@ impl Registers for W5500 {
         let mut reg: [u8; 1] = [0];
         self.read(reg::SN_IR, socket.block(), &mut reg)?;
         Ok(SocketInterrupt::from(reg[0]))
+    }
+
+    fn set_sn_ir(&mut self, socket: Socket, ir: SocketInterrupt) -> Result<(), Self::Error> {
+        let sn_ir_reg: &mut u8 =
+            &mut self.socket_regs[usize::from(socket)][usize::from(reg::SN_IR)];
+
+        let log_cleared = |name: &str| {
+            log::trace!(
+                "[W] [SN{}] [0x{:02X}] ({}) clearing {}",
+                u8::from(socket),
+                reg::SN_IR,
+                regmap::socket_reg_name(&reg::SN_IR),
+                name
+            )
+        };
+
+        if ir.con_raised() {
+            log_cleared("CON");
+            *sn_ir_reg &= !SocketInterrupt::CON_MASK;
+        }
+        if ir.discon_raised() {
+            log_cleared("DISCON");
+            *sn_ir_reg &= !SocketInterrupt::DISCON_MASK;
+        }
+        if ir.recv_raised() {
+            log_cleared("RECV");
+            *sn_ir_reg &= !SocketInterrupt::RECV_MASK;
+        }
+        if ir.timeout_raised() {
+            log_cleared("TIMEOUT");
+            *sn_ir_reg &= !SocketInterrupt::TIMEOUT_MASK;
+        }
+        if ir.sendok_raised() {
+            log_cleared("SENDOK");
+            *sn_ir_reg &= !SocketInterrupt::SENDOK_MASK;
+        }
+
+        Ok(())
     }
 
     fn sn_rx_rsr(&mut self, socket: Socket) -> Result<u16, Self::Error> {

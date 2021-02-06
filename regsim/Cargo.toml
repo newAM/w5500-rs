@@ -7,8 +7,8 @@ repository = "https://github.com/newAM/w5500-regsim-rs"
 license = "MIT"
 description = "Register simulation for the Wiznet W5500 internet offload chip."
 readme = "README.md"
-keywords = ["spi", "driver", "embedded-hal-driver", "W5500", "wiznet"]
-categories = ["embedded", "hardware-support", "no-std"]
+keywords = ["W5500", "wiznet"]
+categories = ["embedded", "development-tools"]
 homepage = "https://github.com/newAM/w5500-regsim-rs"
 
 [badges]
