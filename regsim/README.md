@@ -7,7 +7,13 @@
 
 Register simulation for the [Wiznet W5500] internet offload chip.
 
-## Example
+This implements the [`w5500_ll::Registers`] trait using [`std::net`] sockets
+to simulate the W5500 on your local PC.
+
+This is a best-effort implementation to aid in development of application
+code, not all features of the W5500 will be fully simulated.
+
+## Examples
 
 See the [`w5500-hl`] crate for examples.
 
@@ -16,14 +22,6 @@ See the [`w5500-hl`] crate for examples.
 This is in an early alpha state, there are many todos throughout the code.
 Bug reports will not be accepted until this reaches `0.1.0`.
 Pull requests are always welcome.
-
-At the moment this only does really basic UDP and TCP streams.
-TCP listeners have not yet been implemented.
-
-It is not possible to fully simulate the W5500 without spending a silly
-ammount of time on this crate.
-This is a best-effort implementation to aid in development of application
-code.
 
 ### Not-implemented
 
@@ -60,7 +58,6 @@ code.
     * TIMEOUT
     * SENDOK
 * SN_SR (Socket n Status Register)
-    * Listen (TCP listeners not yet implemented)
     * SynSent
     * SynRecv
     * FinWait
@@ -85,5 +82,8 @@ Believe it or not that is not simply a list of all registers.
 * Your PC is connected to a network, and has a valid IPv4 address.
 * You are not using the `read` and `write` methods directly.
 
+
 [Wiznet W5500]: https://www.wiznet.io/product-item/w5500/
+[`std::net`]: https://doc.rust-lang.org/std/net/index.html
 [`w5500-hl`]: https://crates.io/crates/w5500-hl
+[`w5500_ll::Registers`]: https://docs.rs/w5500-ll/latest/w5500_ll/trait.Registers.html

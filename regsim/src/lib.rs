@@ -1,6 +1,12 @@
 //! Register simulation for the [Wiznet W5500] internet offload chip.
 //!
-//! # Example
+//! This implements the [`w5500_ll::Registers`] trait using [`std::net`] sockets
+//! to simulate the W5500 on your local PC.
+//!
+//! This is a best-effort implementation to aid in development of application
+//! code, not all features of the W5500 will be fully simulated.
+//!
+//! # Examples
 //!
 //! See the [`w5500-hl`] crate for examples.
 //!
@@ -9,14 +15,6 @@
 //! This is in an early alpha state, there are many todos throughout the code.
 //! Bug reports will not be accepted until this reaches `0.1.0`.
 //! Pull requests are always welcome.
-//!
-//! At the moment this only does really basic UDP and TCP streams.
-//! TCP listeners have not yet been implemented.
-//!
-//! It is not possible to fully simulate the W5500 without spending a silly
-//! ammount of time on this crate.
-//! This is a best-effort implementation to aid in development of application
-//! code.
 //!
 //! ## Not-implemented
 //!
@@ -53,7 +51,6 @@
 //!     * TIMEOUT
 //!     * SENDOK
 //! * SN_SR (Socket n Status Register)
-//!     * Listen (TCP listeners not yet implemented)
 //!     * SynSent
 //!     * SynRecv
 //!     * FinWait
@@ -78,14 +75,16 @@
 //! * Your PC is connected to a network, and has a valid IPv4 address.
 //! * You are not using the `read` and `write` methods directly.
 //!
+//!
 //! [Wiznet W5500]: https://www.wiznet.io/product-item/w5500/
+//! [`std::net`]: https://doc.rust-lang.org/std/net/index.html
 //! [`w5500-hl`]: https://crates.io/crates/w5500-hl
-#![doc(html_root_url = "https://docs.rs/w5500-regsim/0.1.0-alpha.1")]
+//! [`w5500_ll::Registers`]: https://docs.rs/w5500-ll/latest/w5500_ll/trait.Registers.html
+#![doc(html_root_url = "https://docs.rs/w5500-regsim/0.1.0-alpha.2")]
 
 mod regmap;
 
 use std::{
-    cmp::min,
     convert::TryFrom,
     io::{self, Read, Write},
     net::{SocketAddrV4, TcpListener, TcpStream, UdpSocket},
@@ -288,6 +287,7 @@ impl W5500 {
         ];
     }
 
+    /// Get the local buffer given block select bits.
     fn buf_from_block(&mut self, block: u8) -> &mut [u8] {
         match block_type(block) {
             BlockType::Common => &mut self.common_regs,
@@ -297,20 +297,41 @@ impl W5500 {
         }
     }
 
+    /// Returns the socket register array for a given socket.
+    fn socket_regs(&mut self, socket: Socket) -> &mut [u8] {
+        &mut self.socket_regs[usize::from(socket)]
+    }
+
+    /// Get the `u8` value of a socket register at the given address.
+    fn socket_reg(&mut self, socket: Socket, addr: u16) -> u8 {
+        self.socket_regs(socket)[usize::from(addr)]
+    }
+
+    /// Set the socket status.
+    ///
+    /// This is a read-only register, this method is used for internal state updates.
     fn set_sn_sr(&mut self, socket: Socket, state: SocketStatus) {
-        self.socket_regs[usize::from(socket)][usize::from(reg::SN_SR)] = state.into()
+        self.socket_regs(socket)[usize::from(reg::SN_SR)] = state.into()
     }
 
+    /// Returns the socket destination as a [`std::net`] type, without logging IO.
     fn std_sn_dest(&mut self, socket: Socket) -> std::net::SocketAddrV4 {
-        let ip = self.sn_dipr(socket).unwrap();
-        let port = self.sn_dport(socket).unwrap();
-        std::net::SocketAddrV4::new(std::net::Ipv4Addr::from(ip.octets), port)
+        let ip = std::net::Ipv4Addr::new(
+            self.socket_reg(socket, reg::SN_DIPR),
+            self.socket_reg(socket, reg::SN_DIPR + 1),
+            self.socket_reg(socket, reg::SN_DIPR + 2),
+            self.socket_reg(socket, reg::SN_DIPR + 3),
+        );
+        let port = u16::from_be_bytes([
+            self.socket_reg(socket, reg::SN_DPORT),
+            self.socket_reg(socket, reg::SN_DPORT + 1),
+        ]);
+        std::net::SocketAddrV4::new(ip, port)
     }
 
-    fn socket_assert_state_init(&self, socket: Socket, command: SocketCommand) {
-        let sn_sr =
-            SocketStatus::try_from(self.socket_regs[usize::from(socket)][usize::from(reg::SN_SR)]);
-
+    /// Asserts that the state of the socket is `Init`
+    fn socket_assert_state_init(&mut self, socket: Socket, command: SocketCommand) {
+        let sn_sr = SocketStatus::try_from(self.socket_reg(socket, reg::SN_SR));
         if sn_sr != Ok(SocketStatus::Init) {
             panic!(
                 "You should only send the {:?} command after initializing {:?} as TCP",
@@ -320,6 +341,12 @@ impl W5500 {
     }
 
     fn socket_cmd_open(&mut self, socket: Socket) -> io::Result<()> {
+        // These registers are initialized by the OPEN command
+        self.set_sn_rx_wr(socket, 0);
+        self.nolog_set_sn_rx_rd(socket, 0);
+        self.set_sn_tx_rd(socket, 0);
+        self.nolog_set_sn_tx_wr(socket, 0);
+
         match self
             .sn_mr(socket)
             .unwrap()
@@ -442,13 +469,14 @@ impl W5500 {
         log::debug!("[{:?}] size=0x{:04X}", socket, size);
 
         debug_assert!(
-            size <= self.priv_sn_txbuf_size(socket),
+            size <= self.nolog_sn_txbuf_size(socket),
             "Send data size exceeds buffer size"
         );
 
         let mut local_tx_buf: Vec<u8> = Vec::with_capacity(size);
         let buf = &self.tx_buf[usize::from(socket)];
 
+        // convert the circular buffer to somthing more usable
         if head >= tail {
             for buffer_adr in tail..head {
                 let buf_idx = buffer_adr % buf.len();
@@ -493,48 +521,69 @@ impl W5500 {
         Ok(())
     }
 
-    fn socket_cmd_recv(&mut self, socket: Socket) -> io::Result<()> {
-        log::error!("[{:?}] TODO RECV", socket);
+    /// The RECV command is used to indicate that the microcontroller has read
+    /// an ammount of data from the W5500, as indicated by the `sn_rx_rd`
+    /// pointer.
+    fn socket_cmd_recv(&mut self, _socket: Socket) -> io::Result<()> {
+        // RX_RSR is automatically calculated, nothing to do here.
         Ok(())
     }
 
-    /// sn_port accessor without logging IO.
-    fn nolog_sn_port(&self, socket: Socket) -> u16 {
+    /// `sn_port` accessor without logging IO.
+    fn nolog_sn_port(&mut self, socket: Socket) -> u16 {
         u16::from_be_bytes([
-            self.socket_regs[usize::from(socket)][usize::from(reg::SN_PORT)],
-            self.socket_regs[usize::from(socket)][usize::from(reg::SN_PORT + 1)],
+            self.socket_reg(socket, reg::SN_PORT),
+            self.socket_reg(socket, reg::SN_PORT + 1),
         ])
     }
 
-    /// sn_rx_rsr accessor without logging IO.
-    fn nolog_sn_rx_rsr(&self, socket: Socket) -> u16 {
+    /// `sn_rx_rsr` accessor without logging IO.
+    fn nolog_sn_rx_rsr(&mut self, socket: Socket) -> u16 {
         u16::from_be_bytes([
-            self.socket_regs[usize::from(socket)][usize::from(reg::SN_RX_RSR)],
-            self.socket_regs[usize::from(socket)][usize::from(reg::SN_RX_RSR + 1)],
+            self.socket_reg(socket, reg::SN_RX_RSR),
+            self.socket_reg(socket, reg::SN_RX_RSR + 1),
         ])
     }
 
-    /// sn_rx_wr accessor without logging IO.
-    fn nolog_sn_rx_wr(&self, socket: Socket) -> u16 {
+    /// `sn_rx_wr` accessor without logging IO.
+    fn nolog_sn_rx_wr(&mut self, socket: Socket) -> u16 {
         u16::from_be_bytes([
-            self.socket_regs[usize::from(socket)][usize::from(reg::SN_RX_WR)],
-            self.socket_regs[usize::from(socket)][usize::from(reg::SN_RX_WR + 1)],
+            self.socket_reg(socket, reg::SN_RX_WR),
+            self.socket_reg(socket, reg::SN_RX_WR + 1),
         ])
     }
 
-    fn set_sn_rx_rsr(&mut self, socket: Socket, rsr: u16) {
-        let current_rsr = self.nolog_sn_rx_rsr(socket);
-        log::debug!(
-            "[{:?}] Updating SN_RX_RSR 0x{:04X} -> 0x{:04X}",
-            socket,
-            current_rsr,
-            rsr
-        );
-        self.socket_regs[usize::from(socket)][usize::from(reg::SN_RX_RSR)] = rsr.to_be_bytes()[0];
-        self.socket_regs[usize::from(socket)][usize::from(reg::SN_RX_RSR + 1)] =
-            rsr.to_be_bytes()[1];
+    /// `sn_rx_rd` accessor without logging IO.
+    fn nolog_sn_rx_rd(&mut self, socket: Socket) -> u16 {
+        u16::from_be_bytes([
+            self.socket_reg(socket, reg::SN_RX_RD),
+            self.socket_reg(socket, reg::SN_RX_RD + 1),
+        ])
     }
 
+    /// `sn_tx_rd` accessor without logging IO.
+    fn nolog_sn_tx_rd(&mut self, socket: Socket) -> u16 {
+        u16::from_be_bytes([
+            self.socket_reg(socket, reg::SN_TX_RD),
+            self.socket_reg(socket, reg::SN_TX_RD + 1),
+        ])
+    }
+
+    /// `sn_tx_rd` setter without logging IO.
+    fn nolog_set_sn_rx_rd(&mut self, socket: Socket, ptr: u16) {
+        self.socket_regs(socket)[usize::from(reg::SN_RX_RD)] = ptr.to_be_bytes()[0];
+        self.socket_regs(socket)[usize::from(reg::SN_RX_RD + 1)] = ptr.to_be_bytes()[1];
+    }
+
+    /// `sn_tx_rd` setter without logging IO.
+    fn nolog_set_sn_tx_wr(&mut self, socket: Socket, ptr: u16) {
+        self.socket_regs(socket)[usize::from(reg::SN_TX_WR)] = ptr.to_be_bytes()[0];
+        self.socket_regs(socket)[usize::from(reg::SN_TX_WR + 1)] = ptr.to_be_bytes()[1];
+    }
+
+    /// Set the socket RX write pointer register.
+    ///
+    /// This is a read-only register, this method is used for internal state updates.
     fn set_sn_rx_wr(&mut self, socket: Socket, wr: u16) {
         let current_wr = self.nolog_sn_rx_wr(socket);
         log::debug!(
@@ -543,10 +592,26 @@ impl W5500 {
             current_wr,
             wr
         );
-        self.socket_regs[usize::from(socket)][usize::from(reg::SN_RX_WR)] = wr.to_be_bytes()[0];
-        self.socket_regs[usize::from(socket)][usize::from(reg::SN_RX_WR + 1)] = wr.to_be_bytes()[1];
+        self.socket_regs(socket)[usize::from(reg::SN_RX_WR)] = wr.to_be_bytes()[0];
+        self.socket_regs(socket)[usize::from(reg::SN_RX_WR + 1)] = wr.to_be_bytes()[1];
     }
 
+    /// Set the socket TX read pointer register.
+    ///
+    /// This is a read-only register, this method is used for internal state updates.
+    fn set_sn_tx_rd(&mut self, socket: Socket, rd: u16) {
+        let current_rd = self.nolog_sn_tx_rd(socket);
+        log::debug!(
+            "[{:?}] Updating SN_TX_RD 0x{:04X} -> 0x{:04X}",
+            socket,
+            current_rd,
+            rd
+        );
+        self.socket_regs(socket)[usize::from(reg::SN_TX_RD)] = rd.to_be_bytes()[0];
+        self.socket_regs(socket)[usize::from(reg::SN_TX_RD + 1)] = rd.to_be_bytes()[1];
+    }
+
+    /// Write to the circular RX buffer given a non-circular buffer.
     fn write_rx_buf(&mut self, socket: Socket, data: &[u8]) {
         let mut rsr = self.nolog_sn_rx_rsr(socket);
         let mut wr = self.nolog_sn_rx_wr(socket);
@@ -559,17 +624,19 @@ impl W5500 {
             rsr = rsr.saturating_add(1);
         }
 
-        rsr = min(rsr, u16::try_from(buf.len()).unwrap_or(u16::MAX));
+        if rsr > u16::try_from(buf.len()).unwrap_or(u16::MAX) {
+            log::warn!("[{:?}] RX buffer overflow", socket);
+        }
 
-        self.set_sn_rx_rsr(socket, rsr);
+        // rsr does not need to be set, it is calculated from wr and rd
         self.set_sn_rx_wr(socket, wr);
     }
 
-    fn priv_sn_rxbuf_size(&mut self, socket: Socket) -> usize {
+    fn nolog_sn_rxbuf_size(&mut self, socket: Socket) -> usize {
         usize::from(self.socket_regs[usize::from(socket)][usize::from(reg::SN_RXBUF_SIZE)]) * 1024
     }
 
-    fn priv_sn_txbuf_size(&mut self, socket: Socket) -> usize {
+    fn nolog_sn_txbuf_size(&mut self, socket: Socket) -> usize {
         usize::from(self.socket_regs[usize::from(socket)][usize::from(reg::SN_TXBUF_SIZE)]) * 1024
     }
 
@@ -578,7 +645,7 @@ impl W5500 {
     }
 
     fn handle_socket(&mut self, socket: Socket) -> io::Result<()> {
-        let bufsize = self.priv_sn_rxbuf_size(socket);
+        let bufsize = self.nolog_sn_rxbuf_size(socket);
         let mut buf = vec![0; bufsize];
 
         match self.sockets[usize::from(socket)] {
@@ -740,15 +807,16 @@ impl Registers for W5500 {
     }
 
     fn set_sn_tx_wr(&mut self, socket: Socket, ptr: u16) -> Result<(), Self::Error> {
-        self.write(reg::SN_TX_WR, socket.block(), &ptr.to_be_bytes())?;
-        // TODO: this should actually occur only on send.
-        // decrement free size
+        // sn_tx_fsr is automatically calculated as the difference between
+        // sn_tx_wr and sn_tx_rd
         let mut sr = self.socket_regs[usize::from(socket)];
         let mut fsr = self.sn_tx_fsr(socket).unwrap();
         fsr = fsr.saturating_sub(ptr);
         let fsr_bytes = u16::to_be_bytes(fsr);
         sr[usize::from(reg::SN_TX_FSR)] = fsr_bytes[0];
         sr[usize::from(reg::SN_TX_FSR) + 1] = fsr_bytes[1];
+
+        self.write(reg::SN_TX_WR, socket.block(), &ptr.to_be_bytes())?;
         Ok(())
     }
 
@@ -799,6 +867,24 @@ impl Registers for W5500 {
 
     fn sn_rx_rsr(&mut self, socket: Socket) -> Result<u16, Self::Error> {
         self.handle_socket(socket)?;
+
+        // sn_rx_rsr is automatically calculated as the difference between sn_rx_rd and sn_rx_wr
+        // this does the updating before reading
+        let rsr: u16 = {
+            let rx_rd: u16 = self.nolog_sn_rx_rd(socket);
+            let rx_wr: u16 = self.nolog_sn_rx_wr(socket);
+
+            if rx_wr >= rx_rd {
+                rx_wr - rx_rd
+            } else {
+                u16::try_from(self.nolog_sn_rxbuf_size(socket)).unwrap() - rx_wr + rx_rd
+            }
+        };
+
+        self.socket_regs(socket)[usize::from(reg::SN_RX_RSR)] = rsr.to_be_bytes()[0];
+        self.socket_regs(socket)[usize::from(reg::SN_RX_RSR + 1)] = rsr.to_be_bytes()[1];
+
+        // a `read` call is still used so that this gets logged
         let mut reg: [u8; 2] = [0; 2];
         self.read(reg::SN_RX_RSR, socket.block(), &mut reg)?;
         Ok(u16::from_be_bytes(reg))

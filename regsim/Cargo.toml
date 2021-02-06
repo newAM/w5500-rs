@@ -1,6 +1,6 @@
 [package]
 name = "w5500-regsim"
-version = "0.1.0-alpha.1"
+version = "0.1.0-alpha.2"
 authors = ["Alex M. <alexmgit@protonmail.com>"]
 edition = "2018"
 repository = "https://github.com/newAM/w5500-regsim-rs"
@@ -15,9 +15,13 @@ homepage = "https://github.com/newAM/w5500-regsim-rs"
 maintenance = { status = "experimental" }
 
 [dependencies]
-lazy_static = "1"
-w5500-ll = "0.4"
-log = "0.4"
+lazy_static = "^1"
+log = "~0.4"
+
+[dependencies.w5500-ll]
+version = "~0.5.1"
+default-features = false
+features = ["std"]
 
 [dev-dependencies]
-version-sync = "0.9.1"
+version-sync = "~0.9.1"
