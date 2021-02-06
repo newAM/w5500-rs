@@ -1,7 +1,7 @@
 //! Platform agnostic rust driver for the [Wiznet W5500] internet offload chip.
 //!
-//! This crate contains higher level (hl) socket operations, built ontop of my
-//! other crate, [`w5500-ll`], which contains register accessors, and networking
+//! This crate contains higher level (hl) socket operations, built on-top of my
+//! other crate, [w5500-ll], which contains register accessors, and networking
 //! data types for the W5500.
 //!
 //! # Warning
@@ -13,10 +13,10 @@
 //!
 //! There are no separate socket structures.
 //! The [`Tcp`] and [`Udp`] traits provided in this crate simply extend the
-//! [`Registers`] trait provided in [`w5500-ll`].
+//! [`Registers`] trait provided in [w5500-ll].
 //! This makes for a less ergonomic API, but a much more portable API because
 //! there are no mutexes or runtime checks to enable socket structures to share
-//! the underlying W5500 device which has ownership over the sockets.
+//! ownership of the underlying W5500 device.
 //!
 //! You will likely want to wrap up the underlying structure that implements
 //! the [`Registers`], [`Tcp`], and [`Udp`] traits to provide separate socket
@@ -82,13 +82,22 @@
 //! # Ok::<(), std::io::Error>(())
 //! ```
 //!
-//! See the [examples directory] for more comprehensive examples.
+//! See the [examples directory] in the repository for more comprehensive examples.
+//!
+//! # Related Crates
+//!
+//! * [w5500-ll] - Low level W5500 register accessors.
+//! * [w5500-regsim] - Register simulation using [`std::net`].
 //!
 //! [`Registers`]: https://docs.rs/w5500-ll/latest/w5500_ll/trait.Registers.html
-//! [`w5500-ll`]: https://crates.io/crates/w5500-ll
-//! [Wiznet W5500]: https://www.wiznet.io/product-item/w5500/
+//! [`std::net`]: https://doc.rust-lang.org/std/net/index.html
 //! [examples directory]: https://github.com/newAM/w5500-hl-rs/tree/main/examples
-#![doc(html_root_url = "https://docs.rs/w5500-hl/0.1.0-alpha.1")]
+//! [w5500-ll]: https://github.com/newAM/w5500-ll-rs
+//! [w5500-regsim]: https://github.com/newAM/w5500-regsim-rs
+//! [Wiznet W5500]: https://www.wiznet.io/product-item/w5500/
+//! [`Tcp`]: https://docs.rs/w5500-hl/0.1.0-alpha.2/w5500_hl/trait.Tcp.html
+//! [`Udp`]: https://docs.rs/w5500-hl/0.1.0-alpha.2/w5500_hl/trait.Udp.html
+#![doc(html_root_url = "https://docs.rs/w5500-hl/0.1.0-alpha.2")]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![no_std]
 
@@ -177,9 +186,8 @@ pub trait Udp<E>: Registers<Error = E> {
     /// # Comparison to [`std::net::UdpSocket::bind`]
     ///
     /// This method accepts a port instead of a [`net::SocketAddrV4`], this is
-    /// because the IP address is global for the device, set by
-    /// [`w5500_ll::Registers::set_sipr`], and cannot be set on a per-socket
-    /// basis.
+    /// because the IP address is global for the device, set by the
+    /// [source IP register], and cannot be set on a per-socket basis.
     ///
     /// Additionally you can only provide one port, instead of iterable
     /// addresses to bind.
@@ -202,6 +210,7 @@ pub trait Udp<E>: Registers<Error = E> {
     /// ```
     ///
     /// [`std::net::UdpSocket::bind`]: https://doc.rust-lang.org/std/net/struct.UdpSocket.html#method.bind
+    /// [source IP register]: w5500_ll::Registers::sipr
     fn udp_bind(&mut self, socket: Socket, port: u16) -> Result<(), E> {
         debug_assert!(
             port_is_unique(self, socket, port)?,
@@ -502,6 +511,8 @@ pub trait Udp<E>: Registers<Error = E> {
     /// [`set_sn_dest`]: w5500_ll::Registers::set_sn_dest
     /// [`send_to`]: Udp::udp_send_to
     fn udp_send(&mut self, socket: Socket, buf: &[u8]) -> Result<usize, E> {
+        debug_assert_eq!(self.sn_sr(socket)?, Ok(SocketStatus::Udp));
+
         let data_len: u16 = u16::try_from(buf.len()).unwrap_or(u16::MAX);
         let free_size: u16 = self.sn_tx_fsr(socket)?;
         let tx_bytes: u16 = min(data_len, free_size);
@@ -830,7 +841,7 @@ pub trait Tcp<E>: Registers<Error = E> {
 impl<T, E> Tcp<E> for T where T: Registers<Error = E> {}
 
 /// Methods common to all W5500 socket types.
-pub trait CommonSocket<E>: Registers<Error = E> {
+pub trait Common<E>: Registers<Error = E> {
     /// Returns the socket address.
     ///
     /// # Example
@@ -838,7 +849,7 @@ pub trait CommonSocket<E>: Registers<Error = E> {
     /// ```no_run
     /// # let mut w5500 = w5500_regsim::W5500::new();
     /// use w5500_hl::ll::{Registers, Socket::Socket0};
-    /// use w5500_hl::{CommonSocket, Udp};
+    /// use w5500_hl::{Common, Udp};
     ///
     /// w5500.udp_bind(Socket0, 8080)?;
     /// let local_addr = w5500.local_addr(Socket0)?;
@@ -846,7 +857,7 @@ pub trait CommonSocket<E>: Registers<Error = E> {
     /// ```
     fn local_addr(&mut self, socket: Socket) -> Result<SocketAddrV4, E> {
         let ip: Ipv4Addr = self.sipr()?;
-        let port: u16 = self.sn_dport(socket)?;
+        let port: u16 = self.sn_port(socket)?;
         Ok(SocketAddrV4::new(ip, port))
     }
 
@@ -860,7 +871,7 @@ pub trait CommonSocket<E>: Registers<Error = E> {
     /// ```no_run
     /// # let mut w5500 = w5500_regsim::W5500::new();
     /// use w5500_hl::ll::{Registers, Socket::Socket0};
-    /// use w5500_hl::CommonSocket;
+    /// use w5500_hl::Common;
     ///
     /// w5500.close(Socket0)?;
     /// # Ok::<(), std::io::Error>(())
@@ -871,7 +882,7 @@ pub trait CommonSocket<E>: Registers<Error = E> {
 }
 
 /// Implement the common socket trait for any structure that implements [`w5500_ll::Registers`].
-impl<T, E> CommonSocket<E> for T where T: Registers<Error = E> {}
+impl<T, E> Common<E> for T where T: Registers<Error = E> {}
 
 #[cfg(test)]
 mod tests {
@@ -879,12 +890,12 @@ mod tests {
 
     use super::*;
 
-    struct PortIsUnique {
+    struct MockRegisters {
         pub socket_ports: [u16; SOCKETS.len()],
         pub socket_status: [SocketStatus; SOCKETS.len()],
     }
 
-    impl Registers for PortIsUnique {
+    impl Registers for MockRegisters {
         type Error = Infallible;
 
         fn read(&mut self, _address: u16, _block: u8, _data: &mut [u8]) -> Result<(), Self::Error> {
@@ -906,23 +917,23 @@ mod tests {
 
     #[test]
     fn test_port_is_unique() {
-        let mut w5500 = PortIsUnique {
+        let mut mock = MockRegisters {
             socket_ports: [0; SOCKETS.len()],
             socket_status: [SocketStatus::Closed; SOCKETS.len()],
         };
         // basics
-        assert!(port_is_unique(&mut w5500, Socket::Socket0, 0).unwrap());
-        assert!(port_is_unique(&mut w5500, Socket::Socket0, 1).unwrap());
-        assert!(port_is_unique(&mut w5500, Socket::Socket0, u16::MAX).unwrap());
+        assert!(port_is_unique(&mut mock, Socket::Socket0, 0).unwrap());
+        assert!(port_is_unique(&mut mock, Socket::Socket0, 1).unwrap());
+        assert!(port_is_unique(&mut mock, Socket::Socket0, u16::MAX).unwrap());
 
         // do not check our own socket
-        w5500.socket_status[0] = SocketStatus::Init;
-        assert!(port_is_unique(&mut w5500, Socket::Socket0, 0).unwrap());
+        mock.socket_status[0] = SocketStatus::Init;
+        assert!(port_is_unique(&mut mock, Socket::Socket0, 0).unwrap());
 
         // other socket on other port
-        assert!(port_is_unique(&mut w5500, Socket::Socket0, 1).unwrap());
+        assert!(port_is_unique(&mut mock, Socket::Socket0, 1).unwrap());
 
         // other socket on same port
-        assert!(!port_is_unique(&mut w5500, Socket::Socket1, 0).unwrap());
+        assert!(!port_is_unique(&mut mock, Socket::Socket1, 0).unwrap());
     }
 }
