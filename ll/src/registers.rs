@@ -23,8 +23,10 @@ macro_rules! impl_u8_for {
 ///
 /// Used for software reset, and controlling modes of operation.
 ///
-/// This is used by the [`crate::Registers::mr`] and
-/// [`crate::Registers::set_mr`] methods.
+/// This is used by the [`Registers::mr`] and [`Registers::set_mr`] methods.
+///
+/// [`Registers::mr`]: crate::Registers::mr
+/// [`Registers::set_mr`]: crate::Registers::set_mr
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 pub struct Mode(u8);
 
@@ -54,7 +56,7 @@ impl Mode {
     /// Bit mask for the `FARP` field.
     pub const FARP_MASK: u8 = 1 << Self::FARP_OFFSET;
 
-    /// Set the software reset bit to '1'.
+    /// Set the software reset bit to `1`.
     ///
     /// When reset all internal registers will be initialized.
     pub fn rst(&mut self) {
@@ -182,7 +184,7 @@ impl Default for Mode {
     }
 }
 
-/// Interrupt and interrupt mask register.
+/// Interrupt and interrupt mask register (IR and IMR).
 ///
 /// When used for interrupt masking:
 /// * `false` = Interrupt is disabled.
@@ -193,10 +195,15 @@ impl Default for Mode {
 /// * `true` = Interrupt is raised.
 ///
 /// This is used by these methods:
-/// * [`crate::Registers::ir`]
-/// * [`crate::Registers::set_ir`]
-/// * [`crate::Registers::imr`]
-/// * [`crate::Registers::set_imr`]
+/// * [`Registers::ir`]
+/// * [`Registers::set_ir`]
+/// * [`Registers::imr`]
+/// * [`Registers::set_imr`]
+///
+/// [`Registers::ir`]: crate::Registers::ir
+/// [`Registers::set_ir`]: crate::Registers::set_ir
+/// [`Registers::imr`]: crate::Registers::imr
+/// [`Registers::set_imr`]: crate::Registers::set_imr
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct Interrupt(u8);
 
@@ -254,11 +261,11 @@ impl Interrupt {
     /// Get the destination unreachable interrupt.
     ///
     /// This interrupt is set when receiving the ICMP
-    /// (Destination port unreachable) packet.
+    /// (destination port unreachable) packet.
     ///
     /// When this interrupt is set destination information such as the IP
-    /// address and port number may be checked with the corresponding UIPR &
-    /// UPORTR.
+    /// address and port number may be checked with the corresponding [UIPR] and
+    /// [UPORTR] registers.
     ///
     /// # Example
     ///
@@ -270,6 +277,9 @@ impl Interrupt {
     /// ir.clear_unreach();
     /// assert!(!ir.unreach());
     /// ```
+    ///
+    /// [UIPR]: crate::Registers::uipr
+    /// [UPORTR]: crate::Registers::uportr
     pub const fn unreach(&self) -> bool {
         self.0 & Self::UNREACH_MASK != 0
     }
@@ -356,8 +366,11 @@ impl Default for Interrupt {
 /// * PHY operation modes.
 /// * PHY status.
 ///
-/// This is used by the [`crate::Registers::phycfgr`] and
-/// [`crate::Registers::set_phycfgr`] methods.
+/// This is used by the [`Registers::phycfgr`] and
+/// [`Registers::set_phycfgr`] methods.
+///
+/// [`Registers::phycfgr`]: crate::Registers::phycfgr
+/// [`Registers::set_phycfgr`]: crate::Registers::set_phycfgr
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct PhyCfg(u8);
 impl_u8_for!(PhyCfg);
@@ -392,7 +405,7 @@ impl PhyCfg {
     /// Bit mask for the `LNK` field.
     pub const LNK_MASK: u8 = 1 << Self::LNK_OFFSET;
 
-    /// Set the PHY reset bit to '0', resetting the PHY.
+    /// Set the PHY reset bit to `0`, resetting the PHY.
     pub fn rst(&mut self) {
         self.0 &= !Self::RST_MASK;
     }
@@ -406,6 +419,19 @@ impl PhyCfg {
     }
 
     /// Enable hardware configuration of the PHY operation mode.
+    ///
+    /// This uses the PMODE pins to select the PHY operation mode.
+    ///
+    /// | PMODE\[2\] | PMODE\[1\] | PMODE\[0\] | Description                                  |
+    /// |------------|------------|------------|----------------------------------------------|
+    /// | 0          | 0          | 0          | 10BT Half-duplex, Auto-negotiation disabled  |
+    /// | 0          | 0          | 1          | 10BT Full-duplex, Auto-negotiation disabled  |
+    /// | 0          | 1          | 0          | 100BT Half-duplex, Auto-negotiation disabled |
+    /// | 0          | 1          | 1          | 100BT Full-duplex, Auto-negotiation disabled |
+    /// | 1          | 0          | 0          | 100BT Half-duplex, Auto-negotiation enabled  |
+    /// | 1          | 0          | 1          | Not used                                     |
+    /// | 1          | 1          | 0          | Not used                                     |
+    /// | 1          | 1          | 1          | All capable, Auto-negotiation enabled        |
     ///
     /// # Example
     ///
@@ -440,6 +466,9 @@ impl PhyCfg {
     }
 
     /// Get the operation mode.
+    ///
+    /// This returns an `Err(u8)` with the opmdc bits if the opmdc bits do not
+    /// match a valid operation mode.
     ///
     /// # Example
     ///
@@ -546,8 +575,11 @@ Operation mode: {:?}
 
 /// Socket Mode Register (Sn_MR).
 ///
-/// This is used by the [`crate::Registers::sn_mr`] and
-/// [`crate::Registers::set_sn_mr`] methods.
+/// This is used by the [`Registers::sn_mr`] and
+/// [`Registers::set_sn_mr`] methods.
+///
+/// [`Registers::set_sn_mr`]: crate::Registers::set_sn_mr
+/// [`Registers::sn_mr`]: crate::Registers::sn_mr
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct SocketMode(u8);
 impl_u8_for!(SocketMode);
@@ -600,7 +632,7 @@ impl SocketMode {
 
     /// Get the protocol.
     ///
-    /// This returns a `Err(u8)` with the protocol bits if the protocol bits
+    /// This returns an `Err(u8)` with the protocol bits if the protocol bits
     /// do not match a valid protocol.
     ///
     /// # Example
@@ -634,7 +666,7 @@ impl SocketMode {
     ///
     /// This applies only for a socket with the UDP protocol.
     ///
-    /// To use multicasting [`crate::Registers::sn_dipr`] and [`crate::Registers::sn_dport`]
+    /// To use multicasting [`Registers::sn_dipr`] and [`Registers::sn_dport`]
     /// should be configured with the multicast group IP and port number
     /// before the socket is opened.
     ///
@@ -648,20 +680,19 @@ impl SocketMode {
     /// sn_mr.disable_multi();
     /// assert!(!sn_mr.multi_enabled());
     /// ```
+    ///
+    /// [`Registers::sn_dipr`]: crate::Registers::sn_dipr
+    /// [`Registers::sn_dport`]: crate::Registers::sn_dport
     pub const fn multi_enabled(&self) -> bool {
         self.0 & Self::MULTI_MASK != 0
     }
 
     /// Enable multicasting.
-    ///
-    /// See [`SocketMode::multi_enabled`] for more information.
     pub fn enable_multi(&mut self) {
         self.0 |= Self::MULTI_MASK
     }
 
     /// Disable multicasting.
-    ///
-    /// See [`SocketMode::multi_enabled`] for more information.
     pub fn disable_multi(&mut self) {
         self.0 &= !Self::MULTI_MASK
     }
@@ -692,15 +723,11 @@ impl SocketMode {
     }
 
     /// Enable MAC filter.
-    ///
-    /// See [`SocketMode::mfen_enabled`] for more information.
     pub fn enable_mfen(&mut self) {
         self.0 |= Self::MFEN_MASK
     }
 
     /// Disable MAC filter.
-    ///
-    /// See [`SocketMode::mfen_enabled`] for more information.
     pub fn disable_mfen(&mut self) {
         self.0 &= !Self::MFEN_MASK
     }
@@ -724,15 +751,11 @@ impl SocketMode {
     }
 
     /// Enable broadcast blocking.
-    ///
-    /// See [`SocketMode::bcastb_enabled`] for more information.
     pub fn enable_bcastb(&mut self) {
         self.0 |= Self::BCASTB_MASK
     }
 
     /// Disable broadcast blocking.
-    ///
-    /// See [`SocketMode::bcastb_enabled`] for more information.
     pub fn disable_bcastb(&mut self) {
         self.0 &= !Self::BCASTB_MASK
     }
@@ -744,7 +767,7 @@ impl SocketMode {
     /// When enabled the ACK packet is sent without delay as soon as a data
     /// packet is received from a peer.
     /// When disabled the ACK packet is sent after waiting for the time
-    /// configured by [`crate::Registers::rtr`].
+    /// configured by [`rtr`].
     ///
     /// # Example
     ///
@@ -756,20 +779,18 @@ impl SocketMode {
     /// sn_mr.disable_nd();
     /// assert!(!sn_mr.nd_enabled());
     /// ```
+    ///
+    /// [`rtr`]: crate::Registers::rtr
     pub const fn nd_enabled(&self) -> bool {
         self.0 & Self::ND_MASK != 0
     }
 
     /// Disable no delayed ACK.
-    ///
-    /// See [`SocketMode::nd_enabled`] for more information.
     pub fn disable_nd(&mut self) {
         self.0 &= !Self::ND_MASK
     }
 
     /// Enable no delayed ACK.
-    ///
-    /// See [`SocketMode::nd_enabled`] for more information.
     pub fn enable_nd(&mut self) {
         self.0 |= Self::ND_MASK
     }
@@ -798,22 +819,18 @@ impl SocketMode {
     }
 
     /// Set IGMP version 1.
-    ///
-    /// See [`SocketMode::mc`] for more information.
     pub fn set_igmp_v1(&mut self) {
         self.0 |= Self::MC_MASK
     }
 
     /// Set IGMP version 2.
-    ///
-    /// See [`SocketMode::mc`] for more information.
     pub fn set_igmp_v2(&mut self) {
         self.0 &= !Self::MC_MASK
     }
 
     /// Multicast blocking.
     ///
-    /// This applies only for a socket with the MACRAW protocol.
+    /// This applies only for a socket with the [MACRAW] protocol.
     ///
     /// # Example
     ///
@@ -825,20 +842,18 @@ impl SocketMode {
     /// sn_mr.disable_mmb();
     /// assert!(!sn_mr.mmb_enabled());
     /// ```
+    ///
+    /// [MACRAW]: crate::Protocol::Macraw
     pub const fn mmb_enabled(&self) -> bool {
         self.0 & Self::MMB_MASK != 0
     }
 
     /// Enable multicast blocking.
-    ///
-    /// See [`SocketMode::mmb_enabled`] for more information.
     pub fn enable_mmb(&mut self) {
         self.0 |= Self::MMB_MASK
     }
 
     /// Disable multicast blocking.
-    ///
-    /// See [`SocketMode::mmb_enabled`] for more information.
     pub fn disable_mmb(&mut self) {
         self.0 &= !Self::MMB_MASK
     }
@@ -862,22 +877,18 @@ impl SocketMode {
     }
 
     /// Enable unicast blocking.
-    ///
-    /// See [`SocketMode::ucastb_enabled`] for more information.
     pub fn enable_ucastb(&mut self) {
         self.0 |= Self::UCASTB_MASK
     }
 
     /// Disable unicast blocking.
-    ///
-    /// See [`SocketMode::ucastb_enabled`] for more information.
     pub fn disable_ucastb(&mut self) {
         self.0 &= !Self::UCASTB_MASK
     }
 
     /// IPV6 packet blocking.
     ///
-    /// This applies only for a socket with the MACRAW protocol.
+    /// This applies only for a socket with the [MACRAW] protocol.
     ///
     /// # Example
     ///
@@ -889,32 +900,33 @@ impl SocketMode {
     /// sn_mr.disable_mip6b();
     /// assert!(!sn_mr.mip6b_enabled());
     /// ```
+    ///
+    /// [MACRAW]: crate::Protocol::Macraw
     pub const fn mip6b_enabled(&self) -> bool {
         self.0 & Self::MIP6B_MASK != 0
     }
 
-    /// Enable unicast blocking.
-    ///
-    /// See [`SocketMode::mip6b_enabled`] for more information.
+    /// Enable IPV6 packet blocking.
     pub fn enable_mip6b(&mut self) {
         self.0 |= Self::MIP6B_MASK
     }
 
-    /// Disable unicast blocking.
-    ///
-    /// See [`SocketMode::mip6b_enabled`] for more information.
+    /// Disable IPV6 packet blocking.
     pub fn disable_mip6b(&mut self) {
         self.0 &= !Self::MIP6B_MASK
     }
 }
 
-/// Socket Interrupt Register.
+/// Socket Interrupt Register (Sn_IR).
 ///
 /// Indicated the socket status, such as connection, termination,
 /// receiving data, and timeout.
 ///
-/// This is used by the [`crate::Registers::sn_ir`] and
-/// [`crate::Registers::set_sn_ir`] methods.
+/// This is used by the [`Registers::sn_ir`] and
+/// [`Registers::set_sn_ir`] methods.
+///
+/// [`Registers::sn_ir`]: crate::Registers::sn_ir
+/// [`Registers::set_sn_ir`]: crate::Registers::set_sn_ir
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct SocketInterrupt(u8);
 impl_u8_for!(SocketInterrupt);
@@ -1037,7 +1049,7 @@ impl SocketInterrupt {
 
     /// Get the value of the `SENDOK` interrupt.
     ///
-    /// This is issued when SEND command is completed.
+    /// This is issued when [SEND] command is completed.
     ///
     /// # Example
     ///
@@ -1047,6 +1059,8 @@ impl SocketInterrupt {
     /// # sir.clear_sendok();
     /// # assert!(sir.sendok_raised());
     /// ```
+    ///
+    /// [SEND]: crate::SocketCommand::Send
     pub fn sendok_raised(&self) -> bool {
         self.0 & Self::SENDOK_MASK != 0
     }
@@ -1057,10 +1071,16 @@ impl SocketInterrupt {
     }
 }
 
-/// Socket Interrupt Mask Register.
+/// Socket Interrupt Mask Register (Sn_IMR).
 ///
-/// This is used by the [`crate::Registers::sn_imr`] and
-/// [`crate::Registers::set_sn_imr`] methods.
+/// This is used by the [`Registers::sn_imr`] and
+/// [`Registers::set_sn_imr`] methods.
+///
+/// See the [`SocketInterrupt`] structure for more information about the
+/// individual interrupts.
+///
+/// [`Registers::sn_imr`]: crate::Registers::sn_imr
+/// [`Registers::set_sn_imr`]: crate::Registers::set_sn_imr
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct SocketInterruptMask(u8);
 impl_u8_for!(SocketInterruptMask);

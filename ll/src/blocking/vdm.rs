@@ -1,5 +1,5 @@
-//! Variable data length implementation of the [`crate::Registers`] trait using
-//! the [`embedded-hal`] blocking SPI traits.
+//! Variable data length implementation of the [`Registers`] trait using the
+//! [`embedded-hal`] blocking SPI traits.
 //!
 //! This uses the W5500 variable data length mode (VDM).
 //! In VDM mode the SPI frame data length is determined by the chip select pin.
@@ -7,6 +7,7 @@
 //! select pin.
 //!
 //! [`embedded-hal`]: https://github.com/rust-embedded/embedded-hal
+//! [`Registers`]: crate::Registers
 
 use crate::spi::{vdm_header, AccessMode};
 use embedded_hal::digital::v2::OutputPin;

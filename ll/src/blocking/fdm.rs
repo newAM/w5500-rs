@@ -1,13 +1,15 @@
-//! Fixed data length implementation of the [`crate::Registers`] trait using
-//! the [`embedded-hal`] blocking SPI traits.
+//! Fixed data length implementation of the [`Registers`] trait using the
+//! [`embedded-hal`] blocking SPI traits.
 //!
 //! This uses the W5500 fixed data length mode (FDM).
 //! In FSM mode the SPI chip select pin is always tied low, and it is not
 //! possible to share the bus with other devices.
 //!
-//! If possible, you should use the VDM implementation instead.
+//! If possible, you should use the [VDM] implementation instead.
 //!
 //! [`embedded-hal`]: https://github.com/rust-embedded/embedded-hal
+//! [`Registers`]: crate::Registers
+//! [VDM]: crate::blocking::vdm
 
 use crate::spi::{self, AccessMode};
 

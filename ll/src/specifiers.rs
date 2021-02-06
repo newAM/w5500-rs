@@ -4,66 +4,92 @@ use core::convert::TryFrom;
 
 /// Socket status.
 ///
-/// This is used with [`crate::Registers::sn_sr`].
+/// This is used with the [`sn_sr`] method.
+///
+/// [`sn_sr`]: crate::Registers::sn_sr
 #[derive(Copy, Clone, Eq, PartialEq, Debug, PartialOrd, Ord, Hash)]
 #[repr(u8)]
 pub enum SocketStatus {
     /// Socket closed, this is the reset state of all sockets.
     ///
-    /// This state can be set by a [`SocketCommand::Disconnect`] or
-    /// [`SocketCommand::Close`] command.
+    /// This state can be set by a [`Disconnect`] or [`Close`] command.
     ///
     /// This state will also be set automatically if a timeout occurs.
+    ///
+    /// [`Disconnect`]: SocketCommand::Disconnect
+    /// [`Close`]: SocketCommand::Close
     Closed = 0x00,
     /// The socket is opened in TCP mode.
     ///
-    /// This state is set when the socket protocol is [`Protocol::Tcp`], and a
-    /// [`SocketCommand::Open`] command is sent.
+    /// This state is set when the socket protocol is [`Tcp`], and a [`Open`]
+    /// command is sent.
     ///
-    /// In this state you can use the [`SocketCommand::Listen`] and
-    /// [`SocketCommand::Connect`] commands.
+    /// In this state you can use the [`Listen`] and [`Connect`] commands.
+    ///
+    /// [`Tcp`]: Protocol::Tcp
+    /// [`Open`]: SocketCommand::Open
+    /// [`Listen`]: SocketCommand::Listen
+    /// [`Connect`]: SocketCommand::Connect
     Init = 0x13,
     /// The socket is listening, operating as a TCP server.
     ///
     /// The socket will wait for a connextion-request (SYN packet) from a
     /// peer (TCP client).
     ///
-    /// The state will change to [`SocketStatus::Established`] when the
-    /// connection-request is successfully accepted.
-    /// Otherwise the state will change to [`SocketStatus::Closed`] after the
-    /// TCP timeout duration set by
-    /// [`crate::Registers::rcr`] and [`crate::Registers::rtr`].
+    /// The state will change to [`Established`] when the connection-request is
+    /// successfully accepted.
+    /// Otherwise the state will change to [`Closed`] after the
+    /// TCP timeout duration set by [`rcr`] and [`rtr`].
+    ///
+    /// [`Established`]: SocketStatus::Established
+    /// [`Closed`]: SocketStatus::Closed
+    /// [`rcr`]: crate::Registers::rcr
+    /// [`rtr`]: crate::Registers::rtr
     Listen = 0x14,
     /// Connection request (SYN packet) has been sent to a peer.
     ///
-    /// This is temporarily displayed between the [`SocketStatus::Init`] and
-    /// [`SocketStatus::Established`] states, after a [`SocketCommand::Connect`]
-    /// command has been sent.
+    /// This is temporarily displayed between the [`Init`] and [`Established`]
+    /// states, after a [`Connect`] command has been sent.
     ///
     /// If the SYN/ACK is received from the peer the state changes to
-    /// [`SocketStatus::Established`], otherwise the state changes to
-    /// [`SocketStatus::Closed`] after the TCP timeout duration set by
-    /// [`crate::Registers::rcr`] and [`crate::Registers::rtr`].
+    /// [`Established`], otherwise the state changes to [`Closed`] after the TCP
+    /// timeout duration set by [`rcr`] and [`rtr`].
+    ///
+    /// [`Init`]: SocketStatus::Init
+    /// [`Connect`]: SocketCommand::Connect
+    /// [`Established`]: SocketStatus::Established
+    /// [`Closed`]: SocketStatus::Closed
+    /// [`rcr`]: crate::Registers::rcr
+    /// [`rtr`]: crate::Registers::rtr
     SynSent = 0x15,
     /// Connection request (SYN packet) has been received from a peer.
     ///
     /// If the socket sends the response (SYN/ACK packet) to the peer
-    /// successfully the state changes to [`SocketStatus::Established`],
-    /// otherwise the state changes to [`SocketStatus::Closed`] after the TCP
-    /// timeout duration set by [`crate::Registers::rcr`] and
-    /// [`crate::Registers::rtr`].
+    /// successfully the state changes to [`Established`], otherwise the state
+    /// changes to [`Closed`] after the TCP timeout duration set by [`rcr`] and
+    /// [`rtr`].
+    ///
+    /// [`Established`]: SocketStatus::Established
+    /// [`Closed`]: SocketStatus::Closed
+    /// [`rcr`]: crate::Registers::rcr
+    /// [`rtr`]: crate::Registers::rtr
     SynRecv = 0x16,
     /// TCP connection is established.
     ///
     /// When operating as a TCP client this state is set after the TCP server
     /// accepts the SYN packet, which is sent by the client after issuing a
-    /// [`SocketCommand::Connect`].
+    /// [`Connect`].
     ///
     /// When operating as a TCP server this state is set after a client
-    /// connects when in the [`SocketStatus::Listen`] state.
+    /// connects when in the [`Listen`] state.
     ///
-    /// While in this state data can be transfered with the
-    /// [`SocketCommand::Send`] and [`SocketCommand::Recv`] commands.
+    /// While in this state data can be transfered with the [`Send`] and
+    /// [`Recv`] commands.
+    ///
+    /// [`Connect`]: SocketCommand::Connect
+    /// [`Listen`]: SocketStatus::Listen
+    /// [`Send`]: SocketCommand::Send
+    /// [`Recv`]: SocketCommand::Recv
     Established = 0x17,
     /// Temporary status between status transitions.
     ///
@@ -82,23 +108,33 @@ pub enum SocketStatus {
     ///
     /// This is half-closing status, and data can be transferred.
     ///
-    /// For full-closing the [`SocketCommand::Disconnect`] command is used.
+    /// For full-closing the [`Disconnect`] command is used.
     ///
-    /// For just-closing the [`SocketCommand::Close`] command is used.
+    /// For just-closing the [`Close`] command is used.
+    ///
+    /// [`Disconnect`]: SocketCommand::Disconnect
+    /// [`Close`]: SocketCommand::Close
     CloseWait = 0x1C,
     /// Temporary status between status transitions.
     LastAck = 0x1D,
     /// Socket is opened in UDP mode.
     ///
-    /// This state is set when the socket protocol is [`Protocol::Udp`], and a
-    /// [`SocketCommand::Open`] command is sent.
+    /// This state is set when the socket protocol is [`Udp`], and a [`Open`]
+    /// command is sent.
+    ///
+    /// [`Udp`]: Protocol::Udp
+    /// [`Open`]: SocketCommand::Open
     Udp = 0x22,
     /// Socket is opened in MACRAW mode.
     ///
-    /// This is valid only for socket 0.
+    /// This is valid only for [socket 0].
     ///
-    /// This state is set when the socket protocol is [`Protocol::Macraw`], and
-    /// a [`SocketCommand::Open`] command is sent.
+    /// This state is set when the socket protocol is [`Macraw`], and a [`Open`]
+    /// command is sent.
+    ///
+    /// [socket 0]: crate::Socket::Socket0
+    /// [`Macraw`]: Protocol::Macraw
+    /// [`Open`]: SocketCommand::Open
     Macraw = 0x42,
 }
 impl From<SocketStatus> for u8 {
@@ -138,12 +174,16 @@ impl Default for SocketStatus {
 ///
 /// This is used to set the command for socket n.
 ///
-/// After W5500 accepts the command, the [`crate::Registers::set_sn_cr`]
-/// register is automatically cleared to 0x00.
-/// Even though [`crate::Registers::set_sn_cr`] is cleared to 0x00, the command
+/// After W5500 accepts the command, the [`sn_cr`] register is automatically
+/// cleared to `0x00`.
+/// Even though [`sn_cr`] is cleared to `0x00`, the command
 /// is still being processed.
 /// To check whether the command is completed or not, check
-/// [`crate::Registers::sn_ir`] or [`crate::Registers::sn_sr`].
+/// [`sn_ir`] or [`sn_sr`].
+///
+/// [`sn_cr`]: crate::Registers::set_sn_cr
+/// [`sn_ir`]: crate::Registers::sn_ir
+/// [`sn_sr`]: crate::Registers::sn_sr
 #[derive(Copy, Clone, Eq, PartialEq, Debug, PartialOrd, Ord, Hash)]
 #[repr(u8)]
 pub enum SocketCommand {
@@ -151,55 +191,70 @@ pub enum SocketCommand {
     /// accepted.
     Accepted = 0x00,
     /// The socket is initialized and opened according to the protocol
-    /// selected in [`crate::Registers::sn_mr`].
+    /// selected in [`sn_mr`].
     ///
-    /// | [`crate::Registers::sn_mr`] | [`crate::Registers::sn_sr`] |
-    /// |-----------------------------|-----------------------------|
-    /// | [`Protocol::Closed`]        | -                           |
-    /// | [`Protocol::Tcp`]           | [`SocketStatus::Init`]      |
-    /// | [`Protocol::Udp`]           | [`SocketStatus::Udp`]       |
-    /// | [`Protocol::Macraw`]        | [`SocketStatus::Macraw`]    |
+    /// | [`sn_mr`]            | [`sn_sr`]                   |
+    /// |----------------------|-----------------------------|
+    /// | [`Protocol::Closed`] | -                           |
+    /// | [`Protocol::Tcp`]    | [`SocketStatus::Init`]      |
+    /// | [`Protocol::Udp`]    | [`SocketStatus::Udp`]       |
+    /// | [`Protocol::Macraw`] | [`SocketStatus::Macraw`]    |
+    ///
+    /// [`sn_mr`]: crate::Registers::sn_mr
+    /// [`sn_sr`]: crate::Registers::sn_sr
     Open = 0x01,
     /// Operate the socket as a TCP server.
     ///
-    /// This will change the socket state from [`SocketStatus::Init`] to
-    /// [`SocketStatus::Listen`], and the socket will listen for a
+    /// This will change the socket state from [`Init`] to [`Listen`],
+    /// and the socket will listen for a
     /// connection-request (SYN packet) from any TCP client.
     ///
     /// When a TCP client connection request is successfully established,
-    /// the socket state changes from [`SocketStatus::Listen`] to
-    /// [`SocketStatus::Established`] and the `CON` socket interrupt is raised
-    /// ([`crate::SocketInterrupt::con_raised`]).
+    /// the socket state changes from [`Listen`] to
+    /// [`Established`] and the [`CON`] socket interrupt is raised.
     ///
-    /// When a TCP client connection request fails the `TIMEOUT` socket
-    /// interrupt is set ([`crate::SocketInterrupt::timeout_raised`]) and the
-    /// socket status changes to [`SocketStatus::Closed`].
+    /// When a TCP client connection request fails the [`TIMEOUT`] socket
+    /// interrupt is set and the
+    /// socket status changes to [`Closed`].
     ///
-    /// Only valid in [`Protocol::Tcp`] mode.
+    /// Only valid in [`Tcp`] mode.
+    ///
+    /// [`Closed`]: SocketStatus::Closed
+    /// [`CON`]: crate::SocketInterrupt::con_raised
+    /// [`Established`]: SocketStatus::Established
+    /// [`Init`]: SocketStatus::Init
+    /// [`Listen`]: SocketStatus::Listen
+    /// [`Tcp`]: Protocol::Tcp
+    /// [`TIMEOUT`]: crate::SocketInterrupt::timeout_raised
     Listen = 0x02,
     /// Connect to a TCP server.
     ///
     /// A connect-request (SYN packet) is sent to the TCP server configured by
-    /// [`crate::Registers::sn_dipr`] and [`crate::Registers::sn_dport`]
-    /// (destination IPv4 address and port).
+    /// the IPv4 address and port set with [`set_sn_dest`].
     ///
     /// If the connect-request is successful, the socket state changes to
-    /// [`SocketStatus::Established`] and the `CON` socket interrupt is raised
-    /// ([`crate::SocketInterrupt::con_raised`]).
+    /// [`Established`] and the [`CON`] socket interrupt is raised.
     ///
     /// The connect-request fails in the following three cases:
-    /// 1. When a ARP<sub>TO</sub> occurs
-    ///    ([`crate::SocketInterrupt::con_raised`]) because the
+    /// 1. When a ARP<sub>TO</sub> occurs ([`timeout_raised`]) because the
     ///    destination hardware address is not acquired through the
     ///    ARP-process.
     /// 2. When a SYN/ACK packet is not received within the TCP timeout duration
-    ///    set by [`crate::Registers::rcr`] and [`crate::Registers::rtr`]
-    ///    ([`crate::SocketInterrupt::timeout_raised`]).
+    ///    set by [`rcr`] and [`rtr`] ([`timeout_raised`]).
     /// 3. When a RST packet is received instead of a SYN/ACK packet.
     ///
-    /// In these cases the socket state changes to [`SocketStatus::Closed`].
+    /// In these cases the socket state changes to [`Closed`].
     ///
-    /// Only valid in [`Protocol::Tcp`] mode when acting as a TCP client.
+    /// Only valid in [`Tcp`] mode when acting as a TCP client.
+    ///
+    /// [`Closed`]: SocketStatus::Closed
+    /// [`CON`]: crate::SocketInterrupt::con_raised
+    /// [`Established`]: SocketStatus::Established
+    /// [`rcr`]: crate::Registers::rcr
+    /// [`rtr`]: crate::Registers::rtr
+    /// [`set_sn_dest`]: crate::Registers::set_sn_dest
+    /// [`Tcp`]: Protocol::Tcp
+    /// [`timeout_raised`]: crate::SocketInterrupt::timeout_raised
     Connect = 0x04,
     /// Start the disconnect process.
     ///
@@ -210,51 +265,68 @@ pub enum SocketCommand {
     ///
     /// When the disconnect-process is successful
     /// (that is, FIN/ACK packet is received successfully),
-    /// the socket state changes to [`SocketStatus::Closed`].
+    /// the socket state changes to [`Closed`].
     /// Otherwise, TCP timeout occurs
-    /// ([`crate::SocketInterrupt::timeout_raised`]) and then
-    /// the socket state changes to [`SocketStatus::Closed`].
+    /// ([`timeout_raised`]) and then
+    /// the socket state changes to [`Closed`].
     ///
-    /// If [`SocketCommand::Close`] is used instead of
-    /// [`SocketCommand::Disconnect`], the socket state is changes to
-    /// [`SocketStatus::Closed`] without the disconnect process.
+    /// If the [`Close`] command is used instead of
+    /// [`Disconnect`], the socket state is changes to
+    /// [`Closed`] without the disconnect process.
     ///
     /// If a RST packet is received from a peer during communication the socket
-    /// status is unconditionally changed to [`SocketStatus::Closed`].
+    /// status is unconditionally changed to [`Closed`].
     ///
-    /// Only valid in [`Protocol::Tcp`] mode.
+    /// Only valid in [`Tcp`] mode.
+    ///
+    /// [`Disconnect`]: SocketCommand::Disconnect
+    /// [`Close`]: SocketCommand::Close
+    /// [`Closed`]: SocketStatus::Closed
+    /// [`Tcp`]: Protocol::Tcp
+    /// [`timeout_raised`]: crate::SocketInterrupt::timeout_raised
     Disconnect = 0x08,
     /// Close the socket.
     ///
-    /// The socket status is changed to [`SocketStatus::Closed`].
+    /// The socket status is changed to [`Closed`].
+    ///
+    /// [`Closed`]: SocketStatus::Closed
     Close = 0x10,
     /// Transmits all the data in the socket TX buffer.
     Send = 0x20,
-    /// The basic operation is same as [`SocketCommand::Send`].
+    /// The basic operation is same as [`Send`].
     ///
-    /// Normally [`SocketCommand::Send`] transmits data after destination
+    /// Normally [`Send`] transmits data after destination
     /// hardware address is acquired by the automatic ARP-process
     /// (Address Resolution Protocol).
-    /// [`SocketCommand::SendMac`] transmits data without the automatic
+    /// [`SendMac`] transmits data without the automatic
     /// ARP-process.
     /// In this case, the destination hardware address is acquired from
-    /// [`crate::Registers::sn_dhar`] configured by the host, instead of the ARP
+    /// [`sn_dhar`] configured by the host, instead of the ARP
     /// process.
     ///
-    /// Only valid in [`Protocol::Udp`] mode.
+    /// Only valid in [`Udp`] mode.
+    ///
+    /// [`Send`]: SocketCommand::Send
+    /// [`SendMac`]: SocketCommand::SendMac
+    /// [`Udp`]: Protocol::Udp
+    /// [`sn_dhar`]: crate::Registers::sn_dhar
     SendMac = 0x21,
     /// Sends a 1 byte keep-alive packet.
     ///
     /// If the peer cannot respond to the keep-alive packet during timeout
     /// time, the connection is terminated and the timeout interrupt will
-    /// occur ([`crate::SocketInterrupt::timeout_raised`]).
+    /// occur ([`timeout_raised`]).
     ///
-    /// Only valid in [`Protocol::Tcp`] mode.
+    /// Only valid in [`Tcp`] mode.
+    ///
+    /// [`Tcp`]: Protocol::Tcp
+    /// [`timeout_raised`]: crate::SocketInterrupt::timeout_raised
     SendKeep = 0x22,
-    /// RECV completes the processing of the received data in socket RX
-    /// buffer.
+    /// Completes the processing of the received data in socket RX buffer.
     ///
-    /// See [`crate::Registers::sn_rx_buf`] for an example.
+    /// See [`sn_rx_buf`] for an example.
+    ///
+    /// [`sn_rx_buf`]: crate::Registers::sn_rx_buf
     Recv = 0x40,
 }
 impl From<SocketCommand> for u8 {
@@ -265,7 +337,10 @@ impl From<SocketCommand> for u8 {
 
 /// Socket protocol.
 ///
-/// Used in the [`crate::SocketMode`] register.
+/// This is used by [`SocketMode::protocol`] method for the [`sn_mr`] register.
+///
+/// [`SocketMode::protocol`]: crate::SocketMode::protocol
+/// [`sn_mr`]: crate::Registers::sn_mr
 #[derive(Copy, Clone, Eq, PartialEq, Debug, PartialOrd, Ord, Hash)]
 #[repr(u8)]
 pub enum Protocol {
@@ -277,7 +352,9 @@ pub enum Protocol {
     Udp = 0b0010,
     /// MACRAW.
     ///
-    /// MACRAW mode can only be used with socket 0.
+    /// MACRAW mode can only be used with [socket 0].
+    ///
+    /// [socket 0]: crate::Socket::Socket0
     Macraw = 0b0100,
 }
 impl From<Protocol> for u8 {
@@ -305,8 +382,10 @@ impl TryFrom<u8> for Protocol {
 
 /// PHY operation mode.
 ///
-/// This is used by [`crate::PhyCfg`] for the
-/// [`crate::Registers::set_phycfgr`] and [`crate::Registers::phycfgr`] methods.
+/// This is used by [`PhyCfg::opmdc`] method for the [`phycfgr`] register.
+///
+/// [`PhyCfg::opmdc`]: crate::PhyCfg::opmdc
+/// [`phycfgr`]: crate::Registers::phycfgr
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Debug, Hash)]
 #[repr(u8)]
 pub enum OperationMode {
@@ -355,8 +434,10 @@ impl Default for OperationMode {
 
 /// PHY link status.
 ///
-/// This is used by [`crate::PhyCfg`] for the
-/// [`crate::Registers::set_phycfgr`] and [`crate::Registers::phycfgr`] methods.
+/// This is used by [`PhyCfg::lnk`] method for the [`phycfgr`] register.
+///
+/// [`PhyCfg::lnk`]: crate::PhyCfg::lnk
+/// [`phycfgr`]: crate::Registers::phycfgr
 #[derive(Copy, Clone, Eq, PartialEq, Debug, PartialOrd, Ord, Hash)]
 #[repr(u8)]
 pub enum LinkStatus {
@@ -379,11 +460,18 @@ impl From<LinkStatus> for u8 {
         val as u8
     }
 }
+impl Default for LinkStatus {
+    fn default() -> Self {
+        LinkStatus::Down
+    }
+}
 
 /// PHY speed status.
 ///
-/// This is used by [`crate::PhyCfg`] for the
-/// [`crate::Registers::set_phycfgr`] and [`crate::Registers::phycfgr`] methods.
+/// This is used by [`PhyCfg::spd`] method for the [`phycfgr`] register.
+///
+/// [`PhyCfg::spd`]: crate::PhyCfg::spd
+/// [`phycfgr`]: crate::Registers::phycfgr
 #[derive(Copy, Clone, Eq, PartialEq, Debug, PartialOrd, Ord, Hash)]
 #[repr(u8)]
 pub enum SpeedStatus {
@@ -406,11 +494,18 @@ impl From<SpeedStatus> for u8 {
         val as u8
     }
 }
+impl Default for SpeedStatus {
+    fn default() -> Self {
+        SpeedStatus::Mbps10
+    }
+}
 
 /// PHY duplex status.
 ///
-/// This is used by [`crate::PhyCfg`] for the
-/// [`crate::Registers::set_phycfgr`] and [`crate::Registers::phycfgr`] methods.
+/// This is used by [`PhyCfg::dpx`] method for the [`phycfgr`] register.
+///
+/// [`PhyCfg::dpx`]: crate::PhyCfg::dpx
+/// [`phycfgr`]: crate::Registers::phycfgr
 #[derive(Copy, Clone, Eq, PartialEq, Debug, PartialOrd, Ord, Hash)]
 #[repr(u8)]
 pub enum DuplexStatus {
@@ -433,11 +528,19 @@ impl From<DuplexStatus> for u8 {
         val as u8
     }
 }
+impl Default for DuplexStatus {
+    fn default() -> Self {
+        DuplexStatus::Half
+    }
+}
 
 /// RX and TX buffer sizes.
 ///
-/// This is an argument of [`crate::Registers::set_sn_rxbuf_size`] and
-/// [`crate::Registers::set_sn_txbuf_size`]
+/// This is an argument of [`Registers::set_sn_rxbuf_size`] and
+/// [`Registers::set_sn_txbuf_size`].
+///
+/// [`Registers::set_sn_txbuf_size`]: crate::Registers::set_sn_txbuf_size
+/// [`Registers::set_sn_rxbuf_size`]: crate::Registers::set_sn_rxbuf_size
 #[derive(Copy, Clone, Eq, PartialEq, PartialOrd, Ord, Hash, Debug)]
 #[repr(u8)]
 pub enum BufferSize {

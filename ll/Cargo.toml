@@ -11,12 +11,21 @@ keywords = ["spi", "driver", "embedded-hal-driver", "W5500", "wiznet"]
 categories = ["embedded", "hardware-support", "no-std"]
 homepage = "https://github.com/newAM/w5500-ll-rs"
 
-[badges]
-maintenance = { status = "experimental" }
+[features]
+default = ["embedded-hal"]
+std = []
 
-[dependencies]
-embedded-hal = "0.2.4"
+[badges]
+maintenance = { status = "actively-developed" }
+
+[dependencies.embedded-hal]
+version = "0.2.4"
+optional = true
 
 [dev-dependencies]
 embedded-hal-mock = "0.7"
 version-sync = "0.9.1"
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]

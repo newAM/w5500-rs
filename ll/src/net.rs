@@ -3,15 +3,15 @@
 //! There may a standard for embedded networking in the future, see
 //! [rust-embedded issue 348] and [RFC 2832]
 //!
-//! This is mostly ripped directly from [std::net].
+//! This is mostly ripped from [`std::net`].
 //!
 //! [rust-embedded issue 348]: https://github.com/rust-embedded/wg/issues/348
-//! [std::net]: https://doc.rust-lang.org/std/net/index.html
+//! [`std::net`]: https://doc.rust-lang.org/std/net/index.html
 //! [RFC 2832]: https://github.com/rust-lang/rfcs/pull/2832
 
 /// Ipv4Addr address struct.
 ///
-/// Can be instantiated with `Ipv4Addr::new`.
+/// Can be instantiated with [`Ipv4Addr::new`].
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Debug, Hash, Default)]
 pub struct Ipv4Addr {
     /// Octets of the Ipv4Addr address.
@@ -242,11 +242,71 @@ impl ::core::fmt::Display for Ipv4Addr {
     }
 }
 
+#[cfg(feature = "std")]
+#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
+impl From<std::net::Ipv4Addr> for Ipv4Addr {
+    fn from(ip: std::net::Ipv4Addr) -> Self {
+        Ipv4Addr::new(
+            ip.octets()[0],
+            ip.octets()[1],
+            ip.octets()[2],
+            ip.octets()[3],
+        )
+    }
+}
+
+#[cfg(feature = "std")]
+#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
+impl From<&std::net::Ipv4Addr> for Ipv4Addr {
+    fn from(ip: &std::net::Ipv4Addr) -> Self {
+        Ipv4Addr::new(
+            ip.octets()[0],
+            ip.octets()[1],
+            ip.octets()[2],
+            ip.octets()[3],
+        )
+    }
+}
+
+#[cfg(feature = "std")]
+#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
+impl From<Ipv4Addr> for std::net::Ipv4Addr {
+    fn from(ip: Ipv4Addr) -> Self {
+        std::net::Ipv4Addr::new(ip.octets[0], ip.octets[1], ip.octets[2], ip.octets[3])
+    }
+}
+
+#[cfg(feature = "std")]
+#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
+impl From<&Ipv4Addr> for std::net::Ipv4Addr {
+    fn from(ip: &Ipv4Addr) -> Self {
+        std::net::Ipv4Addr::new(ip.octets[0], ip.octets[1], ip.octets[2], ip.octets[3])
+    }
+}
+
+#[cfg(feature = "std")]
+#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
+impl From<Ipv4Addr> for std::net::IpAddr {
+    fn from(ip: Ipv4Addr) -> Self {
+        std::net::IpAddr::V4(ip.into())
+    }
+}
+
+#[cfg(feature = "std")]
+#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
+impl From<&Ipv4Addr> for std::net::IpAddr {
+    fn from(ip: &Ipv4Addr) -> Self {
+        std::net::IpAddr::V4(ip.into())
+    }
+}
+
 /// EUI-48 MAC address struct.
 ///
-/// Can be instantiated with `Eui48Addr::new`.
+/// Can be instantiated with [`Eui48Addr::new`].
 ///
-/// This is an EUI-48 MAC address (previously called MAC-48).
+/// This is an EUI-48 [MAC address] (previously called MAC-48).
+///
+/// [MAC address]: https://en.wikipedia.org/wiki/MAC_address
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Debug, Hash, Default)]
 pub struct Eui48Addr {
     /// Octets of the MAC address.
@@ -305,14 +365,12 @@ impl ::core::fmt::Display for Eui48Addr {
 
 /// An IPv4 socket address.
 ///
-/// This is mostly ripped directly from [`std::net::SocketAddrV4`].
+/// This is mostly ripped from [`std::net::SocketAddrV4`].
 ///
 /// IPv4 socket addresses consist of an [`IPv4` address] and a 16-bit port
 /// number, as stated in [IETF RFC 793].
 ///
-/// [IETF RFC 793]: https://tools.ietf.org/html/rfc793
-/// [`IPv4` address]: Ipv4Addr
-/// [`std::net::SocketAddrV4`]: https://doc.rust-lang.org/std/net/struct.SocketAddrV4.html
+/// Can be instantiated with [`SocketAddrV4::new`].
 ///
 /// # Examples
 ///
@@ -324,6 +382,10 @@ impl ::core::fmt::Display for Eui48Addr {
 /// assert_eq!(socket.ip(), &Ipv4Addr::new(127, 0, 0, 1));
 /// assert_eq!(socket.port(), 8080);
 /// ```
+///
+/// [IETF RFC 793]: https://tools.ietf.org/html/rfc793
+/// [`IPv4` address]: Ipv4Addr
+/// [`std::net::SocketAddrV4`]: https://doc.rust-lang.org/std/net/struct.SocketAddrV4.html
 #[derive(Debug, PartialEq, Eq, Clone, Copy, PartialOrd, Ord, Hash, Default)]
 pub struct SocketAddrV4 {
     ip: Ipv4Addr,
@@ -409,5 +471,53 @@ impl ::core::fmt::Display for SocketAddrV4 {
     /// String formatter for SocketAddrV4 addresses.
     fn fmt(&self, fmt: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
         write!(fmt, "{}:{}", self.ip(), self.port())
+    }
+}
+
+#[cfg(feature = "std")]
+#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
+impl From<std::net::SocketAddrV4> for SocketAddrV4 {
+    fn from(addr: std::net::SocketAddrV4) -> Self {
+        SocketAddrV4::new(addr.ip().into(), addr.port())
+    }
+}
+
+#[cfg(feature = "std")]
+#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
+impl From<&std::net::SocketAddrV4> for SocketAddrV4 {
+    fn from(addr: &std::net::SocketAddrV4) -> Self {
+        SocketAddrV4::new(addr.ip().into(), addr.port())
+    }
+}
+
+#[cfg(feature = "std")]
+#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
+impl From<SocketAddrV4> for std::net::SocketAddrV4 {
+    fn from(addr: SocketAddrV4) -> Self {
+        std::net::SocketAddrV4::new(addr.ip().into(), addr.port)
+    }
+}
+
+#[cfg(feature = "std")]
+#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
+impl From<&SocketAddrV4> for std::net::SocketAddrV4 {
+    fn from(addr: &SocketAddrV4) -> Self {
+        std::net::SocketAddrV4::new(addr.ip().into(), addr.port)
+    }
+}
+
+#[cfg(feature = "std")]
+#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
+impl From<&SocketAddrV4> for std::net::SocketAddr {
+    fn from(addr: &SocketAddrV4) -> Self {
+        std::net::SocketAddr::V4(addr.into())
+    }
+}
+
+#[cfg(feature = "std")]
+#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
+impl From<SocketAddrV4> for std::net::SocketAddr {
+    fn from(addr: SocketAddrV4) -> Self {
+        std::net::SocketAddr::V4(addr.into())
     }
 }

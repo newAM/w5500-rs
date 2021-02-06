@@ -1,7 +1,5 @@
 //! Helpers and functions relating to W5500 SPI transfers.
 
-use embedded_hal::spi::{self, Phase, Polarity};
-
 /// SPI Access Modes.
 #[repr(u8)]
 #[derive(PartialEq, Eq, Copy, Clone, Debug, Hash)]
@@ -105,7 +103,9 @@ pub const fn fdm_header_4b(address: u16, block: u8, mode: AccessMode) -> [u8; HE
 /// Recommended W5500 SPI mode.
 ///
 /// The W5500 may operate in SPI mode 0 or SPI mode 3.
-pub const MODE: spi::Mode = spi::Mode {
-    polarity: Polarity::IdleLow,
-    phase: Phase::CaptureOnFirstTransition,
+#[cfg(any(feature = "embedded-hal", doc))]
+#[cfg_attr(docsrs, doc(cfg(feature = "embedded-hal")))]
+pub const MODE: embedded_hal::spi::Mode = embedded_hal::spi::Mode {
+    polarity: embedded_hal::spi::Polarity::IdleLow,
+    phase: embedded_hal::spi::Phase::CaptureOnFirstTransition,
 };

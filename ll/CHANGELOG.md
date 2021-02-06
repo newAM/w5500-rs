@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Added
+- Added the `Default` trait for `DuplexStatus`, `LinkStatus`, and `SpeedStatus`.
+- Added a `std` crate feature (disabled by default).
+- Added the `From` trait to convert between `std::net` and `w5500_ll::net` types.
+
+### Changed
+- Changed fully qualified documentation links (e.g. `crate::`) to shorter links.
+- Changed the `embedded-hal` dependency to an optional feature (enabled by default).
+- Changed the maintenance status from experimental to actively-developed.
+
+### Fixed
+- Fixed incorrect documentation on `SocketMode::enable_mip6b` and `SocketMode::disable_mip6b`.
+
 ## [0.4.0] - 2021-01-30
 ### Added
 - Added `impl From<Socket> for usize`.

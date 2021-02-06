@@ -1,17 +1,66 @@
 //! Platform agnostic rust driver for the [Wiznet W5500] SPI internet offload
 //! chip.
 //!
-//! This is a low-level (ll) crate, specifically limited in scope to register
-//! accessors only.
+//! This is a low-level (ll) crate. The scope of this crate is:
+//! 1) Register accessors.
+//! 2) Networking data types.
+//!
 //! Higher level functionality (such as socket operations) should be built
 //! on-top of what is provided here.
 //!
+//! # Example
+//!
+//! Reading the VERSIONR register (a constant value).
+//!
+//! ```
+//! # use embedded_hal_mock as hal;
+//! # let spi = hal::spi::Mock::new(&[
+//! #   hal::spi::Transaction::write(vec![0x00, 0x39, 0x00]),
+//! #   hal::spi::Transaction::transfer(vec![0], vec![0x04]),
+//! # ]);
+//! # let pin = hal::pin::Mock::new(&[
+//! #    hal::pin::Transaction::set(hal::pin::State::Low),
+//! #    hal::pin::Transaction::set(hal::pin::State::High),
+//! # ]);
+//! use w5500_ll::{blocking::vdm::W5500, Registers};
+//!
+//! let mut w5500 = W5500::new(spi, pin);
+//! let version: u8 = w5500.version()?;
+//! assert_eq!(version, 0x04);
+//! # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+//! ```
+//!
+//! # Feature Flags
+//!
+//! By default only the `embedded-hal` feature is enabled.
+//!
+//! * `embedded-hal`: Enables the [`blocking`] module which contains
+//!   implmentations of the [`Registers`] trait using the [`embedded-hal`] traits.
+//! * `std`: Enables conversion between [`std::net`] and [`w5500_ll::net`] types.
+//!   This is for testing purposes only, the `std` flag will not work on
+//!   embedded systems because it uses the standard library.
+//!
+//! # Related Crates
+//!
+//! * [w5500-hl] - Higher level socket operations.
+//! * [w5500-regsim] - Register simulation using [`std::net`].
+//!
+//! [`blocking`]: https://docs.rs/w5500-ll/0.4.0/w5500_ll/blocking/index.html
+//! [`embedded-hal`]: https://github.com/rust-embedded/embedded-hal
+//! [`Registers`]: https://docs.rs/w5500-ll/0.4.0/w5500_ll/trait.Registers.html
+//! [`std::net`]: https://doc.rust-lang.org/std/net/index.html
+//! [`w5500_ll::net`]: https://docs.rs/w5500-ll/0.4.0/w5500_ll/net/index.html
+//! [w5500-hl]: https://github.com/newAM/w5500-hl-rs
+//! [w5500-regsim]: https://github.com/newAM/w5500-regsim-rs
 //! [Wiznet W5500]: https://www.wiznet.io/product-item/w5500/
 #![doc(html_root_url = "https://docs.rs/w5500-ll/0.4.0")]
+#![cfg_attr(docsrs, feature(doc_cfg))]
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
-#![no_std]
+#![cfg_attr(not(feature = "std"), no_std)]
 
+#[cfg(any(feature = "embedded-hal", doc))]
+#[cfg_attr(docsrs, doc(cfg(feature = "embedded-hal")))]
 pub mod blocking;
 pub mod net;
 pub mod spi;
@@ -136,13 +185,25 @@ pub mod reg {
 #[allow(missing_docs)]
 #[derive(PartialEq, Eq, PartialOrd, Ord, Copy, Clone, Debug, Hash)]
 pub enum Socket {
+    /// Socket 0.
+    ///
+    /// This is the only socket that can be used in the [`Macraw`] mode.
+    ///
+    /// [`Macraw`]: crate::Protocol::Macraw
     Socket0 = 0,
+    /// Socket 1.
     Socket1 = 1,
+    /// Socket 2.
     Socket2 = 2,
+    /// Socket 3.
     Socket3 = 3,
+    /// Socket 4.
     Socket4 = 4,
+    /// Socket 5.
     Socket5 = 5,
+    /// Socket 6.
     Socket6 = 6,
+    /// Socket 7.
     Socket7 = 7,
 }
 
