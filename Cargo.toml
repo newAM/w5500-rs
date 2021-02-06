@@ -1,6 +1,6 @@
 [package]
 name = "w5500-hl"
-version = "0.1.0-alpha.1"
+version = "0.1.0-alpha.2"
 authors = ["Alex M. <alexmgit@protonmail.com>"]
 edition = "2018"
 repository = "https://github.com/newAM/w5500-hl-rs"
@@ -15,16 +15,16 @@ homepage = "https://github.com/newAM/w5500-hl-rs"
 maintenance = { status = "experimental" }
 
 [dependencies]
-nb = "1"
-w5500-ll = "~0.4"
+nb = "^1"
+w5500-ll = "~0.5.1"
 
 [dev-dependencies]
 trust-dns-client = "~0.20"
 embedded-hal-mock = "~0.7"
-w5500-regsim = "0.1.0-alpha.1"
+w5500-regsim = "0.1.0-alpha.2"
 version-sync = "~0.9"
 stderrlog = "~0.5"
-httparse = { version = "1", default-features = false }
+httparse = { version = "^1", default-features = false }
 
 [package.metadata.docs.rs]
 all-features = true
