@@ -35,7 +35,7 @@
 //! By default only the `embedded-hal` feature is enabled.
 //!
 //! * `embedded-hal`: Enables the [`blocking`] module which contains
-//!   implmentations of the [`Registers`] trait using the [`embedded-hal`] traits.
+//!   implementations of the [`Registers`] trait using the [`embedded-hal`] traits.
 //! * `std`: Enables conversion between [`std::net`] and [`w5500_ll::net`] types.
 //!   This is for testing purposes only, the `std` flag will not work on
 //!   embedded systems because it uses the standard library.
@@ -45,15 +45,15 @@
 //! * [w5500-hl] - Higher level socket operations.
 //! * [w5500-regsim] - Register simulation using [`std::net`].
 //!
-//! [`blocking`]: https://docs.rs/w5500-ll/0.4.0/w5500_ll/blocking/index.html
 //! [`embedded-hal`]: https://github.com/rust-embedded/embedded-hal
-//! [`Registers`]: https://docs.rs/w5500-ll/0.4.0/w5500_ll/trait.Registers.html
 //! [`std::net`]: https://doc.rust-lang.org/std/net/index.html
-//! [`w5500_ll::net`]: https://docs.rs/w5500-ll/0.4.0/w5500_ll/net/index.html
 //! [w5500-hl]: https://github.com/newAM/w5500-hl-rs
 //! [w5500-regsim]: https://github.com/newAM/w5500-regsim-rs
 //! [Wiznet W5500]: https://www.wiznet.io/product-item/w5500/
-#![doc(html_root_url = "https://docs.rs/w5500-ll/0.4.0")]
+//! [`blocking`]: https://docs.rs/w5500-ll/0.5.0/w5500_ll/blocking/index.html
+//! [`Registers`]: https://docs.rs/w5500-ll/0.5.0/w5500_ll/trait.Registers.html
+//! [`w5500_ll::net`]: https://docs.rs/w5500-ll/0.5.0/w5500_ll/net/index.html
+#![doc(html_root_url = "https://docs.rs/w5500-ll/0.5.0")]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
