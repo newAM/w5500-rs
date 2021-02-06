@@ -1,19 +1,93 @@
 //! Platform agnostic rust driver for the [Wiznet W5500] internet offload chip.
 //!
-//! This crate contains higher level socket operations, built ontop of my other
-//! crate, [`w5500_ll`], which contains register accessors and networking data
-//! types for the W5500.
+//! This crate contains higher level (hl) socket operations, built ontop of my
+//! other crate, [`w5500-ll`], which contains register accessors, and networking
+//! data types for the W5500.
 //!
 //! # Warning
 //!
 //! This crate is still in an early alpha state.
 //! This has been published early to solicit feedback.
 //!
-//! At the moment only UDP socket and TCP streams have been implemented.
-//! TCP listeners have not yet been implemented.
+//! # Design
 //!
-//! [`w5500_ll`]: https://crates.io/crates/w5500-ll
+//! There are no separate socket structures.
+//! The [`Tcp`] and [`Udp`] traits provided in this crate simply extend the
+//! [`Registers`] trait provided in [`w5500-ll`].
+//! This makes for a less ergonomic API, but a much more portable API because
+//! there are no mutexes or runtime checks to enable socket structures to share
+//! the underlying W5500 device which has ownership over the sockets.
+//!
+//! You will likely want to wrap up the underlying structure that implements
+//! the [`Registers`], [`Tcp`], and [`Udp`] traits to provide separate socket
+//! structures utilizing whatever Mutex is available for your platform / RTOS.
+//!
+//! # Examples
+//!
+//! UDP sockets
+//!
+//! ```no_run
+//! # let mut w5500 = w5500_regsim::W5500::new();
+//! use w5500_hl::ll::{
+//!     net::{Ipv4Addr, SocketAddrV4},
+//!     Registers,
+//!     Socket::Socket0,
+//! };
+//! use w5500_hl::Udp;
+//!
+//! // open Socket0 as a UDP socket on port 1234
+//! w5500.udp_bind(Socket0, 1234)?;
+//!
+//! // send 4 bytes to 192.168.2.4:8080, and get the number of bytes transmitted
+//! let data: [u8; 4] = [0, 1, 2, 3];
+//! let destination = SocketAddrV4::new(Ipv4Addr::new(192, 168, 2, 4), 8080);
+//! let tx_bytes = w5500.udp_send_to(Socket0, &data, &destination);
+//! # Ok::<(), std::io::Error>(())
+//! ```
+//!
+//! TCP streams (client)
+//!
+//! ```no_run
+//! # let mut w5500 = w5500_regsim::W5500::new();
+//! use w5500_hl::ll::{
+//!     net::{Ipv4Addr, SocketAddrV4},
+//!     Registers, Socket,
+//! };
+//! use w5500_hl::Tcp;
+//!
+//! const MQTT_SOCKET: Socket = Socket::Socket0;
+//! const MQTT_SOURCE_PORT: u16 = 33650;
+//! const MQTT_SERVER: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::new(192, 168, 2, 10), 1883);
+//!
+//! // initiate a TCP connection to a MQTT server
+//! w5500.tcp_connect(MQTT_SOCKET, MQTT_SOURCE_PORT, &MQTT_SERVER)?;
+//! # Ok::<(), std::io::Error>(())
+//! ```
+//!
+//! TCP listeners (server)
+//!
+//! ```no_run
+//! # let mut w5500 = w5500_regsim::W5500::new();
+//! use w5500_hl::ll::{
+//!     net::{Ipv4Addr, SocketAddrV4},
+//!     Registers, Socket,
+//! };
+//! use w5500_hl::Tcp;
+//!
+//! const HTTP_SOCKET: Socket = Socket::Socket1;
+//! const HTTP_PORT: u16 = 80;
+//!
+//! // serve HTTP
+//! w5500.tcp_listen(HTTP_SOCKET, HTTP_PORT)?;
+//! # Ok::<(), std::io::Error>(())
+//! ```
+//!
+//! See the [examples directory] for more comprehensive examples.
+//!
+//! [`Registers`]: https://docs.rs/w5500-ll/latest/w5500_ll/trait.Registers.html
+//! [`w5500-ll`]: https://crates.io/crates/w5500-ll
 //! [Wiznet W5500]: https://www.wiznet.io/product-item/w5500/
+//! [examples directory]: https://github.com/newAM/w5500-hl-rs/tree/main/examples
 #![doc(html_root_url = "https://docs.rs/w5500-hl/0.1.0-alpha.1")]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![no_std]
@@ -79,8 +153,7 @@ where
 /// data can be [sent to] and [received from] any other socket address.
 ///
 /// As stated in the User Datagram Protocol's specification in [IETF RFC 768],
-/// UDP is an unordered, unreliable protocol; refer to `TcpListener` (TODO) and
-/// [`TcpStream`] for TCP traits.
+/// UDP is an unordered, unreliable protocol; refer to [`Tcp`] for the TCP trait.
 ///
 /// # Comparison to [`std::net::UdpSocket`]
 ///
@@ -94,7 +167,7 @@ where
 /// [IETF RFC 768]: https://tools.ietf.org/html/rfc768
 /// [received from]: Udp::udp_recv_from
 /// [sent to]: Udp::udp_send_to
-/// [`TcpStream`]: crate::TcpStream
+/// [`Tcp`]: crate::Tcp
 /// [`std::net::UdpSocket`]: https://doc.rust-lang.org/std/net/struct.UdpSocket.html
 pub trait Udp<E>: Registers<Error = E> {
     /// Binds the socket to the given port.
@@ -445,21 +518,16 @@ pub trait Udp<E>: Registers<Error = E> {
 /// Implement the UDP trait for any structure that implements [`w5500_ll::Registers`].
 impl<T, E> Udp<E> for T where T: Registers<Error = E> {}
 
-/// A W5500 TCP stream trait.
-///
-/// These methods are used to create and interact with a TCP stream between
-/// a local host and a remote socket.
-///
-/// After initiating a connection with [`tcp_connect`] and recieving the [`con`]
-/// interrupt data can be transmitting by using [`tcp_read`] and [`tcp_write`].
-///
-///
-/// [`tcp_write`]: TcpStream::tcp_write
-/// [`tcp_read`]: TcpStream::tcp_read
-/// [`tcp_connect`]: TcpStream::tcp_connect
-/// [`con`]: w5500_ll::SocketInterrupt::con_raised
-pub trait TcpStream<E>: Registers<Error = E> {
+/// A W5500 TCP trait.
+pub trait Tcp<E>: Registers<Error = E> {
     /// Starts the 3-way TCP handshake with the remote host.
+    ///
+    /// This method is used to create and interact with a TCP stream between
+    /// a local host and a remote socket.
+    ///
+    /// After initiating a connection with [`tcp_connect`] and recieving the
+    /// [`con`] interrupt data can be transmitting by using [`tcp_read`] and
+    /// [`tcp_write`].
     ///
     /// Calling this method **does not** mean the socket will be connected
     /// afterwards, this simply starts the three way handshake.
@@ -488,7 +556,7 @@ pub trait TcpStream<E>: Registers<Error = E> {
     /// use w5500_hl::{
     ///     ll::{Registers, Socket, SocketInterrupt},
     ///     net::{Ipv4Addr, SocketAddrV4},
-    ///     TcpStream,
+    ///     Tcp,
     /// };
     ///
     /// const MQTT_SOCKET: Socket = Socket::Socket0;
@@ -513,6 +581,11 @@ pub trait TcpStream<E>: Registers<Error = E> {
     /// }
     /// # Ok::<(), std::io::Error>(())
     /// ```
+    ///
+    /// [`tcp_write`]: Tcp::tcp_write
+    /// [`tcp_read`]: Tcp::tcp_read
+    /// [`tcp_connect`]: Tcp::tcp_connect
+    /// [`con`]: w5500_ll::SocketInterrupt::con_raised
     fn tcp_connect(&mut self, socket: Socket, port: u16, addr: &SocketAddrV4) -> Result<(), E> {
         debug_assert!(
             port_is_unique(self, socket, port)?,
@@ -546,6 +619,100 @@ pub trait TcpStream<E>: Registers<Error = E> {
         self.set_sn_cr(socket, SocketCommand::Connect)
     }
 
+    /// Open a TCP listener on the given port.
+    ///
+    /// After opening a listener with [`tcp_listen`] and recieving the
+    /// [`con`] interrupt data can be transmitting by using [`tcp_read`] and
+    /// [`tcp_write`].
+    ///
+    /// # Arguments
+    ///
+    /// * `socket` - The socket number to use for this TCP listener.
+    /// * `port` - The local port to listen for remote connections on.
+    ///
+    /// # Panics
+    ///
+    /// * (debug only) The port must not be in use by any other socket on the W5500.
+    ///
+    /// # Example
+    ///
+    /// Create an HTTP server.
+    ///
+    /// ```no_run
+    /// # let mut w5500 = w5500_regsim::W5500::new();
+    /// use w5500_hl::{
+    ///     ll::{Registers, Socket, SocketInterrupt},
+    ///     net::{Ipv4Addr, SocketAddrV4},
+    ///     Tcp,
+    /// };
+    /// // global_allocator is currently avaliable on nightly for embedded rust
+    /// extern crate alloc;
+    /// use alloc::vec::{self, Vec};
+    ///
+    /// const HTTP_SOCKET: Socket = Socket::Socket1;
+    /// const HTTP_PORT: u16 = 80;
+    ///
+    /// // start serving
+    /// w5500.tcp_listen(HTTP_SOCKET, HTTP_PORT)?;
+    ///
+    /// // wait for the RECV interrupt, indicating there is data to read from a client
+    /// loop {
+    ///     let sn_ir = w5500.sn_ir(HTTP_SOCKET).unwrap();
+    ///     if sn_ir.recv_raised() {
+    ///         w5500.set_sn_ir(HTTP_SOCKET, sn_ir).unwrap();
+    ///         break;
+    ///     }
+    ///     if sn_ir.discon_raised() | sn_ir.timeout_raised() {
+    ///         panic!("Socket disconnected while waiting for RECV");
+    ///     }
+    /// }
+    ///
+    /// let mut buf: Vec<u8> = vec![0; 256];
+    /// let rx_bytes: usize = w5500.tcp_read(HTTP_SOCKET, &mut buf).unwrap();
+    /// // Truncate the buffer to the number of bytes read
+    /// // Safety: BUF is only borrowed mutably in one location
+    /// let filled_buf: &[u8] = &buf[..rx_bytes];
+    ///
+    /// // parse HTTP request here using filled_buf
+    /// # Ok::<(), std::io::Error>(())
+    /// ```
+    ///
+    /// [`tcp_write`]: Tcp::tcp_write
+    /// [`tcp_read`]: Tcp::tcp_read
+    /// [`tcp_listen`]: Tcp::tcp_listen
+    /// [`con`]: w5500_ll::SocketInterrupt::con_raised
+    fn tcp_listen(&mut self, socket: Socket, port: u16) -> Result<(), E> {
+        debug_assert!(
+            port_is_unique(self, socket, port)?,
+            "Local port {} is in use",
+            port
+        );
+
+        self.set_sn_cr(socket, SocketCommand::Close)?;
+        // This will not hang, the socket status will always change to closed
+        // after a close command.
+        // (unless you do somthing silly like holding the W5500 in reset)
+        loop {
+            if self.sn_sr(socket)? == Ok(SocketStatus::Closed) {
+                break;
+            }
+        }
+        let mut mode = SocketMode::default();
+        mode.set_protocol(Protocol::Tcp);
+        self.set_sn_mr(socket, mode)?;
+        self.set_sn_port(socket, port)?;
+        self.set_sn_cr(socket, SocketCommand::Open)?;
+        // This will not hang, the socket status will always change to Init
+        // after a open command with SN_MR set to TCP.
+        // (unless you do somthing silly like holding the W5500 in reset)
+        loop {
+            if self.sn_sr(socket)? == Ok(SocketStatus::Init) {
+                break;
+            }
+        }
+        self.set_sn_cr(socket, SocketCommand::Listen)
+    }
+
     /// Read data from the remote host, returning the number of bytes read.
     ///
     /// You should wait for the socket [`recv`] interrupt before calling this method.
@@ -556,14 +723,14 @@ pub trait TcpStream<E>: Registers<Error = E> {
     ///
     /// # Example
     ///
-    /// Send a MQTT CONNECt packet and read a CONNACK.
+    /// Send a MQTT CONNECT packet and read a CONNACK.
     ///
     /// ```no_run
     /// # let mut w5500 = w5500_regsim::W5500::new();
     /// use w5500_hl::{
     ///     ll::{Registers, Socket, SocketInterrupt},
     ///     net::{Ipv4Addr, SocketAddrV4},
-    ///     TcpStream,
+    ///     Tcp,
     /// };
     ///
     /// const MQTT_SOCKET: Socket = Socket::Socket0;
@@ -621,7 +788,7 @@ pub trait TcpStream<E>: Registers<Error = E> {
     /// use w5500_hl::{
     ///     ll::{Registers, Socket, SocketInterrupt},
     ///     net::{Ipv4Addr, SocketAddrV4},
-    ///     TcpStream,
+    ///     Tcp,
     /// };
     ///
     /// const MQTT_SOCKET: Socket = Socket::Socket0;
@@ -659,8 +826,8 @@ pub trait TcpStream<E>: Registers<Error = E> {
     }
 }
 
-/// Implement the TCP stream trait for any structure that implements [`w5500_ll::Registers`].
-impl<T, E> TcpStream<E> for T where T: Registers<Error = E> {}
+/// Implement the TCP trait for any structure that implements [`w5500_ll::Registers`].
+impl<T, E> Tcp<E> for T where T: Registers<Error = E> {}
 
 /// Methods common to all W5500 socket types.
 pub trait CommonSocket<E>: Registers<Error = E> {

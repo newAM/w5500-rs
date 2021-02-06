@@ -16,14 +16,15 @@ maintenance = { status = "experimental" }
 
 [dependencies]
 nb = "1"
-w5500-ll = "0.4"
+w5500-ll = "~0.4"
 
 [dev-dependencies]
-trust-dns-client = "0.20"
-embedded-hal-mock = "0.7"
+trust-dns-client = "~0.20"
+embedded-hal-mock = "~0.7"
 w5500-regsim = "0.1.0-alpha.1"
-version-sync = "0.9"
-stderrlog = "0.5"
+version-sync = "~0.9"
+stderrlog = "~0.5"
+httparse = { version = "1", default-features = false }
 
 [package.metadata.docs.rs]
 all-features = true
