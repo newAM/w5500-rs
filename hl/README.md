@@ -7,8 +7,8 @@
 
 Platform agnostic rust driver for the [Wiznet W5500] internet offload chip.
 
-This crate contains higher level (hl) socket operations, built ontop of my
-other crate, [`w5500-ll`], which contains register accessors, and networking
+This crate contains higher level (hl) socket operations, built on-top of my
+other crate, [w5500-ll], which contains register accessors, and networking
 data types for the W5500.
 
 ## Warning
@@ -20,10 +20,10 @@ This has been published early to solicit feedback.
 
 There are no separate socket structures.
 The [`Tcp`] and [`Udp`] traits provided in this crate simply extend the
-[`Registers`] trait provided in [`w5500-ll`].
+[`Registers`] trait provided in [w5500-ll].
 This makes for a less ergonomic API, but a much more portable API because
 there are no mutexes or runtime checks to enable socket structures to share
-the underlying W5500 device which has ownership over the sockets.
+ownership of the underlying W5500 device.
 
 You will likely want to wrap up the underlying structure that implements
 the [`Registers`], [`Tcp`], and [`Udp`] traits to provide separate socket
@@ -83,9 +83,18 @@ const HTTP_PORT: u16 = 80;
 w5500.tcp_listen(HTTP_SOCKET, HTTP_PORT)?;
 ```
 
-See the [examples directory] for more comprehensive examples.
+See the [examples directory] in the repository for more comprehensive examples.
+
+## Related Crates
+
+* [w5500-ll] - Low level W5500 register accessors.
+* [w5500-regsim] - Register simulation using [`std::net`].
 
 [`Registers`]: https://docs.rs/w5500-ll/latest/w5500_ll/trait.Registers.html
-[`w5500-ll`]: https://crates.io/crates/w5500-ll
-[Wiznet W5500]: https://www.wiznet.io/product-item/w5500/
+[`std::net`]: https://doc.rust-lang.org/std/net/index.html
 [examples directory]: https://github.com/newAM/w5500-hl-rs/tree/main/examples
+[w5500-ll]: https://github.com/newAM/w5500-ll-rs
+[w5500-regsim]: https://github.com/newAM/w5500-regsim-rs
+[Wiznet W5500]: https://www.wiznet.io/product-item/w5500/
+[`Tcp`]: https://docs.rs/w5500-hl/0.1.0-alpha.1/w5500_hl/trait.Tcp.html
+[`Udp`]: https://docs.rs/w5500-hl/0.1.0-alpha.1/w5500_hl/trait.Udp.html

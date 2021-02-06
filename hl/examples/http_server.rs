@@ -9,7 +9,7 @@
 
 use std::{thread::sleep, time::Duration};
 
-use w5500_hl::{CommonSocket, Tcp};
+use w5500_hl::{Common, Tcp};
 use w5500_ll::{Registers, Socket, VERSION};
 use w5500_regsim::W5500;
 
