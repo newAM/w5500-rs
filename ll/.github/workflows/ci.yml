@@ -15,10 +15,10 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
-      - run: RUSTFLAGS="-D warnings" cargo build --verbose --no-default-features
-      - run: RUSTFLAGS="-D warnings" cargo build --verbose --no-default-features --features embedded-hal
-      - run: RUSTFLAGS="-D warnings" cargo build --verbose --no-default-features --features std
-      - run: RUSTFLAGS="-D warnings" cargo build --verbose --all-features
+      - run: RUSTFLAGS="-D warnings" cargo build --no-default-features
+      - run: RUSTFLAGS="-D warnings" cargo build --no-default-features --features embedded-hal
+      - run: RUSTFLAGS="-D warnings" cargo build --no-default-features --features std
+      - run: RUSTFLAGS="-D warnings" cargo build --all-features
   
   test:
     name: Unit Tests
@@ -28,7 +28,7 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
-      - run: cargo test --verbose --all-features
+      - run: cargo test --all-features
 
   clippy_check:
     name: Clippy
@@ -63,6 +63,9 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
+      - run: cargo doc --no-default-features
+      - run: cargo doc --no-default-features --features embedded-hal
+      - run: cargo doc --no-default-features --features std
       - run: cargo doc --all-features
 
   rustdoc:

@@ -103,7 +103,7 @@ pub const fn fdm_header_4b(address: u16, block: u8, mode: AccessMode) -> [u8; HE
 /// Recommended W5500 SPI mode.
 ///
 /// The W5500 may operate in SPI mode 0 or SPI mode 3.
-#[cfg(any(feature = "embedded-hal", doc))]
+#[cfg(feature = "embedded-hal")]
 #[cfg_attr(docsrs, doc(cfg(feature = "embedded-hal")))]
 pub const MODE: embedded_hal::spi::Mode = embedded_hal::spi::Mode {
     polarity: embedded_hal::spi::Polarity::IdleLow,

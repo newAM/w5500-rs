@@ -50,16 +50,16 @@
 //! [w5500-hl]: https://github.com/newAM/w5500-hl-rs
 //! [w5500-regsim]: https://github.com/newAM/w5500-regsim-rs
 //! [Wiznet W5500]: https://www.wiznet.io/product-item/w5500/
-//! [`blocking`]: https://docs.rs/w5500-ll/0.5.0/w5500_ll/blocking/index.html
-//! [`Registers`]: https://docs.rs/w5500-ll/0.5.0/w5500_ll/trait.Registers.html
-//! [`w5500_ll::net`]: https://docs.rs/w5500-ll/0.5.0/w5500_ll/net/index.html
-#![doc(html_root_url = "https://docs.rs/w5500-ll/0.5.0")]
+//! [`blocking`]: https://docs.rs/w5500-ll/0.5.1/w5500_ll/blocking/index.html
+//! [`Registers`]: https://docs.rs/w5500-ll/0.5.1/w5500_ll/trait.Registers.html
+//! [`w5500_ll::net`]: https://docs.rs/w5500-ll/0.5.1/w5500_ll/net/index.html
+#![doc(html_root_url = "https://docs.rs/w5500-ll/0.5.1")]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
 #![cfg_attr(not(feature = "std"), no_std)]
 
-#[cfg(any(feature = "embedded-hal", doc))]
+#[cfg(feature = "embedded-hal")]
 #[cfg_attr(docsrs, doc(cfg(feature = "embedded-hal")))]
 pub mod blocking;
 pub mod net;
