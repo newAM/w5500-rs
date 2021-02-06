@@ -10,7 +10,7 @@
 use core::panic;
 use std::{thread::sleep, time::Duration};
 
-use w5500_hl::TcpStream;
+use w5500_hl::Tcp;
 use w5500_ll::{
     net::{Ipv4Addr, SocketAddrV4},
     Registers, Socket, SocketInterrupt, VERSION,

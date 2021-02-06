@@ -7,17 +7,85 @@
 
 Platform agnostic rust driver for the [Wiznet W5500] internet offload chip.
 
-This crate contains higher level socket operations, built ontop of my other
-crate, [`w5500_ll`], which contains register accessors and networking data
-types for the W5500.
+This crate contains higher level (hl) socket operations, built ontop of my
+other crate, [`w5500-ll`], which contains register accessors, and networking
+data types for the W5500.
 
 ## Warning
 
 This crate is still in an early alpha state.
 This has been published early to solicit feedback.
 
-At the moment only UDP socket and TCP streams have been implemented.
-TCP listeners have not yet been implemented.
+## Design
 
-[`w5500_ll`]: https://crates.io/crates/w5500-ll
+There are no separate socket structures.
+The [`Tcp`] and [`Udp`] traits provided in this crate simply extend the
+[`Registers`] trait provided in [`w5500-ll`].
+This makes for a less ergonomic API, but a much more portable API because
+there are no mutexes or runtime checks to enable socket structures to share
+the underlying W5500 device which has ownership over the sockets.
+
+You will likely want to wrap up the underlying structure that implements
+the [`Registers`], [`Tcp`], and [`Udp`] traits to provide separate socket
+structures utilizing whatever Mutex is available for your platform / RTOS.
+
+## Examples
+
+UDP sockets
+
+```rust
+use w5500_hl::ll::{
+    net::{Ipv4Addr, SocketAddrV4},
+    Registers,
+    Socket::Socket0,
+};
+use w5500_hl::Udp;
+
+// open Socket0 as a UDP socket on port 1234
+w5500.udp_bind(Socket0, 1234)?;
+
+// send 4 bytes to 192.168.2.4:8080, and get the number of bytes transmitted
+let data: [u8; 4] = [0, 1, 2, 3];
+let destination = SocketAddrV4::new(Ipv4Addr::new(192, 168, 2, 4), 8080);
+let tx_bytes = w5500.udp_send_to(Socket0, &data, &destination);
+```
+
+TCP streams (client)
+
+```rust
+use w5500_hl::ll::{
+    net::{Ipv4Addr, SocketAddrV4},
+    Registers, Socket,
+};
+use w5500_hl::Tcp;
+
+const MQTT_SOCKET: Socket = Socket::Socket0;
+const MQTT_SOURCE_PORT: u16 = 33650;
+const MQTT_SERVER: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::new(192, 168, 2, 10), 1883);
+
+// initiate a TCP connection to a MQTT server
+w5500.tcp_connect(MQTT_SOCKET, MQTT_SOURCE_PORT, &MQTT_SERVER)?;
+```
+
+TCP listeners (server)
+
+```rust
+use w5500_hl::ll::{
+    net::{Ipv4Addr, SocketAddrV4},
+    Registers, Socket,
+};
+use w5500_hl::Tcp;
+
+const HTTP_SOCKET: Socket = Socket::Socket1;
+const HTTP_PORT: u16 = 80;
+
+// serve HTTP
+w5500.tcp_listen(HTTP_SOCKET, HTTP_PORT)?;
+```
+
+See the [examples directory] for more comprehensive examples.
+
+[`Registers`]: https://docs.rs/w5500-ll/latest/w5500_ll/trait.Registers.html
+[`w5500-ll`]: https://crates.io/crates/w5500-ll
 [Wiznet W5500]: https://www.wiznet.io/product-item/w5500/
+[examples directory]: https://github.com/newAM/w5500-hl-rs/tree/main/examples
