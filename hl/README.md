@@ -11,11 +11,6 @@ This crate contains higher level (hl) socket operations, built on-top of my
 other crate, [w5500-ll], which contains register accessors, and networking
 data types for the W5500.
 
-## Warning
-
-This crate is still in an early alpha state.
-This has been published early to solicit feedback.
-
 ## Design
 
 There are no separate socket structures.
@@ -93,5 +88,5 @@ w5500.tcp_listen(HTTP_SOCKET, HTTP_PORT)?;
 [w5500-ll]: https://github.com/newAM/w5500-ll-rs
 [w5500-regsim]: https://github.com/newAM/w5500-regsim-rs
 [Wiznet W5500]: https://www.wiznet.io/product-item/w5500/
-[`Tcp`]: https://docs.rs/w5500-hl/0.1.0-alpha.2/w5500_hl/trait.Tcp.html
-[`Udp`]: https://docs.rs/w5500-hl/0.1.0-alpha.2/w5500_hl/trait.Udp.html
+[`Tcp`]: https://docs.rs/w5500-hl/0.1.0/w5500_hl/trait.Tcp.html
+[`Udp`]: https://docs.rs/w5500-hl/0.1.0/w5500_hl/trait.Udp.html
