@@ -35,6 +35,27 @@ jobs:
         with:
           toolchain: stable
       - run: cargo test
+  
+  testsuite:
+    name: testsuite Compile Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: thumbv6m-none-eabi
+      - run: RUSTFLAGS="-D warnings" cargo test -p testsuite --target thumbv6m-none-eabi --no-run
+
+  testsuite_peer:
+    name: testsuite-peer Compile Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - run: RUSTFLAGS="-D warnings" cargo build -p testsuite-peer
 
   clippy_check:
     name: Clippy
@@ -74,7 +95,14 @@ jobs:
   release:
     name: crates.io release
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: [build, test, clippy_check, format_check, docs]
+    needs:
+      - build
+      - test
+      - clippy_check
+      - format_check
+      - docs
+      - testsuite
+      - testsuite_peer
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
