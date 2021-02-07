@@ -485,7 +485,8 @@ pub trait Udp<E>: Registers<Error = E> {
 
     /// Sends data to the currently configured destination.
     ///
-    /// The destination is by the last call to [`set_sn_dest`] or [`send_to`].
+    /// The destination is set by the last call to [`set_sn_dest`] or
+    /// [`send_to`].
     ///
     /// # Panics
     ///
@@ -844,6 +845,49 @@ pub trait Tcp<E>: Registers<Error = E> {
             self.set_sn_cr(socket, SocketCommand::Send)?;
         }
         Ok(usize::from(tx_bytes))
+    }
+
+    /// Disconnect from the peer.
+    ///
+    /// If the disconnect is successful (FIN/ACK packet is received) the socket
+    /// status changes to [`Closed`], otherwise TCP<sub>TO</sub> occurs, the
+    /// [timeout interrupt] is raised, and the socket status changes to
+    /// [`Closed`].
+    ///
+    /// # Panics
+    ///
+    /// * (debug only) The socket must be an [`Established`] TCP socket.
+    ///
+    /// # Example
+    ///
+    /// Connect and disconnect from a MQTT server.
+    ///
+    /// ```no_run
+    /// # use embedded_hal_mock as h;
+    /// # let mut w5500 = w5500_ll::blocking::vdm::W5500::new(h::spi::Mock::new(&[]), h::pin::Mock::new(&[]));
+    /// use w5500_hl::{
+    ///     ll::{Registers, Socket, SocketInterrupt},
+    ///     net::{Ipv4Addr, SocketAddrV4},
+    ///     Tcp,
+    /// };
+    ///
+    /// const MQTT_SOCKET: Socket = Socket::Socket0;
+    /// const MQTT_SOURCE_PORT: u16 = 33650;
+    /// const MQTT_SERVER: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::new(192, 168, 2, 10), 1883);
+    ///
+    /// w5500.tcp_connect(MQTT_SOCKET, MQTT_SOURCE_PORT, &MQTT_SERVER)?;
+    ///
+    /// // ... wait for a CON interrupt
+    ///
+    /// w5500.tcp_disconnect(MQTT_SOCKET)?;
+    /// # Ok::<(), w5500_hl::ll::blocking::vdm::Error<_, _>>(())
+    /// ```
+    ///
+    /// [`Closed`]: w5500_ll::SocketStatus::Closed
+    /// [`Established`]: w5500_ll::SocketStatus::Established
+    /// [timeout interrupt]: w5500_ll::SocketInterrupt::timeout_raised
+    fn tcp_disconnect(&mut self, socket: Socket) -> Result<(), E> {
+        self.set_sn_cr(socket, SocketCommand::Disconnect)
     }
 }
 

@@ -16,7 +16,11 @@ maintenance = { status = "experimental" }
 
 [dependencies]
 nb = "^1"
-w5500-ll = "~0.5.1"
+
+[dependencies.w5500-ll]
+default-features = false
+version = "~0.5.1"
+features = ["embedded-hal"]
 
 [dev-dependencies]
 version-sync = "~0.9.1"
@@ -25,3 +29,6 @@ embedded-hal-mock = "~0.7"
 [package.metadata.docs.rs]
 all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
+
+[workspace]
+members = ["testsuite", "testsuite-peer", "testsuite-assets"]

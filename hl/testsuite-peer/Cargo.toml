@@ -1,0 +1,11 @@
+[package]
+authors = ["Alex M. <alexmgit@protonmail.com>"]
+name = "testsuite-peer"
+publish = false
+edition = "2018"
+version = "0.1.0"
+
+[dependencies]
+tokio = {version = "^1", features = ["full"]}
+reqwest = "~0.11.0"
+testsuite-assets = { path = "../testsuite-assets" }
