@@ -146,7 +146,7 @@ impl std::fmt::Display for BlockType {
                 write!(f, "TX{}", u8::from(*n))
             }
             BlockType::Rx(n) => {
-                write!(f, "SN{}", u8::from(*n))
+                write!(f, "RX{}", u8::from(*n))
             }
         }
     }
