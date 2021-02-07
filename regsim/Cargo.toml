@@ -24,4 +24,9 @@ default-features = false
 features = ["std"]
 
 [dev-dependencies]
-version-sync = "~0.9.1"
+trust-dns-client = "~0.20"
+w5500-hl = "0.1.0-alpha.2"
+version-sync = "~0.9"
+nb = "^1"
+stderrlog = "~0.5"
+httparse = { version = "^1", default-features = false }
