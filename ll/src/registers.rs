@@ -937,6 +937,31 @@ impl Default for SocketInterrupt {
     }
 }
 
+impl ::core::fmt::Display for SocketInterrupt {
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+        let not = |raised: bool| -> &str {
+            if raised {
+                ""
+            } else {
+                "not "
+            }
+        };
+        write!(
+            f,
+            r#"Socket interrupts:
+CON: {}raised
+DISCON: {}raised
+RECV: {}raised
+SENDOK: {}raised
+"#,
+            not(self.con_raised()),
+            not(self.discon_raised()),
+            not(self.recv_raised()),
+            not(self.sendok_raised())
+        )
+    }
+}
+
 impl SocketInterrupt {
     /// Socket interrupt status register (Sn_IR) reset value.
     pub const RESET: u8 = 0x00;
