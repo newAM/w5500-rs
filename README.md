@@ -83,8 +83,6 @@ const HTTP_PORT: u16 = 80;
 w5500.tcp_listen(HTTP_SOCKET, HTTP_PORT)?;
 ```
 
-See the [examples directory] in the repository for more comprehensive examples.
-
 ## Related Crates
 
 * [w5500-ll] - Low level W5500 register accessors.
@@ -92,9 +90,8 @@ See the [examples directory] in the repository for more comprehensive examples.
 
 [`Registers`]: https://docs.rs/w5500-ll/latest/w5500_ll/trait.Registers.html
 [`std::net`]: https://doc.rust-lang.org/std/net/index.html
-[examples directory]: https://github.com/newAM/w5500-hl-rs/tree/main/examples
 [w5500-ll]: https://github.com/newAM/w5500-ll-rs
 [w5500-regsim]: https://github.com/newAM/w5500-regsim-rs
 [Wiznet W5500]: https://www.wiznet.io/product-item/w5500/
-[`Tcp`]: https://docs.rs/w5500-hl/0.1.0-alpha.1/w5500_hl/trait.Tcp.html
-[`Udp`]: https://docs.rs/w5500-hl/0.1.0-alpha.1/w5500_hl/trait.Udp.html
+[`Tcp`]: https://docs.rs/w5500-hl/0.1.0-alpha.2/w5500_hl/trait.Tcp.html
+[`Udp`]: https://docs.rs/w5500-hl/0.1.0-alpha.2/w5500_hl/trait.Udp.html
