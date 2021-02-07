@@ -27,7 +27,8 @@
 //! UDP sockets
 //!
 //! ```no_run
-//! # let mut w5500 = w5500_regsim::W5500::new();
+//! # use embedded_hal_mock as h;
+//! # let mut w5500 = w5500_ll::blocking::vdm::W5500::new(h::spi::Mock::new(&[]), h::pin::Mock::new(&[]));
 //! use w5500_hl::ll::{
 //!     net::{Ipv4Addr, SocketAddrV4},
 //!     Registers,
@@ -42,13 +43,14 @@
 //! let data: [u8; 4] = [0, 1, 2, 3];
 //! let destination = SocketAddrV4::new(Ipv4Addr::new(192, 168, 2, 4), 8080);
 //! let tx_bytes = w5500.udp_send_to(Socket0, &data, &destination);
-//! # Ok::<(), std::io::Error>(())
+//! # Ok::<(), w5500_hl::ll::blocking::vdm::Error<_, _>>(())
 //! ```
 //!
 //! TCP streams (client)
 //!
 //! ```no_run
-//! # let mut w5500 = w5500_regsim::W5500::new();
+//! # use embedded_hal_mock as h;
+//! # let mut w5500 = w5500_ll::blocking::vdm::W5500::new(h::spi::Mock::new(&[]), h::pin::Mock::new(&[]));
 //! use w5500_hl::ll::{
 //!     net::{Ipv4Addr, SocketAddrV4},
 //!     Registers, Socket,
@@ -61,13 +63,14 @@
 //!
 //! // initiate a TCP connection to a MQTT server
 //! w5500.tcp_connect(MQTT_SOCKET, MQTT_SOURCE_PORT, &MQTT_SERVER)?;
-//! # Ok::<(), std::io::Error>(())
+//! # Ok::<(), w5500_hl::ll::blocking::vdm::Error<_, _>>(())
 //! ```
 //!
 //! TCP listeners (server)
 //!
 //! ```no_run
-//! # let mut w5500 = w5500_regsim::W5500::new();
+//! # use embedded_hal_mock as h;
+//! # let mut w5500 = w5500_ll::blocking::vdm::W5500::new(h::spi::Mock::new(&[]), h::pin::Mock::new(&[]));
 //! use w5500_hl::ll::{
 //!     net::{Ipv4Addr, SocketAddrV4},
 //!     Registers, Socket,
@@ -79,10 +82,8 @@
 //!
 //! // serve HTTP
 //! w5500.tcp_listen(HTTP_SOCKET, HTTP_PORT)?;
-//! # Ok::<(), std::io::Error>(())
+//! # Ok::<(), w5500_hl::ll::blocking::vdm::Error<_, _>>(())
 //! ```
-//!
-//! See the [examples directory] in the repository for more comprehensive examples.
 //!
 //! # Related Crates
 //!
@@ -91,7 +92,6 @@
 //!
 //! [`Registers`]: https://docs.rs/w5500-ll/latest/w5500_ll/trait.Registers.html
 //! [`std::net`]: https://doc.rust-lang.org/std/net/index.html
-//! [examples directory]: https://github.com/newAM/w5500-hl-rs/tree/main/examples
 //! [w5500-ll]: https://github.com/newAM/w5500-ll-rs
 //! [w5500-regsim]: https://github.com/newAM/w5500-regsim-rs
 //! [Wiznet W5500]: https://www.wiznet.io/product-item/w5500/
@@ -201,12 +201,13 @@ pub trait Udp<E>: Registers<Error = E> {
     /// Bind the first socket to port 8080.
     ///
     /// ```no_run
-    /// # let mut w5500 = w5500_regsim::W5500::new();
+    /// # use embedded_hal_mock as h;
+    /// # let mut w5500 = w5500_ll::blocking::vdm::W5500::new(h::spi::Mock::new(&[]), h::pin::Mock::new(&[]));
     /// use w5500_hl::ll::{Registers, Socket::Socket0};
     /// use w5500_hl::Udp;
     ///
     /// w5500.udp_bind(Socket0, 8080)?;
-    /// # Ok::<(), std::io::Error>(())
+    /// # Ok::<(), w5500_hl::ll::blocking::vdm::Error<_, _>>(())
     /// ```
     ///
     /// [`std::net::UdpSocket::bind`]: https://doc.rust-lang.org/std/net/struct.UdpSocket.html#method.bind
@@ -263,7 +264,8 @@ pub trait Udp<E>: Registers<Error = E> {
     /// # Example
     ///
     /// ```no_run
-    /// # let mut w5500 = w5500_regsim::W5500::new();
+    /// # use embedded_hal_mock as h;
+    /// # let mut w5500 = w5500_ll::blocking::vdm::W5500::new(h::spi::Mock::new(&[]), h::pin::Mock::new(&[]));
     /// use nb::block;
     /// use w5500_hl::{
     ///     ll::{Registers, Socket::Socket0},
@@ -281,7 +283,7 @@ pub trait Udp<E>: Registers<Error = E> {
     /// );
     ///
     /// let filled_buf = &mut buf[..number_of_bytes];
-    /// # Ok::<(), std::io::Error>(())
+    /// # Ok::<(), w5500_hl::ll::blocking::vdm::Error<_, _>>(())
     /// ```
     ///
     /// [`std::net::UdpSocket::recv_from`]: https://doc.rust-lang.org/std/net/struct.UdpSocket.html#method.recv_from
@@ -337,7 +339,8 @@ pub trait Udp<E>: Registers<Error = E> {
     /// # Example
     ///
     /// ```no_run
-    /// # let mut w5500 = w5500_regsim::W5500::new();
+    /// # use embedded_hal_mock as h;
+    /// # let mut w5500 = w5500_ll::blocking::vdm::W5500::new(h::spi::Mock::new(&[]), h::pin::Mock::new(&[]));
     /// use nb::block;
     /// use w5500_hl::{
     ///     ll::{Registers, Socket::Socket0},
@@ -355,7 +358,7 @@ pub trait Udp<E>: Registers<Error = E> {
     /// );
     ///
     /// let filled_buf = &mut buf[..number_of_bytes];
-    /// # Ok::<(), std::io::Error>(())
+    /// # Ok::<(), w5500_hl::ll::blocking::vdm::Error<_, _>>(())
     /// ```
     ///
     /// [`std::net::UdpSocket::peek_from`]: https://doc.rust-lang.org/std/net/struct.UdpSocket.html#method.peek_from
@@ -406,7 +409,8 @@ pub trait Udp<E>: Registers<Error = E> {
     /// # Example
     ///
     /// ```no_run
-    /// # let mut w5500 = w5500_regsim::W5500::new();
+    /// # use embedded_hal_mock as h;
+    /// # let mut w5500 = w5500_ll::blocking::vdm::W5500::new(h::spi::Mock::new(&[]), h::pin::Mock::new(&[]));
     /// use nb::block;
     /// use w5500_hl::{
     ///     ll::{Registers, Socket::Socket0},
@@ -422,7 +426,7 @@ pub trait Udp<E>: Registers<Error = E> {
     /// let mut buf: Vec<u8> = vec![0; bytes_to_allocate];
     /// let (number_of_bytes, source) = block!(w5500.udp_recv_from(Socket0, &mut buf))?;
     /// debug_assert_eq!(bytes_to_allocate, number_of_bytes);
-    /// # Ok::<(), std::io::Error>(())
+    /// # Ok::<(), w5500_hl::ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn udp_peek_from_header(&mut self, socket: Socket) -> nb::Result<(usize, SocketAddrV4), E> {
         let rsr: u16 = self.sn_rx_rsr(socket)?;
@@ -456,7 +460,8 @@ pub trait Udp<E>: Registers<Error = E> {
     /// # Example
     ///
     /// ```no_run
-    /// # let mut w5500 = w5500_regsim::W5500::new();
+    /// # use embedded_hal_mock as h;
+    /// # let mut w5500 = w5500_ll::blocking::vdm::W5500::new(h::spi::Mock::new(&[]), h::pin::Mock::new(&[]));
     /// use w5500_hl::{
     ///     ll::{Registers, Socket::Socket0},
     ///     net::{Ipv4Addr, SocketAddrV4},
@@ -469,7 +474,7 @@ pub trait Udp<E>: Registers<Error = E> {
     /// let buf: [u8; 10] = [0; 10];
     /// let tx_bytes = w5500.udp_send_to(Socket0, &buf, &DEST)?;
     /// assert_eq!(tx_bytes, buf.len());
-    /// # Ok::<(), std::io::Error>(())
+    /// # Ok::<(), w5500_hl::ll::blocking::vdm::Error<_, _>>(())
     /// ```
     ///
     /// [`std::net::UdpSocket::send_to`]: https://doc.rust-lang.org/std/net/struct.UdpSocket.html#method.send_to
@@ -489,7 +494,8 @@ pub trait Udp<E>: Registers<Error = E> {
     /// # Example
     ///
     /// ```no_run
-    /// # let mut w5500 = w5500_regsim::W5500::new();
+    /// # use embedded_hal_mock as h;
+    /// # let mut w5500 = w5500_ll::blocking::vdm::W5500::new(h::spi::Mock::new(&[]), h::pin::Mock::new(&[]));
     /// use w5500_hl::{
     ///     ll::{Registers, Socket::Socket0},
     ///     net::{Ipv4Addr, SocketAddrV4},
@@ -505,7 +511,7 @@ pub trait Udp<E>: Registers<Error = E> {
     /// // send the same to the same destination
     /// let tx_bytes = w5500.udp_send(Socket0, &buf)?;
     /// assert_eq!(tx_bytes, buf.len());
-    /// # Ok::<(), std::io::Error>(())
+    /// # Ok::<(), w5500_hl::ll::blocking::vdm::Error<_, _>>(())
     /// ```
     ///
     /// [`set_sn_dest`]: w5500_ll::Registers::set_sn_dest
@@ -563,7 +569,8 @@ pub trait Tcp<E>: Registers<Error = E> {
     /// # Example
     ///
     /// ```no_run
-    /// # let mut w5500 = w5500_regsim::W5500::new();
+    /// # use embedded_hal_mock as h;
+    /// # let mut w5500 = w5500_ll::blocking::vdm::W5500::new(h::spi::Mock::new(&[]), h::pin::Mock::new(&[]));
     /// use w5500_hl::{
     ///     ll::{Registers, Socket, SocketInterrupt},
     ///     net::{Ipv4Addr, SocketAddrV4},
@@ -590,7 +597,7 @@ pub trait Tcp<E>: Registers<Error = E> {
     ///         break;
     ///     }
     /// }
-    /// # Ok::<(), std::io::Error>(())
+    /// # Ok::<(), w5500_hl::ll::blocking::vdm::Error<_, _>>(())
     /// ```
     ///
     /// [`tcp_write`]: Tcp::tcp_write
@@ -650,7 +657,8 @@ pub trait Tcp<E>: Registers<Error = E> {
     /// Create an HTTP server.
     ///
     /// ```no_run
-    /// # let mut w5500 = w5500_regsim::W5500::new();
+    /// # use embedded_hal_mock as h;
+    /// # let mut w5500 = w5500_ll::blocking::vdm::W5500::new(h::spi::Mock::new(&[]), h::pin::Mock::new(&[]));
     /// use w5500_hl::{
     ///     ll::{Registers, Socket, SocketInterrupt},
     ///     net::{Ipv4Addr, SocketAddrV4},
@@ -685,7 +693,7 @@ pub trait Tcp<E>: Registers<Error = E> {
     /// let filled_buf: &[u8] = &buf[..rx_bytes];
     ///
     /// // parse HTTP request here using filled_buf
-    /// # Ok::<(), std::io::Error>(())
+    /// # Ok::<(), w5500_hl::ll::blocking::vdm::Error<_, _>>(())
     /// ```
     ///
     /// [`tcp_write`]: Tcp::tcp_write
@@ -737,7 +745,8 @@ pub trait Tcp<E>: Registers<Error = E> {
     /// Send a MQTT CONNECT packet and read a CONNACK.
     ///
     /// ```no_run
-    /// # let mut w5500 = w5500_regsim::W5500::new();
+    /// # use embedded_hal_mock as h;
+    /// # let mut w5500 = w5500_ll::blocking::vdm::W5500::new(h::spi::Mock::new(&[]), h::pin::Mock::new(&[]));
     /// use w5500_hl::{
     ///     ll::{Registers, Socket, SocketInterrupt},
     ///     net::{Ipv4Addr, SocketAddrV4},
@@ -763,7 +772,7 @@ pub trait Tcp<E>: Registers<Error = E> {
     /// let mut buf = [0; 10];
     /// let rx_bytes: usize = w5500.tcp_read(MQTT_SOCKET, &mut buf)?;
     /// let filled_buf = &buf[..rx_bytes];
-    /// # Ok::<(), std::io::Error>(())
+    /// # Ok::<(), w5500_hl::ll::blocking::vdm::Error<_, _>>(())
     /// ```
     ///
     /// [`Established`]: w5500_ll::SocketStatus::Established
@@ -795,7 +804,8 @@ pub trait Tcp<E>: Registers<Error = E> {
     /// Send a MQTT CONNECT packet.
     ///
     /// ```no_run
-    /// # let mut w5500 = w5500_regsim::W5500::new();
+    /// # use embedded_hal_mock as h;
+    /// # let mut w5500 = w5500_ll::blocking::vdm::W5500::new(h::spi::Mock::new(&[]), h::pin::Mock::new(&[]));
     /// use w5500_hl::{
     ///     ll::{Registers, Socket, SocketInterrupt},
     ///     net::{Ipv4Addr, SocketAddrV4},
@@ -815,7 +825,7 @@ pub trait Tcp<E>: Registers<Error = E> {
     /// ];
     /// let tx_bytes: usize = w5500.tcp_write(MQTT_SOCKET, &CONNECT)?;
     /// assert_eq!(tx_bytes, CONNECT.len());
-    /// # Ok::<(), std::io::Error>(())
+    /// # Ok::<(), w5500_hl::ll::blocking::vdm::Error<_, _>>(())
     /// ```
     ///
     /// [`Established`]: w5500_ll::SocketStatus::Established
@@ -847,13 +857,14 @@ pub trait Common<E>: Registers<Error = E> {
     /// # Example
     ///
     /// ```no_run
-    /// # let mut w5500 = w5500_regsim::W5500::new();
+    /// # use embedded_hal_mock as h;
+    /// # let mut w5500 = w5500_ll::blocking::vdm::W5500::new(h::spi::Mock::new(&[]), h::pin::Mock::new(&[]));
     /// use w5500_hl::ll::{Registers, Socket::Socket0};
     /// use w5500_hl::{Common, Udp};
     ///
     /// w5500.udp_bind(Socket0, 8080)?;
     /// let local_addr = w5500.local_addr(Socket0)?;
-    /// # Ok::<(), std::io::Error>(())
+    /// # Ok::<(), w5500_hl::ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn local_addr(&mut self, socket: Socket) -> Result<SocketAddrV4, E> {
         let ip: Ipv4Addr = self.sipr()?;
@@ -869,12 +880,13 @@ pub trait Common<E>: Registers<Error = E> {
     /// # Example
     ///
     /// ```no_run
-    /// # let mut w5500 = w5500_regsim::W5500::new();
+    /// # use embedded_hal_mock as h;
+    /// # let mut w5500 = w5500_ll::blocking::vdm::W5500::new(h::spi::Mock::new(&[]), h::pin::Mock::new(&[]));
     /// use w5500_hl::ll::{Registers, Socket::Socket0};
     /// use w5500_hl::Common;
     ///
     /// w5500.close(Socket0)?;
-    /// # Ok::<(), std::io::Error>(())
+    /// # Ok::<(), w5500_hl::ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn close(&mut self, socket: Socket) -> Result<(), E> {
         self.set_sn_cr(socket, SocketCommand::Close)

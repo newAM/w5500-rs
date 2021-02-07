@@ -19,12 +19,8 @@ nb = "^1"
 w5500-ll = "~0.5.1"
 
 [dev-dependencies]
-trust-dns-client = "~0.20"
+version-sync = "~0.9.1"
 embedded-hal-mock = "~0.7"
-w5500-regsim = "0.1.0-alpha.2"
-version-sync = "~0.9"
-stderrlog = "~0.5"
-httparse = { version = "^1", default-features = false }
 
 [package.metadata.docs.rs]
 all-features = true
