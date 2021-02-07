@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Implement `fmt::Display` for `SocketInterrupt`.
 
+## Changed
+- Changed `set_sn_ir` to accept any type that implements `Into<u8>`.
+
 ## [0.5.1] - 2021-02-06
 ### Fixed
 - Fixed documentation builds failing without the `embedded-hal` feature.

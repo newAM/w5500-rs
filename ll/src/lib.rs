@@ -1564,7 +1564,11 @@ pub trait Registers {
 
     /// Set the socket interrupt status.
     ///
-    /// # Example
+    /// This is a write 1 to clear register.
+    ///
+    /// # Examples
+    ///
+    /// Clearing all raised interrupts.
     ///
     /// ```
     /// # use embedded_hal_mock as hal;
@@ -1580,14 +1584,33 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::vdm::W5500, Registers, Socket};
+    /// use w5500_ll::{blocking::vdm::W5500, Registers, Socket, SocketInterrupt};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
-    /// let socket_interrupts = w5500.sn_ir(Socket::Socket0)?;
+    /// let socket_interrupts: SocketInterrupt = w5500.sn_ir(Socket::Socket0)?;
     /// w5500.set_sn_ir(Socket::Socket0, socket_interrupts)?;
     /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
-    fn set_sn_ir(&mut self, socket: Socket, sn_ir: SocketInterrupt) -> Result<(), Self::Error> {
+    ///
+    /// Clearing only the SENDOK interrupt.
+    ///
+    /// ```
+    /// # use embedded_hal_mock as hal;
+    /// # let spi = hal::spi::Mock::new(&[
+    /// #   hal::spi::Transaction::write(vec![0x00, 0x02, 0x08 | 0x04]),
+    /// #   hal::spi::Transaction::write(vec![SocketInterrupt::SENDOK_MASK]),
+    /// # ]);
+    /// # let pin = hal::pin::Mock::new(&[
+    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
+    /// #    hal::pin::Transaction::set(hal::pin::State::High),
+    /// # ]);
+    /// use w5500_ll::{blocking::vdm::W5500, Registers, Socket, SocketInterrupt};
+    ///
+    /// let mut w5500 = W5500::new(spi, pin);
+    /// w5500.set_sn_ir(Socket::Socket0, SocketInterrupt::SENDOK_MASK)?;
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// ```
+    fn set_sn_ir<T: Into<u8>>(&mut self, socket: Socket, sn_ir: T) -> Result<(), Self::Error> {
         self.write(reg::SN_IR, socket.block(), &[sn_ir.into()])
     }
 
