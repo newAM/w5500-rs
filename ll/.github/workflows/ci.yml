@@ -10,16 +10,27 @@ jobs:
   build:
     name: Cargo Build
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target:
+          - "x86_64-unknown-linux-gnu"
+          - "thumbv6m-none-eabi"
+          - "thumbv7em-none-eabi"
+          - "thumbv7em-none-eabihf"
+          - "thumbv7m-none-eabi"
     steps:
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
-      - run: RUSTFLAGS="-D warnings" cargo build --no-default-features
-      - run: RUSTFLAGS="-D warnings" cargo build --no-default-features --features embedded-hal
-      - run: RUSTFLAGS="-D warnings" cargo build --no-default-features --features std
-      - run: RUSTFLAGS="-D warnings" cargo build --all-features
-  
+          target: ${{ matrix.target }}
+      - run: RUSTFLAGS="-D warnings" cargo build --target ${{ matrix.target }} --no-default-features
+      - run: RUSTFLAGS="-D warnings" cargo build --target ${{ matrix.target }} --no-default-features --features embedded-hal
+      - run: RUSTFLAGS="-D warnings" cargo build --target ${{ matrix.target }} --no-default-features --features std
+        if: ${{ contains(matrix.target, 'linux') }}
+      - run: RUSTFLAGS="-D warnings" cargo build --target ${{ matrix.target }} --all-features
+        if: ${{ contains(matrix.target, 'linux') }}
+
   test:
     name: Unit Tests
     runs-on: ubuntu-latest

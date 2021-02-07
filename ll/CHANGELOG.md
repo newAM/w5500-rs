@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.5.1] - 2021-02-06
 ### Fixed
-- Fixed failing documentation builds without the `embedded-hal` feature.
+- Fixed documentation builds failing without the `embedded-hal` feature.
 
 ## [0.5.0] - 2021-02-06
 ### Added
