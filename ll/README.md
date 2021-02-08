@@ -29,8 +29,9 @@ assert_eq!(version, 0x04);
 
 ## Feature Flags
 
-By default only the `embedded-hal` feature is enabled.
+All features are disabled by default.
 
+* `defmt`: Enable formatting `Ipv4Addr` and `SocketAddrV4` with `defmt`.
 * `embedded-hal`: Enables the [`blocking`] module which contains
   implementations of the [`Registers`] trait using the [`embedded-hal`] traits.
 * `std`: Enables conversion between [`std::net`] and [`w5500_ll::net`] types.

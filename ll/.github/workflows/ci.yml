@@ -24,9 +24,10 @@ jobs:
         with:
           toolchain: stable
           target: ${{ matrix.target }}
-      - run: RUSTFLAGS="-D warnings" cargo build --target ${{ matrix.target }} --no-default-features
-      - run: RUSTFLAGS="-D warnings" cargo build --target ${{ matrix.target }} --no-default-features --features embedded-hal
-      - run: RUSTFLAGS="-D warnings" cargo build --target ${{ matrix.target }} --no-default-features --features std
+      - run: RUSTFLAGS="-D warnings" cargo build --target ${{ matrix.target }}
+      - run: RUSTFLAGS="-D warnings" cargo build --target ${{ matrix.target }} --features embedded-hal
+      - run: RUSTFLAGS="-D warnings" cargo build --target ${{ matrix.target }} --features defmt
+      - run: RUSTFLAGS="-D warnings" cargo build --target ${{ matrix.target }} --features std
         if: ${{ contains(matrix.target, 'linux') }}
       - run: RUSTFLAGS="-D warnings" cargo build --target ${{ matrix.target }} --all-features
         if: ${{ contains(matrix.target, 'linux') }}
