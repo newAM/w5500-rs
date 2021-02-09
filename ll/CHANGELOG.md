@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Implement `fmt::Display` for `SocketInterrupt`.
 - Implement `defmt::Format` for `Ipv4Addr` and `SocketAddrV4`.
+- Added a `free` method to the fixed data length implementation.
 
 ## Changed
 - Changed `set_sn_ir` to accept any type that implements `Into<u8>`.

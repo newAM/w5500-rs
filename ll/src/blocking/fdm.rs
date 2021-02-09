@@ -41,6 +41,22 @@ where
     pub fn new(spi: SPI) -> Self {
         W5500 { spi }
     }
+
+    /// Free the SPI bus from the W5500.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use embedded_hal_mock as hal;
+    /// # let spi = hal::spi::Mock::new(&[]);
+    /// use w5500_ll::blocking::fdm::W5500;
+    ///
+    /// let w5500: W5500<_> = W5500::new(spi);
+    /// let spi = w5500.free();
+    /// ```
+    pub fn free(self) -> SPI {
+        self.spi
+    }
 }
 
 impl<SPI, SpiError> crate::Registers for W5500<SPI>
