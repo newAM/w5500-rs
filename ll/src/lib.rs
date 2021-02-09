@@ -36,7 +36,7 @@
 //!
 //! * `defmt`: Enable formatting `Ipv4Addr` and `SocketAddrV4` with `defmt`.
 //! * `embedded-hal`: Enables the [`blocking`] module which contains
-//!   implementations of the [`Registers`] trait using the [`embedded-hal`] traits.
+//!   implementations of the [`Registers`] trait using the `embedded-hal` traits.
 //! * `std`: Enables conversion between [`std::net`] and [`w5500_ll::net`] types.
 //!   This is for testing purposes only, the `std` flag will not work on
 //!   embedded systems because it uses the standard library.
@@ -46,7 +46,6 @@
 //! * [w5500-hl] - Higher level socket operations.
 //! * [w5500-regsim] - Register simulation using [`std::net`].
 //!
-//! [`embedded-hal`]: https://github.com/rust-embedded/embedded-hal
 //! [`std::net`]: https://doc.rust-lang.org/std/net/index.html
 //! [w5500-hl]: https://github.com/newAM/w5500-hl-rs
 //! [w5500-regsim]: https://github.com/newAM/w5500-regsim-rs
@@ -57,7 +56,7 @@
 #![doc(html_root_url = "https://docs.rs/w5500-ll/0.5.1")]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![forbid(unsafe_code)]
-#![deny(missing_docs)]
+#![forbid(missing_docs)]
 #![cfg_attr(not(feature = "std"), no_std)]
 
 #[cfg(feature = "embedded-hal")]
@@ -87,7 +86,31 @@ const SOCKET_BLOCK_OFFSET: u8 = 0x01;
 const SOCKET_TX_OFFSET: u8 = 0x02;
 /// Socket RX block select bits offset
 const SOCKET_RX_OFFSET: u8 = 0x03;
+
 /// Value of the W5500 VERSIONR register.
+///
+/// This is very useful as a sanity check to ensure the W5500 is out of reset
+/// and responding correctly to register reads.
+///
+/// # Example
+///
+/// ```
+/// # use embedded_hal_mock as hal;
+/// # let spi = hal::spi::Mock::new(&[
+/// #   hal::spi::Transaction::write(vec![0x00, 0x39, 0x00]),
+/// #   hal::spi::Transaction::transfer(vec![0], vec![0x04]),
+/// # ]);
+/// # let pin = hal::pin::Mock::new(&[
+/// #    hal::pin::Transaction::set(hal::pin::State::Low),
+/// #    hal::pin::Transaction::set(hal::pin::State::High),
+/// # ]);
+/// use w5500_ll::{blocking::vdm::W5500, Registers, VERSION};
+///
+/// let mut w5500 = W5500::new(spi, pin);
+/// let version: u8 = w5500.version()?;
+/// assert_eq!(version, VERSION);
+/// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+/// ```
 pub const VERSION: u8 = 0x04;
 
 /// W5500 register addresses.
@@ -183,7 +206,6 @@ pub mod reg {
 
 /// W5500 sockets.
 #[repr(u8)]
-#[allow(missing_docs)]
 #[derive(PartialEq, Eq, PartialOrd, Ord, Copy, Clone, Debug, Hash)]
 pub enum Socket {
     /// Socket 0.
@@ -305,6 +327,58 @@ impl TryFrom<u8> for Socket {
 /// Array of all sockets.
 ///
 /// Useful for iterating over sockets.
+///
+/// # Example
+///
+/// Close all sockets.
+///
+/// ```
+/// # use w5500_ll::Socket::*;
+/// # use embedded_hal_mock as hal;
+/// # let spi = hal::spi::Mock::new(&[
+/// #   hal::spi::Transaction::write(vec![0x00, 0x01, (Socket0.block() << 3) | 0x04]),
+/// #   hal::spi::Transaction::write(vec![SocketCommand::Close.into()]),
+/// #   hal::spi::Transaction::write(vec![0x00, 0x01, (Socket1.block() << 3) | 0x04]),
+/// #   hal::spi::Transaction::write(vec![SocketCommand::Close.into()]),
+/// #   hal::spi::Transaction::write(vec![0x00, 0x01, (Socket2.block() << 3) | 0x04]),
+/// #   hal::spi::Transaction::write(vec![SocketCommand::Close.into()]),
+/// #   hal::spi::Transaction::write(vec![0x00, 0x01, (Socket3.block() << 3) | 0x04]),
+/// #   hal::spi::Transaction::write(vec![SocketCommand::Close.into()]),
+/// #   hal::spi::Transaction::write(vec![0x00, 0x01, (Socket4.block() << 3) | 0x04]),
+/// #   hal::spi::Transaction::write(vec![SocketCommand::Close.into()]),
+/// #   hal::spi::Transaction::write(vec![0x00, 0x01, (Socket5.block() << 3) | 0x04]),
+/// #   hal::spi::Transaction::write(vec![SocketCommand::Close.into()]),
+/// #   hal::spi::Transaction::write(vec![0x00, 0x01, (Socket6.block() << 3) | 0x04]),
+/// #   hal::spi::Transaction::write(vec![SocketCommand::Close.into()]),
+/// #   hal::spi::Transaction::write(vec![0x00, 0x01, (Socket7.block() << 3) | 0x04]),
+/// #   hal::spi::Transaction::write(vec![SocketCommand::Close.into()]),
+/// # ]);
+/// # let pin = hal::pin::Mock::new(&[
+/// #    hal::pin::Transaction::set(hal::pin::State::Low),
+/// #    hal::pin::Transaction::set(hal::pin::State::High),
+/// #    hal::pin::Transaction::set(hal::pin::State::Low),
+/// #    hal::pin::Transaction::set(hal::pin::State::High),
+/// #    hal::pin::Transaction::set(hal::pin::State::Low),
+/// #    hal::pin::Transaction::set(hal::pin::State::High),
+/// #    hal::pin::Transaction::set(hal::pin::State::Low),
+/// #    hal::pin::Transaction::set(hal::pin::State::High),
+/// #    hal::pin::Transaction::set(hal::pin::State::Low),
+/// #    hal::pin::Transaction::set(hal::pin::State::High),
+/// #    hal::pin::Transaction::set(hal::pin::State::Low),
+/// #    hal::pin::Transaction::set(hal::pin::State::High),
+/// #    hal::pin::Transaction::set(hal::pin::State::Low),
+/// #    hal::pin::Transaction::set(hal::pin::State::High),
+/// #    hal::pin::Transaction::set(hal::pin::State::Low),
+/// #    hal::pin::Transaction::set(hal::pin::State::High),
+/// # ]);
+/// use w5500_ll::{blocking::vdm::W5500, Registers, SocketCommand, SOCKETS};
+///
+/// let mut w5500 = W5500::new(spi, pin);
+/// for socket in SOCKETS.iter() {
+///     w5500.set_sn_cr(*socket, SocketCommand::Close)?;
+/// }
+/// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+/// ```
 pub const SOCKETS: [Socket; 8] = [
     Socket::Socket0,
     Socket::Socket1,
@@ -327,9 +401,23 @@ pub trait Registers {
     type Error;
 
     /// Read from the W5500.
+    ///
+    /// # Arguments
+    ///
+    /// * `address` - Starting address of the memory being read.
+    /// * `block` - W5500 block select bits
+    /// * `data` - Buffer to read data into. The number of bytes read is equal
+    ///   to the length of this buffer.
     fn read(&mut self, address: u16, block: u8, data: &mut [u8]) -> Result<(), Self::Error>;
 
     /// Write to the W5500.
+    ///
+    /// # Arguments
+    ///
+    /// * `address` - Starting address of the memory being written.
+    /// * `block` - W5500 block select bits
+    /// * `data` - Buffer of data to write. The number of bytes written is equal
+    ///   to the length of this buffer.
     fn write(&mut self, address: u16, block: u8, data: &[u8]) -> Result<(), Self::Error>;
 
     /// Get the mode register.

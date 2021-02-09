@@ -33,7 +33,7 @@ All features are disabled by default.
 
 * `defmt`: Enable formatting `Ipv4Addr` and `SocketAddrV4` with `defmt`.
 * `embedded-hal`: Enables the [`blocking`] module which contains
-  implementations of the [`Registers`] trait using the [`embedded-hal`] traits.
+  implementations of the [`Registers`] trait using the `embedded-hal` traits.
 * `std`: Enables conversion between [`std::net`] and [`w5500_ll::net`] types.
   This is for testing purposes only, the `std` flag will not work on
   embedded systems because it uses the standard library.
@@ -43,7 +43,6 @@ All features are disabled by default.
 * [w5500-hl] - Higher level socket operations.
 * [w5500-regsim] - Register simulation using [`std::net`].
 
-[`embedded-hal`]: https://github.com/rust-embedded/embedded-hal
 [`std::net`]: https://doc.rust-lang.org/std/net/index.html
 [w5500-hl]: https://github.com/newAM/w5500-hl-rs
 [w5500-regsim]: https://github.com/newAM/w5500-regsim-rs
