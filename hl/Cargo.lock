@@ -1434,7 +1434,7 @@ dependencies = [
 
 [[package]]
 name = "w5500-hl"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "embedded-hal-mock",
  "nb 1.0.0",
