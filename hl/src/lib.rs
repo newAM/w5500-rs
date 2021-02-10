@@ -17,6 +17,14 @@
 //! the [`Registers`], [`Tcp`], and [`Udp`] traits to provide separate socket
 //! structures utilizing whatever Mutex is available for your platform / RTOS.
 //!
+//! # Feature Flags
+//!
+//! All features are disabled by default.
+//!
+//! * `defmt`: Passthrough to [w5500-ll].
+//! * `embedded-hal`: Passthrough to [w5500-ll].
+//! * `std`: Passthrough to [w5500-ll].
+//!
 //! # Examples
 //!
 //! UDP sockets
@@ -189,7 +197,7 @@ pub trait Udp<E>: Registers<Error = E> {
     ///
     /// # Panics
     ///
-    /// * (debug only) The port must not be in use by any other socket on the W5500.
+    /// * (debug) The port must not be in use by any other socket on the W5500.
     ///
     /// # Example
     ///
@@ -560,7 +568,7 @@ pub trait Tcp<E>: Registers<Error = E> {
     ///
     /// # Panics
     ///
-    /// * (debug only) The port must not be in use by any other socket on the W5500.
+    /// * (debug) The port must not be in use by any other socket on the W5500.
     ///
     /// # Example
     ///
@@ -646,7 +654,7 @@ pub trait Tcp<E>: Registers<Error = E> {
     ///
     /// # Panics
     ///
-    /// * (debug only) The port must not be in use by any other socket on the W5500.
+    /// * (debug) The port must not be in use by any other socket on the W5500.
     ///
     /// # Example
     ///
@@ -734,7 +742,7 @@ pub trait Tcp<E>: Registers<Error = E> {
     ///
     /// # Panics
     ///
-    /// * (debug only) The socket must be an [`Established`] TCP socket.
+    /// * (debug) The socket must be an [`Established`] TCP socket.
     ///
     /// # Example
     ///
@@ -793,7 +801,7 @@ pub trait Tcp<E>: Registers<Error = E> {
     ///
     /// # Panics
     ///
-    /// * (debug only) The socket must be an [`Established`] TCP socket.
+    /// * (debug) The socket must be an [`Established`] TCP socket.
     ///
     /// # Example
     ///
@@ -851,7 +859,7 @@ pub trait Tcp<E>: Registers<Error = E> {
     ///
     /// # Panics
     ///
-    /// * (debug only) The socket must be an [`Established`] TCP socket.
+    /// * (debug) The socket must be an [`Established`] TCP socket.
     ///
     /// # Example
     ///
