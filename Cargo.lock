@@ -1188,7 +1188,6 @@ dependencies = [
  "stm32f0xx-hal",
  "testsuite-assets",
  "w5500-hl",
- "w5500-ll",
 ]
 
 [[package]]
@@ -1445,10 +1444,11 @@ dependencies = [
 
 [[package]]
 name = "w5500-ll"
-version = "0.5.1"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "739d713aa7000705b1fab7f0d7cacb23fca33df0755e499eacb698abd7ba83ea"
+checksum = "2b13468e3cf99e63074af4774b5b32d88f1ee35deae72c6998e9a340a27bb067"
 dependencies = [
+ "defmt",
  "embedded-hal",
 ]
 

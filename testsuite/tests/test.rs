@@ -59,7 +59,7 @@ pub fn nop_delay_ms(ms: usize) {
 
 /// W5500 without template type deduction.
 /// VDM = Variable data mode (with a chip select pin).
-type MyW5500 = w5500_ll::blocking::vdm::W5500<
+type MyW5500 = w5500_hl::ll::blocking::vdm::W5500<
     Spi<
         SPI1,
         PA5<gpio::Alternate<AF0>>,
@@ -87,7 +87,7 @@ fn poll_int<T: Registers<Error = E>, E: core::fmt::Debug>(
         let sn_ir = w5500.sn_ir(socket).unwrap();
         if u8::from(sn_ir) & interrupt != 0x00 {
             defmt::info!("Got interrupt on Socket{:u8}", u8::from(socket));
-            w5500.set_sn_ir(socket, interrupt.into()).unwrap();
+            w5500.set_sn_ir(socket, interrupt).unwrap();
             break;
         }
         if sn_ir.discon_raised() {
@@ -239,7 +239,7 @@ mod tests {
             .tcp_connect(TCP_SOCKET, W5500_TCP_PORT, &PEER_TCP_ADDR)
             .unwrap();
 
-        assert!(w5500.local_addr(TCP_SOCKET).unwrap() == W5500_TCP_ADDR);
+        assert_eq!(w5500.local_addr(TCP_SOCKET).unwrap(), W5500_TCP_ADDR);
 
         poll_int(w5500, TCP_SOCKET, SocketInterrupt::CON_MASK);
 
@@ -273,7 +273,7 @@ mod tests {
             .udp_bind(UDP_SOCKET, testsuite_assets::W5500_UDP_PORT)
             .unwrap();
 
-        assert!(w5500.local_addr(UDP_SOCKET).unwrap() == W5500_UDP_ADDR);
+        assert_eq!(w5500.local_addr(UDP_SOCKET).unwrap(), W5500_UDP_ADDR);
 
         let n: usize = w5500
             .udp_send_to(UDP_SOCKET, UDP_DATA, &testsuite_assets::PEER_UDP_ADDR)
@@ -291,18 +291,18 @@ mod tests {
 
         let (n, from) = w5500.udp_peek_from_header(UDP_SOCKET).unwrap();
         assert_eq!(n, UDP_DATA.len());
-        assert!(from == PEER_UDP_ADDR, "unexpected peer address");
+        assert_eq!(from, PEER_UDP_ADDR);
 
         let mut buf: [u8; UDP_DATA.len()] = [0; UDP_DATA.len()];
         let (n, from) = w5500.udp_peek_from(UDP_SOCKET, &mut buf).unwrap();
         assert_eq!(n, UDP_DATA.len());
-        assert!(from == PEER_UDP_ADDR, "unexpected peer address");
+        assert_eq!(from, PEER_UDP_ADDR);
         assert_eq!(buf, UDP_DATA);
 
         let mut buf: [u8; UDP_DATA.len()] = [0; UDP_DATA.len()];
         let (n, from) = w5500.udp_recv_from(UDP_SOCKET, &mut buf).unwrap();
         assert_eq!(n, UDP_DATA.len());
-        assert!(from == PEER_UDP_ADDR, "unexpected peer address");
+        assert_eq!(from, PEER_UDP_ADDR);
         assert_eq!(buf, UDP_DATA);
 
         // queue should be empty now
