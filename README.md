@@ -24,6 +24,14 @@ You will likely want to wrap up the underlying structure that implements
 the [`Registers`], [`Tcp`], and [`Udp`] traits to provide separate socket
 structures utilizing whatever Mutex is available for your platform / RTOS.
 
+## Feature Flags
+
+All features are disabled by default.
+
+* `defmt`: Passthrough to [w5500-ll].
+* `embedded-hal`: Passthrough to [w5500-ll].
+* `std`: Passthrough to [w5500-ll].
+
 ## Examples
 
 UDP sockets
