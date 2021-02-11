@@ -76,7 +76,7 @@
 //! [`std::net`]: https://doc.rust-lang.org/std/net/index.html
 //! [`w5500-hl`]: https://crates.io/crates/w5500-hl
 //! [`w5500_ll::Registers`]: https://docs.rs/w5500-ll/latest/w5500_ll/trait.Registers.html
-#![doc(html_root_url = "https://docs.rs/w5500-regsim/0.1.0-alpha.2")]
+#![doc(html_root_url = "https://docs.rs/w5500-regsim/0.1.0-alpha.3")]
 
 mod regmap;
 
@@ -823,7 +823,7 @@ impl Registers for W5500 {
         Ok(SocketInterrupt::from(reg[0]))
     }
 
-    fn set_sn_ir(&mut self, socket: Socket, ir: SocketInterrupt) -> Result<(), Self::Error> {
+    fn set_sn_ir<T: Into<u8>>(&mut self, socket: Socket, ir: T) -> Result<(), Self::Error> {
         let sn_ir_reg: &mut u8 =
             &mut self.socket_regs[usize::from(socket)][usize::from(reg::SN_IR)];
 
@@ -836,6 +836,9 @@ impl Registers for W5500 {
                 name
             )
         };
+
+        let ir: u8 = ir.into();
+        let ir: SocketInterrupt = ir.into();
 
         if ir.con_raised() {
             log_cleared("CON");

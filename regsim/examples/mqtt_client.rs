@@ -102,7 +102,7 @@ fn main() {
 
     // clear the CON interrupt
     w5500
-        .set_sn_ir(MQTT_SOCKET, SocketInterrupt::CON_MASK.into())
+        .set_sn_ir(MQTT_SOCKET, SocketInterrupt::CON_MASK)
         .unwrap();
 
     // send the CONNECT packet
@@ -125,7 +125,7 @@ fn main() {
 
     // clear the RECV interrupt
     w5500
-        .set_sn_ir(MQTT_SOCKET, SocketInterrupt::RECV_MASK.into())
+        .set_sn_ir(MQTT_SOCKET, SocketInterrupt::RECV_MASK)
         .unwrap();
 
     // read the response, this should be a 4-byte CONNACK response
