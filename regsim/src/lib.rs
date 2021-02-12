@@ -30,6 +30,7 @@
 //! * IR (Interrupt Register)
 //! * IMR (Interrupt Mask Register)
 //! * SIR (Socket Interrupt Register)
+//!     * Partial; see SN_IR
 //! * SIMR (Socket Interrupt Mask Register)
 //! * RTR (Retry Time Register)
 //! * RCR (Retry Count Register)
@@ -637,6 +638,7 @@ impl W5500 {
     }
 
     fn raise_sn_ir(&mut self, socket: Socket, int: u8) {
+        self.socket_regs[usize::from(socket)][usize::from(reg::SIR)] |= u8::from(socket);
         self.socket_regs[usize::from(socket)][usize::from(reg::SN_IR)] |= int;
     }
 

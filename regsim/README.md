@@ -37,6 +37,7 @@ Pull requests are always welcome.
 * IR (Interrupt Register)
 * IMR (Interrupt Mask Register)
 * SIR (Socket Interrupt Register)
+    * Partial; see SN_IR
 * SIMR (Socket Interrupt Mask Register)
 * RTR (Retry Time Register)
 * RCR (Retry Count Register)
