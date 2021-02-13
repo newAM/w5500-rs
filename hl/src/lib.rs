@@ -782,7 +782,10 @@ pub trait Tcp<E>: Registers<Error = E> {
     /// [`Established`]: w5500_ll::SocketStatus::Established
     /// [`recv`]: w5500_ll::SocketInterrupt::recv_raised
     fn tcp_read(&mut self, socket: Socket, buf: &mut [u8]) -> Result<usize, E> {
-        debug_assert_ne!(self.sn_sr(socket)?, Ok(SocketStatus::Udp));
+        debug_assert!(!matches!(
+            self.sn_sr(socket)?,
+            Ok(SocketStatus::Udp) | Ok(SocketStatus::Init) | Ok(SocketStatus::Macraw)
+        ));
 
         let rx_bytes: u16 = {
             let rsr: u16 = self.sn_rx_rsr(socket)?;
@@ -834,7 +837,10 @@ pub trait Tcp<E>: Registers<Error = E> {
     ///
     /// [`Established`]: w5500_ll::SocketStatus::Established
     fn tcp_write(&mut self, socket: Socket, buf: &[u8]) -> Result<usize, E> {
-        debug_assert_ne!(self.sn_sr(socket)?, Ok(SocketStatus::Udp));
+        debug_assert!(!matches!(
+            self.sn_sr(socket)?,
+            Ok(SocketStatus::Udp) | Ok(SocketStatus::Init) | Ok(SocketStatus::Macraw)
+        ));
 
         let tx_bytes: u16 = {
             let data_len: u16 = u16::try_from(buf.len()).unwrap_or(u16::MAX);
@@ -890,6 +896,10 @@ pub trait Tcp<E>: Registers<Error = E> {
     /// [`Established`]: w5500_ll::SocketStatus::Established
     /// [timeout interrupt]: w5500_ll::SocketInterrupt::timeout_raised
     fn tcp_disconnect(&mut self, socket: Socket) -> Result<(), E> {
+        debug_assert!(!matches!(
+            self.sn_sr(socket)?,
+            Ok(SocketStatus::Udp) | Ok(SocketStatus::Init) | Ok(SocketStatus::Macraw)
+        ));
         self.set_sn_cr(socket, SocketCommand::Disconnect)
     }
 }
@@ -937,6 +947,118 @@ pub trait Common<E>: Registers<Error = E> {
     /// ```
     fn close(&mut self, socket: Socket) -> Result<(), E> {
         self.set_sn_cr(socket, SocketCommand::Close)
+    }
+
+    /// Returns `true` if the socket state is [Closed].
+    ///
+    /// **Note:** This does not include states that indicate the socket is about
+    /// to close, such as [Closing].
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// # use embedded_hal_mock as h;
+    /// # let mut w5500 = w5500_ll::blocking::vdm::W5500::new(h::spi::Mock::new(&[]), h::pin::Mock::new(&[]));
+    /// use w5500_hl::ll::{Registers, Socket::Socket0};
+    /// use w5500_hl::{Common, Udp};
+    ///
+    /// w5500.close(Socket0)?;
+    /// assert!(w5500.is_state_closed(Socket0)?);
+    /// w5500.udp_bind(Socket0, 8080)?;
+    /// assert!(!w5500.is_state_closed(Socket0)?);
+    /// # Ok::<(), w5500_hl::ll::blocking::vdm::Error<_, _>>(())
+    /// ```
+    ///
+    /// [Closed]: w5500_ll::SocketStatus::Closed
+    /// [Closing]: w5500_ll::SocketStatus::Closing
+    fn is_state_closed(&mut self, socket: Socket) -> Result<bool, E> {
+        Ok(self.sn_sr(socket)? == Ok(SocketStatus::Closed))
+    }
+
+    /// Returns `true` if the socket state is any valid TCP state as described
+    /// in [RFC 793].
+    ///
+    /// Valid TCP states include:
+    ///
+    /// * [Closed]
+    /// * [Listen]
+    /// * [SynSent]
+    /// * [SynRecv]
+    /// * [Established]
+    /// * [FinWait]
+    /// * [Closing]
+    /// * [CloseWait]
+    /// * [TimeWait]
+    /// * [LastAck]
+    ///
+    /// **Note:** This **does not** include the W5500 [Init] state.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// # use embedded_hal_mock as h;
+    /// # let mut w5500 = w5500_ll::blocking::vdm::W5500::new(h::spi::Mock::new(&[]), h::pin::Mock::new(&[]));
+    /// use w5500_hl::ll::{Registers, Socket::Socket0};
+    /// use w5500_hl::{Common, Udp};
+    ///
+    /// w5500.close(Socket0)?;
+    /// assert!(w5500.is_state_tcp(Socket0)?);
+    /// w5500.udp_bind(Socket0, 8080)?;
+    /// assert!(!w5500.is_state_tcp(Socket0)?);
+    /// # Ok::<(), w5500_hl::ll::blocking::vdm::Error<_, _>>(())
+    /// ```
+    ///
+    /// [RFC 793]: https://tools.ietf.org/html/rfc793
+    /// [Init]: w5500_ll::SocketStatus::Init
+    /// [Closed]: w5500_ll::SocketStatus::Closed
+    /// [Listen]: w5500_ll::SocketStatus::Listen
+    /// [SynSent]: w5500_ll::SocketStatus::SynSent
+    /// [SynRecv]: w5500_ll::SocketStatus::SynRecv
+    /// [Established]: w5500_ll::SocketStatus::Established
+    /// [FinWait]: w5500_ll::SocketStatus::FinWait
+    /// [Closing]: w5500_ll::SocketStatus::Closing
+    /// [CloseWait]: w5500_ll::SocketStatus::CloseWait
+    /// [TimeWait]: w5500_ll::SocketStatus::TimeWait
+    /// [LastAck]: w5500_ll::SocketStatus::LastAck
+    fn is_state_tcp(&mut self, socket: Socket) -> Result<bool, E> {
+        // Hopefully the compiler will optimize this to check that the state is
+        // not MACRAW, UDP, or INIT.
+        // Leaving it as-is since the code is more readable this way.
+        Ok(matches!(
+            self.sn_sr(socket)?,
+            Ok(SocketStatus::Closed)
+                | Ok(SocketStatus::Listen)
+                | Ok(SocketStatus::SynSent)
+                | Ok(SocketStatus::SynRecv)
+                | Ok(SocketStatus::Established)
+                | Ok(SocketStatus::FinWait)
+                | Ok(SocketStatus::Closing)
+                | Ok(SocketStatus::CloseWait)
+                | Ok(SocketStatus::TimeWait)
+                | Ok(SocketStatus::LastAck)
+        ))
+    }
+
+    /// Returns `true` if the socket state is [Udp].
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// # use embedded_hal_mock as h;
+    /// # let mut w5500 = w5500_ll::blocking::vdm::W5500::new(h::spi::Mock::new(&[]), h::pin::Mock::new(&[]));
+    /// use w5500_hl::ll::{Registers, Socket::Socket0};
+    /// use w5500_hl::{Common, Udp};
+    ///
+    /// w5500.close(Socket0)?;
+    /// assert!(!w5500.is_state_udp(Socket0)?);
+    /// w5500.udp_bind(Socket0, 8080)?;
+    /// assert!(w5500.is_state_udp(Socket0)?);
+    /// # Ok::<(), w5500_hl::ll::blocking::vdm::Error<_, _>>(())
+    /// ```
+    ///
+    /// [Udp]: w5500_ll::SocketStatus::Udp
+    fn is_state_udp(&mut self, socket: Socket) -> Result<bool, E> {
+        Ok(self.sn_sr(socket)? == Ok(SocketStatus::Udp))
     }
 }
 
