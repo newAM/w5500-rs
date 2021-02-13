@@ -1,7 +1,7 @@
 use std::convert::Infallible;
+use w5500_hl::ll::{Registers, Socket, SocketCommand, SOCKETS};
 use w5500_hl::net::{Ipv4Addr, SocketAddrV4};
 use w5500_hl::Common;
-use w5500_ll::{Registers, Socket, SocketCommand, SOCKETS};
 
 mod local_addr {
     use super::*;
@@ -65,5 +65,187 @@ mod close {
     fn close() {
         let mut mock = MockRegisters {};
         mock.close(Socket::Socket3).unwrap();
+    }
+}
+
+mod is_state_closed {
+    use w5500_hl::ll::SocketStatus;
+
+    use super::*;
+
+    const SOCKET: Socket = Socket::Socket4;
+
+    struct MockRegisters {
+        states: Vec<Result<SocketStatus, u8>>,
+    }
+
+    impl Registers for MockRegisters {
+        type Error = Infallible;
+
+        fn sn_sr(&mut self, socket: Socket) -> Result<Result<SocketStatus, u8>, Self::Error> {
+            assert_eq!(socket, SOCKET);
+            Ok(self.states.pop().expect("Unexpected call to sn_sr"))
+        }
+
+        fn read(&mut self, _address: u16, _block: u8, _data: &mut [u8]) -> Result<(), Self::Error> {
+            unimplemented!()
+        }
+
+        fn write(&mut self, _address: u16, _block: u8, _data: &[u8]) -> Result<(), Self::Error> {
+            unimplemented!()
+        }
+    }
+
+    #[test]
+    fn is_state_closed() {
+        let mut mock = MockRegisters {
+            states: vec![
+                // closed state
+                Ok(SocketStatus::Closed),
+                // not closed states.
+                Ok(SocketStatus::Udp),
+                Ok(SocketStatus::Listen),
+                Ok(SocketStatus::SynSent),
+                Ok(SocketStatus::SynRecv),
+                Ok(SocketStatus::Established),
+                Ok(SocketStatus::FinWait),
+                Ok(SocketStatus::Closing),
+                Ok(SocketStatus::CloseWait),
+                Ok(SocketStatus::TimeWait),
+                Ok(SocketStatus::LastAck),
+                Ok(SocketStatus::Init),
+                Ok(SocketStatus::Macraw),
+                Err(0x1F),
+                Err(0xFF),
+            ],
+        };
+        for _ in 0..14 {
+            assert!(!mock.is_state_closed(SOCKET).unwrap());
+        }
+        assert!(mock.is_state_closed(SOCKET).unwrap());
+
+        assert!(mock.states.is_empty())
+    }
+}
+
+mod is_state_tcp {
+    use w5500_hl::ll::SocketStatus;
+
+    use super::*;
+
+    const SOCKET: Socket = Socket::Socket4;
+
+    struct MockRegisters {
+        states: Vec<Result<SocketStatus, u8>>,
+    }
+
+    impl Registers for MockRegisters {
+        type Error = Infallible;
+
+        fn sn_sr(&mut self, socket: Socket) -> Result<Result<SocketStatus, u8>, Self::Error> {
+            assert_eq!(socket, SOCKET);
+            Ok(self.states.pop().expect("Unexpected call to sn_sr"))
+        }
+
+        fn read(&mut self, _address: u16, _block: u8, _data: &mut [u8]) -> Result<(), Self::Error> {
+            unimplemented!()
+        }
+
+        fn write(&mut self, _address: u16, _block: u8, _data: &[u8]) -> Result<(), Self::Error> {
+            unimplemented!()
+        }
+    }
+
+    #[test]
+    fn is_state_tcp() {
+        let mut mock = MockRegisters {
+            states: vec![
+                // TCP states
+                Ok(SocketStatus::Closed),
+                Ok(SocketStatus::Listen),
+                Ok(SocketStatus::SynSent),
+                Ok(SocketStatus::SynRecv),
+                Ok(SocketStatus::Established),
+                Ok(SocketStatus::FinWait),
+                Ok(SocketStatus::Closing),
+                Ok(SocketStatus::CloseWait),
+                Ok(SocketStatus::TimeWait),
+                Ok(SocketStatus::LastAck),
+                // not TCP states
+                Ok(SocketStatus::Init),
+                Ok(SocketStatus::Udp),
+                Ok(SocketStatus::Macraw),
+                Err(0x1F),
+                Err(0xFF),
+            ],
+        };
+        for _ in 0..5 {
+            assert!(!mock.is_state_tcp(SOCKET).unwrap());
+        }
+        for _ in 0..10 {
+            assert!(mock.is_state_tcp(SOCKET).unwrap());
+        }
+
+        assert!(mock.states.is_empty())
+    }
+}
+
+mod is_state_udp {
+    use w5500_hl::ll::SocketStatus;
+
+    use super::*;
+
+    const SOCKET: Socket = Socket::Socket6;
+
+    struct MockRegisters {
+        states: Vec<Result<SocketStatus, u8>>,
+    }
+
+    impl Registers for MockRegisters {
+        type Error = Infallible;
+
+        fn sn_sr(&mut self, socket: Socket) -> Result<Result<SocketStatus, u8>, Self::Error> {
+            assert_eq!(socket, SOCKET);
+            Ok(self.states.pop().expect("Unexpected call to sn_sr"))
+        }
+
+        fn read(&mut self, _address: u16, _block: u8, _data: &mut [u8]) -> Result<(), Self::Error> {
+            unimplemented!()
+        }
+
+        fn write(&mut self, _address: u16, _block: u8, _data: &[u8]) -> Result<(), Self::Error> {
+            unimplemented!()
+        }
+    }
+
+    #[test]
+    fn is_state_udp() {
+        let mut mock = MockRegisters {
+            states: vec![
+                // UDP state
+                Ok(SocketStatus::Udp),
+                // not UDP states.
+                Ok(SocketStatus::Closed),
+                Ok(SocketStatus::Listen),
+                Ok(SocketStatus::SynSent),
+                Ok(SocketStatus::SynRecv),
+                Ok(SocketStatus::Established),
+                Ok(SocketStatus::FinWait),
+                Ok(SocketStatus::Closing),
+                Ok(SocketStatus::CloseWait),
+                Ok(SocketStatus::TimeWait),
+                Ok(SocketStatus::LastAck),
+                Ok(SocketStatus::Init),
+                Ok(SocketStatus::Macraw),
+                Err(0x1F),
+                Err(0xFF),
+            ],
+        };
+        for _ in 0..14 {
+            assert!(!mock.is_state_udp(SOCKET).unwrap());
+        }
+        assert!(mock.is_state_udp(SOCKET).unwrap());
+
+        assert!(mock.states.is_empty())
     }
 }
