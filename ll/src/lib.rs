@@ -293,6 +293,57 @@ impl Socket {
     pub const fn rx_block(self) -> u8 {
         SOCKET_SPACING * (self as u8) + SOCKET_RX_OFFSET
     }
+
+    /// Socket bitmask.
+    ///
+    /// This is useful for masking socket interrupts with [`set_simr`].
+    ///
+    /// # Examples
+    ///
+    /// Demonstration:
+    ///
+    /// ```
+    /// use w5500_ll::Socket;
+    ///
+    /// assert_eq!(Socket::Socket0.bitmask(), 0x01);
+    /// assert_eq!(Socket::Socket1.bitmask(), 0x02);
+    /// assert_eq!(Socket::Socket2.bitmask(), 0x04);
+    /// assert_eq!(Socket::Socket3.bitmask(), 0x08);
+    /// assert_eq!(Socket::Socket4.bitmask(), 0x10);
+    /// assert_eq!(Socket::Socket5.bitmask(), 0x20);
+    /// assert_eq!(Socket::Socket6.bitmask(), 0x40);
+    /// assert_eq!(Socket::Socket7.bitmask(), 0x80);
+    /// ```
+    ///
+    /// As an argument of [`set_simr`]:
+    ///
+    /// ```
+    /// # use embedded_hal_mock as hal;
+    /// # let spi = hal::spi::Mock::new(&[
+    /// #   hal::spi::Transaction::write(vec![0x00, 0x18, 0x04]),
+    /// #   hal::spi::Transaction::write(vec![0x0A]),
+    /// # ]);
+    /// # let pin = hal::pin::Mock::new(&[
+    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
+    /// #    hal::pin::Transaction::set(hal::pin::State::High),
+    /// # ]);
+    /// use w5500_ll::{
+    ///     blocking::vdm::W5500,
+    ///     Registers,
+    ///     Socket::{Socket1, Socket3},
+    /// };
+    ///
+    /// let mut w5500 = W5500::new(spi, pin);
+    /// // enable socket 1 and socket 3 interrupts
+    /// const SOCKET_INTERRUPT_MASK: u8 = Socket1.bitmask() | Socket3.bitmask();
+    /// w5500.set_simr(SOCKET_INTERRUPT_MASK)?;
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// ```
+    ///
+    /// [`set_simr`]: crate::Registers::set_simr
+    pub const fn bitmask(self) -> u8 {
+        1 << (self as u8)
+    }
 }
 
 impl From<Socket> for u8 {
@@ -949,7 +1000,7 @@ pub trait Registers {
     ///
     /// # Example
     ///
-    /// ```no_run
+    /// ```
     /// # use embedded_hal_mock as hal;
     /// # let spi = hal::spi::Mock::new(&[
     /// #   hal::spi::Transaction::write(vec![0x00, 0x18, 0x00]),
@@ -977,10 +1028,10 @@ pub trait Registers {
     ///
     /// # Example
     ///
-    /// ```no_run
+    /// ```
     /// # use embedded_hal_mock as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x18, 0x00]),
+    /// #   hal::spi::Transaction::write(vec![0x00, 0x18, 0x04]),
     /// #   hal::spi::Transaction::write(vec![0xFF]),
     /// # ]);
     /// # let pin = hal::pin::Mock::new(&[
