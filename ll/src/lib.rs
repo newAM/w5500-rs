@@ -390,6 +390,41 @@ pub const SOCKETS: [Socket; 8] = [
     Socket::Socket7,
 ];
 
+/// Reset the W5500 using the reset pin.
+///
+/// This function performs the following sequence:
+///
+/// 1. Set the reset pin low.
+/// 2. Wait 1 ms (2x longer than the minimum reset cycle time of 500 µs).
+/// 3. Set the reset pin high.
+/// 4. Wait 2 ms (2x longer than the maximum PLL lock time of 1 ms).
+///
+/// # Example
+///
+/// ```
+/// # use embedded_hal_mock as hal;
+/// # let mut delay = hal::delay::MockNoop::new();
+/// # let mut reset_pin = hal::pin::Mock::new(&[
+/// #    hal::pin::Transaction::set(hal::pin::State::Low),
+/// #    hal::pin::Transaction::set(hal::pin::State::High),
+/// # ]);
+/// w5500_ll::reset(&mut reset_pin, &mut delay)?;
+/// # Ok::<(), hal::MockError>(())
+/// ```
+#[cfg(feature = "embedded-hal")]
+#[cfg_attr(docsrs, doc(cfg(feature = "embedded-hal")))]
+pub fn reset<P, D, E>(pin: &mut P, delay: &mut D) -> Result<(), E>
+where
+    P: embedded_hal::digital::v2::OutputPin<Error = E>,
+    D: embedded_hal::blocking::delay::DelayMs<u8>,
+{
+    pin.set_low()?;
+    delay.delay_ms(1);
+    pin.set_high()?;
+    delay.delay_ms(2);
+    Ok(())
+}
+
 /// W5500 register setters and getters.
 ///
 /// * All register getters are simply the name of the register.

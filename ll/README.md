@@ -1,4 +1,4 @@
-![Maintenance](https://img.shields.io/badge/maintenance-activly--developed-brightgreen.svg)
+![Maintenance](https://img.shields.io/badge/maintenance-passively--maintained-yellowgreen.svg)
 [![crates.io](https://img.shields.io/crates/v/w5500-ll.svg)](https://crates.io/crates/w5500-ll)
 [![docs.rs](https://docs.rs/w5500-ll/badge.svg)](https://docs.rs/w5500-ll/)
 [![CI](https://github.com/newAM/w5500-ll-rs/workflows/CI/badge.svg)](https://github.com/newAM/w5500-ll-rs/actions)
@@ -47,6 +47,6 @@ All features are disabled by default.
 [w5500-hl]: https://github.com/newAM/w5500-hl-rs
 [w5500-regsim]: https://github.com/newAM/w5500-regsim-rs
 [Wiznet W5500]: https://www.wiznet.io/product-item/w5500/
-[`blocking`]: https://docs.rs/w5500-ll/0.5.1/w5500_ll/blocking/index.html
-[`Registers`]: https://docs.rs/w5500-ll/0.5.1/w5500_ll/trait.Registers.html
-[`w5500_ll::net`]: https://docs.rs/w5500-ll/0.5.1/w5500_ll/net/index.html
+[`blocking`]: https://docs.rs/w5500-ll/0.6.0/w5500_ll/blocking/index.html
+[`Registers`]: https://docs.rs/w5500-ll/0.6.0/w5500_ll/trait.Registers.html
+[`w5500_ll::net`]: https://docs.rs/w5500-ll/0.6.0/w5500_ll/net/index.html

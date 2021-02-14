@@ -16,7 +16,7 @@ default = []
 std = []
 
 [badges]
-maintenance = { status = "actively-developed" }
+maintenance = { status = "passively-maintained" }
 
 [dependencies.embedded-hal]
 version = "~0.2.4"

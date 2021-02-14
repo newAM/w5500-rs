@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Added a note about the assumed state of the chip select pin in the W5500 constructor.
+- Added a `reset` function to perform a hardware reset of the W5500.
+
+### Changed
+- Changed the maintenance status from actively-developed to passively-maintained.
 
 ## [0.6.0] - 2021-02-08
 ### Added
