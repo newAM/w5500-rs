@@ -1,6 +1,6 @@
 [package]
 name = "w5500-ll"
-version = "0.6.0"
+version = "0.6.1"
 authors = ["Alex M. <alexmgit@protonmail.com>"]
 edition = "2018"
 repository = "https://github.com/newAM/w5500-ll-rs"
@@ -12,7 +12,6 @@ categories = ["embedded", "hardware-support", "no-std"]
 homepage = "https://github.com/newAM/w5500-ll-rs"
 
 [features]
-default = []
 std = []
 
 [badges]
