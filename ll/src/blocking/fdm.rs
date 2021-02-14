@@ -1,5 +1,5 @@
 //! Fixed data length implementation of the [`Registers`] trait using the
-//! [`embedded-hal`] blocking SPI traits.
+//! [`embedded-hal`] blocking SPI trait.
 //!
 //! This uses the W5500 fixed data length mode (FDM).
 //! In FSM mode the SPI chip select pin is always tied low, and it is not

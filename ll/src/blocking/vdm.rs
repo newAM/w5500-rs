@@ -1,5 +1,5 @@
 //! Variable data length implementation of the [`Registers`] trait using the
-//! [`embedded-hal`] blocking SPI traits.
+//! [`embedded-hal`] blocking SPI trait.
 //!
 //! This uses the W5500 variable data length mode (VDM).
 //! In VDM mode the SPI frame data length is determined by the chip select pin.
@@ -38,15 +38,24 @@ where
     /// Creates a new `W5500` driver from a SPI peripheral and a chip select
     /// digital I/O pin.
     ///
+    /// # Safety
+    ///
+    /// The chip select pin must be high before being passed to this function.
+    ///
     /// # Example
     ///
     /// ```
     /// # use embedded_hal_mock as hal;
     /// # let spi = hal::spi::Mock::new(&[]);
-    /// # let pin = hal::pin::Mock::new(&[]);
+    /// # let mut pin = hal::pin::Mock::new(&[
+    /// #    hal::pin::Transaction::set(hal::pin::State::High),
+    /// # ]);
+    /// use embedded_hal::digital::v2::OutputPin;
     /// use w5500_ll::blocking::vdm::W5500;
     ///
+    /// pin.set_high()?;
     /// let mut w5500: W5500<_, _> = W5500::new(spi, pin);
+    /// # Ok::<(), hal::MockError>(())
     /// ```
     pub fn new(spi: SPI, cs: CS) -> Self {
         W5500 { spi, cs }
