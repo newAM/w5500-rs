@@ -242,6 +242,22 @@ impl ::core::fmt::Display for Ipv4Addr {
     }
 }
 
+impl From<[u8; 4]> for Ipv4Addr {
+    /// Creates an `Ipv4Addr` from a four element byte array.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use w5500_ll::net::Ipv4Addr;
+    ///
+    /// let addr = Ipv4Addr::from([13u8, 12u8, 11u8, 10u8]);
+    /// assert_eq!(Ipv4Addr::new(13, 12, 11, 10), addr);
+    /// ```
+    fn from(octets: [u8; 4]) -> Self {
+        Ipv4Addr { octets }
+    }
+}
+
 #[cfg(feature = "defmt")]
 #[cfg_attr(docsrs, doc(cfg(feature = "defmt")))]
 impl defmt::Format for Ipv4Addr {
@@ -375,6 +391,22 @@ impl ::core::fmt::Display for Eui48Addr {
             self.octets[4],
             self.octets[5],
         )
+    }
+}
+
+impl From<[u8; 6]> for Eui48Addr {
+    /// Creates an `Eui48Addr` from a six element byte array.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use w5500_ll::net::Eui48Addr;
+    ///
+    /// let addr = Eui48Addr::from([0x12, 0x34, 0x56, 0x78, 0x9A, 0xBC]);
+    /// assert_eq!(Eui48Addr::new(0x12, 0x34, 0x56, 0x78, 0x9A, 0xBC), addr);
+    /// ```
+    fn from(octets: [u8; 6]) -> Self {
+        Eui48Addr { octets }
     }
 }
 

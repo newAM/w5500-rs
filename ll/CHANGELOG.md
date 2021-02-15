@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Added a `bitmask` method to `Socket` for masking interrupts.
+- Added `From<[u8; 4]> for Ipv4Addr`.
+- Added `From<[u8; 6]> for Eui48Addr`.
 
 ## [0.6.1] - 2021-02-14
 ### Added
