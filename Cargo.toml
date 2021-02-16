@@ -24,7 +24,7 @@ nb = "^1"
 w5500-ll = "~0.6"
 
 [dev-dependencies]
-version-sync = "~0.9.1"
+version-sync = "~0.9.2"
 embedded-hal-mock = "~0.7"
 w5500-ll = { version = "~0.6", features = ["embedded-hal", "defmt"] }
 
