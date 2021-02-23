@@ -261,10 +261,10 @@ impl From<[u8; 4]> for Ipv4Addr {
 #[cfg(feature = "defmt")]
 #[cfg_attr(docsrs, doc(cfg(feature = "defmt")))]
 impl defmt::Format for Ipv4Addr {
-    fn format(&self, fmt: &mut defmt::Formatter) {
+    fn format(&self, fmt: defmt::Formatter) {
         defmt::write!(
             fmt,
-            "{:u8}.{:u8}.{:u8}.{:u8}",
+            "{}.{}.{}.{}",
             self.octets[0],
             self.octets[1],
             self.octets[2],
@@ -524,8 +524,8 @@ impl ::core::fmt::Display for SocketAddrV4 {
 #[cfg(feature = "defmt")]
 #[cfg_attr(docsrs, doc(cfg(feature = "defmt")))]
 impl defmt::Format for SocketAddrV4 {
-    fn format(&self, fmt: &mut defmt::Formatter) {
-        defmt::write!(fmt, "{:?}:{:u16}", self.ip(), self.port())
+    fn format(&self, fmt: defmt::Formatter) {
+        defmt::write!(fmt, "{:?}:{}", self.ip(), self.port())
     }
 }
 
