@@ -47,6 +47,6 @@ All features are disabled by default.
 [w5500-hl]: https://github.com/newAM/w5500-hl-rs
 [w5500-regsim]: https://github.com/newAM/w5500-regsim-rs
 [Wiznet W5500]: https://www.wiznet.io/product-item/w5500/
-[`blocking`]: https://docs.rs/w5500-ll/0.6.2/w5500_ll/blocking/index.html
-[`Registers`]: https://docs.rs/w5500-ll/0.6.2/w5500_ll/trait.Registers.html
-[`w5500_ll::net`]: https://docs.rs/w5500-ll/0.6.2/w5500_ll/net/index.html
+[`blocking`]: https://docs.rs/w5500-ll/0.7.0/w5500_ll/blocking/index.html
+[`Registers`]: https://docs.rs/w5500-ll/0.7.0/w5500_ll/trait.Registers.html
+[`w5500_ll::net`]: https://docs.rs/w5500-ll/0.7.0/w5500_ll/net/index.html
