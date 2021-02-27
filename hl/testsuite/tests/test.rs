@@ -33,14 +33,13 @@ fn panic() -> ! {
     cortex_m::asm::udf()
 }
 
-#[defmt::timestamp]
-fn timestamp() -> u64 {
-    static COUNT: AtomicUsize = AtomicUsize::new(0);
+static COUNT: AtomicUsize = AtomicUsize::new(0);
+defmt::timestamp!("{=usize}", {
     // NOTE(no-CAS) `timestamps` runs with interrupts disabled
     let n = COUNT.load(Ordering::Relaxed);
     COUNT.store(n + 1, Ordering::Relaxed);
-    n as u64
-}
+    n
+});
 
 /// Terminates the application and makes `probe-run` exit with exit-code = 0
 pub fn exit() -> ! {
@@ -82,11 +81,11 @@ fn poll_int<T: Registers<Error = E>, E: core::fmt::Debug>(
     socket: Socket,
     interrupt: u8,
 ) {
-    defmt::info!("Polling for interrupt on Socket{:u8}", u8::from(socket));
+    defmt::info!("Polling for interrupt on Socket{}", u8::from(socket));
     loop {
         let sn_ir = w5500.sn_ir(socket).unwrap();
         if u8::from(sn_ir) & interrupt != 0x00 {
-            defmt::info!("Got interrupt on Socket{:u8}", u8::from(socket));
+            defmt::info!("Got interrupt on Socket{}", u8::from(socket));
             w5500.set_sn_ir(socket, interrupt).unwrap();
             break;
         }
@@ -246,7 +245,7 @@ mod tests {
         // write 32x 1234 byte chunks
         // this tests the socket pointer rollover handling in tcp_write
         for i in 0..NUM_CHUNKS {
-            defmt::debug!("Chunk {:usize}", i);
+            defmt::debug!("Chunk {}", i);
 
             // ensure there is space for the entire chunk
             loop {
