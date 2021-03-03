@@ -77,7 +77,7 @@
 //! [`std::net`]: https://doc.rust-lang.org/std/net/index.html
 //! [`w5500-hl`]: https://crates.io/crates/w5500-hl
 //! [`w5500_ll::Registers`]: https://docs.rs/w5500-ll/latest/w5500_ll/trait.Registers.html
-#![doc(html_root_url = "https://docs.rs/w5500-regsim/0.1.0-alpha.3")]
+#![doc(html_root_url = "https://docs.rs/w5500-regsim/0.1.0-alpha.4")]
 
 mod regmap;
 
