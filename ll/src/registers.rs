@@ -184,6 +184,17 @@ impl Default for Mode {
     }
 }
 
+impl ::core::fmt::Display for Mode {
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+        f.debug_struct("Mode")
+            .field("wol_enabled", &self.wol_enabled())
+            .field("pb_enabled", &self.pb_enabled())
+            .field("pppoe_enabled", &self.pppoe_enabled())
+            .field("farp_enabled", &self.farp_enabled())
+            .finish()
+    }
+}
+
 /// Interrupt and interrupt mask register (IR and IMR).
 ///
 /// When used for interrupt masking:
@@ -356,6 +367,17 @@ impl_u8_for!(Interrupt);
 impl Default for Interrupt {
     fn default() -> Self {
         Interrupt(Interrupt::RESET)
+    }
+}
+
+impl ::core::fmt::Display for Interrupt {
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+        f.debug_struct("Interrupt")
+            .field("conflict", &self.conflict())
+            .field("unreach", &self.unreach())
+            .field("pppoe", &self.pppoe())
+            .field("mp", &self.mp())
+            .finish()
     }
 }
 
@@ -557,19 +579,12 @@ impl Default for PhyCfg {
 
 impl ::core::fmt::Display for PhyCfg {
     fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-        write!(
-            f,
-            r#"PHY configuration:
-Link status: {:?}
-Speed status: {:?}
-Duplex status: {:?}
-Operation mode: {:?}
-"#,
-            self.lnk(),
-            self.spd(),
-            self.dpx(),
-            self.opmdc()
-        )
+        f.debug_struct("PhyCfg")
+            .field("opmd", &self.opmdc())
+            .field("dpx", &self.dpx())
+            .field("spd", &self.spd())
+            .field("lnk", &self.lnk())
+            .finish()
     }
 }
 
@@ -917,6 +932,22 @@ impl SocketMode {
     }
 }
 
+impl ::core::fmt::Display for SocketMode {
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+        f.debug_struct("SocketMode")
+            .field("protocol", &self.protocol())
+            .field("multi_enabled", &self.multi_enabled())
+            .field("mfen_enabled", &self.mfen_enabled())
+            .field("bcastb_enabled", &self.bcastb_enabled())
+            .field("nd_enabled", &self.nd_enabled())
+            .field("mc", &self.mc())
+            .field("mmb_enabled", &self.mmb_enabled())
+            .field("ucastb_enabled", &self.ucastb_enabled())
+            .field("mip6b_enabled", &self.mip6b_enabled())
+            .finish()
+    }
+}
+
 /// Socket Interrupt Register (Sn_IR).
 ///
 /// Indicated the socket status, such as connection, termination,
@@ -934,31 +965,6 @@ impl_u8_for!(SocketInterrupt);
 impl Default for SocketInterrupt {
     fn default() -> Self {
         Self(Self::RESET)
-    }
-}
-
-impl ::core::fmt::Display for SocketInterrupt {
-    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-        let not = |raised: bool| -> &str {
-            if raised {
-                ""
-            } else {
-                "not "
-            }
-        };
-        write!(
-            f,
-            r#"Socket interrupts:
-CON: {}raised
-DISCON: {}raised
-RECV: {}raised
-SENDOK: {}raised
-"#,
-            not(self.con_raised()),
-            not(self.discon_raised()),
-            not(self.recv_raised()),
-            not(self.sendok_raised())
-        )
     }
 }
 
@@ -1093,6 +1099,18 @@ impl SocketInterrupt {
     /// Clear the `SENDOK` interrupt by writing `1`.
     pub fn clear_sendok(&mut self) {
         self.0 |= Self::SENDOK_MASK
+    }
+}
+
+impl ::core::fmt::Display for SocketInterrupt {
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+        f.debug_struct("SocketInterrupt")
+            .field("con_raised", &self.con_raised())
+            .field("discon_raised", &self.discon_raised())
+            .field("recv_raised", &self.recv_raised())
+            .field("timeout_raised", &self.timeout_raised())
+            .field("sendok_raised", &self.sendok_raised())
+            .finish()
     }
 }
 
@@ -1262,5 +1280,17 @@ impl SocketInterruptMask {
     /// Mask the `SENDOK` interrupt.
     pub fn mask_sendok(&mut self) {
         self.0 &= !SocketInterrupt::SENDOK_MASK
+    }
+}
+
+impl ::core::fmt::Display for SocketInterruptMask {
+    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+        f.debug_struct("SocketInterruptMask")
+            .field("con_masked", &self.con_masked())
+            .field("discon_masked", &self.discon_masked())
+            .field("recv_masked", &self.recv_masked())
+            .field("timeout_masked", &self.timeout_masked())
+            .field("sendok_masked", &self.sendok_masked())
+            .finish()
     }
 }
