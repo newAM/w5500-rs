@@ -118,15 +118,15 @@ dependencies = [
  "aligned",
  "bare-metal 0.2.5",
  "bitfield",
- "cortex-m 0.7.1",
+ "cortex-m 0.7.2",
  "volatile-register",
 ]
 
 [[package]]
 name = "cortex-m"
-version = "0.7.1"
+version = "0.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a0b756a8bffc56025de45218a48ff9b801180440c0ee49a722b32d49dcebc771"
+checksum = "643a210c1bdc23d0db511e2a576082f4ff4dcae9d0c37f50b431b8f8439d6d6b"
 dependencies = [
  "bare-metal 0.2.5",
  "bitfield",
@@ -1122,7 +1122,7 @@ dependencies = [
 name = "testsuite"
 version = "0.1.0"
 dependencies = [
- "cortex-m 0.7.1",
+ "cortex-m 0.7.2",
  "cortex-m-rt",
  "defmt",
  "defmt-rtt",
