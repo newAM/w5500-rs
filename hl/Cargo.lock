@@ -157,9 +157,9 @@ dependencies = [
 
 [[package]]
 name = "defmt"
-version = "0.2.0"
+version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "aec6bcd26e64f526aa24eb79c0b30e7d7a3f2f9087acaf8e8650bc4e5fc1b54c"
+checksum = "735ffd58278b045498da4ca9c5057a52faa6e18472cd63568b059ae592ca7602"
 dependencies = [
  "defmt-macros",
  "semver 0.11.0",
