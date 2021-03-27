@@ -543,6 +543,7 @@ impl Default for DuplexStatus {
 /// [`Registers::set_sn_rxbuf_size`]: crate::Registers::set_sn_rxbuf_size
 #[derive(Copy, Clone, Eq, PartialEq, PartialOrd, Ord, Hash, Debug)]
 #[repr(u8)]
+#[allow(clippy::upper_case_acronyms)]
 pub enum BufferSize {
     /// 0 KiB
     KB0 = 0,
