@@ -195,11 +195,11 @@ dependencies = [
 
 [[package]]
 name = "defmt-test"
-version = "0.2.1"
+version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3a91dc0b435675bcf541541ef6b86a4b5d761d9a108d03e9304058caddcedb64"
+checksum = "a20f672d71dd5de495cf61591345a9bcc8a01c4a303121922a5e17b58d9beea8"
 dependencies = [
- "cortex-m 0.6.7",
+ "cortex-m 0.7.2",
  "cortex-m-rt",
  "defmt",
  "defmt-test-macros",
