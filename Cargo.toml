@@ -1,6 +1,6 @@
 [package]
 name = "w5500-hl"
-version = "0.3.0"
+version = "0.4.0"
 authors = ["Alex M. <alexmgit@protonmail.com>"]
 edition = "2018"
 repository = "https://github.com/newAM/w5500-hl-rs"
@@ -21,12 +21,12 @@ maintenance = { status = "experimental" }
 
 [dependencies]
 nb = "^1"
-w5500-ll = "~0.7"
+w5500-ll = "~0.8"
 
 [dev-dependencies]
 version-sync = "~0.9.2"
 embedded-hal-mock = "~0.7"
-w5500-ll = { version = "~0.7", features = ["embedded-hal", "defmt"] }
+w5500-ll = { version = "~0.8", features = ["embedded-hal", "defmt"] }
 
 [package.metadata.docs.rs]
 all-features = true
