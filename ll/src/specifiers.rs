@@ -559,26 +559,67 @@ pub enum BufferSize {
     KB16 = 16,
 }
 impl From<BufferSize> for u8 {
+    /// Get the register value from a buffer size.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use w5500_ll::BufferSize;
+    ///
+    /// assert_eq!(u8::from(BufferSize::KB0), 0);
+    /// assert_eq!(u8::from(BufferSize::KB1), 1);
+    /// assert_eq!(u8::from(BufferSize::KB2), 2);
+    /// assert_eq!(u8::from(BufferSize::KB4), 4);
+    /// assert_eq!(u8::from(BufferSize::KB8), 8);
+    /// assert_eq!(u8::from(BufferSize::KB16), 16);
+    /// ```
     fn from(val: BufferSize) -> u8 {
         val as u8
     }
 }
+
 impl TryFrom<u8> for BufferSize {
     type Error = u8;
+
+    /// Get the buffer size given the register value.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use core::convert::TryFrom;
+    /// use w5500_ll::BufferSize;
+    ///
+    /// assert_eq!(BufferSize::try_from(0), Ok(BufferSize::KB0));
+    /// assert_eq!(BufferSize::try_from(1), Ok(BufferSize::KB1));
+    /// assert_eq!(BufferSize::try_from(2), Ok(BufferSize::KB2));
+    /// assert_eq!(BufferSize::try_from(4), Ok(BufferSize::KB4));
+    /// assert_eq!(BufferSize::try_from(8), Ok(BufferSize::KB8));
+    /// assert_eq!(BufferSize::try_from(16), Ok(BufferSize::KB16));
+    /// assert_eq!(BufferSize::try_from(17), Err(17));
+    /// ```
     fn try_from(val: u8) -> Result<BufferSize, u8> {
         match val {
             x if x == BufferSize::KB0 as u8 => Ok(BufferSize::KB0),
             x if x == BufferSize::KB1 as u8 => Ok(BufferSize::KB1),
             x if x == BufferSize::KB2 as u8 => Ok(BufferSize::KB2),
-            x if x == BufferSize::KB4 as u8 => Ok(BufferSize::KB0),
-            x if x == BufferSize::KB8 as u8 => Ok(BufferSize::KB0),
-            x if x == BufferSize::KB16 as u8 => Ok(BufferSize::KB0),
+            x if x == BufferSize::KB4 as u8 => Ok(BufferSize::KB4),
+            x if x == BufferSize::KB8 as u8 => Ok(BufferSize::KB8),
+            x if x == BufferSize::KB16 as u8 => Ok(BufferSize::KB16),
             _ => Err(val),
         }
     }
 }
 
 impl Default for BufferSize {
+    /// Default buffer size.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use w5500_ll::BufferSize;
+    ///
+    /// assert_eq!(BufferSize::default(), BufferSize::KB2);
+    /// ```
     fn default() -> Self {
         BufferSize::KB2
     }
