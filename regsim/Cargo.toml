@@ -24,7 +24,7 @@ features = ["std"]
 
 [dev-dependencies]
 trust-dns-client = "~0.20"
-w5500-hl = "~0.3.0"
+w5500-hl = "~0.4.0"
 version-sync = "~0.9"
 nb = "^1"
 stderrlog = "~0.5"
