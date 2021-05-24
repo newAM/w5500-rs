@@ -13,7 +13,7 @@ harness = false
 nb = "^1"
 cortex-m = "~0.7.2"
 cortex-m-rt = { version = "~0.6.14" }
-defmt = "~0.2.1"
+defmt = "~0.2.2"
 defmt-rtt = "~0.2.0"
 defmt-test = "~0.2.2"
 embedded-hal = "~0.2.5"
