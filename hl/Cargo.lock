@@ -157,9 +157,9 @@ dependencies = [
 
 [[package]]
 name = "defmt"
-version = "0.2.1"
+version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "735ffd58278b045498da4ca9c5057a52faa6e18472cd63568b059ae592ca7602"
+checksum = "7aba21ce228b4769b8b5b6d2e2ee28c5dcfbe60c46f76b63d88b3a6677c8dc5b"
 dependencies = [
  "defmt-macros",
  "semver 0.11.0",
@@ -167,9 +167,9 @@ dependencies = [
 
 [[package]]
 name = "defmt-macros"
-version = "0.2.0"
+version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d35887971a66a572654b37f2dd6a82e17a9dadf65935402fc910cf422955e994"
+checksum = "0fec88b1676137530f3d2e89e7ba3c4b1eb9eac49f4133752a309adf8d4f5c3b"
 dependencies = [
  "defmt-parser",
  "proc-macro2",
@@ -179,9 +179,9 @@ dependencies = [
 
 [[package]]
 name = "defmt-parser"
-version = "0.2.0"
+version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c816f778ec2147f95990a606795fe9dcc82781bcd98e222675c4103c2d250ea1"
+checksum = "fc63e313e87db4666440753288012024f117065b52e9b9f4d0d869e9fada6404"
 
 [[package]]
 name = "defmt-rtt"
@@ -768,9 +768,9 @@ checksum = "ac74c624d6b2d21f425f752262f42188365d7b8ff1aff74c82e45136510a4857"
 
 [[package]]
 name = "proc-macro2"
-version = "1.0.26"
+version = "1.0.27"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a152013215dca273577e18d2bf00fa862b89b24169fb78c4c95aeb07992c9cec"
+checksum = "f0d8caf72986c1a598726adc988bb5984792ef84f5ee5aa50209145ee8077038"
 dependencies = [
  "unicode-xid",
 ]
