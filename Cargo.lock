@@ -195,9 +195,9 @@ dependencies = [
 
 [[package]]
 name = "defmt-test"
-version = "0.2.2"
+version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a20f672d71dd5de495cf61591345a9bcc8a01c4a303121922a5e17b58d9beea8"
+checksum = "ebeddf511188fb687bce605fb065495e71aa6af7e6ae4d8aa404a93bc585ec09"
 dependencies = [
  "cortex-m 0.7.2",
  "cortex-m-rt",
@@ -207,9 +207,9 @@ dependencies = [
 
 [[package]]
 name = "defmt-test-macros"
-version = "0.2.0"
+version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "395afff6ac8939f200b832bb7bbf36cc2716942161415ad8facf76ea972f63e8"
+checksum = "68d93be9fdd423e6206831a9db2bda3616c52cce22db13f96f0b08bb08ba8600"
 dependencies = [
  "proc-macro2",
  "quote",
