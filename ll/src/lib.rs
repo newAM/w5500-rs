@@ -954,9 +954,9 @@ pub trait Registers {
 
     /// Get the socket interrupt status.
     ///
-    /// SIMR indicated the interrupt status of all sockets.
-    /// Each bit of SIR will be `1` until [`Registers::sn_ir`] is cleared.
-    /// If [`Registers::sn_ir`] is not equal to `0x00` the n<sub>th</sup>
+    /// SIMR indicates the interrupt status of all sockets.
+    /// Each bit of SIR will be `1` until [`sn_ir`] is cleared.
+    /// If [`sn_ir`] is not equal to `0x00` the n<sub>th</sub>
     /// bit of `sir` is `1` and the INTn pin is asserted until SIR is `0x00`.
     ///
     /// # Example
@@ -984,6 +984,8 @@ pub trait Registers {
     /// }
     /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
+    ///
+    /// [`sn_ir`]: Registers::sn_ir
     fn sir(&mut self) -> Result<u8, Self::Error> {
         let mut reg: [u8; 1] = [0];
         self.read(reg::SIR, COMMON_BLOCK_OFFSET, &mut reg)?;
