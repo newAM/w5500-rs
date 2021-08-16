@@ -228,9 +228,9 @@ dependencies = [
 
 [[package]]
 name = "embedded-hal-mock"
-version = "0.7.2"
+version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9eca2fb304dbaea79776ea2a0b1445e0de00b103854dbd956f406edcbf54a262"
+checksum = "b0c061879892486c076c52665d6e04e3ce0b2f7bba8250874b5942963d436c65"
 dependencies = [
  "embedded-hal",
  "nb 0.1.3",
