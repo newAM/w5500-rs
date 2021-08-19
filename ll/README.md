@@ -31,7 +31,7 @@ assert_eq!(version, 0x04);
 
 All features are disabled by default.
 
-* `defmt`: Enable formatting `Ipv4Addr` and `SocketAddrV4` with `defmt`.
+* `defmt`: Enable formatting most types with `defmt`.
 * `embedded-hal`: Enables the [`blocking`] module which contains
   implementations of the [`Registers`] trait using the `embedded-hal` traits.
 * `std`: Enables conversion between [`std::net`] and [`w5500_ll::net`] types.
@@ -47,6 +47,6 @@ All features are disabled by default.
 [w5500-hl]: https://github.com/newAM/w5500-hl-rs
 [w5500-regsim]: https://github.com/newAM/w5500-regsim-rs
 [Wiznet W5500]: https://www.wiznet.io/product-item/w5500/
-[`blocking`]: https://docs.rs/w5500-ll/0.7.0/w5500_ll/blocking/index.html
-[`Registers`]: https://docs.rs/w5500-ll/0.7.0/w5500_ll/trait.Registers.html
-[`w5500_ll::net`]: https://docs.rs/w5500-ll/0.7.0/w5500_ll/net/index.html
+[`blocking`]: https://docs.rs/w5500-ll/0.8.0/w5500_ll/blocking/index.html
+[`Registers`]: https://docs.rs/w5500-ll/0.8.0/w5500_ll/trait.Registers.html
+[`w5500_ll::net`]: https://docs.rs/w5500-ll/0.8.0/w5500_ll/net/index.html

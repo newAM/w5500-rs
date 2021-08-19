@@ -34,7 +34,7 @@
 //!
 //! All features are disabled by default.
 //!
-//! * `defmt`: Enable formatting `Ipv4Addr` and `SocketAddrV4` with `defmt`.
+//! * `defmt`: Enable formatting most types with `defmt`.
 //! * `embedded-hal`: Enables the [`blocking`] module which contains
 //!   implementations of the [`Registers`] trait using the `embedded-hal` traits.
 //! * `std`: Enables conversion between [`std::net`] and [`w5500_ll::net`] types.
@@ -207,6 +207,7 @@ pub mod reg {
 /// W5500 sockets.
 #[repr(u8)]
 #[derive(PartialEq, Eq, PartialOrd, Ord, Copy, Clone, Debug, Hash)]
+#[cfg_attr(feature = "defmt", derive(defmt::Format))]
 pub enum Socket {
     /// Socket 0.
     ///

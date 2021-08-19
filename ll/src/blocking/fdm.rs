@@ -17,6 +17,8 @@ use crate::spi::{self, AccessMode};
 ///
 /// Unlike the VDM implementation there is an intentional lack of a `free`
 /// method to prevent you from sharing the bus with other devices.
+#[derive(Debug)]
+#[cfg_attr(feature = "defmt", derive(defmt::Format))]
 pub struct W5500<SPI> {
     /// SPI bus.
     spi: SPI,

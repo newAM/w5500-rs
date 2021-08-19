@@ -8,6 +8,7 @@ use core::convert::TryFrom;
 ///
 /// [`sn_sr`]: crate::Registers::sn_sr
 #[derive(Copy, Clone, Eq, PartialEq, Debug, PartialOrd, Ord, Hash)]
+#[cfg_attr(feature = "defmt", derive(defmt::Format))]
 #[repr(u8)]
 pub enum SocketStatus {
     /// Socket closed, this is the reset state of all sockets.
@@ -185,6 +186,7 @@ impl Default for SocketStatus {
 /// [`sn_ir`]: crate::Registers::sn_ir
 /// [`sn_sr`]: crate::Registers::sn_sr
 #[derive(Copy, Clone, Eq, PartialEq, Debug, PartialOrd, Ord, Hash)]
+#[cfg_attr(feature = "defmt", derive(defmt::Format))]
 #[repr(u8)]
 pub enum SocketCommand {
     /// The command register clears to this state once a command has been
@@ -342,6 +344,7 @@ impl From<SocketCommand> for u8 {
 /// [`SocketMode::protocol`]: crate::SocketMode::protocol
 /// [`sn_mr`]: crate::Registers::sn_mr
 #[derive(Copy, Clone, Eq, PartialEq, Debug, PartialOrd, Ord, Hash)]
+#[cfg_attr(feature = "defmt", derive(defmt::Format))]
 #[repr(u8)]
 pub enum Protocol {
     /// Closed.
@@ -387,6 +390,7 @@ impl TryFrom<u8> for Protocol {
 /// [`PhyCfg::opmdc`]: crate::PhyCfg::opmdc
 /// [`phycfgr`]: crate::Registers::phycfgr
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Debug, Hash)]
+#[cfg_attr(feature = "defmt", derive(defmt::Format))]
 #[repr(u8)]
 pub enum OperationMode {
     /// 10BT half-duplex. Auto-negotiation disabled.
@@ -439,6 +443,7 @@ impl Default for OperationMode {
 /// [`PhyCfg::lnk`]: crate::PhyCfg::lnk
 /// [`phycfgr`]: crate::Registers::phycfgr
 #[derive(Copy, Clone, Eq, PartialEq, Debug, PartialOrd, Ord, Hash)]
+#[cfg_attr(feature = "defmt", derive(defmt::Format))]
 #[repr(u8)]
 pub enum LinkStatus {
     /// PHY link down.
@@ -473,6 +478,7 @@ impl Default for LinkStatus {
 /// [`PhyCfg::spd`]: crate::PhyCfg::spd
 /// [`phycfgr`]: crate::Registers::phycfgr
 #[derive(Copy, Clone, Eq, PartialEq, Debug, PartialOrd, Ord, Hash)]
+#[cfg_attr(feature = "defmt", derive(defmt::Format))]
 #[repr(u8)]
 pub enum SpeedStatus {
     /// 10 Mbps.
@@ -507,6 +513,7 @@ impl Default for SpeedStatus {
 /// [`PhyCfg::dpx`]: crate::PhyCfg::dpx
 /// [`phycfgr`]: crate::Registers::phycfgr
 #[derive(Copy, Clone, Eq, PartialEq, Debug, PartialOrd, Ord, Hash)]
+#[cfg_attr(feature = "defmt", derive(defmt::Format))]
 #[repr(u8)]
 pub enum DuplexStatus {
     /// Half duplex
@@ -542,6 +549,7 @@ impl Default for DuplexStatus {
 /// [`Registers::set_sn_txbuf_size`]: crate::Registers::set_sn_txbuf_size
 /// [`Registers::set_sn_rxbuf_size`]: crate::Registers::set_sn_rxbuf_size
 #[derive(Copy, Clone, Eq, PartialEq, PartialOrd, Ord, Hash, Debug)]
+#[cfg_attr(feature = "defmt", derive(defmt::Format))]
 #[repr(u8)]
 #[allow(clippy::upper_case_acronyms)]
 pub enum BufferSize {

@@ -3,6 +3,7 @@
 /// SPI Access Modes.
 #[repr(u8)]
 #[derive(PartialEq, Eq, Copy, Clone, Debug, Hash)]
+#[cfg_attr(feature = "defmt", derive(defmt::Format))]
 pub enum AccessMode {
     /// Read access.
     Read = 0,
