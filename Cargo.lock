@@ -673,12 +673,11 @@ dependencies = [
 
 [[package]]
 name = "panic-probe"
-version = "0.2.0"
+version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "45b5c81d6b51f415b3ba40b30dc598dfffb29ad4cf4a8815989754850ce6c0dc"
+checksum = "6a0fa226f55c70d0d70ad373802f0d65a775478afec75c0f3eee1de5d39057c9"
 dependencies = [
- "cortex-m 0.6.7",
- "cortex-m-rt",
+ "cortex-m 0.7.3",
  "defmt",
 ]
 
