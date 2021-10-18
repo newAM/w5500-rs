@@ -181,7 +181,7 @@ where
 /// [sent to]: Udp::udp_send_to
 /// [`Tcp`]: crate::Tcp
 /// [`std::net::UdpSocket`]: https://doc.rust-lang.org/std/net/struct.UdpSocket.html
-pub trait Udp<E>: Registers<Error = E> {
+pub trait Udp: Registers {
     /// Binds the socket to the given port.
     ///
     /// This will close the socket, which will reset the RX and TX buffers.
@@ -215,7 +215,7 @@ pub trait Udp<E>: Registers<Error = E> {
     ///
     /// [`std::net::UdpSocket::bind`]: https://doc.rust-lang.org/std/net/struct.UdpSocket.html#method.bind
     /// [source IP register]: w5500_ll::Registers::sipr
-    fn udp_bind(&mut self, socket: Socket, port: u16) -> Result<(), E> {
+    fn udp_bind(&mut self, socket: Socket, port: u16) -> Result<(), Self::Error> {
         debug_assert!(
             port_is_unique(self, socket, port)?,
             "Local port {} is in use",
@@ -294,7 +294,7 @@ pub trait Udp<E>: Registers<Error = E> {
         &mut self,
         socket: Socket,
         buf: &mut [u8],
-    ) -> nb::Result<(usize, SocketAddrV4), E> {
+    ) -> nb::Result<(usize, SocketAddrV4), Self::Error> {
         let mut rsr: u16 = self.sn_rx_rsr(socket)?;
 
         // nothing to recieve
@@ -369,7 +369,7 @@ pub trait Udp<E>: Registers<Error = E> {
         &mut self,
         socket: Socket,
         buf: &mut [u8],
-    ) -> nb::Result<(usize, SocketAddrV4), E> {
+    ) -> nb::Result<(usize, SocketAddrV4), Self::Error> {
         let mut rsr: u16 = self.sn_rx_rsr(socket)?;
 
         // nothing to recieve
@@ -431,7 +431,10 @@ pub trait Udp<E>: Registers<Error = E> {
     /// debug_assert_eq!(bytes_to_allocate, number_of_bytes);
     /// # Ok::<(), w5500_hl::ll::blocking::vdm::Error<_, _>>(())
     /// ```
-    fn udp_peek_from_header(&mut self, socket: Socket) -> nb::Result<(usize, SocketAddrV4), E> {
+    fn udp_peek_from_header(
+        &mut self,
+        socket: Socket,
+    ) -> nb::Result<(usize, SocketAddrV4), Self::Error> {
         let rsr: u16 = self.sn_rx_rsr(socket)?;
 
         // nothing to recieve
@@ -481,7 +484,12 @@ pub trait Udp<E>: Registers<Error = E> {
     /// ```
     ///
     /// [`std::net::UdpSocket::send_to`]: https://doc.rust-lang.org/std/net/struct.UdpSocket.html#method.send_to
-    fn udp_send_to(&mut self, socket: Socket, buf: &[u8], addr: &SocketAddrV4) -> Result<usize, E> {
+    fn udp_send_to(
+        &mut self,
+        socket: Socket,
+        buf: &[u8],
+        addr: &SocketAddrV4,
+    ) -> Result<usize, Self::Error> {
         self.set_sn_dest(socket, addr)?;
         self.udp_send(socket, buf)
     }
@@ -520,7 +528,7 @@ pub trait Udp<E>: Registers<Error = E> {
     ///
     /// [`set_sn_dest`]: w5500_ll::Registers::set_sn_dest
     /// [`send_to`]: Udp::udp_send_to
-    fn udp_send(&mut self, socket: Socket, buf: &[u8]) -> Result<usize, E> {
+    fn udp_send(&mut self, socket: Socket, buf: &[u8]) -> Result<usize, Self::Error> {
         debug_assert_eq!(self.sn_sr(socket)?, Ok(SocketStatus::Udp));
 
         let data_len: u16 = u16::try_from(buf.len()).unwrap_or(u16::MAX);
@@ -537,10 +545,10 @@ pub trait Udp<E>: Registers<Error = E> {
 }
 
 /// Implement the UDP trait for any structure that implements [`w5500_ll::Registers`].
-impl<T, E> Udp<E> for T where T: Registers<Error = E> {}
+impl<T> Udp for T where T: Registers {}
 
 /// A W5500 TCP trait.
-pub trait Tcp<E>: Registers<Error = E> {
+pub trait Tcp: Registers {
     /// Starts the 3-way TCP handshake with the remote host.
     ///
     /// This method is used to create and interact with a TCP stream between
@@ -608,7 +616,12 @@ pub trait Tcp<E>: Registers<Error = E> {
     /// [`tcp_read`]: Tcp::tcp_read
     /// [`tcp_connect`]: Tcp::tcp_connect
     /// [`con`]: w5500_ll::SocketInterrupt::con_raised
-    fn tcp_connect(&mut self, socket: Socket, port: u16, addr: &SocketAddrV4) -> Result<(), E> {
+    fn tcp_connect(
+        &mut self,
+        socket: Socket,
+        port: u16,
+        addr: &SocketAddrV4,
+    ) -> Result<(), Self::Error> {
         debug_assert!(
             port_is_unique(self, socket, port)?,
             "Local port {} is in use",
@@ -704,7 +717,7 @@ pub trait Tcp<E>: Registers<Error = E> {
     /// [`tcp_read`]: Tcp::tcp_read
     /// [`tcp_listen`]: Tcp::tcp_listen
     /// [`con`]: w5500_ll::SocketInterrupt::con_raised
-    fn tcp_listen(&mut self, socket: Socket, port: u16) -> Result<(), E> {
+    fn tcp_listen(&mut self, socket: Socket, port: u16) -> Result<(), Self::Error> {
         debug_assert!(
             port_is_unique(self, socket, port)?,
             "Local port {} is in use",
@@ -781,7 +794,7 @@ pub trait Tcp<E>: Registers<Error = E> {
     ///
     /// [`Established`]: w5500_ll::SocketStatus::Established
     /// [`recv`]: w5500_ll::SocketInterrupt::recv_raised
-    fn tcp_read(&mut self, socket: Socket, buf: &mut [u8]) -> Result<usize, E> {
+    fn tcp_read(&mut self, socket: Socket, buf: &mut [u8]) -> Result<usize, Self::Error> {
         debug_assert!(!matches!(
             self.sn_sr(socket)?,
             Ok(SocketStatus::Udp) | Ok(SocketStatus::Init) | Ok(SocketStatus::Macraw)
@@ -836,7 +849,7 @@ pub trait Tcp<E>: Registers<Error = E> {
     /// ```
     ///
     /// [`Established`]: w5500_ll::SocketStatus::Established
-    fn tcp_write(&mut self, socket: Socket, buf: &[u8]) -> Result<usize, E> {
+    fn tcp_write(&mut self, socket: Socket, buf: &[u8]) -> Result<usize, Self::Error> {
         debug_assert!(!matches!(
             self.sn_sr(socket)?,
             Ok(SocketStatus::Udp) | Ok(SocketStatus::Init) | Ok(SocketStatus::Macraw)
@@ -895,7 +908,7 @@ pub trait Tcp<E>: Registers<Error = E> {
     /// [`Closed`]: w5500_ll::SocketStatus::Closed
     /// [`Established`]: w5500_ll::SocketStatus::Established
     /// [timeout interrupt]: w5500_ll::SocketInterrupt::timeout_raised
-    fn tcp_disconnect(&mut self, socket: Socket) -> Result<(), E> {
+    fn tcp_disconnect(&mut self, socket: Socket) -> Result<(), Self::Error> {
         debug_assert!(!matches!(
             self.sn_sr(socket)?,
             Ok(SocketStatus::Udp) | Ok(SocketStatus::Init) | Ok(SocketStatus::Macraw)
@@ -905,10 +918,10 @@ pub trait Tcp<E>: Registers<Error = E> {
 }
 
 /// Implement the TCP trait for any structure that implements [`w5500_ll::Registers`].
-impl<T, E> Tcp<E> for T where T: Registers<Error = E> {}
+impl<T> Tcp for T where T: Registers {}
 
 /// Methods common to all W5500 socket types.
-pub trait Common<E>: Registers<Error = E> {
+pub trait Common: Registers {
     /// Returns the socket address.
     ///
     /// # Example
@@ -923,7 +936,7 @@ pub trait Common<E>: Registers<Error = E> {
     /// let local_addr = w5500.local_addr(Socket0)?;
     /// # Ok::<(), w5500_hl::ll::blocking::vdm::Error<_, _>>(())
     /// ```
-    fn local_addr(&mut self, socket: Socket) -> Result<SocketAddrV4, E> {
+    fn local_addr(&mut self, socket: Socket) -> Result<SocketAddrV4, Self::Error> {
         let ip: Ipv4Addr = self.sipr()?;
         let port: u16 = self.sn_port(socket)?;
         Ok(SocketAddrV4::new(ip, port))
@@ -945,7 +958,7 @@ pub trait Common<E>: Registers<Error = E> {
     /// w5500.close(Socket0)?;
     /// # Ok::<(), w5500_hl::ll::blocking::vdm::Error<_, _>>(())
     /// ```
-    fn close(&mut self, socket: Socket) -> Result<(), E> {
+    fn close(&mut self, socket: Socket) -> Result<(), Self::Error> {
         self.set_sn_cr(socket, SocketCommand::Close)
     }
 
@@ -971,7 +984,7 @@ pub trait Common<E>: Registers<Error = E> {
     ///
     /// [Closed]: w5500_ll::SocketStatus::Closed
     /// [Closing]: w5500_ll::SocketStatus::Closing
-    fn is_state_closed(&mut self, socket: Socket) -> Result<bool, E> {
+    fn is_state_closed(&mut self, socket: Socket) -> Result<bool, Self::Error> {
         Ok(self.sn_sr(socket)? == Ok(SocketStatus::Closed))
     }
 
@@ -1020,7 +1033,7 @@ pub trait Common<E>: Registers<Error = E> {
     /// [CloseWait]: w5500_ll::SocketStatus::CloseWait
     /// [TimeWait]: w5500_ll::SocketStatus::TimeWait
     /// [LastAck]: w5500_ll::SocketStatus::LastAck
-    fn is_state_tcp(&mut self, socket: Socket) -> Result<bool, E> {
+    fn is_state_tcp(&mut self, socket: Socket) -> Result<bool, Self::Error> {
         // Hopefully the compiler will optimize this to check that the state is
         // not MACRAW, UDP, or INIT.
         // Leaving it as-is since the code is more readable this way.
@@ -1057,13 +1070,13 @@ pub trait Common<E>: Registers<Error = E> {
     /// ```
     ///
     /// [Udp]: w5500_ll::SocketStatus::Udp
-    fn is_state_udp(&mut self, socket: Socket) -> Result<bool, E> {
+    fn is_state_udp(&mut self, socket: Socket) -> Result<bool, Self::Error> {
         Ok(self.sn_sr(socket)? == Ok(SocketStatus::Udp))
     }
 }
 
 /// Implement the common socket trait for any structure that implements [`w5500_ll::Registers`].
-impl<T, E> Common<E> for T where T: Registers<Error = E> {}
+impl<T> Common for T where T: Registers {}
 
 #[cfg(test)]
 mod tests {
