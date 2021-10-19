@@ -1,5 +1,5 @@
 [package]
-authors = ["Alex M. <alexmgit@protonmail.com>"]
+authors = ["Alex Martens <alexmgit@protonmail.com>"]
 name = "testsuite-assets"
 publish = false
 edition = "2018"
