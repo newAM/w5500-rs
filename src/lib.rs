@@ -100,7 +100,7 @@
 //! [Wiznet W5500]: https://www.wiznet.io/product-item/w5500/
 //! [`Tcp`]: https://docs.rs/w5500-hl/0.4.0/w5500_hl/trait.Tcp.html
 //! [`Udp`]: https://docs.rs/w5500-hl/0.4.0/w5500_hl/trait.Udp.html
-#![doc(html_root_url = "https://docs.rs/w5500-hl/0.4.0")]
+#![doc(html_root_url = "https://docs.rs/w5500-hl/0.5.0")]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![no_std]
 
