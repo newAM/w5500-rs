@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.5.0] - 2021-10-18
 ### Changed
-- Remove the generic parameter from the `Udp`, `Tcp`, and `Common` traits.
+- Removed the generic parameter from the `Udp`, `Tcp`, and `Common` traits.
 
 ## [0.4.0] - 2021-05-08
 ### Changed
@@ -53,7 +53,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial release
 
 [Unreleased]: https://github.com/newAM/w5500-hl-rs/compare/v0.5.0...HEAD
-[0.4.0]: https://github.com/newAM/w5500-hl-rs/compare/v0.4.0...v0.5.0
+[0.5.0]: https://github.com/newAM/w5500-hl-rs/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/newAM/w5500-hl-rs/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/newAM/w5500-hl-rs/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/newAM/w5500-hl-rs/compare/v0.1.0...v0.2.0
