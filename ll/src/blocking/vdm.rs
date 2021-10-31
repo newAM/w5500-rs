@@ -120,7 +120,7 @@ where
         let header = vdm_header(address, block, AccessMode::Write);
         self.with_chip_enable(|spi| {
             spi.write(&header).map_err(Error::Spi)?;
-            spi.write(&data).map_err(Error::Spi)?;
+            spi.write(data).map_err(Error::Spi)?;
             Ok(())
         })
     }

@@ -14,26 +14,24 @@ jobs:
   build:
     name: Cargo Build
     runs-on: ubuntu-latest
+    env: {"RUSTFLAGS": "-D warnings"}
     strategy:
       matrix:
         target:
           - "x86_64-unknown-linux-gnu"
           - "thumbv6m-none-eabi"
-          - "thumbv7em-none-eabi"
-          - "thumbv7em-none-eabihf"
-          - "thumbv7m-none-eabi"
     steps:
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
           target: ${{ matrix.target }}
-      - run: RUSTFLAGS="-D warnings" cargo build --target ${{ matrix.target }}
-      - run: RUSTFLAGS="-D warnings" cargo build --target ${{ matrix.target }} --features embedded-hal
-      - run: RUSTFLAGS="-D warnings" cargo build --target ${{ matrix.target }} --features defmt
-      - run: RUSTFLAGS="-D warnings" cargo build --target ${{ matrix.target }} --features std
+      - run: cargo build --target ${{ matrix.target }}
+      - run: cargo build --target ${{ matrix.target }} --features embedded-hal
+      - run: cargo build --target ${{ matrix.target }} --features defmt
+      - run: cargo build --target ${{ matrix.target }} --features std
         if: ${{ contains(matrix.target, 'linux') }}
-      - run: RUSTFLAGS="-D warnings" cargo build --target ${{ matrix.target }} --all-features
+      - run: cargo build --target ${{ matrix.target }} --all-features
         if: ${{ contains(matrix.target, 'linux') }}
 
   test:
@@ -46,7 +44,7 @@ jobs:
           toolchain: stable
       - run: cargo test --all-features
 
-  clippy_check:
+  clippy:
     name: Clippy
     runs-on: ubuntu-latest
     steps:
@@ -55,10 +53,9 @@ jobs:
         with:
           toolchain: stable
           components: clippy
-      - uses: actions-rs/clippy-check@v1.0.7
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          args: --all-features
+      # not using clippy-check due to this issue:
+      # https://github.com/actions-rs/clippy-check/issues/2
+      - run: cargo clippy --all-features -- --deny warnings
 
   format_check:
     name: Rust Format
@@ -97,7 +94,13 @@ jobs:
   release:
     name: crates.io release
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: [build, test, clippy_check, format_check, doc, rustdoc]
+    needs:
+      - build
+      - test
+      - clippy
+      - format_check
+      - doc
+      - rustdoc
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2

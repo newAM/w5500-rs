@@ -104,21 +104,21 @@ where
         while let Some(chunk) = chunks.next() {
             let header = spi::fdm_header_4b(address, block, AccessMode::Write);
             self.spi.write(&header)?;
-            self.spi.write(&chunk)?;
+            self.spi.write(chunk)?;
             address = address.wrapping_add(4);
         }
         let mut chunks = chunks.remainder().chunks_exact(2);
         while let Some(chunk) = chunks.next() {
             let header = spi::fdm_header_2b(address, block, AccessMode::Write);
             self.spi.write(&header)?;
-            self.spi.write(&chunk)?;
+            self.spi.write(chunk)?;
             address = address.wrapping_add(2);
         }
         let mut chunks = chunks.remainder().chunks_exact(1);
         while let Some(chunk) = chunks.next() {
             let header = spi::fdm_header_1b(address, block, AccessMode::Write);
             self.spi.write(&header)?;
-            self.spi.write(&chunk)?;
+            self.spi.write(chunk)?;
             address = address.wrapping_add(1);
         }
 
