@@ -60,7 +60,6 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 #[cfg(feature = "embedded-hal")]
-#[cfg_attr(docsrs, doc(cfg(feature = "embedded-hal")))]
 pub mod blocking;
 pub mod net;
 pub mod spi;
@@ -463,7 +462,6 @@ pub const SOCKETS: [Socket; 8] = [
 /// # Ok::<(), hal::MockError>(())
 /// ```
 #[cfg(feature = "embedded-hal")]
-#[cfg_attr(docsrs, doc(cfg(feature = "embedded-hal")))]
 pub fn reset<P, D, E>(pin: &mut P, delay: &mut D) -> Result<(), E>
 where
     P: embedded_hal::digital::v2::OutputPin<Error = E>,

@@ -259,7 +259,6 @@ impl From<[u8; 4]> for Ipv4Addr {
 }
 
 #[cfg(feature = "defmt")]
-#[cfg_attr(docsrs, doc(cfg(feature = "defmt")))]
 impl defmt::Format for Ipv4Addr {
     fn format(&self, fmt: defmt::Formatter) {
         defmt::write!(
@@ -274,7 +273,6 @@ impl defmt::Format for Ipv4Addr {
 }
 
 #[cfg(feature = "std")]
-#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
 impl From<std::net::Ipv4Addr> for Ipv4Addr {
     fn from(ip: std::net::Ipv4Addr) -> Self {
         Ipv4Addr::new(
@@ -287,7 +285,6 @@ impl From<std::net::Ipv4Addr> for Ipv4Addr {
 }
 
 #[cfg(feature = "std")]
-#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
 impl From<&std::net::Ipv4Addr> for Ipv4Addr {
     fn from(ip: &std::net::Ipv4Addr) -> Self {
         Ipv4Addr::new(
@@ -300,7 +297,6 @@ impl From<&std::net::Ipv4Addr> for Ipv4Addr {
 }
 
 #[cfg(feature = "std")]
-#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
 impl From<Ipv4Addr> for std::net::Ipv4Addr {
     fn from(ip: Ipv4Addr) -> Self {
         std::net::Ipv4Addr::new(ip.octets[0], ip.octets[1], ip.octets[2], ip.octets[3])
@@ -308,7 +304,6 @@ impl From<Ipv4Addr> for std::net::Ipv4Addr {
 }
 
 #[cfg(feature = "std")]
-#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
 impl From<&Ipv4Addr> for std::net::Ipv4Addr {
     fn from(ip: &Ipv4Addr) -> Self {
         std::net::Ipv4Addr::new(ip.octets[0], ip.octets[1], ip.octets[2], ip.octets[3])
@@ -316,7 +311,6 @@ impl From<&Ipv4Addr> for std::net::Ipv4Addr {
 }
 
 #[cfg(feature = "std")]
-#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
 impl From<Ipv4Addr> for std::net::IpAddr {
     fn from(ip: Ipv4Addr) -> Self {
         std::net::IpAddr::V4(ip.into())
@@ -324,7 +318,6 @@ impl From<Ipv4Addr> for std::net::IpAddr {
 }
 
 #[cfg(feature = "std")]
-#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
 impl From<&Ipv4Addr> for std::net::IpAddr {
     fn from(ip: &Ipv4Addr) -> Self {
         std::net::IpAddr::V4(ip.into())
@@ -522,7 +515,6 @@ impl ::core::fmt::Display for SocketAddrV4 {
 }
 
 #[cfg(feature = "defmt")]
-#[cfg_attr(docsrs, doc(cfg(feature = "defmt")))]
 impl defmt::Format for SocketAddrV4 {
     fn format(&self, fmt: defmt::Formatter) {
         defmt::write!(fmt, "{:?}:{}", self.ip(), self.port())
@@ -530,7 +522,6 @@ impl defmt::Format for SocketAddrV4 {
 }
 
 #[cfg(feature = "std")]
-#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
 impl From<std::net::SocketAddrV4> for SocketAddrV4 {
     fn from(addr: std::net::SocketAddrV4) -> Self {
         SocketAddrV4::new(addr.ip().into(), addr.port())
@@ -538,7 +529,6 @@ impl From<std::net::SocketAddrV4> for SocketAddrV4 {
 }
 
 #[cfg(feature = "std")]
-#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
 impl From<&std::net::SocketAddrV4> for SocketAddrV4 {
     fn from(addr: &std::net::SocketAddrV4) -> Self {
         SocketAddrV4::new(addr.ip().into(), addr.port())
@@ -546,7 +536,6 @@ impl From<&std::net::SocketAddrV4> for SocketAddrV4 {
 }
 
 #[cfg(feature = "std")]
-#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
 impl From<SocketAddrV4> for std::net::SocketAddrV4 {
     fn from(addr: SocketAddrV4) -> Self {
         std::net::SocketAddrV4::new(addr.ip().into(), addr.port)
@@ -554,7 +543,6 @@ impl From<SocketAddrV4> for std::net::SocketAddrV4 {
 }
 
 #[cfg(feature = "std")]
-#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
 impl From<&SocketAddrV4> for std::net::SocketAddrV4 {
     fn from(addr: &SocketAddrV4) -> Self {
         std::net::SocketAddrV4::new(addr.ip().into(), addr.port)
@@ -562,7 +550,6 @@ impl From<&SocketAddrV4> for std::net::SocketAddrV4 {
 }
 
 #[cfg(feature = "std")]
-#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
 impl From<&SocketAddrV4> for std::net::SocketAddr {
     fn from(addr: &SocketAddrV4) -> Self {
         std::net::SocketAddr::V4(addr.into())
@@ -570,7 +557,6 @@ impl From<&SocketAddrV4> for std::net::SocketAddr {
 }
 
 #[cfg(feature = "std")]
-#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
 impl From<SocketAddrV4> for std::net::SocketAddr {
     fn from(addr: SocketAddrV4) -> Self {
         std::net::SocketAddr::V4(addr.into())
