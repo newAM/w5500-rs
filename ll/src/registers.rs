@@ -1,7 +1,6 @@
 //! Register structures.
 
 use crate::specifiers::{DuplexStatus, LinkStatus, OperationMode, Protocol, SpeedStatus};
-use core::convert::TryFrom;
 
 macro_rules! impl_u8_for {
     ($REG:ident) => {

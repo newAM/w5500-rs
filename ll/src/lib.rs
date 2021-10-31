@@ -67,7 +67,6 @@ pub mod spi;
 
 mod registers;
 mod specifiers;
-use core::convert::TryFrom;
 use net::{Eui48Addr, Ipv4Addr, SocketAddrV4};
 
 pub use registers::{Interrupt, Mode, PhyCfg, SocketInterrupt, SocketInterruptMask, SocketMode};
@@ -1819,7 +1818,6 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use core::convert::TryFrom;
     /// use w5500_ll::{blocking::vdm::W5500, Registers, Socket, SocketStatus};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
@@ -2398,7 +2396,6 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use core::convert::TryFrom;
     /// use w5500_ll::{blocking::vdm::W5500, BufferSize, Registers, Socket};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
@@ -2431,7 +2428,6 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use core::convert::TryFrom;
     /// use w5500_ll::{blocking::vdm::W5500, BufferSize, Registers, Socket};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
@@ -2473,7 +2469,6 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use core::convert::TryFrom;
     /// use w5500_ll::{blocking::vdm::W5500, BufferSize, Registers, Socket};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
@@ -2506,7 +2501,6 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use core::convert::TryFrom;
     /// use w5500_ll::{blocking::vdm::W5500, BufferSize, Registers, Socket};
     ///
     /// let mut w5500 = W5500::new(spi, pin);
@@ -2946,7 +2940,6 @@ pub trait Registers {
     ///
     /// ```
     /// use core::cmp::min;
-    /// use core::convert::TryFrom;
     /// use w5500_ll::{blocking::vdm::W5500, Registers, Socket, SocketCommand};
     /// # use embedded_hal_mock as hal;
     /// # let spi = hal::spi::Mock::new(&[
@@ -3005,7 +2998,6 @@ pub trait Registers {
     ///
     /// ```
     /// use core::cmp::min;
-    /// use core::convert::TryFrom;
     /// use w5500_ll::{blocking::vdm::W5500, Registers, Socket, SocketCommand};
     /// # use embedded_hal_mock as hal;
     /// # let spi = hal::spi::Mock::new(&[

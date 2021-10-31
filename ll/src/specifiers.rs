@@ -1,7 +1,5 @@
 //! Register specifiers (enumerations).
 
-use core::convert::TryFrom;
-
 /// Socket status.
 ///
 /// This is used with the [`sn_sr`] method.
@@ -594,7 +592,6 @@ impl TryFrom<u8> for BufferSize {
     /// # Example
     ///
     /// ```
-    /// use core::convert::TryFrom;
     /// use w5500_ll::BufferSize;
     ///
     /// assert_eq!(BufferSize::try_from(0), Ok(BufferSize::KB0));

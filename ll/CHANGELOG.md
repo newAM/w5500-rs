@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `defmt::Display` for all enumerations.
 - Added `defmt::Display` for `fdm::W5500`, `vdm::W5500`, and `vdm::Error`.
 
+### Changed
+- Changed edition from 2018 to 2021.
+
 ## [0.8.0] - 2021-05-08
 ### Added
 - Added `Display` for `SocketInterruptMask`.
