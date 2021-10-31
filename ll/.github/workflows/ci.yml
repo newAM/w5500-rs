@@ -71,6 +71,7 @@ jobs:
   doc:
     name: doc
     runs-on: ubuntu-latest
+    env: {"RUSTDOCFLAGS": "-D warnings"}
     steps:
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
@@ -89,7 +90,7 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: nightly
-      - run: RUSTDOCFLAGS='--cfg docsrs' cargo +nightly rustdoc --all-features
+      - run: RUSTDOCFLAGS='--cfg docsrs -D warnings' cargo +nightly rustdoc --all-features
 
   release:
     name: crates.io release

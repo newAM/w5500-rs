@@ -55,9 +55,9 @@
 //! [`w5500_ll::net`]: https://docs.rs/w5500-ll/0.8.0/w5500_ll/net/index.html
 #![doc(html_root_url = "https://docs.rs/w5500-ll/0.8.0")]
 #![cfg_attr(docsrs, feature(doc_cfg))]
-#![forbid(unsafe_code)]
-#![forbid(missing_docs)]
 #![cfg_attr(not(feature = "std"), no_std)]
+#![forbid(unsafe_code)]
+#![warn(missing_docs)]
 
 #[cfg(feature = "embedded-hal")]
 pub mod blocking;
