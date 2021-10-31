@@ -2,7 +2,8 @@
 name = "w5500-hl"
 version = "0.5.0"
 authors = ["Alex Martens <alexmgit@protonmail.com>"]
-edition = "2018"
+edition = "2021"
+rust-version = "1.56"
 repository = "https://github.com/newAM/w5500-hl-rs"
 license = "MIT"
 description = "Driver for the Wiznet W5500 internet offload chip."
