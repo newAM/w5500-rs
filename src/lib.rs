@@ -109,7 +109,6 @@ pub use w5500_ll as ll;
 use ll::{Protocol, Registers, Socket, SocketCommand, SocketMode, SocketStatus, SOCKETS};
 
 use core::cmp::min;
-use core::convert::TryFrom;
 
 /// Networking data types.
 ///
