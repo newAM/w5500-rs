@@ -1,4 +1,4 @@
-use std::convert::{Infallible, TryFrom};
+use std::convert::Infallible;
 use w5500_hl::net::{Ipv4Addr, SocketAddrV4};
 use w5500_hl::Udp;
 use w5500_ll::{Protocol, Registers, Socket, SocketCommand, SocketMode, SocketStatus};
