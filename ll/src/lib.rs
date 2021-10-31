@@ -547,10 +547,9 @@ pub trait Registers {
     /// # ]);
     /// use w5500_ll::{blocking::vdm::W5500, Mode, Registers};
     ///
-    /// let mut mode: Mode = Mode::default();
-    /// mode.enable_wol();
+    /// const MODE: Mode = Mode::DEFAULT.enable_wol();
     /// let mut w5500 = W5500::new(spi, pin);
-    /// w5500.set_mr(mode)?;
+    /// w5500.set_mr(MODE)?;
     /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn set_mr(&mut self, mode: Mode) -> Result<(), Self::Error> {
@@ -939,11 +938,11 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
     ///
-    /// let mut imr: Interrupt = Interrupt::default();
     /// // enable the magic packet interrupt
-    /// imr.set_mp();
+    /// const IMR: Interrupt = Interrupt::DEFAULT.set_mp();
+    ///
     /// let mut w5500 = W5500::new(spi, pin);
-    /// w5500.set_imr(imr)?;
+    /// w5500.set_imr(IMR)?;
     /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn set_imr(&mut self, mask: Interrupt) -> Result<(), Self::Error> {
@@ -1550,10 +1549,9 @@ pub trait Registers {
     /// # ]);
     /// use w5500_ll::{blocking::vdm::W5500, OperationMode, PhyCfg, Registers};
     ///
-    /// let mut phy_cfg: PhyCfg = PhyCfg::default();
-    /// phy_cfg.set_opmdc(OperationMode::Auto);
+    /// const PHY_CFG: PhyCfg = PhyCfg::DEFAULT.set_opmdc(OperationMode::Auto);
     /// let mut w5500 = W5500::new(spi, pin);
-    /// w5500.set_phycfgr(phy_cfg)?;
+    /// w5500.set_phycfgr(PHY_CFG)?;
     /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn set_phycfgr(&mut self, phycfg: PhyCfg) -> Result<(), Self::Error> {
@@ -1635,10 +1633,9 @@ pub trait Registers {
     /// # ]);
     /// use w5500_ll::{blocking::vdm::W5500, Protocol, Registers, Socket, SocketMode};
     ///
-    /// let mut socket_mode = SocketMode::default();
-    /// socket_mode.set_protocol(Protocol::Tcp);
+    /// const SOCKET_MODE: SocketMode = SocketMode::DEFAULT.set_protocol(Protocol::Tcp);
     /// let mut w5500 = W5500::new(spi, pin);
-    /// w5500.set_sn_mr(Socket::Socket0, socket_mode)?;
+    /// w5500.set_sn_mr(Socket::Socket0, SOCKET_MODE)?;
     /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn set_sn_mr(&mut self, socket: Socket, mode: SocketMode) -> Result<(), Self::Error> {

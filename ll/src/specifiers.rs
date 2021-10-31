@@ -358,19 +358,24 @@ pub enum Protocol {
     /// [socket 0]: crate::Socket::Socket0
     Macraw = 0b0100,
 }
-impl From<Protocol> for u8 {
-    fn from(val: Protocol) -> u8 {
-        val as u8
-    }
-}
-impl Default for Protocol {
-    fn default() -> Protocol {
-        Protocol::Closed
-    }
-}
-impl TryFrom<u8> for Protocol {
-    type Error = u8;
-    fn try_from(val: u8) -> Result<Protocol, u8> {
+impl Protocol {
+    /// Convert a raw `u8` to an `Protocol`.
+    ///
+    /// Bit values that do not correspond to a protocol will be returned in the
+    /// `Err` variant of the result.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use w5500_ll::Protocol;
+    ///
+    /// assert_eq!(Protocol::from_raw(0b0000), Ok(Protocol::Closed));
+    /// assert_eq!(Protocol::from_raw(0b0001), Ok(Protocol::Tcp));
+    /// assert_eq!(Protocol::from_raw(0b0010), Ok(Protocol::Udp));
+    /// assert_eq!(Protocol::from_raw(0b0100), Ok(Protocol::Macraw));
+    /// assert_eq!(Protocol::from_raw(0b0101), Err(0b0101));
+    /// ```
+    pub const fn from_raw(val: u8) -> Result<Self, u8> {
         match val {
             x if x == Protocol::Closed as u8 => Ok(Protocol::Closed),
             x if x == Protocol::Tcp as u8 => Ok(Protocol::Tcp),
@@ -378,6 +383,22 @@ impl TryFrom<u8> for Protocol {
             x if x == Protocol::Macraw as u8 => Ok(Protocol::Macraw),
             _ => Err(val),
         }
+    }
+}
+impl From<Protocol> for u8 {
+    fn from(val: Protocol) -> u8 {
+        val as u8
+    }
+}
+impl Default for Protocol {
+    fn default() -> Self {
+        Self::Closed
+    }
+}
+impl TryFrom<u8> for Protocol {
+    type Error = u8;
+    fn try_from(val: u8) -> Result<Self, u8> {
+        Self::from_raw(val)
     }
 }
 
@@ -406,31 +427,60 @@ pub enum OperationMode {
     /// All capable. Auto-negotiation enabled.
     Auto = 0b111,
 }
+impl OperationMode {
+    /// Convert a raw `u8` to an `OperationMode`.
+    ///
+    /// Only the first 3 bits of the `u8` value are used.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use w5500_ll::OperationMode;
+    ///
+    /// assert_eq!(
+    ///     OperationMode::from_raw(0b000),
+    ///     OperationMode::HalfDuplex10bt
+    /// );
+    /// assert_eq!(
+    ///     OperationMode::from_raw(0b001),
+    ///     OperationMode::FullDuplex10bt
+    /// );
+    /// assert_eq!(
+    ///     OperationMode::from_raw(0b010),
+    ///     OperationMode::HalfDuplex100bt
+    /// );
+    /// assert_eq!(
+    ///     OperationMode::from_raw(0b011),
+    ///     OperationMode::FullDuplex100bt
+    /// );
+    /// assert_eq!(
+    ///     OperationMode::from_raw(0b100),
+    ///     OperationMode::HalfDuplex100btAuto
+    /// );
+    /// assert_eq!(OperationMode::from_raw(0b110), OperationMode::PowerDown);
+    /// assert_eq!(OperationMode::from_raw(0b111), OperationMode::Auto);
+    /// ```
+    pub const fn from_raw(val: u8) -> Self {
+        match val & 0b111 {
+            x if x == Self::HalfDuplex10bt as u8 => Self::HalfDuplex10bt,
+            x if x == Self::FullDuplex10bt as u8 => Self::FullDuplex10bt,
+            x if x == Self::HalfDuplex100bt as u8 => Self::HalfDuplex100bt,
+            x if x == Self::FullDuplex100bt as u8 => Self::FullDuplex100bt,
+            x if x == Self::HalfDuplex100btAuto as u8 => Self::HalfDuplex100btAuto,
+            x if x == Self::PowerDown as u8 => Self::PowerDown,
+            // x if x == Self::Auto as u8
+            _ => Self::Auto,
+        }
+    }
+}
 impl From<OperationMode> for u8 {
     fn from(val: OperationMode) -> u8 {
         val as u8
     }
 }
-impl TryFrom<u8> for OperationMode {
-    type Error = u8;
-    fn try_from(val: u8) -> Result<OperationMode, u8> {
-        match val {
-            x if x == OperationMode::HalfDuplex10bt as u8 => Ok(OperationMode::HalfDuplex10bt),
-            x if x == OperationMode::FullDuplex10bt as u8 => Ok(OperationMode::FullDuplex10bt),
-            x if x == OperationMode::HalfDuplex100bt as u8 => Ok(OperationMode::HalfDuplex100bt),
-            x if x == OperationMode::FullDuplex100bt as u8 => Ok(OperationMode::FullDuplex100bt),
-            x if x == OperationMode::HalfDuplex100btAuto as u8 => {
-                Ok(OperationMode::HalfDuplex100btAuto)
-            }
-            x if x == OperationMode::PowerDown as u8 => Ok(OperationMode::PowerDown),
-            x if x == OperationMode::Auto as u8 => Ok(OperationMode::Auto),
-            _ => Err(val),
-        }
-    }
-}
 impl Default for OperationMode {
-    fn default() -> OperationMode {
-        OperationMode::Auto
+    fn default() -> Self {
+        Self::Auto
     }
 }
 

@@ -2,17 +2,23 @@
 
 use crate::specifiers::{DuplexStatus, LinkStatus, OperationMode, Protocol, SpeedStatus};
 
-macro_rules! impl_u8_for {
+macro_rules! impl_boilerplate_for {
     ($REG:ident) => {
         impl From<u8> for $REG {
-            fn from(val: u8) -> $REG {
-                $REG(val)
+            fn from(val: u8) -> Self {
+                Self(val)
             }
         }
 
         impl From<$REG> for u8 {
             fn from(val: $REG) -> u8 {
                 val.0
+            }
+        }
+
+        impl Default for $REG {
+            fn default() -> Self {
+                Self::DEFAULT
             }
         }
     };
@@ -28,10 +34,24 @@ macro_rules! impl_u8_for {
 /// [`Registers::set_mr`]: crate::Registers::set_mr
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 pub struct Mode(u8);
+impl_boilerplate_for!(Mode);
 
 impl Mode {
     /// Mode register reset value.
     pub const RESET: u8 = 0x00;
+
+    /// Default value.
+    ///
+    /// This is the same as `default`, but as a `const` value.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use w5500_ll::Mode;
+    ///
+    /// assert_eq!(Mode::DEFAULT, Mode::default());
+    /// ```
+    pub const DEFAULT: Self = Self(Self::RESET);
 
     /// Bit offset for the `RST` field.
     pub const RST_OFFSET: u8 = 7;
@@ -58,8 +78,10 @@ impl Mode {
     /// Set the software reset bit to `1`.
     ///
     /// When reset all internal registers will be initialized.
-    pub fn rst(&mut self) {
+    #[must_use = "rst returns a modified Mode"]
+    pub const fn rst(mut self) -> Self {
         self.0 |= Self::RST_MASK;
+        self
     }
 
     /// Wake on LAN.
@@ -70,25 +92,31 @@ impl Mode {
     /// # Example
     ///
     /// ```
-    /// let mut mr = w5500_ll::Mode::default();
+    /// use w5500_ll::Mode;
+    ///
+    /// let mr: Mode = Mode::DEFAULT;
     /// assert!(!mr.wol_enabled());
-    /// mr.enable_wol();
+    /// let mr: Mode = mr.enable_wol();
     /// assert!(mr.wol_enabled());
-    /// mr.disable_wol();
+    /// let mr: Mode = mr.disable_wol();
     /// assert!(!mr.wol_enabled());
     /// ```
-    pub fn wol_enabled(&self) -> bool {
+    pub const fn wol_enabled(&self) -> bool {
         self.0 & Self::WOL_MASK != 0
     }
 
     /// Enable wake on LAN.
-    pub fn enable_wol(&mut self) {
-        self.0 |= Self::WOL_MASK
+    #[must_use = "enable_wol returns a modified Mode"]
+    pub const fn enable_wol(mut self) -> Self {
+        self.0 |= Self::WOL_MASK;
+        self
     }
 
     /// Disable wake on LAN.
-    pub fn disable_wol(&mut self) {
-        self.0 &= !Self::WOL_MASK
+    #[must_use = "disable_wol returns a modified Mode"]
+    pub const fn disable_wol(mut self) -> Self {
+        self.0 &= !Self::WOL_MASK;
+        self
     }
 
     /// Ping block mode.
@@ -98,25 +126,31 @@ impl Mode {
     /// # Example
     ///
     /// ```
-    /// let mut mr = w5500_ll::Mode::default();
+    /// use w5500_ll::Mode;
+    ///
+    /// let mr: Mode = Mode::DEFAULT;
     /// assert!(!mr.pb_enabled());
-    /// mr.enable_pb();
+    /// let mr: Mode = mr.enable_pb();
     /// assert!(mr.pb_enabled());
-    /// mr.disable_pb();
+    /// let mr: Mode = mr.disable_pb();
     /// assert!(!mr.pb_enabled());
     /// ```
-    pub fn pb_enabled(&self) -> bool {
+    pub const fn pb_enabled(&self) -> bool {
         self.0 & Self::PB_MASK != 0
     }
 
     /// Enable ping block.
-    pub fn enable_pb(&mut self) {
-        self.0 |= Self::PB_MASK
+    #[must_use = "enable_pb returns a modified Mode"]
+    pub const fn enable_pb(mut self) -> Self {
+        self.0 |= Self::PB_MASK;
+        self
     }
 
     /// Disable ping block.
-    pub fn disable_pb(&mut self) {
-        self.0 &= !Self::PB_MASK
+    #[must_use = "disable_pb returns a modified Mode"]
+    pub const fn disable_pb(mut self) -> Self {
+        self.0 &= !Self::PB_MASK;
+        self
     }
 
     /// PPPoE mode.
@@ -126,25 +160,31 @@ impl Mode {
     /// # Example
     ///
     /// ```
-    /// let mut mr = w5500_ll::Mode::default();
+    /// use w5500_ll::Mode;
+    ///
+    /// let mr: Mode = Mode::DEFAULT;
     /// assert!(!mr.pppoe_enabled());
-    /// mr.enable_pppoe();
+    /// let mr: Mode = mr.enable_pppoe();
     /// assert!(mr.pppoe_enabled());
-    /// mr.disable_pppoe();
+    /// let mr: Mode = mr.disable_pppoe();
     /// assert!(!mr.pppoe_enabled());
     /// ```
-    pub fn pppoe_enabled(&self) -> bool {
+    pub const fn pppoe_enabled(&self) -> bool {
         self.0 & Self::PPPOE_MASK != 0
     }
 
     /// Enable PPPoE mode.
-    pub fn enable_pppoe(&mut self) {
-        self.0 |= Self::PPPOE_MASK
+    #[must_use = "enable_pppoe returns a modified Mode"]
+    pub const fn enable_pppoe(mut self) -> Self {
+        self.0 |= Self::PPPOE_MASK;
+        self
     }
 
     /// Disable PPPoE mode.
-    pub fn disable_pppoe(&mut self) {
-        self.0 &= !Self::PPPOE_MASK
+    #[must_use = "disable_pppoe returns a modified Mode"]
+    pub const fn disable_pppoe(mut self) -> Self {
+        self.0 &= !Self::PPPOE_MASK;
+        self
     }
 
     /// Force ARP.
@@ -154,32 +194,31 @@ impl Mode {
     /// # Example
     ///
     /// ```
-    /// let mut mr = w5500_ll::Mode::default();
+    /// use w5500_ll::Mode;
+    ///
+    /// let mr: Mode = Mode::DEFAULT;
     /// assert!(!mr.farp_enabled());
-    /// mr.enable_farp();
+    /// let mr: Mode = mr.enable_farp();
     /// assert!(mr.farp_enabled());
-    /// mr.disable_farp();
+    /// let mr: Mode = mr.disable_farp();
     /// assert!(!mr.farp_enabled());
     /// ```
-    pub fn farp_enabled(&self) -> bool {
+    pub const fn farp_enabled(&self) -> bool {
         self.0 & Self::FARP_MASK != 0
     }
 
     /// Enable force ARP.
-    pub fn enable_farp(&mut self) {
-        self.0 |= Self::FARP_MASK
+    #[must_use = "enable_farp returns a modified Mode"]
+    pub const fn enable_farp(mut self) -> Self {
+        self.0 |= Self::FARP_MASK;
+        self
     }
 
     /// Disable force ARP.
-    pub fn disable_farp(&mut self) {
-        self.0 &= !Self::FARP_MASK
-    }
-}
-impl_u8_for!(Mode);
-
-impl Default for Mode {
-    fn default() -> Mode {
-        Mode(Mode::RESET)
+    #[must_use = "disable_farp returns a modified Mode"]
+    pub const fn disable_farp(mut self) -> Self {
+        self.0 &= !Self::FARP_MASK;
+        self
     }
 }
 
@@ -216,10 +255,24 @@ impl ::core::fmt::Display for Mode {
 /// [`Registers::set_imr`]: crate::Registers::set_imr
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct Interrupt(u8);
+impl_boilerplate_for!(Interrupt);
 
 impl Interrupt {
     /// Interrupt and interrupt mask reset value.
     pub const RESET: u8 = 0x00;
+
+    /// Default value.
+    ///
+    /// This is the same as `default`, but as a `const` value.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use w5500_ll::Interrupt;
+    ///
+    /// assert_eq!(Interrupt::DEFAULT, Interrupt::default());
+    /// ```
+    pub const DEFAULT: Self = Self(Self::RESET);
 
     /// Bit offset for the `CONFLICT` field.
     pub const CONFLICT_OFFSET: u8 = 7;
@@ -247,11 +300,13 @@ impl Interrupt {
     /// # Example
     ///
     /// ```
-    /// let mut ir = w5500_ll::Interrupt::default();
+    /// use w5500_ll::Interrupt;
+    ///
+    /// let ir: Interrupt = Interrupt::DEFAULT;
     /// assert!(!ir.conflict());
-    /// ir.set_conflict();
+    /// let ir: Interrupt = ir.set_conflict();
     /// assert!(ir.conflict());
-    /// ir.clear_conflict();
+    /// let ir: Interrupt = ir.clear_conflict();
     /// assert!(!ir.conflict());
     /// ```
     pub const fn conflict(&self) -> bool {
@@ -259,13 +314,17 @@ impl Interrupt {
     }
 
     /// Set the IP conflict bit.
-    pub fn set_conflict(&mut self) {
-        self.0 |= Self::CONFLICT_MASK
+    #[must_use = "set_conflict returns a modified Interrupt"]
+    pub const fn set_conflict(mut self) -> Self {
+        self.0 |= Self::CONFLICT_MASK;
+        self
     }
 
     /// Clear the IP conflict bit.
-    pub fn clear_conflict(&mut self) {
-        self.0 &= !Self::CONFLICT_MASK
+    #[must_use = "clear_conflict returns a modified Interrupt"]
+    pub const fn clear_conflict(mut self) -> Self {
+        self.0 &= !Self::CONFLICT_MASK;
+        self
     }
 
     /// Get the destination unreachable interrupt.
@@ -280,11 +339,13 @@ impl Interrupt {
     /// # Example
     ///
     /// ```
-    /// let mut ir = w5500_ll::Interrupt::default();
+    /// use w5500_ll::Interrupt;
+    ///
+    /// let ir: Interrupt = Interrupt::DEFAULT;
     /// assert!(!ir.unreach());
-    /// ir.set_unreach();
+    /// let ir: Interrupt = ir.set_unreach();
     /// assert!(ir.unreach());
-    /// ir.clear_unreach();
+    /// let ir: Interrupt = ir.clear_unreach();
     /// assert!(!ir.unreach());
     /// ```
     ///
@@ -295,13 +356,17 @@ impl Interrupt {
     }
 
     /// Set the destination unreachable bit.
-    pub fn set_unreach(&mut self) {
-        self.0 |= Self::UNREACH_MASK
+    #[must_use = "set_unreach returns a modified Interrupt"]
+    pub const fn set_unreach(mut self) -> Self {
+        self.0 |= Self::UNREACH_MASK;
+        self
     }
 
     /// Clear the destination unreachable bit.
-    pub fn clear_unreach(&mut self) {
-        self.0 &= !Self::UNREACH_MASK
+    #[must_use = "clear_unreach returns a modified Interrupt"]
+    pub const fn clear_unreach(mut self) -> Self {
+        self.0 &= !Self::UNREACH_MASK;
+        self
     }
 
     /// Get the PPPoE connection close interrupt.
@@ -311,11 +376,13 @@ impl Interrupt {
     /// # Example
     ///
     /// ```
-    /// let mut ir = w5500_ll::Interrupt::default();
+    /// use w5500_ll::Interrupt;
+    ///
+    /// let ir: Interrupt = Interrupt::DEFAULT;
     /// assert!(!ir.pppoe());
-    /// ir.set_pppoe();
+    /// let ir: Interrupt = ir.set_pppoe();
     /// assert!(ir.pppoe());
-    /// ir.clear_pppoe();
+    /// let ir: Interrupt = ir.clear_pppoe();
     /// assert!(!ir.pppoe());
     /// ```
     pub const fn pppoe(&self) -> bool {
@@ -323,13 +390,17 @@ impl Interrupt {
     }
 
     /// Set the PPPoE connection close bit.
-    pub fn set_pppoe(&mut self) {
-        self.0 |= Self::PPPOE_MASK
+    #[must_use = "set_pppoe returns a modified Interrupt"]
+    pub const fn set_pppoe(mut self) -> Self {
+        self.0 |= Self::PPPOE_MASK;
+        self
     }
 
     /// Clear the PPPoE connection close bit.
-    pub fn clear_pppoe(&mut self) {
-        self.0 &= !Self::PPPOE_MASK
+    #[must_use = "clear_pppoe returns a modified Interrupt"]
+    pub const fn clear_pppoe(mut self) -> Self {
+        self.0 &= !Self::PPPOE_MASK;
+        self
     }
 
     /// Get the magic packet interrupt.
@@ -340,11 +411,13 @@ impl Interrupt {
     /// # Example
     ///
     /// ```
-    /// let mut ir = w5500_ll::Interrupt::default();
+    /// use w5500_ll::Interrupt;
+    ///
+    /// let ir: Interrupt = Interrupt::DEFAULT;
     /// assert!(!ir.mp());
-    /// ir.set_mp();
+    /// let ir: Interrupt = ir.set_mp();
     /// assert!(ir.mp());
-    /// ir.clear_mp();
+    /// let ir: Interrupt = ir.clear_mp();
     /// assert!(!ir.mp());
     /// ```
     pub const fn mp(&self) -> bool {
@@ -352,20 +425,17 @@ impl Interrupt {
     }
 
     /// Set the magic packet bit.
-    pub fn set_mp(&mut self) {
-        self.0 |= Self::MP_MASK
+    #[must_use = "set_mp returns a modified Interrupt"]
+    pub const fn set_mp(mut self) -> Self {
+        self.0 |= Self::MP_MASK;
+        self
     }
 
     /// Clear the magic packet bit.
-    pub fn clear_mp(&mut self) {
-        self.0 &= !Self::MP_MASK
-    }
-}
-impl_u8_for!(Interrupt);
-
-impl Default for Interrupt {
-    fn default() -> Self {
-        Interrupt(Interrupt::RESET)
+    #[must_use = "clear_mp returns a modified Interrupt"]
+    pub const fn clear_mp(mut self) -> Self {
+        self.0 &= !Self::MP_MASK;
+        self
     }
 }
 
@@ -394,11 +464,24 @@ impl ::core::fmt::Display for Interrupt {
 /// [`Registers::set_phycfgr`]: crate::Registers::set_phycfgr
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct PhyCfg(u8);
-impl_u8_for!(PhyCfg);
+impl_boilerplate_for!(PhyCfg);
 
 impl PhyCfg {
     /// PHY configuration register reset value.
     pub const RESET: u8 = 0b10111000;
+
+    /// Default value.
+    ///
+    /// This is the same as `default`, but as a `const` value.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use w5500_ll::PhyCfg;
+    ///
+    /// assert_eq!(PhyCfg::DEFAULT, PhyCfg::default());
+    /// ```
+    pub const DEFAULT: Self = Self(Self::RESET);
 
     /// Bit offset for the `RST` field.
     pub const RST_OFFSET: u8 = 7;
@@ -427,8 +510,10 @@ impl PhyCfg {
     pub const LNK_MASK: u8 = 1 << Self::LNK_OFFSET;
 
     /// Set the PHY reset bit to `0`, resetting the PHY.
-    pub fn rst(&mut self) {
+    #[must_use = "rst returns a modified PhyCfg"]
+    pub const fn rst(mut self) -> Self {
         self.0 &= !Self::RST_MASK;
+        self
     }
 
     /// Get the PHY operation mode.
@@ -457,17 +542,19 @@ impl PhyCfg {
     /// # Example
     ///
     /// ```
-    /// use w5500_ll::{OperationMode, PhyCfg};
+    /// use w5500_ll::PhyCfg;
     ///
-    /// let mut phy_cfg = PhyCfg::default();
+    /// let phy_cfg: PhyCfg = PhyCfg::DEFAULT;
     /// assert!(!phy_cfg.opmd());
-    /// phy_cfg.software_op();
+    /// let phy_cfg: PhyCfg = phy_cfg.software_op();
     /// assert!(phy_cfg.opmd());
-    /// phy_cfg.hardware_op();
+    /// let phy_cfg: PhyCfg = phy_cfg.hardware_op();
     /// assert!(!phy_cfg.opmd());
     /// ```
-    pub fn hardware_op(&mut self) {
+    #[must_use = "hardware_op returns a modified PhyCfg"]
+    pub const fn hardware_op(mut self) -> Self {
         self.0 &= !Self::OPMD_MASK;
+        self
     }
 
     /// Enable software configuration of the PHY operation mode.
@@ -475,15 +562,17 @@ impl PhyCfg {
     /// # Example
     ///
     /// ```
-    /// use w5500_ll::{OperationMode, PhyCfg};
+    /// use w5500_ll::PhyCfg;
     ///
-    /// let mut phy_cfg = PhyCfg::default();
+    /// let phy_cfg: PhyCfg = PhyCfg::DEFAULT;
     /// assert!(!phy_cfg.opmd());
-    /// phy_cfg.software_op();
+    /// let phy_cfg: PhyCfg = phy_cfg.software_op();
     /// assert!(phy_cfg.opmd());
     /// ```
-    pub fn software_op(&mut self) {
+    #[must_use = "software_op returns a modified PhyCfg"]
+    pub const fn software_op(mut self) -> Self {
         self.0 |= Self::OPMD_MASK;
+        self
     }
 
     /// Get the operation mode.
@@ -496,11 +585,11 @@ impl PhyCfg {
     /// ```
     /// use w5500_ll::{OperationMode, PhyCfg};
     ///
-    /// let phy_cfg = PhyCfg::default();
-    /// assert_eq!(phy_cfg.opmdc(), Ok(OperationMode::Auto));
+    /// assert_eq!(PhyCfg::DEFAULT.opmdc(), OperationMode::Auto);
     /// ```
-    pub fn opmdc(&self) -> Result<OperationMode, u8> {
-        OperationMode::try_from((self.0 & Self::OPMDC_MASK) >> Self::OPMDC_OFFSET)
+    pub const fn opmdc(&self) -> OperationMode {
+        // from_raw masks the value
+        OperationMode::from_raw(self.0 >> Self::OPMDC_OFFSET)
     }
 
     /// Set the PHY operation mode.
@@ -513,18 +602,20 @@ impl PhyCfg {
     /// ```
     /// use w5500_ll::{OperationMode, PhyCfg};
     ///
-    /// let mut phy_cfg = PhyCfg::default();
+    /// let phy_cfg: PhyCfg = PhyCfg::DEFAULT;
     /// assert!(!phy_cfg.opmd());
-    /// phy_cfg.set_opmdc(OperationMode::PowerDown);
+    /// let phy_cfg: PhyCfg = phy_cfg.set_opmdc(OperationMode::PowerDown);
     /// assert!(phy_cfg.opmd());
-    /// assert_eq!(phy_cfg.opmdc(), Ok(OperationMode::PowerDown));
-    /// phy_cfg.set_opmdc(OperationMode::Auto);
-    /// assert_eq!(phy_cfg.opmdc(), Ok(OperationMode::Auto));
+    /// assert_eq!(phy_cfg.opmdc(), OperationMode::PowerDown);
+    /// let phy_cfg: PhyCfg = phy_cfg.set_opmdc(OperationMode::Auto);
+    /// assert_eq!(phy_cfg.opmdc(), OperationMode::Auto);
     /// ```
-    pub fn set_opmdc(&mut self, mode: OperationMode) {
-        self.software_op();
+    #[must_use = "set_opmdc returns a modified PhyCfg"]
+    pub const fn set_opmdc(mut self, mode: OperationMode) -> Self {
+        self = self.software_op();
         self.0 &= !Self::OPMDC_MASK;
-        self.0 |= u8::from(mode) << Self::OPMDC_OFFSET;
+        self.0 |= (mode as u8) << Self::OPMDC_OFFSET;
+        self
     }
 
     /// Get the duplex status.
@@ -534,11 +625,14 @@ impl PhyCfg {
     /// ```
     /// use w5500_ll::{DuplexStatus, PhyCfg};
     ///
-    /// let phy_cfg = PhyCfg::default();
+    /// let phy_cfg: PhyCfg = PhyCfg::DEFAULT;
     /// assert_eq!(phy_cfg.dpx(), DuplexStatus::Half);
     /// ```
-    pub fn dpx(&self) -> DuplexStatus {
-        DuplexStatus::from(self.0 & Self::DPX_MASK == Self::DPX_MASK)
+    pub const fn dpx(&self) -> DuplexStatus {
+        match self.0 & Self::DPX_MASK == Self::DPX_MASK {
+            true => DuplexStatus::Full,
+            false => DuplexStatus::Half,
+        }
     }
 
     /// Get the speed status.
@@ -548,11 +642,14 @@ impl PhyCfg {
     /// ```
     /// use w5500_ll::{PhyCfg, SpeedStatus};
     ///
-    /// let phy_cfg = PhyCfg::default();
+    /// let phy_cfg: PhyCfg = PhyCfg::DEFAULT;
     /// assert_eq!(phy_cfg.spd(), SpeedStatus::Mbps10);
     /// ```
-    pub fn spd(&self) -> SpeedStatus {
-        SpeedStatus::from(self.0 & Self::SPD_MASK == Self::SPD_MASK)
+    pub const fn spd(&self) -> SpeedStatus {
+        match self.0 & Self::SPD_MASK == Self::SPD_MASK {
+            true => SpeedStatus::Mbps100,
+            false => SpeedStatus::Mbps10,
+        }
     }
 
     /// Get the link status.
@@ -562,17 +659,14 @@ impl PhyCfg {
     /// ```
     /// use w5500_ll::{LinkStatus, PhyCfg};
     ///
-    /// let phy_cfg = PhyCfg::default();
+    /// let phy_cfg: PhyCfg = PhyCfg::DEFAULT;
     /// assert_eq!(phy_cfg.lnk(), LinkStatus::Down);
     /// ```
-    pub fn lnk(&self) -> LinkStatus {
-        LinkStatus::from(self.0 & Self::LNK_MASK == Self::LNK_MASK)
-    }
-}
-
-impl Default for PhyCfg {
-    fn default() -> Self {
-        Self(Self::RESET)
+    pub const fn lnk(&self) -> LinkStatus {
+        match self.0 & Self::LNK_MASK == Self::LNK_MASK {
+            true => LinkStatus::Up,
+            false => LinkStatus::Down,
+        }
     }
 }
 
@@ -596,17 +690,24 @@ impl ::core::fmt::Display for PhyCfg {
 /// [`Registers::sn_mr`]: crate::Registers::sn_mr
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct SocketMode(u8);
-impl_u8_for!(SocketMode);
-
-impl Default for SocketMode {
-    fn default() -> Self {
-        Self(Self::RESET)
-    }
-}
+impl_boilerplate_for!(SocketMode);
 
 impl SocketMode {
     /// Reset value of the socket mode register.
     pub const RESET: u8 = 0x00;
+
+    /// Default value.
+    ///
+    /// This is the same as `default`, but as a `const` value.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use w5500_ll::SocketMode;
+    ///
+    /// assert_eq!(SocketMode::DEFAULT, SocketMode::default());
+    /// ```
+    pub const DEFAULT: Self = Self(Self::RESET);
 
     /// Bit offset for the `MULTI` field.
     pub const MULTI_OFFSET: u8 = 7;
@@ -654,11 +755,11 @@ impl SocketMode {
     /// ```
     /// use w5500_ll::{Protocol, SocketMode};
     ///
-    /// let mode: SocketMode = SocketMode::default();
-    /// assert_eq!(mode.protocol(), Ok(Protocol::Closed));
+    /// let sn_mr: SocketMode = SocketMode::DEFAULT;
+    /// assert_eq!(sn_mr.protocol(), Ok(Protocol::Closed));
     /// ```
-    pub fn protocol(&self) -> Result<Protocol, u8> {
-        Protocol::try_from(self.0 & Self::PROTOCOL_MASK)
+    pub const fn protocol(&self) -> Result<Protocol, u8> {
+        Protocol::from_raw(self.0 & Self::PROTOCOL_MASK)
     }
 
     /// Set the protocol.
@@ -668,12 +769,12 @@ impl SocketMode {
     /// ```
     /// use w5500_ll::{Protocol, SocketMode};
     ///
-    /// let mut mode: SocketMode = SocketMode::default();
-    /// mode.set_protocol(Protocol::Tcp);
-    /// assert_eq!(mode.protocol(), Ok(Protocol::Tcp));
+    /// const SN_MR: SocketMode = SocketMode::DEFAULT.set_protocol(Protocol::Tcp);
+    /// assert_eq!(SN_MR.protocol(), Ok(Protocol::Tcp));
     /// ```
-    pub fn set_protocol(&mut self, protocol: Protocol) {
-        self.0 = (self.0 & 0xF0) | ((protocol as u8) & 0xF)
+    pub const fn set_protocol(mut self, protocol: Protocol) -> Self {
+        self.0 = (self.0 & 0xF0) | ((protocol as u8) & 0xF);
+        self
     }
 
     /// Multicasting.
@@ -687,11 +788,13 @@ impl SocketMode {
     /// # Example
     ///
     /// ```
-    /// let mut sn_mr = w5500_ll::SocketMode::default();
+    /// use w5500_ll::SocketMode;
+    ///
+    /// let sn_mr: SocketMode = SocketMode::DEFAULT;
     /// assert!(!sn_mr.multi_enabled());
-    /// sn_mr.enable_multi();
+    /// let sn_mr: SocketMode = sn_mr.enable_multi();
     /// assert!(sn_mr.multi_enabled());
-    /// sn_mr.disable_multi();
+    /// let sn_mr: SocketMode = sn_mr.disable_multi();
     /// assert!(!sn_mr.multi_enabled());
     /// ```
     ///
@@ -702,13 +805,17 @@ impl SocketMode {
     }
 
     /// Enable multicasting.
-    pub fn enable_multi(&mut self) {
-        self.0 |= Self::MULTI_MASK
+    #[must_use = "enable_multi returns a modified SocketMode"]
+    pub const fn enable_multi(mut self) -> Self {
+        self.0 |= Self::MULTI_MASK;
+        self
     }
 
     /// Disable multicasting.
-    pub fn disable_multi(&mut self) {
-        self.0 &= !Self::MULTI_MASK
+    #[must_use = "disable_multi returns a modified SocketMode"]
+    pub const fn disable_multi(mut self) -> Self {
+        self.0 &= !Self::MULTI_MASK;
+        self
     }
 
     /// MAC filter.
@@ -725,11 +832,13 @@ impl SocketMode {
     /// # Example
     ///
     /// ```
-    /// let mut sn_mr = w5500_ll::SocketMode::default();
+    /// use w5500_ll::SocketMode;
+    ///
+    /// let sn_mr: SocketMode = SocketMode::DEFAULT;
     /// assert!(!sn_mr.mfen_enabled());
-    /// sn_mr.enable_mfen();
+    /// let sn_mr: SocketMode = sn_mr.enable_mfen();
     /// assert!(sn_mr.mfen_enabled());
-    /// sn_mr.disable_mfen();
+    /// let sn_mr: SocketMode = sn_mr.disable_mfen();
     /// assert!(!sn_mr.mfen_enabled());
     /// ```
     pub const fn mfen_enabled(&self) -> bool {
@@ -737,13 +846,17 @@ impl SocketMode {
     }
 
     /// Enable MAC filter.
-    pub fn enable_mfen(&mut self) {
-        self.0 |= Self::MFEN_MASK
+    #[must_use = "enable_mfen returns a modified SocketMode"]
+    pub const fn enable_mfen(mut self) -> Self {
+        self.0 |= Self::MFEN_MASK;
+        self
     }
 
     /// Disable MAC filter.
-    pub fn disable_mfen(&mut self) {
-        self.0 &= !Self::MFEN_MASK
+    #[must_use = "disable_mfen returns a modified SocketMode"]
+    pub const fn disable_mfen(mut self) -> Self {
+        self.0 &= !Self::MFEN_MASK;
+        self
     }
 
     /// Broadcast blocking.
@@ -753,11 +866,13 @@ impl SocketMode {
     /// # Example
     ///
     /// ```
-    /// let mut sn_mr = w5500_ll::SocketMode::default();
+    /// use w5500_ll::SocketMode;
+    ///
+    /// let sn_mr: SocketMode = SocketMode::DEFAULT;
     /// assert!(!sn_mr.bcastb_enabled());
-    /// sn_mr.enable_bcastb();
+    /// let sn_mr: SocketMode = sn_mr.enable_bcastb();
     /// assert!(sn_mr.bcastb_enabled());
-    /// sn_mr.disable_bcastb();
+    /// let sn_mr: SocketMode = sn_mr.disable_bcastb();
     /// assert!(!sn_mr.bcastb_enabled());
     /// ```
     pub const fn bcastb_enabled(&self) -> bool {
@@ -765,13 +880,17 @@ impl SocketMode {
     }
 
     /// Enable broadcast blocking.
-    pub fn enable_bcastb(&mut self) {
-        self.0 |= Self::BCASTB_MASK
+    #[must_use = "enable_bcastb returns a modified SocketMode"]
+    pub const fn enable_bcastb(mut self) -> Self {
+        self.0 |= Self::BCASTB_MASK;
+        self
     }
 
     /// Disable broadcast blocking.
-    pub fn disable_bcastb(&mut self) {
-        self.0 &= !Self::BCASTB_MASK
+    #[must_use = "disable_bcastb returns a modified SocketMode"]
+    pub const fn disable_bcastb(mut self) -> Self {
+        self.0 &= !Self::BCASTB_MASK;
+        self
     }
 
     /// Use no delayed ACK.
@@ -786,11 +905,13 @@ impl SocketMode {
     /// # Example
     ///
     /// ```
-    /// let mut sn_mr = w5500_ll::SocketMode::default();
+    /// use w5500_ll::SocketMode;
+    ///
+    /// let sn_mr: SocketMode = SocketMode::DEFAULT;
     /// assert!(!sn_mr.nd_enabled());
-    /// sn_mr.enable_nd();
+    /// let sn_mr: SocketMode = sn_mr.enable_nd();
     /// assert!(sn_mr.nd_enabled());
-    /// sn_mr.disable_nd();
+    /// let sn_mr: SocketMode = sn_mr.disable_nd();
     /// assert!(!sn_mr.nd_enabled());
     /// ```
     ///
@@ -800,13 +921,17 @@ impl SocketMode {
     }
 
     /// Disable no delayed ACK.
-    pub fn disable_nd(&mut self) {
-        self.0 &= !Self::ND_MASK
+    #[must_use = "disable_nd returns a modified SocketMode"]
+    pub const fn disable_nd(mut self) -> Self {
+        self.0 &= !Self::ND_MASK;
+        self
     }
 
     /// Enable no delayed ACK.
-    pub fn enable_nd(&mut self) {
-        self.0 |= Self::ND_MASK
+    #[must_use = "enable_nd returns a modified SocketMode"]
+    pub const fn enable_nd(mut self) -> Self {
+        self.0 |= Self::ND_MASK;
+        self
     }
 
     /// Multicast IGMP version.
@@ -821,11 +946,13 @@ impl SocketMode {
     /// # Example
     ///
     /// ```
-    /// let mut sn_mr = w5500_ll::SocketMode::default();
+    /// use w5500_ll::SocketMode;
+    ///
+    /// let sn_mr: SocketMode = SocketMode::DEFAULT;
     /// assert!(!sn_mr.mc());
-    /// sn_mr.set_igmp_v1();
+    /// let sn_mr: SocketMode = sn_mr.set_igmp_v1();
     /// assert!(sn_mr.mc());
-    /// sn_mr.set_igmp_v2();
+    /// let sn_mr: SocketMode = sn_mr.set_igmp_v2();
     /// assert!(!sn_mr.mc());
     /// ```
     pub const fn mc(&self) -> bool {
@@ -833,13 +960,17 @@ impl SocketMode {
     }
 
     /// Set IGMP version 1.
-    pub fn set_igmp_v1(&mut self) {
-        self.0 |= Self::MC_MASK
+    #[must_use = "set_igmp_v1 returns a modified SocketMode"]
+    pub const fn set_igmp_v1(mut self) -> Self {
+        self.0 |= Self::MC_MASK;
+        self
     }
 
     /// Set IGMP version 2.
-    pub fn set_igmp_v2(&mut self) {
-        self.0 &= !Self::MC_MASK
+    #[must_use = "set_igmp_v2 returns a modified SocketMode"]
+    pub const fn set_igmp_v2(mut self) -> Self {
+        self.0 &= !Self::MC_MASK;
+        self
     }
 
     /// Multicast blocking.
@@ -849,11 +980,13 @@ impl SocketMode {
     /// # Example
     ///
     /// ```
-    /// let mut sn_mr = w5500_ll::SocketMode::default();
+    /// use w5500_ll::SocketMode;
+    ///
+    /// let sn_mr: SocketMode = SocketMode::DEFAULT;
     /// assert!(!sn_mr.mmb_enabled());
-    /// sn_mr.enable_mmb();
+    /// let sn_mr: SocketMode = sn_mr.enable_mmb();
     /// assert!(sn_mr.mmb_enabled());
-    /// sn_mr.disable_mmb();
+    /// let sn_mr: SocketMode = sn_mr.disable_mmb();
     /// assert!(!sn_mr.mmb_enabled());
     /// ```
     ///
@@ -863,13 +996,17 @@ impl SocketMode {
     }
 
     /// Enable multicast blocking.
-    pub fn enable_mmb(&mut self) {
-        self.0 |= Self::MMB_MASK
+    #[must_use = "enable_mmb returns a modified SocketMode"]
+    pub const fn enable_mmb(mut self) -> Self {
+        self.0 |= Self::MMB_MASK;
+        self
     }
 
     /// Disable multicast blocking.
-    pub fn disable_mmb(&mut self) {
-        self.0 &= !Self::MMB_MASK
+    #[must_use = "disable_mmb returns a modified SocketMode"]
+    pub const fn disable_mmb(mut self) -> Self {
+        self.0 &= !Self::MMB_MASK;
+        self
     }
 
     /// Unicast blocking enabled.
@@ -879,11 +1016,13 @@ impl SocketMode {
     /// # Example
     ///
     /// ```
-    /// let mut sn_mr = w5500_ll::SocketMode::default();
+    /// use w5500_ll::SocketMode;
+    ///
+    /// let sn_mr: SocketMode = SocketMode::DEFAULT;
     /// assert!(!sn_mr.ucastb_enabled());
-    /// sn_mr.enable_ucastb();
+    /// let sn_mr: SocketMode = sn_mr.enable_ucastb();
     /// assert!(sn_mr.ucastb_enabled());
-    /// sn_mr.disable_ucastb();
+    /// let sn_mr: SocketMode = sn_mr.disable_ucastb();
     /// assert!(!sn_mr.ucastb_enabled());
     /// ```
     pub const fn ucastb_enabled(&self) -> bool {
@@ -891,13 +1030,17 @@ impl SocketMode {
     }
 
     /// Enable unicast blocking.
-    pub fn enable_ucastb(&mut self) {
-        self.0 |= Self::UCASTB_MASK
+    #[must_use = "enable_ucastb returns a modified SocketMode"]
+    pub const fn enable_ucastb(mut self) -> Self {
+        self.0 |= Self::UCASTB_MASK;
+        self
     }
 
     /// Disable unicast blocking.
-    pub fn disable_ucastb(&mut self) {
-        self.0 &= !Self::UCASTB_MASK
+    #[must_use = "disable_ucastb returns a modified SocketMode"]
+    pub const fn disable_ucastb(mut self) -> Self {
+        self.0 &= !Self::UCASTB_MASK;
+        self
     }
 
     /// IPV6 packet blocking.
@@ -907,11 +1050,13 @@ impl SocketMode {
     /// # Example
     ///
     /// ```
-    /// let mut sn_mr = w5500_ll::SocketMode::default();
+    /// use w5500_ll::SocketMode;
+    ///
+    /// let sn_mr: SocketMode = SocketMode::DEFAULT;
     /// assert!(!sn_mr.mip6b_enabled());
-    /// sn_mr.enable_mip6b();
+    /// let sn_mr: SocketMode = sn_mr.enable_mip6b();
     /// assert!(sn_mr.mip6b_enabled());
-    /// sn_mr.disable_mip6b();
+    /// let sn_mr: SocketMode = sn_mr.disable_mip6b();
     /// assert!(!sn_mr.mip6b_enabled());
     /// ```
     ///
@@ -921,13 +1066,17 @@ impl SocketMode {
     }
 
     /// Enable IPV6 packet blocking.
-    pub fn enable_mip6b(&mut self) {
-        self.0 |= Self::MIP6B_MASK
+    #[must_use = "enable_mip6b returns a modified SocketMode"]
+    pub const fn enable_mip6b(mut self) -> Self {
+        self.0 |= Self::MIP6B_MASK;
+        self
     }
 
     /// Disable IPV6 packet blocking.
-    pub fn disable_mip6b(&mut self) {
-        self.0 &= !Self::MIP6B_MASK
+    #[must_use = "disable_mip6b returns a modified SocketMode"]
+    pub const fn disable_mip6b(mut self) -> Self {
+        self.0 &= !Self::MIP6B_MASK;
+        self
     }
 }
 
@@ -959,17 +1108,24 @@ impl ::core::fmt::Display for SocketMode {
 /// [`Registers::set_sn_ir`]: crate::Registers::set_sn_ir
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct SocketInterrupt(u8);
-impl_u8_for!(SocketInterrupt);
-
-impl Default for SocketInterrupt {
-    fn default() -> Self {
-        Self(Self::RESET)
-    }
-}
+impl_boilerplate_for!(SocketInterrupt);
 
 impl SocketInterrupt {
     /// Socket interrupt status register (Sn_IR) reset value.
     pub const RESET: u8 = 0x00;
+
+    /// Default value.
+    ///
+    /// This is the same as `default`, but as a `const` value.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use w5500_ll::SocketInterrupt;
+    ///
+    /// assert_eq!(SocketInterrupt::DEFAULT, SocketInterrupt::default());
+    /// ```
+    pub const DEFAULT: Self = Self(Self::RESET);
 
     /// Bit offset for the `CON` field.
     pub const CON_OFFSET: u8 = 0;
@@ -1000,18 +1156,21 @@ impl SocketInterrupt {
     /// # Example
     ///
     /// ```
-    /// let mut sir = w5500_ll::SocketInterrupt::default();
+    /// use w5500_ll::SocketInterrupt;
+    ///
+    /// let sir: SocketInterrupt = SocketInterrupt::DEFAULT;
     /// assert!(!sir.con_raised());
-    /// # sir.clear_con();
-    /// # assert!(sir.con_raised());
+    /// # assert!(sir.clear_con().con_raised());
     /// ```
     pub const fn con_raised(&self) -> bool {
         self.0 & Self::CON_MASK != 0
     }
 
     /// Clear the `CON` interrupt by writing `1`.
-    pub fn clear_con(&mut self) {
-        self.0 |= Self::CON_MASK
+    #[must_use = "clear_con returns a modified SocketInterrupt"]
+    pub const fn clear_con(mut self) -> Self {
+        self.0 |= Self::CON_MASK;
+        self
     }
 
     /// Get the value of the `DISCON` interrupt.
@@ -1021,18 +1180,21 @@ impl SocketInterrupt {
     /// # Example
     ///
     /// ```
-    /// let mut sir = w5500_ll::SocketInterrupt::default();
+    /// use w5500_ll::SocketInterrupt;
+    ///
+    /// let sir: SocketInterrupt = SocketInterrupt::DEFAULT;
     /// assert!(!sir.discon_raised());
-    /// # sir.clear_discon();
-    /// # assert!(sir.discon_raised());
+    /// # assert!(sir.clear_discon().discon_raised());
     /// ```
     pub const fn discon_raised(&self) -> bool {
         self.0 & Self::DISCON_MASK != 0
     }
 
     /// Clear the `DISCON` interrupt by writing `1`.
-    pub fn clear_discon(&mut self) {
-        self.0 |= Self::DISCON_MASK
+    #[must_use = "clear_discon returns a modified SocketInterrupt"]
+    pub const fn clear_discon(mut self) -> Self {
+        self.0 |= Self::DISCON_MASK;
+        self
     }
 
     /// Get the value of the `RECV` interrupt.
@@ -1042,18 +1204,21 @@ impl SocketInterrupt {
     /// # Example
     ///
     /// ```
-    /// let mut sir = w5500_ll::SocketInterrupt::default();
+    /// use w5500_ll::SocketInterrupt;
+    ///
+    /// let sir: SocketInterrupt = SocketInterrupt::DEFAULT;
     /// assert!(!sir.recv_raised());
-    /// # sir.clear_recv();
-    /// # assert!(sir.recv_raised());
+    /// # assert!(sir.clear_recv().recv_raised());
     /// ```
     pub const fn recv_raised(&self) -> bool {
         self.0 & Self::RECV_MASK != 0
     }
 
     /// Clear the `RECV` interrupt by writing `1`.
-    pub fn clear_recv(&mut self) {
-        self.0 |= Self::RECV_MASK
+    #[must_use = "clear_recv returns a modified SocketInterrupt"]
+    pub const fn clear_recv(mut self) -> Self {
+        self.0 |= Self::RECV_MASK;
+        self
     }
 
     /// Get the value of the `TIMEOUT` interrupt.
@@ -1063,18 +1228,21 @@ impl SocketInterrupt {
     /// # Example
     ///
     /// ```
-    /// let mut sir = w5500_ll::SocketInterrupt::default();
+    /// use w5500_ll::SocketInterrupt;
+    ///
+    /// let sir: SocketInterrupt = SocketInterrupt::DEFAULT;
     /// assert!(!sir.timeout_raised());
-    /// # sir.clear_timeout();
-    /// # assert!(sir.timeout_raised());
+    /// # assert!(sir.clear_timeout().timeout_raised());
     /// ```
     pub const fn timeout_raised(&self) -> bool {
         self.0 & Self::TIMEOUT_MASK != 0
     }
 
     /// Clear the `TIMEOUT` interrupt by writing `1`.
-    pub fn clear_timeout(&mut self) {
-        self.0 |= Self::TIMEOUT_MASK
+    #[must_use = "clear_timeout returns a modified SocketInterrupt"]
+    pub const fn clear_timeout(mut self) -> Self {
+        self.0 |= Self::TIMEOUT_MASK;
+        self
     }
 
     /// Get the value of the `SENDOK` interrupt.
@@ -1084,20 +1252,23 @@ impl SocketInterrupt {
     /// # Example
     ///
     /// ```
-    /// let mut sir = w5500_ll::SocketInterrupt::default();
+    /// use w5500_ll::SocketInterrupt;
+    ///
+    /// let sir: SocketInterrupt = SocketInterrupt::DEFAULT;
     /// assert!(!sir.sendok_raised());
-    /// # sir.clear_sendok();
-    /// # assert!(sir.sendok_raised());
+    /// # assert!(sir.clear_sendok().sendok_raised());
     /// ```
     ///
     /// [SEND]: crate::SocketCommand::Send
-    pub fn sendok_raised(&self) -> bool {
+    pub const fn sendok_raised(&self) -> bool {
         self.0 & Self::SENDOK_MASK != 0
     }
 
     /// Clear the `SENDOK` interrupt by writing `1`.
-    pub fn clear_sendok(&mut self) {
-        self.0 |= Self::SENDOK_MASK
+    #[must_use = "clear_sendok returns a modified SocketInterrupt"]
+    pub const fn clear_sendok(mut self) -> Self {
+        self.0 |= Self::SENDOK_MASK;
+        self
     }
 }
 
@@ -1125,17 +1296,24 @@ impl ::core::fmt::Display for SocketInterrupt {
 /// [`Registers::set_sn_imr`]: crate::Registers::set_sn_imr
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct SocketInterruptMask(u8);
-impl_u8_for!(SocketInterruptMask);
-
-impl Default for SocketInterruptMask {
-    fn default() -> Self {
-        Self(Self::RESET)
-    }
-}
+impl_boilerplate_for!(SocketInterruptMask);
 
 impl SocketInterruptMask {
     /// Socket interrupt mask register (Sn_IMR) reset value.
     pub const RESET: u8 = 0xFF;
+
+    /// Default value.
+    ///
+    /// This is the same as `default`, but as a `const` value.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use w5500_ll::SocketInterruptMask;
+    ///
+    /// assert_eq!(SocketInterruptMask::DEFAULT, SocketInterruptMask::default());
+    /// ```
+    pub const DEFAULT: Self = Self(Self::RESET);
 
     /// Mask all socket interrupts.
     ///
@@ -1143,6 +1321,7 @@ impl SocketInterruptMask {
     ///
     /// ```
     /// use w5500_ll::SocketInterruptMask;
+    ///
     /// assert!(SocketInterruptMask::ALL_MASKED.con_masked());
     /// assert!(SocketInterruptMask::ALL_MASKED.discon_masked());
     /// assert!(SocketInterruptMask::ALL_MASKED.recv_masked());
@@ -1156,11 +1335,13 @@ impl SocketInterruptMask {
     /// # Example
     ///
     /// ```
-    /// let mut simr = w5500_ll::SocketInterruptMask::default();
+    /// use w5500_ll::SocketInterruptMask;
+    ///
+    /// let simr: SocketInterruptMask = SocketInterruptMask::DEFAULT;
     /// assert!(!simr.con_masked());
-    /// simr.mask_con();
+    /// let simr: SocketInterruptMask = simr.mask_con();
     /// assert!(simr.con_masked());
-    /// simr.unmask_con();
+    /// let simr: SocketInterruptMask = simr.unmask_con();
     /// assert!(!simr.con_masked());
     /// ```
     pub const fn con_masked(&self) -> bool {
@@ -1168,13 +1349,17 @@ impl SocketInterruptMask {
     }
 
     /// Unmask the `CON` interrupt.
-    pub fn unmask_con(&mut self) {
-        self.0 |= SocketInterrupt::CON_MASK
+    #[must_use = "unmask_con returns a modified SocketInterruptMask"]
+    pub const fn unmask_con(mut self) -> Self {
+        self.0 |= SocketInterrupt::CON_MASK;
+        self
     }
 
     /// Mask the `CON` interrupt.
-    pub fn mask_con(&mut self) {
-        self.0 &= !SocketInterrupt::CON_MASK
+    #[must_use = "mask_con returns a modified SocketInterruptMask"]
+    pub const fn mask_con(mut self) -> Self {
+        self.0 &= !SocketInterrupt::CON_MASK;
+        self
     }
 
     /// Check if the `DISCON` interrupt is masked.
@@ -1182,11 +1367,13 @@ impl SocketInterruptMask {
     /// # Example
     ///
     /// ```
-    /// let mut simr = w5500_ll::SocketInterruptMask::default();
+    /// use w5500_ll::SocketInterruptMask;
+    ///
+    /// let simr: SocketInterruptMask = SocketInterruptMask::DEFAULT;
     /// assert!(!simr.discon_masked());
-    /// simr.mask_discon();
+    /// let simr: SocketInterruptMask = simr.mask_discon();
     /// assert!(simr.discon_masked());
-    /// simr.unmask_discon();
+    /// let simr: SocketInterruptMask = simr.unmask_discon();
     /// assert!(!simr.discon_masked());
     /// ```
     pub const fn discon_masked(&self) -> bool {
@@ -1194,13 +1381,17 @@ impl SocketInterruptMask {
     }
 
     /// Unmask the `DISCON` interrupt.
-    pub fn unmask_discon(&mut self) {
-        self.0 |= SocketInterrupt::DISCON_MASK
+    #[must_use = "unmask_discon returns a modified SocketInterruptMask"]
+    pub const fn unmask_discon(mut self) -> Self {
+        self.0 |= SocketInterrupt::DISCON_MASK;
+        self
     }
 
     /// Mask the `DISCON` interrupt.
-    pub fn mask_discon(&mut self) {
-        self.0 &= !SocketInterrupt::DISCON_MASK
+    #[must_use = "mask_discon returns a modified SocketInterruptMask"]
+    pub const fn mask_discon(mut self) -> Self {
+        self.0 &= !SocketInterrupt::DISCON_MASK;
+        self
     }
 
     /// Check if the `RECV` interrupt is masked.
@@ -1208,11 +1399,13 @@ impl SocketInterruptMask {
     /// # Example
     ///
     /// ```
-    /// let mut simr = w5500_ll::SocketInterruptMask::default();
+    /// use w5500_ll::SocketInterruptMask;
+    ///
+    /// let simr: SocketInterruptMask = SocketInterruptMask::DEFAULT;
     /// assert!(!simr.recv_masked());
-    /// simr.mask_recv();
+    /// let simr: SocketInterruptMask = simr.mask_recv();
     /// assert!(simr.recv_masked());
-    /// simr.unmask_recv();
+    /// let simr: SocketInterruptMask = simr.unmask_recv();
     /// assert!(!simr.recv_masked());
     /// ```
     pub const fn recv_masked(&self) -> bool {
@@ -1220,13 +1413,17 @@ impl SocketInterruptMask {
     }
 
     /// Unmask the `RECV` interrupt.
-    pub fn unmask_recv(&mut self) {
-        self.0 |= SocketInterrupt::RECV_MASK
+    #[must_use = "unmask_recv returns a modified SocketInterruptMask"]
+    pub const fn unmask_recv(mut self) -> Self {
+        self.0 |= SocketInterrupt::RECV_MASK;
+        self
     }
 
     /// Mask the `RECV` interrupt.
-    pub fn mask_recv(&mut self) {
-        self.0 &= !SocketInterrupt::RECV_MASK
+    #[must_use = "mask_recv returns a modified SocketInterruptMask"]
+    pub const fn mask_recv(mut self) -> Self {
+        self.0 &= !SocketInterrupt::RECV_MASK;
+        self
     }
 
     /// Check if the `TIMEOUT` interrupt is masked.
@@ -1234,11 +1431,13 @@ impl SocketInterruptMask {
     /// # Example
     ///
     /// ```
-    /// let mut simr = w5500_ll::SocketInterruptMask::default();
+    /// use w5500_ll::SocketInterruptMask;
+    ///
+    /// let simr: SocketInterruptMask = SocketInterruptMask::DEFAULT;
     /// assert!(!simr.timeout_masked());
-    /// simr.mask_timeout();
+    /// let simr: SocketInterruptMask = simr.mask_timeout();
     /// assert!(simr.timeout_masked());
-    /// simr.unmask_timeout();
+    /// let simr: SocketInterruptMask = simr.unmask_timeout();
     /// assert!(!simr.timeout_masked());
     /// ```
     pub const fn timeout_masked(&self) -> bool {
@@ -1246,13 +1445,17 @@ impl SocketInterruptMask {
     }
 
     /// Unmask the `TIMEOUT` interrupt.
-    pub fn unmask_timeout(&mut self) {
-        self.0 |= SocketInterrupt::TIMEOUT_MASK
+    #[must_use = "unmask_timeout returns a modified SocketInterruptMask"]
+    pub const fn unmask_timeout(mut self) -> Self {
+        self.0 |= SocketInterrupt::TIMEOUT_MASK;
+        self
     }
 
     /// Mask the `TIMEOUT` interrupt.
-    pub fn mask_timeout(&mut self) {
-        self.0 &= !SocketInterrupt::TIMEOUT_MASK
+    #[must_use = "mask_timeout returns a modified SocketInterruptMask"]
+    pub const fn mask_timeout(mut self) -> Self {
+        self.0 &= !SocketInterrupt::TIMEOUT_MASK;
+        self
     }
 
     /// Check if the `SENDOK` interrupt is masked.
@@ -1260,25 +1463,31 @@ impl SocketInterruptMask {
     /// # Example
     ///
     /// ```
-    /// let mut simr = w5500_ll::SocketInterruptMask::default();
+    /// use w5500_ll::SocketInterruptMask;
+    ///
+    /// let simr: SocketInterruptMask = SocketInterruptMask::DEFAULT;
     /// assert!(!simr.sendok_masked());
-    /// simr.mask_sendok();
+    /// let simr: SocketInterruptMask = simr.mask_sendok();
     /// assert!(simr.sendok_masked());
-    /// simr.unmask_sendok();
+    /// let simr: SocketInterruptMask = simr.unmask_sendok();
     /// assert!(!simr.sendok_masked());
     /// ```
-    pub fn sendok_masked(&self) -> bool {
+    pub const fn sendok_masked(&self) -> bool {
         self.0 & SocketInterrupt::SENDOK_MASK == 0
     }
 
     /// Unmask the `SENDOK` interrupt.
-    pub fn unmask_sendok(&mut self) {
-        self.0 |= SocketInterrupt::SENDOK_MASK
+    #[must_use = "unmask_sendok returns a modified SocketInterruptMask"]
+    pub const fn unmask_sendok(mut self) -> Self {
+        self.0 |= SocketInterrupt::SENDOK_MASK;
+        self
     }
 
     /// Mask the `SENDOK` interrupt.
-    pub fn mask_sendok(&mut self) {
-        self.0 &= !SocketInterrupt::SENDOK_MASK
+    #[must_use = "mask_sendok returns a modified SocketInterruptMask"]
+    pub const fn mask_sendok(mut self) -> Self {
+        self.0 &= !SocketInterrupt::SENDOK_MASK;
+        self
     }
 }
 

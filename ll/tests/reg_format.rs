@@ -2,9 +2,8 @@ use w5500_ll::{Mode, PhyCfg, SocketInterrupt};
 
 #[test]
 fn sn_ir_none() {
-    let snir = SocketInterrupt::default();
     assert_eq!(
-        format!("{:#}", snir),
+        format!("{:#}", SocketInterrupt::DEFAULT),
         r#"SocketInterrupt {
     con_raised: false,
     discon_raised: false,
@@ -49,10 +48,8 @@ fn sn_ir_partial() {
 
 #[test]
 fn mode() {
-    let mode: Mode = Mode::default();
-
     assert_eq!(
-        format!("{:#}", mode),
+        format!("{:#}", Mode::DEFAULT),
         r#"Mode {
     wol_enabled: false,
     pb_enabled: false,
@@ -64,14 +61,10 @@ fn mode() {
 
 #[test]
 fn phy_cfg() {
-    let phy_cfg: PhyCfg = PhyCfg::default();
-
     assert_eq!(
-        format!("{:#}", phy_cfg),
+        format!("{:#}", PhyCfg::DEFAULT),
         r#"PhyCfg {
-    opmd: Ok(
-        Auto,
-    ),
+    opmd: Auto,
     dpx: Half,
     spd: Mbps10,
     lnk: Down,

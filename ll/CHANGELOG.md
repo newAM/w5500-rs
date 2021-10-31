@@ -8,9 +8,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Added `defmt::Display` for all enumerations.
 - Added `defmt::Display` for `fdm::W5500`, `vdm::W5500`, and `vdm::Error`.
+- Added `Protocol::from_raw` to convert from a raw value in `const` contexts.
+- Added `OperationMode::from_raw` to convert from a raw value in `const` contexts.
 
 ### Changed
+- Changed all field setters for registers to methods that return a modified structure.
+  - Allows for functional programming styles.
+  - Enables composing structures in `const` contexts.
 - Changed edition from 2018 to 2021.
+- Changed the return type of `PhyCfg::opmdc` from `Result<OperationMode, u8>` to `OperationMode`.
+
+### Removed
+- Removed `TryFrom<u8>` for `OperationMode`.
 
 ## [0.8.0] - 2021-05-08
 ### Added
