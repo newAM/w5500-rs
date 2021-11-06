@@ -334,6 +334,24 @@ impl From<SocketCommand> for u8 {
         val as u8
     }
 }
+impl TryFrom<u8> for SocketCommand {
+    type Error = u8;
+    fn try_from(val: u8) -> Result<Self, u8> {
+        match val {
+            x if x == Self::Accepted as u8 => Ok(Self::Accepted),
+            x if x == Self::Open as u8 => Ok(Self::Open),
+            x if x == Self::Listen as u8 => Ok(Self::Listen),
+            x if x == Self::Connect as u8 => Ok(Self::Connect),
+            x if x == Self::Disconnect as u8 => Ok(Self::Disconnect),
+            x if x == Self::Close as u8 => Ok(Self::Close),
+            x if x == Self::Send as u8 => Ok(Self::Send),
+            x if x == Self::SendMac as u8 => Ok(Self::SendMac),
+            x if x == Self::SendKeep as u8 => Ok(Self::SendKeep),
+            x if x == Self::Recv as u8 => Ok(Self::Recv),
+            _ => Err(val),
+        }
+    }
+}
 
 /// Socket protocol.
 ///
