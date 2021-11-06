@@ -131,7 +131,7 @@ pub enum SocketStatus {
     /// This state is set when the socket protocol is [`Macraw`], and a [`Open`]
     /// command is sent.
     ///
-    /// [socket 0]: crate::Socket::Socket0
+    /// [socket 0]: crate::Sn::Sn0
     /// [`Macraw`]: Protocol::Macraw
     /// [`Open`]: SocketCommand::Open
     Macraw = 0x42,
@@ -373,7 +373,7 @@ pub enum Protocol {
     ///
     /// MACRAW mode can only be used with [socket 0].
     ///
-    /// [socket 0]: crate::Socket::Socket0
+    /// [socket 0]: crate::Sn::Sn0
     Macraw = 0b0100,
 }
 impl Protocol {
