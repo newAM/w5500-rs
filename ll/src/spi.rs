@@ -27,16 +27,20 @@ pub const HEADER_LEN: usize = 3;
 /// SPI header to read the VERSIONR register in variable data length mode.
 ///
 /// ```
-/// use w5500_ll::{reg, spi, COMMON_BLOCK_OFFSET};
+/// use w5500_ll::{spi, Reg, COMMON_BLOCK_OFFSET};
 ///
-/// let hdr = spi::vdm_header(reg::VERSIONR, COMMON_BLOCK_OFFSET, spi::AccessMode::Read);
+/// let hdr = spi::vdm_header(
+///     Reg::VERSIONR.addr(),
+///     COMMON_BLOCK_OFFSET,
+///     spi::AccessMode::Read,
+/// );
 /// assert_eq!(hdr, [0x00, 0x39, 0x00]);
 /// ```
 #[inline(always)]
-pub const fn vdm_header(address: u16, block: u8, mode: AccessMode) -> [u8; HEADER_LEN] {
+pub const fn vdm_header(addr: u16, block: u8, mode: AccessMode) -> [u8; HEADER_LEN] {
     [
-        (address >> 8) as u8,
-        address as u8,
+        (addr >> 8) as u8,
+        addr as u8,
         (block << 3) | ((mode as u8) << 2),
     ]
 }
@@ -48,15 +52,19 @@ pub const fn vdm_header(address: u16, block: u8, mode: AccessMode) -> [u8; HEADE
 /// SPI header to read the VERSIONR register in fixed data length mode.
 ///
 /// ```
-/// use w5500_ll::{reg, spi, COMMON_BLOCK_OFFSET};
+/// use w5500_ll::{spi, Reg, COMMON_BLOCK_OFFSET};
 ///
-/// let hdr = spi::fdm_header_1b(reg::VERSIONR, COMMON_BLOCK_OFFSET, spi::AccessMode::Read);
+/// let hdr = spi::fdm_header_1b(
+///     Reg::VERSIONR.addr(),
+///     COMMON_BLOCK_OFFSET,
+///     spi::AccessMode::Read,
+/// );
 /// assert_eq!(hdr, [0x00, 0x39, 0x01]);
 /// ```
-pub const fn fdm_header_1b(address: u16, block: u8, mode: AccessMode) -> [u8; HEADER_LEN] {
+pub const fn fdm_header_1b(addr: u16, block: u8, mode: AccessMode) -> [u8; HEADER_LEN] {
     [
-        (address >> 8) as u8,
-        address as u8,
+        (addr >> 8) as u8,
+        addr as u8,
         (block << 3) | ((mode as u8) << 2) | 0b01,
     ]
 }
@@ -68,15 +76,19 @@ pub const fn fdm_header_1b(address: u16, block: u8, mode: AccessMode) -> [u8; HE
 /// SPI header to read the UPORTR register in fixed data length mode.
 ///
 /// ```
-/// use w5500_ll::{reg, spi, COMMON_BLOCK_OFFSET};
+/// use w5500_ll::{spi, Reg, COMMON_BLOCK_OFFSET};
 ///
-/// let hdr = spi::fdm_header_2b(reg::UPORTR, COMMON_BLOCK_OFFSET, spi::AccessMode::Read);
+/// let hdr = spi::fdm_header_2b(
+///     Reg::UPORTR.addr(),
+///     COMMON_BLOCK_OFFSET,
+///     spi::AccessMode::Read,
+/// );
 /// assert_eq!(hdr, [0x00, 0x2C, 0x02]);
 /// ```
-pub const fn fdm_header_2b(address: u16, block: u8, mode: AccessMode) -> [u8; HEADER_LEN] {
+pub const fn fdm_header_2b(addr: u16, block: u8, mode: AccessMode) -> [u8; HEADER_LEN] {
     [
-        (address >> 8) as u8,
-        address as u8,
+        (addr >> 8) as u8,
+        addr as u8,
         (block << 3) | ((mode as u8) << 2) | 0b10,
     ]
 }
@@ -88,15 +100,15 @@ pub const fn fdm_header_2b(address: u16, block: u8, mode: AccessMode) -> [u8; HE
 /// SPI header to read the UIPR register in fixed data length mode.
 ///
 /// ```
-/// use w5500_ll::{reg, spi, COMMON_BLOCK_OFFSET};
+/// use w5500_ll::{spi, Reg, COMMON_BLOCK_OFFSET};
 ///
-/// let hdr = spi::fdm_header_4b(reg::UIPR, COMMON_BLOCK_OFFSET, spi::AccessMode::Read);
+/// let hdr = spi::fdm_header_4b(Reg::UIPR.addr(), COMMON_BLOCK_OFFSET, spi::AccessMode::Read);
 /// assert_eq!(hdr, [0x00, 0x28, 0x03]);
 /// ```
-pub const fn fdm_header_4b(address: u16, block: u8, mode: AccessMode) -> [u8; HEADER_LEN] {
+pub const fn fdm_header_4b(addr: u16, block: u8, mode: AccessMode) -> [u8; HEADER_LEN] {
     [
-        (address >> 8) as u8,
-        address as u8,
+        (addr >> 8) as u8,
+        addr as u8,
         (block << 3) | ((mode as u8) << 2) | 0b11,
     ]
 }

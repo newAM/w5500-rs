@@ -64,10 +64,12 @@ pub mod blocking;
 pub mod net;
 pub mod spi;
 
+mod addr;
 mod registers;
 mod specifiers;
 use net::{Eui48Addr, Ipv4Addr, SocketAddrV4};
 
+pub use addr::{Reg, SnReg};
 pub use registers::{Interrupt, Mode, PhyCfg, SocketInterrupt, SocketInterruptMask, SocketMode};
 pub use specifiers::{
     BufferSize, DuplexStatus, LinkStatus, OperationMode, Protocol, SocketCommand, SocketStatus,
@@ -110,97 +112,6 @@ const SOCKET_RX_OFFSET: u8 = 0x03;
 /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
 /// ```
 pub const VERSION: u8 = 0x04;
-
-/// W5500 register addresses.
-pub mod reg {
-    /// Address of the MR register.
-    pub const MR: u16 = 0x0000;
-    /// Address of the GAR register.
-    pub const GAR: u16 = 0x0001;
-    /// Address of the SUBR register.
-    pub const SUBR: u16 = 0x0005;
-    /// Address of the SHAR register.
-    pub const SHAR: u16 = 0x0009;
-    /// Address of the SIPR register.
-    pub const SIPR: u16 = 0x000F;
-    /// Address of the INTLEVEL register.
-    pub const INTLEVEL: u16 = 0x0013;
-    /// Address of the IR register.
-    pub const IR: u16 = 0x0015;
-    /// Address of the IMR register.
-    pub const IMR: u16 = 0x0016;
-    /// Address of the SIR register.
-    pub const SIR: u16 = 0x0017;
-    /// Address of the SIMR register.
-    pub const SIMR: u16 = 0x0018;
-    /// Address of the RTR register.
-    pub const RTR: u16 = 0x0019;
-    /// Address of the RCR register.
-    pub const RCR: u16 = 0x001B;
-    /// Address of the PTIMER register.
-    pub const PTIMER: u16 = 0x001C;
-    /// Address of the PMAGIC register.
-    pub const PMAGIC: u16 = 0x001D;
-    /// Address of the PHAR register.
-    pub const PHAR: u16 = 0x001E;
-    /// Address of the PSID register.
-    pub const PSID: u16 = 0x0024;
-    /// Address of the PMRU register.
-    pub const PMRU: u16 = 0x0026;
-    /// Address of the UIPR register.
-    pub const UIPR: u16 = 0x0028;
-    /// Address of the UPORTR register.
-    pub const UPORTR: u16 = 0x002C;
-    /// Address of the PHYCFGR register.
-    pub const PHYCFGR: u16 = 0x002E;
-    /// Address of the VERSIONR register.
-    pub const VERSIONR: u16 = 0x0039;
-
-    /// Address of the SN_MR register.
-    pub const SN_MR: u16 = 0x0000;
-    /// Address of the SN_CR register.
-    pub const SN_CR: u16 = 0x0001;
-    /// Address of the SN_IR register.
-    pub const SN_IR: u16 = 0x0002;
-    /// Address of the SN_SR register.
-    pub const SN_SR: u16 = 0x0003;
-    /// Address of the SN_PORT register.
-    pub const SN_PORT: u16 = 0x0004;
-    /// Address of the SN_DHAR register.
-    pub const SN_DHAR: u16 = 0x0006;
-    /// Address of the SN_DIPR register.
-    pub const SN_DIPR: u16 = 0x000C;
-    /// Address of the SN_DPORT register.
-    pub const SN_DPORT: u16 = 0x0010;
-    /// Address of the SN_MSSR register.
-    pub const SN_MSSR: u16 = 0x0012;
-    /// Address of the SN_TOS register.
-    pub const SN_TOS: u16 = 0x0015;
-    /// Address of the SN_TTL register.
-    pub const SN_TTL: u16 = 0x0016;
-    /// Address of the SN_RXBUF_SIZE register.
-    pub const SN_RXBUF_SIZE: u16 = 0x001E;
-    /// Address of the SN_TXBUF_SIZE register.
-    pub const SN_TXBUF_SIZE: u16 = 0x001F;
-    /// Address of the SN_TX_FSR register.
-    pub const SN_TX_FSR: u16 = 0x0020;
-    /// Address of the SN_TX_RD register.
-    pub const SN_TX_RD: u16 = 0x0022;
-    /// Address of the SN_TX_WR register.
-    pub const SN_TX_WR: u16 = 0x0024;
-    /// Address of the SN_RX_RSR register.
-    pub const SN_RX_RSR: u16 = 0x0026;
-    /// Address of the SN_RX_RD register.
-    pub const SN_RX_RD: u16 = 0x0028;
-    /// Address of the SN_RX_WR register.
-    pub const SN_RX_WR: u16 = 0x002A;
-    /// Address of the SN_IMR register.
-    pub const SN_IMR: u16 = 0x002C;
-    /// Address of the SN_FRAG register.
-    pub const SN_FRAG: u16 = 0x002D;
-    /// Address of the SN_KPALVTR register.
-    pub const SN_KPALVTR: u16 = 0x002F;
-}
 
 /// W5500 sockets.
 #[repr(u8)]
@@ -488,21 +399,21 @@ pub trait Registers {
     ///
     /// # Arguments
     ///
-    /// * `address` - Starting address of the memory being read.
+    /// * `addr` - Starting address of the memory being read.
     /// * `block` - W5500 block select bits
     /// * `data` - Buffer to read data into. The number of bytes read is equal
     ///   to the length of this buffer.
-    fn read(&mut self, address: u16, block: u8, data: &mut [u8]) -> Result<(), Self::Error>;
+    fn read(&mut self, addr: u16, block: u8, data: &mut [u8]) -> Result<(), Self::Error>;
 
     /// Write to the W5500.
     ///
     /// # Arguments
     ///
-    /// * `address` - Starting address of the memory being written.
+    /// * `addr` - Starting address of the memory being written.
     /// * `block` - W5500 block select bits
     /// * `data` - Buffer of data to write. The number of bytes written is equal
     ///   to the length of this buffer.
-    fn write(&mut self, address: u16, block: u8, data: &[u8]) -> Result<(), Self::Error>;
+    fn write(&mut self, addr: u16, block: u8, data: &[u8]) -> Result<(), Self::Error>;
 
     /// Get the mode register.
     ///
@@ -527,7 +438,7 @@ pub trait Registers {
     /// ```
     fn mr(&mut self) -> Result<Mode, Self::Error> {
         let mut reg: [u8; 1] = [0];
-        self.read(reg::MR, COMMON_BLOCK_OFFSET, &mut reg)?;
+        self.read(Reg::MR.addr(), COMMON_BLOCK_OFFSET, &mut reg)?;
         Ok(Mode::from(reg[0]))
     }
 
@@ -553,7 +464,7 @@ pub trait Registers {
     /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn set_mr(&mut self, mode: Mode) -> Result<(), Self::Error> {
-        self.write(reg::MR, COMMON_BLOCK_OFFSET, &[mode.into()])
+        self.write(Reg::MR.addr(), COMMON_BLOCK_OFFSET, &[mode.into()])
     }
 
     /// Get the gateway IP address.
@@ -579,7 +490,7 @@ pub trait Registers {
     /// ```
     fn gar(&mut self) -> Result<Ipv4Addr, Self::Error> {
         let mut gar = Ipv4Addr::UNSPECIFIED;
-        self.read(reg::GAR, COMMON_BLOCK_OFFSET, &mut gar.octets)?;
+        self.read(Reg::GAR.addr(), COMMON_BLOCK_OFFSET, &mut gar.octets)?;
         Ok(gar)
     }
 
@@ -604,7 +515,7 @@ pub trait Registers {
     /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn set_gar(&mut self, gar: &Ipv4Addr) -> Result<(), Self::Error> {
-        self.write(reg::GAR, COMMON_BLOCK_OFFSET, &gar.octets)
+        self.write(Reg::GAR.addr(), COMMON_BLOCK_OFFSET, &gar.octets)
     }
 
     /// Get the subnet mask.
@@ -630,7 +541,7 @@ pub trait Registers {
     /// ```
     fn subr(&mut self) -> Result<Ipv4Addr, Self::Error> {
         let mut subr = Ipv4Addr::UNSPECIFIED;
-        self.read(reg::SUBR, COMMON_BLOCK_OFFSET, &mut subr.octets)?;
+        self.read(Reg::SUBR.addr(), COMMON_BLOCK_OFFSET, &mut subr.octets)?;
         Ok(subr)
     }
 
@@ -655,7 +566,7 @@ pub trait Registers {
     /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn set_subr(&mut self, subr: &Ipv4Addr) -> Result<(), Self::Error> {
-        self.write(reg::SUBR, COMMON_BLOCK_OFFSET, &subr.octets)
+        self.write(Reg::SUBR.addr(), COMMON_BLOCK_OFFSET, &subr.octets)
     }
 
     /// Get the source hardware address.
@@ -681,7 +592,7 @@ pub trait Registers {
     /// ```
     fn shar(&mut self) -> Result<Eui48Addr, Self::Error> {
         let mut shar = Eui48Addr::UNSPECIFIED;
-        self.read(reg::SHAR, COMMON_BLOCK_OFFSET, &mut shar.octets)?;
+        self.read(Reg::SHAR.addr(), COMMON_BLOCK_OFFSET, &mut shar.octets)?;
         Ok(shar)
     }
 
@@ -706,7 +617,7 @@ pub trait Registers {
     /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn set_shar(&mut self, shar: &Eui48Addr) -> Result<(), Self::Error> {
-        self.write(reg::SHAR, COMMON_BLOCK_OFFSET, &shar.octets)
+        self.write(Reg::SHAR.addr(), COMMON_BLOCK_OFFSET, &shar.octets)
     }
 
     /// Get the source (client) IP address.
@@ -732,7 +643,7 @@ pub trait Registers {
     /// ```
     fn sipr(&mut self) -> Result<Ipv4Addr, Self::Error> {
         let mut sipr = Ipv4Addr::UNSPECIFIED;
-        self.read(reg::SIPR, COMMON_BLOCK_OFFSET, &mut sipr.octets)?;
+        self.read(Reg::SIPR.addr(), COMMON_BLOCK_OFFSET, &mut sipr.octets)?;
         Ok(sipr)
     }
 
@@ -757,7 +668,7 @@ pub trait Registers {
     /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn set_sipr(&mut self, sipr: &Ipv4Addr) -> Result<(), Self::Error> {
-        self.write(reg::SIPR, COMMON_BLOCK_OFFSET, &sipr.octets)
+        self.write(Reg::SIPR.addr(), COMMON_BLOCK_OFFSET, &sipr.octets)
     }
 
     /// Get the interrupt low level time.
@@ -797,7 +708,7 @@ pub trait Registers {
     /// ```
     fn intlevel(&mut self) -> Result<u16, Self::Error> {
         let mut buf: [u8; 2] = [0; 2];
-        self.read(reg::INTLEVEL, COMMON_BLOCK_OFFSET, &mut buf)?;
+        self.read(Reg::INTLEVEL.addr(), COMMON_BLOCK_OFFSET, &mut buf)?;
         Ok(u16::from_be_bytes(buf))
     }
 
@@ -824,7 +735,11 @@ pub trait Registers {
     /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn set_intlevel(&mut self, intlevel: u16) -> Result<(), Self::Error> {
-        self.write(reg::INTLEVEL, COMMON_BLOCK_OFFSET, &intlevel.to_be_bytes())
+        self.write(
+            Reg::INTLEVEL.addr(),
+            COMMON_BLOCK_OFFSET,
+            &intlevel.to_be_bytes(),
+        )
     }
 
     /// Get the interrupt status.
@@ -852,7 +767,7 @@ pub trait Registers {
     /// ```
     fn ir(&mut self) -> Result<Interrupt, Self::Error> {
         let mut reg: [u8; 1] = [0];
-        self.read(reg::IR, COMMON_BLOCK_OFFSET, &mut reg)?;
+        self.read(Reg::IR.addr(), COMMON_BLOCK_OFFSET, &mut reg)?;
         Ok(Interrupt::from(reg[0]))
     }
 
@@ -884,7 +799,7 @@ pub trait Registers {
     /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn set_ir(&mut self, interrupt: Interrupt) -> Result<(), Self::Error> {
-        self.write(reg::IR, COMMON_BLOCK_OFFSET, &[interrupt.into()])
+        self.write(Reg::IR.addr(), COMMON_BLOCK_OFFSET, &[interrupt.into()])
     }
 
     /// Get the interrupt mask.
@@ -912,7 +827,7 @@ pub trait Registers {
     /// ```
     fn imr(&mut self) -> Result<Interrupt, Self::Error> {
         let mut reg: [u8; 1] = [0];
-        self.read(reg::IMR, COMMON_BLOCK_OFFSET, &mut reg)?;
+        self.read(Reg::IMR.addr(), COMMON_BLOCK_OFFSET, &mut reg)?;
         Ok(Interrupt::from(reg[0]))
     }
 
@@ -946,7 +861,7 @@ pub trait Registers {
     /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn set_imr(&mut self, mask: Interrupt) -> Result<(), Self::Error> {
-        self.write(reg::IMR, COMMON_BLOCK_OFFSET, &[mask.into()])
+        self.write(Reg::IMR.addr(), COMMON_BLOCK_OFFSET, &[mask.into()])
     }
 
     /// Get the socket interrupt status.
@@ -985,7 +900,7 @@ pub trait Registers {
     /// [`sn_ir`]: Registers::sn_ir
     fn sir(&mut self) -> Result<u8, Self::Error> {
         let mut reg: [u8; 1] = [0];
-        self.read(reg::SIR, COMMON_BLOCK_OFFSET, &mut reg)?;
+        self.read(Reg::SIR.addr(), COMMON_BLOCK_OFFSET, &mut reg)?;
         Ok(reg[0])
     }
 
@@ -1017,7 +932,7 @@ pub trait Registers {
     /// ```
     fn simr(&mut self) -> Result<u8, Self::Error> {
         let mut reg: [u8; 1] = [0];
-        self.read(reg::SIMR, COMMON_BLOCK_OFFSET, &mut reg)?;
+        self.read(Reg::SIMR.addr(), COMMON_BLOCK_OFFSET, &mut reg)?;
         Ok(reg[0])
     }
 
@@ -1045,7 +960,7 @@ pub trait Registers {
     /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn set_simr(&mut self, simr: u8) -> Result<(), Self::Error> {
-        self.write(reg::SIMR, COMMON_BLOCK_OFFSET, &[simr])
+        self.write(Reg::SIMR.addr(), COMMON_BLOCK_OFFSET, &[simr])
     }
 
     /// Get the retry time.
@@ -1081,7 +996,7 @@ pub trait Registers {
     /// ```
     fn rtr(&mut self) -> Result<u16, Self::Error> {
         let mut buf: [u8; 2] = [0; 2];
-        self.read(reg::RTR, COMMON_BLOCK_OFFSET, &mut buf)?;
+        self.read(Reg::RTR.addr(), COMMON_BLOCK_OFFSET, &mut buf)?;
         Ok(u16::from_be_bytes(buf))
     }
 
@@ -1108,7 +1023,7 @@ pub trait Registers {
     /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn set_rtr(&mut self, rtr: u16) -> Result<(), Self::Error> {
-        self.write(reg::RTR, COMMON_BLOCK_OFFSET, &rtr.to_be_bytes())
+        self.write(Reg::RTR.addr(), COMMON_BLOCK_OFFSET, &rtr.to_be_bytes())
     }
 
     /// Get the retry count.
@@ -1140,7 +1055,7 @@ pub trait Registers {
     /// ```
     fn rcr(&mut self) -> Result<u8, Self::Error> {
         let mut reg: [u8; 1] = [0];
-        self.read(reg::RCR, COMMON_BLOCK_OFFSET, &mut reg)?;
+        self.read(Reg::RCR.addr(), COMMON_BLOCK_OFFSET, &mut reg)?;
         Ok(reg[0])
     }
 
@@ -1167,7 +1082,7 @@ pub trait Registers {
     /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn set_rcr(&mut self, rcr: u8) -> Result<(), Self::Error> {
-        self.write(reg::RCR, COMMON_BLOCK_OFFSET, &[rcr])
+        self.write(Reg::RCR.addr(), COMMON_BLOCK_OFFSET, &[rcr])
     }
 
     /// Get the PPP link control protocol request timer.
@@ -1197,7 +1112,7 @@ pub trait Registers {
     /// ```
     fn ptimer(&mut self) -> Result<u8, Self::Error> {
         let mut reg: [u8; 1] = [0];
-        self.read(reg::PTIMER, COMMON_BLOCK_OFFSET, &mut reg)?;
+        self.read(Reg::PTIMER.addr(), COMMON_BLOCK_OFFSET, &mut reg)?;
         Ok(reg[0])
     }
 
@@ -1224,7 +1139,7 @@ pub trait Registers {
     /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn set_ptimer(&mut self, ptimer: u8) -> Result<(), Self::Error> {
-        self.write(reg::PTIMER, COMMON_BLOCK_OFFSET, &[ptimer])
+        self.write(Reg::PTIMER.addr(), COMMON_BLOCK_OFFSET, &[ptimer])
     }
 
     /// Get the PPP link control protocol magic number.
@@ -1252,7 +1167,7 @@ pub trait Registers {
     /// ```
     fn pmagic(&mut self) -> Result<u8, Self::Error> {
         let mut reg: [u8; 1] = [0];
-        self.read(reg::PMAGIC, COMMON_BLOCK_OFFSET, &mut reg)?;
+        self.read(Reg::PMAGIC.addr(), COMMON_BLOCK_OFFSET, &mut reg)?;
         Ok(reg[0])
     }
 
@@ -1279,7 +1194,7 @@ pub trait Registers {
     /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn set_pmagic(&mut self, pmagic: u8) -> Result<(), Self::Error> {
-        self.write(reg::PMAGIC, COMMON_BLOCK_OFFSET, &[pmagic])
+        self.write(Reg::PMAGIC.addr(), COMMON_BLOCK_OFFSET, &[pmagic])
     }
 
     /// Get the destination hardware address in PPPoE mode.
@@ -1305,7 +1220,7 @@ pub trait Registers {
     /// ```
     fn phar(&mut self) -> Result<Eui48Addr, Self::Error> {
         let mut phar = Eui48Addr::UNSPECIFIED;
-        self.read(reg::PHAR, COMMON_BLOCK_OFFSET, &mut phar.octets)?;
+        self.read(Reg::PHAR.addr(), COMMON_BLOCK_OFFSET, &mut phar.octets)?;
         Ok(phar)
     }
 
@@ -1330,7 +1245,7 @@ pub trait Registers {
     /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn set_phar(&mut self, phar: &Eui48Addr) -> Result<(), Self::Error> {
-        self.write(reg::PHAR, COMMON_BLOCK_OFFSET, &phar.octets)
+        self.write(Reg::PHAR.addr(), COMMON_BLOCK_OFFSET, &phar.octets)
     }
 
     /// Get the session ID in PPPoE mode.
@@ -1359,7 +1274,7 @@ pub trait Registers {
     /// ```
     fn psid(&mut self) -> Result<u16, Self::Error> {
         let mut buf: [u8; 2] = [0; 2];
-        self.read(reg::PSID, COMMON_BLOCK_OFFSET, &mut buf)?;
+        self.read(Reg::PSID.addr(), COMMON_BLOCK_OFFSET, &mut buf)?;
         Ok(u16::from_be_bytes(buf))
     }
 
@@ -1386,7 +1301,7 @@ pub trait Registers {
     /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn set_psid(&mut self, psid: u16) -> Result<(), Self::Error> {
-        self.write(reg::PSID, COMMON_BLOCK_OFFSET, &psid.to_be_bytes())
+        self.write(Reg::PSID.addr(), COMMON_BLOCK_OFFSET, &psid.to_be_bytes())
     }
 
     /// Get the maximum receive unit in PPPoE mode.
@@ -1414,7 +1329,7 @@ pub trait Registers {
     /// ```
     fn pmru(&mut self) -> Result<u16, Self::Error> {
         let mut buf: [u8; 2] = [0; 2];
-        self.read(reg::PMRU, COMMON_BLOCK_OFFSET, &mut buf)?;
+        self.read(Reg::PMRU.addr(), COMMON_BLOCK_OFFSET, &mut buf)?;
         Ok(u16::from_be_bytes(buf))
     }
 
@@ -1441,7 +1356,7 @@ pub trait Registers {
     /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn set_pmru(&mut self, pmru: u16) -> Result<(), Self::Error> {
-        self.write(reg::PMRU, COMMON_BLOCK_OFFSET, &pmru.to_be_bytes())
+        self.write(Reg::PMRU.addr(), COMMON_BLOCK_OFFSET, &pmru.to_be_bytes())
     }
 
     /// Get the unreachable IP address.
@@ -1474,7 +1389,7 @@ pub trait Registers {
     /// ```
     fn uipr(&mut self) -> Result<Ipv4Addr, Self::Error> {
         let mut uipr = Ipv4Addr::UNSPECIFIED;
-        self.read(reg::UIPR, COMMON_BLOCK_OFFSET, &mut uipr.octets)?;
+        self.read(Reg::UIPR.addr(), COMMON_BLOCK_OFFSET, &mut uipr.octets)?;
         Ok(uipr)
     }
 
@@ -1502,7 +1417,7 @@ pub trait Registers {
     /// ```
     fn uportr(&mut self) -> Result<u16, Self::Error> {
         let mut buf: [u8; 2] = [0; 2];
-        self.read(reg::UPORTR, COMMON_BLOCK_OFFSET, &mut buf)?;
+        self.read(Reg::UPORTR.addr(), COMMON_BLOCK_OFFSET, &mut buf)?;
         Ok(u16::from_be_bytes(buf))
     }
 
@@ -1529,7 +1444,7 @@ pub trait Registers {
     /// ```
     fn phycfgr(&mut self) -> Result<PhyCfg, Self::Error> {
         let mut reg: [u8; 1] = [0];
-        self.read(reg::PHYCFGR, COMMON_BLOCK_OFFSET, &mut reg)?;
+        self.read(Reg::PHYCFGR.addr(), COMMON_BLOCK_OFFSET, &mut reg)?;
         Ok(PhyCfg::from(reg[0]))
     }
 
@@ -1555,7 +1470,7 @@ pub trait Registers {
     /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn set_phycfgr(&mut self, phycfg: PhyCfg) -> Result<(), Self::Error> {
-        self.write(reg::PHYCFGR, COMMON_BLOCK_OFFSET, &[phycfg.into()])
+        self.write(Reg::PHYCFGR.addr(), COMMON_BLOCK_OFFSET, &[phycfg.into()])
     }
 
     /// Get the version.
@@ -1586,7 +1501,7 @@ pub trait Registers {
     /// ```
     fn version(&mut self) -> Result<u8, Self::Error> {
         let mut reg: [u8; 1] = [0];
-        self.read(reg::VERSIONR, COMMON_BLOCK_OFFSET, &mut reg)?;
+        self.read(Reg::VERSIONR.addr(), COMMON_BLOCK_OFFSET, &mut reg)?;
         Ok(reg[0])
     }
 
@@ -1613,7 +1528,7 @@ pub trait Registers {
     /// ```
     fn sn_mr(&mut self, socket: Socket) -> Result<SocketMode, Self::Error> {
         let mut reg: [u8; 1] = [0];
-        self.read(reg::SN_MR, socket.block(), &mut reg)?;
+        self.read(SnReg::MR.addr(), socket.block(), &mut reg)?;
         Ok(SocketMode::from(reg[0]))
     }
 
@@ -1639,7 +1554,7 @@ pub trait Registers {
     /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn set_sn_mr(&mut self, socket: Socket, mode: SocketMode) -> Result<(), Self::Error> {
-        self.write(reg::SN_MR, socket.block(), &[mode.into()])
+        self.write(SnReg::MR.addr(), socket.block(), &[mode.into()])
     }
 
     /// Get the socket command.
@@ -1680,7 +1595,7 @@ pub trait Registers {
     /// ```
     fn sn_cr(&mut self, socket: Socket) -> Result<u8, Self::Error> {
         let mut reg: [u8; 1] = [0];
-        self.read(reg::SN_CR, socket.block(), &mut reg)?;
+        self.read(SnReg::CR.addr(), socket.block(), &mut reg)?;
         Ok(reg[0])
     }
 
@@ -1705,7 +1620,7 @@ pub trait Registers {
     /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn set_sn_cr(&mut self, socket: Socket, cmd: SocketCommand) -> Result<(), Self::Error> {
-        self.write(reg::SN_CR, socket.block(), &[cmd.into()])
+        self.write(SnReg::CR.addr(), socket.block(), &[cmd.into()])
     }
 
     /// Get the socket interrupt status.
@@ -1730,7 +1645,7 @@ pub trait Registers {
     /// ```
     fn sn_ir(&mut self, socket: Socket) -> Result<SocketInterrupt, Self::Error> {
         let mut reg: [u8; 1] = [0];
-        self.read(reg::SN_IR, socket.block(), &mut reg)?;
+        self.read(SnReg::IR.addr(), socket.block(), &mut reg)?;
         Ok(SocketInterrupt::from(reg[0]))
     }
 
@@ -1783,7 +1698,7 @@ pub trait Registers {
     /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn set_sn_ir<T: Into<u8>>(&mut self, socket: Socket, sn_ir: T) -> Result<(), Self::Error> {
-        self.write(reg::SN_IR, socket.block(), &[sn_ir.into()])
+        self.write(SnReg::IR.addr(), socket.block(), &[sn_ir.into()])
     }
 
     /// Get the socket status.
@@ -1825,7 +1740,7 @@ pub trait Registers {
     /// [`Err`]: https://doc.rust-lang.org/core/result/enum.Result.html#variant.Err
     fn sn_sr(&mut self, socket: Socket) -> Result<Result<SocketStatus, u8>, Self::Error> {
         let mut reg: [u8; 1] = [0];
-        self.read(reg::SN_SR, socket.block(), &mut reg)?;
+        self.read(SnReg::SR.addr(), socket.block(), &mut reg)?;
         Ok(SocketStatus::try_from(reg[0]))
     }
 
@@ -1854,7 +1769,7 @@ pub trait Registers {
     /// ```
     fn sn_port(&mut self, socket: Socket) -> Result<u16, Self::Error> {
         let mut reg: [u8; 2] = [0; 2];
-        self.read(reg::SN_PORT, socket.block(), &mut reg)?;
+        self.read(SnReg::PORT.addr(), socket.block(), &mut reg)?;
         Ok(u16::from_be_bytes(reg))
     }
 
@@ -1881,7 +1796,7 @@ pub trait Registers {
     /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn set_sn_port(&mut self, socket: Socket, port: u16) -> Result<(), Self::Error> {
-        self.write(reg::SN_PORT, socket.block(), &u16::to_be_bytes(port))
+        self.write(SnReg::PORT.addr(), socket.block(), &u16::to_be_bytes(port))
     }
 
     /// Get the socket destination hardware address.
@@ -1913,7 +1828,7 @@ pub trait Registers {
     /// ```
     fn sn_dhar(&mut self, socket: Socket) -> Result<Eui48Addr, Self::Error> {
         let mut dhar: Eui48Addr = Eui48Addr::UNSPECIFIED;
-        self.read(reg::SN_DHAR, socket.block(), &mut dhar.octets)?;
+        self.read(SnReg::DHAR.addr(), socket.block(), &mut dhar.octets)?;
         Ok(dhar)
     }
 
@@ -1943,7 +1858,7 @@ pub trait Registers {
     /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn set_sn_dhar(&mut self, socket: Socket, dhar: &Eui48Addr) -> Result<(), Self::Error> {
-        self.write(reg::SN_DHAR, socket.block(), &dhar.octets)
+        self.write(SnReg::DHAR.addr(), socket.block(), &dhar.octets)
     }
 
     /// Get the socket destination IP address.
@@ -1982,7 +1897,7 @@ pub trait Registers {
     /// ```
     fn sn_dipr(&mut self, socket: Socket) -> Result<Ipv4Addr, Self::Error> {
         let mut dipr: Ipv4Addr = Ipv4Addr::UNSPECIFIED;
-        self.read(reg::SN_DIPR, socket.block(), &mut dipr.octets)?;
+        self.read(SnReg::DIPR.addr(), socket.block(), &mut dipr.octets)?;
         Ok(dipr)
     }
 
@@ -2009,7 +1924,7 @@ pub trait Registers {
     /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn set_sn_dipr(&mut self, socket: Socket, dipr: &Ipv4Addr) -> Result<(), Self::Error> {
-        self.write(reg::SN_DIPR, socket.block(), &dipr.octets)
+        self.write(SnReg::DIPR.addr(), socket.block(), &dipr.octets)
     }
 
     /// Get the socket destination port.
@@ -2048,7 +1963,7 @@ pub trait Registers {
     /// ```
     fn sn_dport(&mut self, socket: Socket) -> Result<u16, Self::Error> {
         let mut reg: [u8; 2] = [0; 2];
-        self.read(reg::SN_DPORT, socket.block(), &mut reg)?;
+        self.read(SnReg::DPORT.addr(), socket.block(), &mut reg)?;
         Ok(u16::from_be_bytes(reg))
     }
 
@@ -2075,7 +1990,7 @@ pub trait Registers {
     /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn set_sn_dport(&mut self, socket: Socket, port: u16) -> Result<(), Self::Error> {
-        self.write(reg::SN_DPORT, socket.block(), &u16::to_be_bytes(port))
+        self.write(SnReg::DPORT.addr(), socket.block(), &u16::to_be_bytes(port))
     }
 
     /// Get the socket destination IPv4 and port.
@@ -2107,7 +2022,7 @@ pub trait Registers {
     /// ```
     fn sn_dest(&mut self, socket: Socket) -> Result<SocketAddrV4, Self::Error> {
         let mut buf: [u8; 6] = [0; 6];
-        self.read(reg::SN_DIPR, socket.block(), &mut buf)?;
+        self.read(SnReg::DIPR.addr(), socket.block(), &mut buf)?;
         Ok(SocketAddrV4::new(
             Ipv4Addr::new(buf[0], buf[1], buf[2], buf[3]),
             u16::from_be_bytes([buf[4], buf[5]]),
@@ -2154,7 +2069,7 @@ pub trait Registers {
             (addr.port() >> 8) as u8,
             addr.port() as u8,
         ];
-        self.write(reg::SN_DIPR, socket.block(), &buf)
+        self.write(SnReg::DIPR.addr(), socket.block(), &buf)
     }
 
     /// Get the socket maximum segment size.
@@ -2211,7 +2126,7 @@ pub trait Registers {
     /// ```
     fn sn_mssr(&mut self, socket: Socket) -> Result<u16, Self::Error> {
         let mut reg: [u8; 2] = [0; 2];
-        self.read(reg::SN_MSSR, socket.block(), &mut reg)?;
+        self.read(SnReg::MSSR.addr(), socket.block(), &mut reg)?;
         Ok(u16::from_be_bytes(reg))
     }
 
@@ -2238,7 +2153,7 @@ pub trait Registers {
     /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn set_sn_mssr(&mut self, socket: Socket, mssr: u16) -> Result<(), Self::Error> {
-        self.write(reg::SN_MSSR, socket.block(), &u16::to_be_bytes(mssr))
+        self.write(SnReg::MSSR.addr(), socket.block(), &u16::to_be_bytes(mssr))
     }
 
     /// Get the IP type of service.
@@ -2271,7 +2186,7 @@ pub trait Registers {
     /// ```
     fn sn_tos(&mut self, socket: Socket) -> Result<u8, Self::Error> {
         let mut reg: [u8; 1] = [0];
-        self.read(reg::SN_TOS, socket.block(), &mut reg)?;
+        self.read(SnReg::TOS.addr(), socket.block(), &mut reg)?;
         Ok(reg[0])
     }
 
@@ -2298,7 +2213,7 @@ pub trait Registers {
     /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn set_sn_tos(&mut self, socket: Socket, tos: u8) -> Result<(), Self::Error> {
-        self.write(reg::SN_TOS, socket.block(), &[tos])
+        self.write(SnReg::TOS.addr(), socket.block(), &[tos])
     }
 
     /// Get the time to live.
@@ -2330,7 +2245,7 @@ pub trait Registers {
     /// ```
     fn sn_ttl(&mut self, socket: Socket) -> Result<u8, Self::Error> {
         let mut reg: [u8; 1] = [0];
-        self.read(reg::SN_TTL, socket.block(), &mut reg)?;
+        self.read(SnReg::TTL.addr(), socket.block(), &mut reg)?;
         Ok(reg[0])
     }
 
@@ -2357,7 +2272,7 @@ pub trait Registers {
     /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn set_sn_ttl(&mut self, socket: Socket, ttl: u8) -> Result<(), Self::Error> {
-        self.write(reg::SN_TTL, socket.block(), &[ttl])
+        self.write(SnReg::TTL.addr(), socket.block(), &[ttl])
     }
 
     /// Get the socket RX buffer size.
@@ -2403,7 +2318,7 @@ pub trait Registers {
     /// [`Err`]: https://doc.rust-lang.org/core/result/enum.Result.html#variant.Err
     fn sn_rxbuf_size(&mut self, socket: Socket) -> Result<Result<BufferSize, u8>, Self::Error> {
         let mut reg: [u8; 1] = [0];
-        self.read(reg::SN_RXBUF_SIZE, socket.block(), &mut reg)?;
+        self.read(SnReg::RXBUF_SIZE.addr(), socket.block(), &mut reg)?;
         Ok(BufferSize::try_from(reg[0]))
     }
 
@@ -2430,7 +2345,7 @@ pub trait Registers {
     /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn set_sn_rxbuf_size(&mut self, socket: Socket, size: BufferSize) -> Result<(), Self::Error> {
-        self.write(reg::SN_RXBUF_SIZE, socket.block(), &[size.into()])
+        self.write(SnReg::RXBUF_SIZE.addr(), socket.block(), &[size.into()])
     }
 
     /// Get the socket TX buffer size.
@@ -2476,7 +2391,7 @@ pub trait Registers {
     /// [`Err`]: https://doc.rust-lang.org/core/result/enum.Result.html#variant.Err
     fn sn_txbuf_size(&mut self, socket: Socket) -> Result<Result<BufferSize, u8>, Self::Error> {
         let mut reg: [u8; 1] = [0];
-        self.read(reg::SN_TXBUF_SIZE, socket.block(), &mut reg)?;
+        self.read(SnReg::TXBUF_SIZE.addr(), socket.block(), &mut reg)?;
         Ok(BufferSize::try_from(reg[0]))
     }
 
@@ -2503,7 +2418,7 @@ pub trait Registers {
     /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn set_sn_txbuf_size(&mut self, socket: Socket, size: BufferSize) -> Result<(), Self::Error> {
-        self.write(reg::SN_TXBUF_SIZE, socket.block(), &[size.into()])
+        self.write(SnReg::TXBUF_SIZE.addr(), socket.block(), &[size.into()])
     }
 
     /// Get transmit buffer free size.
@@ -2550,7 +2465,7 @@ pub trait Registers {
     /// ```
     fn sn_tx_fsr(&mut self, socket: Socket) -> Result<u16, Self::Error> {
         let mut reg: [u8; 2] = [0; 2];
-        self.read(reg::SN_TX_FSR, socket.block(), &mut reg)?;
+        self.read(SnReg::TX_FSR.addr(), socket.block(), &mut reg)?;
         Ok(u16::from_be_bytes(reg))
     }
 
@@ -2593,7 +2508,7 @@ pub trait Registers {
     /// ```
     fn sn_tx_rd(&mut self, socket: Socket) -> Result<u16, Self::Error> {
         let mut reg: [u8; 2] = [0; 2];
-        self.read(reg::SN_TX_RD, socket.block(), &mut reg)?;
+        self.read(SnReg::TX_RD.addr(), socket.block(), &mut reg)?;
         Ok(u16::from_be_bytes(reg))
     }
 
@@ -2632,7 +2547,7 @@ pub trait Registers {
     /// ```
     fn sn_tx_wr(&mut self, socket: Socket) -> Result<u16, Self::Error> {
         let mut reg: [u8; 2] = [0; 2];
-        self.read(reg::SN_TX_WR, socket.block(), &mut reg)?;
+        self.read(SnReg::TX_WR.addr(), socket.block(), &mut reg)?;
         Ok(u16::from_be_bytes(reg))
     }
 
@@ -2642,7 +2557,7 @@ pub trait Registers {
     ///
     /// See [`Registers::set_sn_tx_buf`] for an example.
     fn set_sn_tx_wr(&mut self, socket: Socket, ptr: u16) -> Result<(), Self::Error> {
-        self.write(reg::SN_TX_WR, socket.block(), &ptr.to_be_bytes())
+        self.write(SnReg::TX_WR.addr(), socket.block(), &ptr.to_be_bytes())
     }
 
     /// Get the socket received data size.
@@ -2673,7 +2588,7 @@ pub trait Registers {
     /// ```
     fn sn_rx_rsr(&mut self, socket: Socket) -> Result<u16, Self::Error> {
         let mut reg: [u8; 2] = [0; 2];
-        self.read(reg::SN_RX_RSR, socket.block(), &mut reg)?;
+        self.read(SnReg::RX_RSR.addr(), socket.block(), &mut reg)?;
         Ok(u16::from_be_bytes(reg))
     }
 
@@ -2711,7 +2626,7 @@ pub trait Registers {
     /// ```
     fn sn_rx_rd(&mut self, socket: Socket) -> Result<u16, Self::Error> {
         let mut reg: [u8; 2] = [0; 2];
-        self.read(reg::SN_RX_RD, socket.block(), &mut reg)?;
+        self.read(SnReg::RX_RD.addr(), socket.block(), &mut reg)?;
         Ok(u16::from_be_bytes(reg))
     }
 
@@ -2720,7 +2635,7 @@ pub trait Registers {
     /// See [`Registers::sn_rx_rd`] for more information.
     /// See [`Registers::sn_rx_buf`] for an example.
     fn set_sn_rx_rd(&mut self, socket: Socket, ptr: u16) -> Result<(), Self::Error> {
-        self.write(reg::SN_RX_RD, socket.block(), &ptr.to_be_bytes())
+        self.write(SnReg::RX_RD.addr(), socket.block(), &ptr.to_be_bytes())
     }
 
     /// Get the socket RX write pointer.
@@ -2748,7 +2663,7 @@ pub trait Registers {
     /// ```
     fn sn_rx_wr(&mut self, socket: Socket) -> Result<u16, Self::Error> {
         let mut reg: [u8; 2] = [0; 2];
-        self.read(reg::SN_RX_WR, socket.block(), &mut reg)?;
+        self.read(SnReg::RX_WR.addr(), socket.block(), &mut reg)?;
         Ok(u16::from_be_bytes(reg))
     }
 
@@ -2775,7 +2690,7 @@ pub trait Registers {
     /// ```
     fn sn_imr(&mut self, socket: Socket) -> Result<SocketInterruptMask, Self::Error> {
         let mut reg: [u8; 1] = [0];
-        self.read(reg::SN_IMR, socket.block(), &mut reg)?;
+        self.read(SnReg::IMR.addr(), socket.block(), &mut reg)?;
         Ok(SocketInterruptMask::from(reg[0]))
     }
 
@@ -2800,7 +2715,7 @@ pub trait Registers {
     /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn set_sn_imr(&mut self, socket: Socket, mask: SocketInterruptMask) -> Result<(), Self::Error> {
-        self.write(reg::SN_IMR, socket.block(), &[mask.into()])
+        self.write(SnReg::IMR.addr(), socket.block(), &[mask.into()])
     }
 
     /// Get the socket fragment.
@@ -2828,7 +2743,7 @@ pub trait Registers {
     /// ```
     fn sn_frag(&mut self, socket: Socket) -> Result<u16, Self::Error> {
         let mut buf: [u8; 2] = [0; 2];
-        self.read(reg::SN_FRAG, socket.block(), &mut buf)?;
+        self.read(SnReg::FRAG.addr(), socket.block(), &mut buf)?;
         Ok(u16::from_be_bytes(buf))
     }
 
@@ -2855,7 +2770,7 @@ pub trait Registers {
     /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn set_sn_frag(&mut self, socket: Socket, frag: u16) -> Result<(), Self::Error> {
-        self.write(reg::SN_FRAG, socket.block(), &u16::to_be_bytes(frag))
+        self.write(SnReg::FRAG.addr(), socket.block(), &u16::to_be_bytes(frag))
     }
 
     /// Get the socket keep alive time.
@@ -2898,7 +2813,7 @@ pub trait Registers {
     /// ```
     fn sn_kpalvtr(&mut self, socket: Socket) -> Result<u8, Self::Error> {
         let mut buf: [u8; 1] = [0];
-        self.read(reg::SN_KPALVTR, socket.block(), &mut buf)?;
+        self.read(SnReg::KPALVTR.addr(), socket.block(), &mut buf)?;
         Ok(buf[0])
     }
 
@@ -2926,7 +2841,7 @@ pub trait Registers {
     /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn set_sn_kpalvtr(&mut self, socket: Socket, kpalvtr: u8) -> Result<(), Self::Error> {
-        self.write(reg::SN_KPALVTR, socket.block(), &[kpalvtr])
+        self.write(SnReg::KPALVTR.addr(), socket.block(), &[kpalvtr])
     }
 
     /// Write the socket TX buffer.
@@ -2938,9 +2853,9 @@ pub trait Registers {
     /// use w5500_ll::{blocking::vdm::W5500, Registers, Socket, SocketCommand};
     /// # use embedded_hal_mock as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, w5500_ll::reg::SN_TX_FSR as u8, 0x08]),
+    /// #   hal::spi::Transaction::write(vec![0x00, w5500_ll::SnReg::TX_FSR.addr() as u8, 0x08]),
     /// #   hal::spi::Transaction::transfer(vec![0, 0], vec![0x08, 0x00]),
-    /// #   hal::spi::Transaction::write(vec![0x00, w5500_ll::reg::SN_TX_WR as u8, 0x08]),
+    /// #   hal::spi::Transaction::write(vec![0x00, w5500_ll::SnReg::TX_WR.addr() as u8, 0x08]),
     /// #   hal::spi::Transaction::transfer(vec![0, 0], vec![0x00, 0x00]),
     /// #   hal::spi::Transaction::write(vec![0x00, 0x00, (Socket::Socket0.tx_block() as u8) << 3 | 0x04]),
     /// #   hal::spi::Transaction::write(vec![0x12, 0x34, 0x56, 0x78, 0x9A]),
@@ -2996,15 +2911,15 @@ pub trait Registers {
     /// use w5500_ll::{blocking::vdm::W5500, Registers, Socket, SocketCommand};
     /// # use embedded_hal_mock as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, w5500_ll::reg::SN_RX_RSR as u8, 0x08]),
+    /// #   hal::spi::Transaction::write(vec![0x00, w5500_ll::SnReg::RX_RSR.addr() as u8, 0x08]),
     /// #   hal::spi::Transaction::transfer(vec![0, 0], vec![0, 4]),
-    /// #   hal::spi::Transaction::write(vec![0x00, w5500_ll::reg::SN_RX_RD as u8, 0x08]),
+    /// #   hal::spi::Transaction::write(vec![0x00, w5500_ll::SnReg::RX_RD.addr() as u8, 0x08]),
     /// #   hal::spi::Transaction::transfer(vec![0, 0], vec![0, 0]),
     /// #   hal::spi::Transaction::write(vec![0x00, 0x00, (Socket::Socket0.rx_block() as u8) << 3]),
     /// #   hal::spi::Transaction::transfer(vec![0, 0, 0, 0], vec![0, 0, 0, 0]),
-    /// #   hal::spi::Transaction::write(vec![0x00, w5500_ll::reg::SN_RX_RD as u8, 0x08 | 0x04]),
+    /// #   hal::spi::Transaction::write(vec![0x00, w5500_ll::SnReg::RX_RD.addr() as u8, 0x08 | 0x04]),
     /// #   hal::spi::Transaction::write(vec![0, 4]),
-    /// #   hal::spi::Transaction::write(vec![0x00, w5500_ll::reg::SN_CR as u8, 0x08 | 0x04]),
+    /// #   hal::spi::Transaction::write(vec![0x00, w5500_ll::SnReg::CR.addr() as u8, 0x08 | 0x04]),
     /// #   hal::spi::Transaction::write(vec![SocketCommand::Recv.into()]),
     /// # ]);
     /// # let pin = hal::pin::Mock::new(&[
