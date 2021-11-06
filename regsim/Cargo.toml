@@ -2,7 +2,7 @@
 name = "w5500-regsim"
 version = "0.1.0-alpha.4"
 authors = ["Alex M. <alexmgit@protonmail.com>"]
-edition = "2018"
+edition = "2021"
 repository = "https://github.com/newAM/w5500-regsim-rs"
 license = "MIT"
 description = "Register simulation for the Wiznet W5500 internet offload chip."
@@ -15,17 +15,17 @@ homepage = "https://github.com/newAM/w5500-regsim-rs"
 maintenance = { status = "experimental" }
 
 [dependencies]
-lazy_static = "^1"
-log = "~0.4"
+lazy_static = "1"
+log = "0.4"
 
 [dependencies.w5500-ll]
 version = "~0.8.0"
 features = ["std"]
 
 [dev-dependencies]
-trust-dns-client = "~0.20"
-w5500-hl = "~0.4.0"
-version-sync = "~0.9"
-nb = "^1"
-stderrlog = "~0.5"
-httparse = { version = "^1", default-features = false }
+trust-dns-client = "0.20"
+w5500-hl = "0.5"
+version-sync = "0.9"
+nb = "1"
+stderrlog = "0.5"
+httparse = { version = "1", default-features = false }
