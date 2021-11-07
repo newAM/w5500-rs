@@ -293,12 +293,11 @@ pub trait Udp: Registers {
         sn: Sn,
         buf: &mut [u8],
     ) -> nb::Result<(usize, SocketAddrV4), Self::Error> {
-        let mut rsr: u16 = self.sn_rx_rsr(sn)?;
-
-        // nothing to recieve
-        if rsr < UDP_HEADER_LEN {
-            return Err(nb::Error::WouldBlock);
-        }
+        let rsr: u16 = match self.sn_rx_rsr(sn)?.checked_sub(UDP_HEADER_LEN) {
+            Some(rsr) => rsr,
+            // nothing to recieve
+            None => return Err(nb::Error::WouldBlock),
+        };
 
         debug_assert_eq!(self.sn_sr(sn)?, Ok(SocketStatus::Udp));
 
@@ -306,7 +305,6 @@ pub trait Udp: Registers {
         let mut header: [u8; UDP_HEADER_LEN_USIZE] = [0; UDP_HEADER_LEN_USIZE];
         self.sn_rx_buf(sn, ptr, &mut header)?;
         ptr = ptr.wrapping_add(UDP_HEADER_LEN);
-        rsr -= UDP_HEADER_LEN;
         let (pkt_size, origin) = deser_hdr(header);
 
         // not all data as indicated by the header has been buffered
@@ -368,12 +366,11 @@ pub trait Udp: Registers {
         sn: Sn,
         buf: &mut [u8],
     ) -> nb::Result<(usize, SocketAddrV4), Self::Error> {
-        let mut rsr: u16 = self.sn_rx_rsr(sn)?;
-
-        // nothing to recieve
-        if rsr < UDP_HEADER_LEN {
-            return Err(nb::Error::WouldBlock);
-        }
+        let rsr: u16 = match self.sn_rx_rsr(sn)?.checked_sub(UDP_HEADER_LEN) {
+            Some(rsr) => rsr,
+            // nothing to recieve
+            None => return Err(nb::Error::WouldBlock),
+        };
 
         debug_assert_eq!(self.sn_sr(sn)?, Ok(SocketStatus::Udp));
 
@@ -381,7 +378,6 @@ pub trait Udp: Registers {
         let mut header: [u8; UDP_HEADER_LEN_USIZE] = [0; UDP_HEADER_LEN_USIZE];
         self.sn_rx_buf(sn, ptr, &mut header)?;
         ptr = ptr.wrapping_add(UDP_HEADER_LEN);
-        rsr -= UDP_HEADER_LEN;
         let (pkt_size, origin) = deser_hdr(header);
 
         // not all data as indicated by the header has been buffered
