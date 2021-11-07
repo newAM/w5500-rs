@@ -79,7 +79,7 @@ pub const fn fdm_header_1b(addr: u16, block: u8, mode: AccessMode) -> [u8; HEADE
 /// use w5500_ll::{spi, Reg, COMMON_BLOCK_OFFSET};
 ///
 /// let hdr = spi::fdm_header_2b(
-///     Reg::UPORTR.addr(),
+///     Reg::UPORTR0.addr(),
 ///     COMMON_BLOCK_OFFSET,
 ///     spi::AccessMode::Read,
 /// );
@@ -102,7 +102,11 @@ pub const fn fdm_header_2b(addr: u16, block: u8, mode: AccessMode) -> [u8; HEADE
 /// ```
 /// use w5500_ll::{spi, Reg, COMMON_BLOCK_OFFSET};
 ///
-/// let hdr = spi::fdm_header_4b(Reg::UIPR.addr(), COMMON_BLOCK_OFFSET, spi::AccessMode::Read);
+/// let hdr = spi::fdm_header_4b(
+///     Reg::UIPR0.addr(),
+///     COMMON_BLOCK_OFFSET,
+///     spi::AccessMode::Read,
+/// );
 /// assert_eq!(hdr, [0x00, 0x28, 0x03]);
 /// ```
 pub const fn fdm_header_4b(addr: u16, block: u8, mode: AccessMode) -> [u8; HEADER_LEN] {
