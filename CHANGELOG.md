@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Changed
 - Changed edition from 2018 to 2021.
+- Updated the `w5500-ll` dependency from `0.8.0` to `0.9.0`.
 
 ## [0.5.0] - 2021-10-18
 ### Changed

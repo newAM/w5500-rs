@@ -4,7 +4,7 @@
 
 #![no_std]
 
-use w5500_hl::ll::Socket;
+use w5500_hl::ll::Sn;
 use w5500_hl::net::{Eui48Addr, Ipv4Addr, SocketAddrV4};
 
 /// W5500 MAC.
@@ -25,12 +25,12 @@ pub const SUBNET_MASK: Ipv4Addr = Ipv4Addr::new(255, 255, 255, 0);
 pub const PEER_IP: Ipv4Addr = Ipv4Addr::new(10, 0, 0, 3);
 
 /// Socket to use for HTTP server tests.
-pub const HTTP_SOCKET: Socket = Socket::Socket7;
+pub const HTTP_SOCKET: Sn = Sn::Sn7;
 /// Port to serve HTTP on (served by the W5500).
 pub const W5500_HTTP_PORT: u16 = 80;
 
 /// Socket to use for non-HTTP tests using TCP.
-pub const TCP_SOCKET: Socket = Socket::Socket6;
+pub const TCP_SOCKET: Sn = Sn::Sn6;
 /// Peer port to use for TCP tests.
 pub const PEER_TCP_PORT: u16 = 8080;
 /// Peer address for TCP tests.
@@ -45,7 +45,7 @@ pub const NUM_CHUNKS: usize = 32;
 pub const CHUNK_SIZE: usize = 1234;
 
 /// Socket to use for tests using UDP.
-pub const UDP_SOCKET: Socket = Socket::Socket5;
+pub const UDP_SOCKET: Sn = Sn::Sn5;
 /// Peer port for the for UDP tests.
 pub const PEER_UDP_PORT: u16 = 5657;
 /// Peer address for UDP tests.

@@ -35,17 +35,17 @@
 //! use w5500_hl::ll::{
 //!     net::{Ipv4Addr, SocketAddrV4},
 //!     Registers,
-//!     Socket::Socket0,
+//!     Sn::Sn0,
 //! };
 //! use w5500_hl::Udp;
 //!
-//! // open Socket0 as a UDP socket on port 1234
-//! w5500.udp_bind(Socket0, 1234)?;
+//! // open Sn0 as a UDP socket on port 1234
+//! w5500.udp_bind(Sn0, 1234)?;
 //!
 //! // send 4 bytes to 192.168.2.4:8080, and get the number of bytes transmitted
 //! let data: [u8; 4] = [0, 1, 2, 3];
 //! let destination = SocketAddrV4::new(Ipv4Addr::new(192, 168, 2, 4), 8080);
-//! let tx_bytes = w5500.udp_send_to(Socket0, &data, &destination);
+//! let tx_bytes = w5500.udp_send_to(Sn0, &data, &destination);
 //! # Ok::<(), w5500_hl::ll::blocking::vdm::Error<_, _>>(())
 //! ```
 //!
@@ -56,11 +56,11 @@
 //! # let mut w5500 = w5500_ll::blocking::vdm::W5500::new(h::spi::Mock::new(&[]), h::pin::Mock::new(&[]));
 //! use w5500_hl::ll::{
 //!     net::{Ipv4Addr, SocketAddrV4},
-//!     Registers, Socket,
+//!     Registers, Sn,
 //! };
 //! use w5500_hl::Tcp;
 //!
-//! const MQTT_SOCKET: Socket = Socket::Socket0;
+//! const MQTT_SOCKET: Sn = Sn::Sn0;
 //! const MQTT_SOURCE_PORT: u16 = 33650;
 //! const MQTT_SERVER: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::new(192, 168, 2, 10), 1883);
 //!
@@ -76,11 +76,11 @@
 //! # let mut w5500 = w5500_ll::blocking::vdm::W5500::new(h::spi::Mock::new(&[]), h::pin::Mock::new(&[]));
 //! use w5500_hl::ll::{
 //!     net::{Ipv4Addr, SocketAddrV4},
-//!     Registers, Socket,
+//!     Registers, Sn,
 //! };
 //! use w5500_hl::Tcp;
 //!
-//! const HTTP_SOCKET: Socket = Socket::Socket1;
+//! const HTTP_SOCKET: Sn = Sn::Sn1;
 //! const HTTP_PORT: u16 = 80;
 //!
 //! // serve HTTP
@@ -106,7 +106,7 @@
 
 pub use w5500_ll as ll;
 
-use ll::{Protocol, Registers, Socket, SocketCommand, SocketMode, SocketStatus, SOCKETS};
+use ll::{Protocol, Registers, Sn, SocketCommand, SocketMode, SocketStatus, SOCKETS};
 
 use core::cmp::min;
 
@@ -138,7 +138,7 @@ const fn deser_hdr(buf: [u8; UDP_HEADER_LEN_USIZE]) -> (u16, SocketAddrV4) {
     )
 }
 
-fn port_is_unique<T: ?Sized, E>(w5500: &mut T, socket: Socket, port: u16) -> Result<bool, E>
+fn port_is_unique<T: ?Sized, E>(w5500: &mut T, socket: Sn, port: u16) -> Result<bool, E>
 where
     T: Registers<Error = E>,
 {
@@ -205,41 +205,40 @@ pub trait Udp: Registers {
     /// ```no_run
     /// # use embedded_hal_mock as h;
     /// # let mut w5500 = w5500_ll::blocking::vdm::W5500::new(h::spi::Mock::new(&[]), h::pin::Mock::new(&[]));
-    /// use w5500_hl::ll::{Registers, Socket::Socket0};
+    /// use w5500_hl::ll::{Registers, Sn::Sn0};
     /// use w5500_hl::Udp;
     ///
-    /// w5500.udp_bind(Socket0, 8080)?;
+    /// w5500.udp_bind(Sn0, 8080)?;
     /// # Ok::<(), w5500_hl::ll::blocking::vdm::Error<_, _>>(())
     /// ```
     ///
     /// [`std::net::UdpSocket::bind`]: https://doc.rust-lang.org/std/net/struct.UdpSocket.html#method.bind
     /// [source IP register]: w5500_ll::Registers::sipr
-    fn udp_bind(&mut self, socket: Socket, port: u16) -> Result<(), Self::Error> {
+    fn udp_bind(&mut self, sn: Sn, port: u16) -> Result<(), Self::Error> {
         debug_assert!(
-            port_is_unique(self, socket, port)?,
+            port_is_unique(self, sn, port)?,
             "Local port {} is in use",
             port
         );
 
-        self.set_sn_cr(socket, SocketCommand::Close)?;
+        self.set_sn_cr(sn, SocketCommand::Close)?;
         // This will not hang, the socket status will always change to closed
         // after a close command.
         // (unless you do somthing silly like holding the W5500 in reset)
         loop {
-            if self.sn_sr(socket)? == Ok(SocketStatus::Closed) {
+            if self.sn_sr(sn)? == Ok(SocketStatus::Closed) {
                 break;
             }
         }
-        self.set_sn_port(socket, port)?;
-        let mut mode = SocketMode::default();
-        mode.set_protocol(Protocol::Udp);
-        self.set_sn_mr(socket, mode)?;
-        self.set_sn_cr(socket, SocketCommand::Open)?;
+        self.set_sn_port(sn, port)?;
+        const MODE: SocketMode = SocketMode::DEFAULT.set_protocol(Protocol::Udp);
+        self.set_sn_mr(sn, MODE)?;
+        self.set_sn_cr(sn, SocketCommand::Open)?;
         // This will not hang, the socket status will always change to Udp
         // after a open command with SN_MR set to UDP.
         // (unless you do somthing silly like holding the W5500 in reset)
         loop {
-            if self.sn_sr(socket)? == Ok(SocketStatus::Udp) {
+            if self.sn_sr(sn)? == Ok(SocketStatus::Udp) {
                 break;
             }
         }
@@ -270,13 +269,13 @@ pub trait Udp: Registers {
     /// # let mut w5500 = w5500_ll::blocking::vdm::W5500::new(h::spi::Mock::new(&[]), h::pin::Mock::new(&[]));
     /// use nb::block;
     /// use w5500_hl::{
-    ///     ll::{Registers, Socket::Socket0},
+    ///     ll::{Registers, Sn::Sn0},
     ///     Udp,
     /// };
     ///
-    /// w5500.udp_bind(Socket0, 8080)?;
+    /// w5500.udp_bind(Sn0, 8080)?;
     /// let mut buf = [0; 10];
-    /// let (number_of_bytes, src_addr) = block!(w5500.udp_recv_from(Socket0, &mut buf))?;
+    /// let (number_of_bytes, src_addr) = block!(w5500.udp_recv_from(Sn0, &mut buf))?;
     ///
     /// // panics if bytes were discarded
     /// assert!(
@@ -291,21 +290,21 @@ pub trait Udp: Registers {
     /// [`std::net::UdpSocket::recv_from`]: https://doc.rust-lang.org/std/net/struct.UdpSocket.html#method.recv_from
     fn udp_recv_from(
         &mut self,
-        socket: Socket,
+        sn: Sn,
         buf: &mut [u8],
     ) -> nb::Result<(usize, SocketAddrV4), Self::Error> {
-        let mut rsr: u16 = self.sn_rx_rsr(socket)?;
+        let mut rsr: u16 = self.sn_rx_rsr(sn)?;
 
         // nothing to recieve
         if rsr < UDP_HEADER_LEN {
             return Err(nb::Error::WouldBlock);
         }
 
-        debug_assert_eq!(self.sn_sr(socket)?, Ok(SocketStatus::Udp));
+        debug_assert_eq!(self.sn_sr(sn)?, Ok(SocketStatus::Udp));
 
-        let mut ptr: u16 = self.sn_rx_rd(socket)?;
+        let mut ptr: u16 = self.sn_rx_rd(sn)?;
         let mut header: [u8; UDP_HEADER_LEN_USIZE] = [0; UDP_HEADER_LEN_USIZE];
-        self.sn_rx_buf(socket, ptr, &mut header)?;
+        self.sn_rx_buf(sn, ptr, &mut header)?;
         ptr = ptr.wrapping_add(UDP_HEADER_LEN);
         rsr -= UDP_HEADER_LEN;
         let (pkt_size, origin) = deser_hdr(header);
@@ -317,11 +316,11 @@ pub trait Udp: Registers {
 
         let read_size: usize = min(usize::from(pkt_size), buf.len());
         if read_size != 0 {
-            self.sn_rx_buf(socket, ptr, &mut buf[..read_size])?;
+            self.sn_rx_buf(sn, ptr, &mut buf[..read_size])?;
         }
         ptr = ptr.wrapping_add(pkt_size);
-        self.set_sn_rx_rd(socket, ptr)?;
-        self.set_sn_cr(socket, SocketCommand::Recv)?;
+        self.set_sn_rx_rd(sn, ptr)?;
+        self.set_sn_cr(sn, SocketCommand::Recv)?;
         Ok((read_size, origin))
     }
 
@@ -345,13 +344,13 @@ pub trait Udp: Registers {
     /// # let mut w5500 = w5500_ll::blocking::vdm::W5500::new(h::spi::Mock::new(&[]), h::pin::Mock::new(&[]));
     /// use nb::block;
     /// use w5500_hl::{
-    ///     ll::{Registers, Socket::Socket0},
+    ///     ll::{Registers, Sn::Sn0},
     ///     Udp,
     /// };
     ///
-    /// w5500.udp_bind(Socket0, 8080)?;
+    /// w5500.udp_bind(Sn0, 8080)?;
     /// let mut buf = [0; 10];
-    /// let (number_of_bytes, src_addr) = block!(w5500.udp_peek_from(Socket0, &mut buf))?;
+    /// let (number_of_bytes, src_addr) = block!(w5500.udp_peek_from(Sn0, &mut buf))?;
     ///
     /// // panics if buffer was too small
     /// assert!(
@@ -366,21 +365,21 @@ pub trait Udp: Registers {
     /// [`std::net::UdpSocket::peek_from`]: https://doc.rust-lang.org/std/net/struct.UdpSocket.html#method.peek_from
     fn udp_peek_from(
         &mut self,
-        socket: Socket,
+        sn: Sn,
         buf: &mut [u8],
     ) -> nb::Result<(usize, SocketAddrV4), Self::Error> {
-        let mut rsr: u16 = self.sn_rx_rsr(socket)?;
+        let mut rsr: u16 = self.sn_rx_rsr(sn)?;
 
         // nothing to recieve
         if rsr < UDP_HEADER_LEN {
             return Err(nb::Error::WouldBlock);
         }
 
-        debug_assert_eq!(self.sn_sr(socket)?, Ok(SocketStatus::Udp));
+        debug_assert_eq!(self.sn_sr(sn)?, Ok(SocketStatus::Udp));
 
-        let mut ptr: u16 = self.sn_rx_rd(socket)?;
+        let mut ptr: u16 = self.sn_rx_rd(sn)?;
         let mut header: [u8; UDP_HEADER_LEN_USIZE] = [0; UDP_HEADER_LEN_USIZE];
-        self.sn_rx_buf(socket, ptr, &mut header)?;
+        self.sn_rx_buf(sn, ptr, &mut header)?;
         ptr = ptr.wrapping_add(UDP_HEADER_LEN);
         rsr -= UDP_HEADER_LEN;
         let (pkt_size, origin) = deser_hdr(header);
@@ -392,7 +391,7 @@ pub trait Udp: Registers {
 
         let read_size: usize = min(usize::from(pkt_size), buf.len());
         if read_size != 0 {
-            self.sn_rx_buf(socket, ptr, &mut buf[..read_size])?;
+            self.sn_rx_buf(sn, ptr, &mut buf[..read_size])?;
         }
 
         Ok((read_size, origin))
@@ -415,37 +414,34 @@ pub trait Udp: Registers {
     /// # let mut w5500 = w5500_ll::blocking::vdm::W5500::new(h::spi::Mock::new(&[]), h::pin::Mock::new(&[]));
     /// use nb::block;
     /// use w5500_hl::{
-    ///     ll::{Registers, Socket::Socket0},
+    ///     ll::{Registers, Sn::Sn0},
     ///     Udp,
     /// };
     /// // global_allocator is currently avaliable on nightly for embedded rust
     /// extern crate alloc;
     /// use alloc::vec::{self, Vec};
     ///
-    /// w5500.udp_bind(Socket0, 8080)?;
-    /// let (bytes_to_allocate, _) = block!(w5500.udp_peek_from_header(Socket0))?;
+    /// w5500.udp_bind(Sn0, 8080)?;
+    /// let (bytes_to_allocate, _) = block!(w5500.udp_peek_from_header(Sn0))?;
     ///
     /// let mut buf: Vec<u8> = vec![0; bytes_to_allocate];
-    /// let (number_of_bytes, source) = block!(w5500.udp_recv_from(Socket0, &mut buf))?;
+    /// let (number_of_bytes, source) = block!(w5500.udp_recv_from(Sn0, &mut buf))?;
     /// debug_assert_eq!(bytes_to_allocate, number_of_bytes);
     /// # Ok::<(), w5500_hl::ll::blocking::vdm::Error<_, _>>(())
     /// ```
-    fn udp_peek_from_header(
-        &mut self,
-        socket: Socket,
-    ) -> nb::Result<(usize, SocketAddrV4), Self::Error> {
-        let rsr: u16 = self.sn_rx_rsr(socket)?;
+    fn udp_peek_from_header(&mut self, sn: Sn) -> nb::Result<(usize, SocketAddrV4), Self::Error> {
+        let rsr: u16 = self.sn_rx_rsr(sn)?;
 
         // nothing to recieve
         if rsr < UDP_HEADER_LEN {
             return Err(nb::Error::WouldBlock);
         }
 
-        debug_assert_eq!(self.sn_sr(socket)?, Ok(SocketStatus::Udp));
+        debug_assert_eq!(self.sn_sr(sn)?, Ok(SocketStatus::Udp));
 
-        let ptr: u16 = self.sn_rx_rd(socket)?;
+        let ptr: u16 = self.sn_rx_rd(sn)?;
         let mut header: [u8; UDP_HEADER_LEN_USIZE] = [0; UDP_HEADER_LEN_USIZE];
-        self.sn_rx_buf(socket, ptr, &mut header)?;
+        self.sn_rx_buf(sn, ptr, &mut header)?;
         let (pkt_size, origin) = deser_hdr(header);
         Ok((usize::from(pkt_size), origin))
     }
@@ -468,16 +464,16 @@ pub trait Udp: Registers {
     /// # use embedded_hal_mock as h;
     /// # let mut w5500 = w5500_ll::blocking::vdm::W5500::new(h::spi::Mock::new(&[]), h::pin::Mock::new(&[]));
     /// use w5500_hl::{
-    ///     ll::{Registers, Socket::Socket0},
+    ///     ll::{Registers, Sn::Sn0},
     ///     net::{Ipv4Addr, SocketAddrV4},
     ///     Udp,
     /// };
     ///
     /// const DEST: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::new(192, 0, 2, 1), 8081);
     ///
-    /// w5500.udp_bind(Socket0, 8080)?;
+    /// w5500.udp_bind(Sn0, 8080)?;
     /// let buf: [u8; 10] = [0; 10];
-    /// let tx_bytes = w5500.udp_send_to(Socket0, &buf, &DEST)?;
+    /// let tx_bytes = w5500.udp_send_to(Sn0, &buf, &DEST)?;
     /// assert_eq!(tx_bytes, buf.len());
     /// # Ok::<(), w5500_hl::ll::blocking::vdm::Error<_, _>>(())
     /// ```
@@ -485,12 +481,12 @@ pub trait Udp: Registers {
     /// [`std::net::UdpSocket::send_to`]: https://doc.rust-lang.org/std/net/struct.UdpSocket.html#method.send_to
     fn udp_send_to(
         &mut self,
-        socket: Socket,
+        sn: Sn,
         buf: &[u8],
         addr: &SocketAddrV4,
     ) -> Result<usize, Self::Error> {
-        self.set_sn_dest(socket, addr)?;
-        self.udp_send(socket, buf)
+        self.set_sn_dest(sn, addr)?;
+        self.udp_send(sn, buf)
     }
 
     /// Sends data to the currently configured destination.
@@ -508,36 +504,36 @@ pub trait Udp: Registers {
     /// # use embedded_hal_mock as h;
     /// # let mut w5500 = w5500_ll::blocking::vdm::W5500::new(h::spi::Mock::new(&[]), h::pin::Mock::new(&[]));
     /// use w5500_hl::{
-    ///     ll::{Registers, Socket::Socket0},
+    ///     ll::{Registers, Sn::Sn0},
     ///     net::{Ipv4Addr, SocketAddrV4},
     ///     Udp,
     /// };
     ///
     /// const DEST: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::new(192, 0, 2, 1), 8081);
     ///
-    /// w5500.udp_bind(Socket0, 8080)?;
+    /// w5500.udp_bind(Sn0, 8080)?;
     /// let buf: [u8; 10] = [0; 10];
-    /// let tx_bytes = w5500.udp_send_to(Socket0, &buf, &DEST)?;
+    /// let tx_bytes = w5500.udp_send_to(Sn0, &buf, &DEST)?;
     /// assert_eq!(tx_bytes, buf.len());
     /// // send the same to the same destination
-    /// let tx_bytes = w5500.udp_send(Socket0, &buf)?;
+    /// let tx_bytes = w5500.udp_send(Sn0, &buf)?;
     /// assert_eq!(tx_bytes, buf.len());
     /// # Ok::<(), w5500_hl::ll::blocking::vdm::Error<_, _>>(())
     /// ```
     ///
     /// [`set_sn_dest`]: w5500_ll::Registers::set_sn_dest
     /// [`send_to`]: Udp::udp_send_to
-    fn udp_send(&mut self, socket: Socket, buf: &[u8]) -> Result<usize, Self::Error> {
-        debug_assert_eq!(self.sn_sr(socket)?, Ok(SocketStatus::Udp));
+    fn udp_send(&mut self, sn: Sn, buf: &[u8]) -> Result<usize, Self::Error> {
+        debug_assert_eq!(self.sn_sr(sn)?, Ok(SocketStatus::Udp));
 
         let data_len: u16 = u16::try_from(buf.len()).unwrap_or(u16::MAX);
-        let free_size: u16 = self.sn_tx_fsr(socket)?;
+        let free_size: u16 = self.sn_tx_fsr(sn)?;
         let tx_bytes: u16 = min(data_len, free_size);
         if tx_bytes != 0 {
-            let ptr: u16 = self.sn_tx_wr(socket)?;
-            self.set_sn_tx_buf(socket, ptr, &buf[..usize::from(tx_bytes)])?;
-            self.set_sn_tx_wr(socket, ptr.wrapping_add(tx_bytes))?;
-            self.set_sn_cr(socket, SocketCommand::Send)?;
+            let ptr: u16 = self.sn_tx_wr(sn)?;
+            self.set_sn_tx_buf(sn, ptr, &buf[..usize::from(tx_bytes)])?;
+            self.set_sn_tx_wr(sn, ptr.wrapping_add(tx_bytes))?;
+            self.set_sn_cr(sn, SocketCommand::Send)?;
         }
         Ok(usize::from(tx_bytes))
     }
@@ -583,12 +579,12 @@ pub trait Tcp: Registers {
     /// # use embedded_hal_mock as h;
     /// # let mut w5500 = w5500_ll::blocking::vdm::W5500::new(h::spi::Mock::new(&[]), h::pin::Mock::new(&[]));
     /// use w5500_hl::{
-    ///     ll::{Registers, Socket, SocketInterrupt},
+    ///     ll::{Registers, Sn, SocketInterrupt},
     ///     net::{Ipv4Addr, SocketAddrV4},
     ///     Tcp,
     /// };
     ///
-    /// const MQTT_SOCKET: Socket = Socket::Socket0;
+    /// const MQTT_SOCKET: Sn = Sn::Sn0;
     /// const MQTT_SOURCE_PORT: u16 = 33650;
     /// const MQTT_SERVER: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::new(192, 168, 2, 10), 1883);
     ///
@@ -615,42 +611,36 @@ pub trait Tcp: Registers {
     /// [`tcp_read`]: Tcp::tcp_read
     /// [`tcp_connect`]: Tcp::tcp_connect
     /// [`con`]: w5500_ll::SocketInterrupt::con_raised
-    fn tcp_connect(
-        &mut self,
-        socket: Socket,
-        port: u16,
-        addr: &SocketAddrV4,
-    ) -> Result<(), Self::Error> {
+    fn tcp_connect(&mut self, sn: Sn, port: u16, addr: &SocketAddrV4) -> Result<(), Self::Error> {
         debug_assert!(
-            port_is_unique(self, socket, port)?,
+            port_is_unique(self, sn, port)?,
             "Local port {} is in use",
             port
         );
 
-        self.set_sn_cr(socket, SocketCommand::Close)?;
+        self.set_sn_cr(sn, SocketCommand::Close)?;
         // This will not hang, the socket status will always change to closed
         // after a close command.
         // (unless you do somthing silly like holding the W5500 in reset)
         loop {
-            if self.sn_sr(socket)? == Ok(SocketStatus::Closed) {
+            if self.sn_sr(sn)? == Ok(SocketStatus::Closed) {
                 break;
             }
         }
-        let mut mode = SocketMode::default();
-        mode.set_protocol(Protocol::Tcp);
-        self.set_sn_mr(socket, mode)?;
-        self.set_sn_port(socket, port)?;
-        self.set_sn_cr(socket, SocketCommand::Open)?;
-        self.set_sn_dest(socket, addr)?;
+        const MODE: SocketMode = SocketMode::DEFAULT.set_protocol(Protocol::Tcp);
+        self.set_sn_mr(sn, MODE)?;
+        self.set_sn_port(sn, port)?;
+        self.set_sn_cr(sn, SocketCommand::Open)?;
+        self.set_sn_dest(sn, addr)?;
         // This will not hang, the socket status will always change to Init
         // after a open command with SN_MR set to TCP.
         // (unless you do somthing silly like holding the W5500 in reset)
         loop {
-            if self.sn_sr(socket)? == Ok(SocketStatus::Init) {
+            if self.sn_sr(sn)? == Ok(SocketStatus::Init) {
                 break;
             }
         }
-        self.set_sn_cr(socket, SocketCommand::Connect)
+        self.set_sn_cr(sn, SocketCommand::Connect)
     }
 
     /// Open a TCP listener on the given port.
@@ -676,7 +666,7 @@ pub trait Tcp: Registers {
     /// # use embedded_hal_mock as h;
     /// # let mut w5500 = w5500_ll::blocking::vdm::W5500::new(h::spi::Mock::new(&[]), h::pin::Mock::new(&[]));
     /// use w5500_hl::{
-    ///     ll::{Registers, Socket, SocketInterrupt},
+    ///     ll::{Registers, Sn, SocketInterrupt},
     ///     net::{Ipv4Addr, SocketAddrV4},
     ///     Tcp,
     /// };
@@ -684,7 +674,7 @@ pub trait Tcp: Registers {
     /// extern crate alloc;
     /// use alloc::vec::{self, Vec};
     ///
-    /// const HTTP_SOCKET: Socket = Socket::Socket1;
+    /// const HTTP_SOCKET: Sn = Sn::Sn1;
     /// const HTTP_PORT: u16 = 80;
     ///
     /// // start serving
@@ -716,36 +706,35 @@ pub trait Tcp: Registers {
     /// [`tcp_read`]: Tcp::tcp_read
     /// [`tcp_listen`]: Tcp::tcp_listen
     /// [`con`]: w5500_ll::SocketInterrupt::con_raised
-    fn tcp_listen(&mut self, socket: Socket, port: u16) -> Result<(), Self::Error> {
+    fn tcp_listen(&mut self, sn: Sn, port: u16) -> Result<(), Self::Error> {
         debug_assert!(
-            port_is_unique(self, socket, port)?,
+            port_is_unique(self, sn, port)?,
             "Local port {} is in use",
             port
         );
 
-        self.set_sn_cr(socket, SocketCommand::Close)?;
+        self.set_sn_cr(sn, SocketCommand::Close)?;
         // This will not hang, the socket status will always change to closed
         // after a close command.
         // (unless you do somthing silly like holding the W5500 in reset)
         loop {
-            if self.sn_sr(socket)? == Ok(SocketStatus::Closed) {
+            if self.sn_sr(sn)? == Ok(SocketStatus::Closed) {
                 break;
             }
         }
-        let mut mode = SocketMode::default();
-        mode.set_protocol(Protocol::Tcp);
-        self.set_sn_mr(socket, mode)?;
-        self.set_sn_port(socket, port)?;
-        self.set_sn_cr(socket, SocketCommand::Open)?;
+        const MODE: SocketMode = SocketMode::DEFAULT.set_protocol(Protocol::Tcp);
+        self.set_sn_mr(sn, MODE)?;
+        self.set_sn_port(sn, port)?;
+        self.set_sn_cr(sn, SocketCommand::Open)?;
         // This will not hang, the socket status will always change to Init
         // after a open command with SN_MR set to TCP.
         // (unless you do somthing silly like holding the W5500 in reset)
         loop {
-            if self.sn_sr(socket)? == Ok(SocketStatus::Init) {
+            if self.sn_sr(sn)? == Ok(SocketStatus::Init) {
                 break;
             }
         }
-        self.set_sn_cr(socket, SocketCommand::Listen)
+        self.set_sn_cr(sn, SocketCommand::Listen)
     }
 
     /// Read data from the remote host, returning the number of bytes read.
@@ -764,12 +753,12 @@ pub trait Tcp: Registers {
     /// # use embedded_hal_mock as h;
     /// # let mut w5500 = w5500_ll::blocking::vdm::W5500::new(h::spi::Mock::new(&[]), h::pin::Mock::new(&[]));
     /// use w5500_hl::{
-    ///     ll::{Registers, Socket, SocketInterrupt},
+    ///     ll::{Registers, Sn, SocketInterrupt},
     ///     net::{Ipv4Addr, SocketAddrV4},
     ///     Tcp,
     /// };
     ///
-    /// const MQTT_SOCKET: Socket = Socket::Socket0;
+    /// const MQTT_SOCKET: Sn = Sn::Sn0;
     /// const MQTT_SOURCE_PORT: u16 = 33650;
     /// const MQTT_SERVER: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::new(192, 168, 2, 10), 1883);
     ///
@@ -793,21 +782,21 @@ pub trait Tcp: Registers {
     ///
     /// [`Established`]: w5500_ll::SocketStatus::Established
     /// [`recv`]: w5500_ll::SocketInterrupt::recv_raised
-    fn tcp_read(&mut self, socket: Socket, buf: &mut [u8]) -> Result<usize, Self::Error> {
+    fn tcp_read(&mut self, sn: Sn, buf: &mut [u8]) -> Result<usize, Self::Error> {
         debug_assert!(!matches!(
-            self.sn_sr(socket)?,
+            self.sn_sr(sn)?,
             Ok(SocketStatus::Udp) | Ok(SocketStatus::Init) | Ok(SocketStatus::Macraw)
         ));
 
         let rx_bytes: u16 = {
-            let rsr: u16 = self.sn_rx_rsr(socket)?;
+            let rsr: u16 = self.sn_rx_rsr(sn)?;
             min(rsr, u16::try_from(buf.len()).unwrap_or(u16::MAX))
         };
         if rx_bytes != 0 {
-            let ptr: u16 = self.sn_rx_rd(socket)?;
-            self.sn_rx_buf(socket, ptr, &mut buf[..usize::from(rx_bytes)])?;
-            self.set_sn_rx_rd(socket, ptr.wrapping_add(rx_bytes))?;
-            self.set_sn_cr(socket, SocketCommand::Recv)?;
+            let ptr: u16 = self.sn_rx_rd(sn)?;
+            self.sn_rx_buf(sn, ptr, &mut buf[..usize::from(rx_bytes)])?;
+            self.set_sn_rx_rd(sn, ptr.wrapping_add(rx_bytes))?;
+            self.set_sn_cr(sn, SocketCommand::Recv)?;
         }
         Ok(usize::from(rx_bytes))
     }
@@ -826,12 +815,12 @@ pub trait Tcp: Registers {
     /// # use embedded_hal_mock as h;
     /// # let mut w5500 = w5500_ll::blocking::vdm::W5500::new(h::spi::Mock::new(&[]), h::pin::Mock::new(&[]));
     /// use w5500_hl::{
-    ///     ll::{Registers, Socket, SocketInterrupt},
+    ///     ll::{Registers, Sn, SocketInterrupt},
     ///     net::{Ipv4Addr, SocketAddrV4},
     ///     Tcp,
     /// };
     ///
-    /// const MQTT_SOCKET: Socket = Socket::Socket0;
+    /// const MQTT_SOCKET: Sn = Sn::Sn0;
     /// const MQTT_SOURCE_PORT: u16 = 33650;
     /// const MQTT_SERVER: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::new(192, 168, 2, 10), 1883);
     ///
@@ -848,22 +837,22 @@ pub trait Tcp: Registers {
     /// ```
     ///
     /// [`Established`]: w5500_ll::SocketStatus::Established
-    fn tcp_write(&mut self, socket: Socket, buf: &[u8]) -> Result<usize, Self::Error> {
+    fn tcp_write(&mut self, sn: Sn, buf: &[u8]) -> Result<usize, Self::Error> {
         debug_assert!(!matches!(
-            self.sn_sr(socket)?,
+            self.sn_sr(sn)?,
             Ok(SocketStatus::Udp) | Ok(SocketStatus::Init) | Ok(SocketStatus::Macraw)
         ));
 
         let tx_bytes: u16 = {
             let data_len: u16 = u16::try_from(buf.len()).unwrap_or(u16::MAX);
-            let free_size: u16 = self.sn_tx_fsr(socket)?;
+            let free_size: u16 = self.sn_tx_fsr(sn)?;
             min(data_len, free_size)
         };
         if tx_bytes != 0 {
-            let ptr: u16 = self.sn_tx_wr(socket)?;
-            self.set_sn_tx_buf(socket, ptr, &buf[..usize::from(tx_bytes)])?;
-            self.set_sn_tx_wr(socket, ptr.wrapping_add(tx_bytes))?;
-            self.set_sn_cr(socket, SocketCommand::Send)?;
+            let ptr: u16 = self.sn_tx_wr(sn)?;
+            self.set_sn_tx_buf(sn, ptr, &buf[..usize::from(tx_bytes)])?;
+            self.set_sn_tx_wr(sn, ptr.wrapping_add(tx_bytes))?;
+            self.set_sn_cr(sn, SocketCommand::Send)?;
         }
         Ok(usize::from(tx_bytes))
     }
@@ -887,12 +876,12 @@ pub trait Tcp: Registers {
     /// # use embedded_hal_mock as h;
     /// # let mut w5500 = w5500_ll::blocking::vdm::W5500::new(h::spi::Mock::new(&[]), h::pin::Mock::new(&[]));
     /// use w5500_hl::{
-    ///     ll::{Registers, Socket, SocketInterrupt},
+    ///     ll::{Registers, Sn, SocketInterrupt},
     ///     net::{Ipv4Addr, SocketAddrV4},
     ///     Tcp,
     /// };
     ///
-    /// const MQTT_SOCKET: Socket = Socket::Socket0;
+    /// const MQTT_SOCKET: Sn = Sn::Sn0;
     /// const MQTT_SOURCE_PORT: u16 = 33650;
     /// const MQTT_SERVER: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::new(192, 168, 2, 10), 1883);
     ///
@@ -907,12 +896,12 @@ pub trait Tcp: Registers {
     /// [`Closed`]: w5500_ll::SocketStatus::Closed
     /// [`Established`]: w5500_ll::SocketStatus::Established
     /// [timeout interrupt]: w5500_ll::SocketInterrupt::timeout_raised
-    fn tcp_disconnect(&mut self, socket: Socket) -> Result<(), Self::Error> {
+    fn tcp_disconnect(&mut self, sn: Sn) -> Result<(), Self::Error> {
         debug_assert!(!matches!(
-            self.sn_sr(socket)?,
+            self.sn_sr(sn)?,
             Ok(SocketStatus::Udp) | Ok(SocketStatus::Init) | Ok(SocketStatus::Macraw)
         ));
-        self.set_sn_cr(socket, SocketCommand::Disconnect)
+        self.set_sn_cr(sn, SocketCommand::Disconnect)
     }
 }
 
@@ -928,16 +917,16 @@ pub trait Common: Registers {
     /// ```no_run
     /// # use embedded_hal_mock as h;
     /// # let mut w5500 = w5500_ll::blocking::vdm::W5500::new(h::spi::Mock::new(&[]), h::pin::Mock::new(&[]));
-    /// use w5500_hl::ll::{Registers, Socket::Socket0};
+    /// use w5500_hl::ll::{Registers, Sn::Sn0};
     /// use w5500_hl::{Common, Udp};
     ///
-    /// w5500.udp_bind(Socket0, 8080)?;
-    /// let local_addr = w5500.local_addr(Socket0)?;
+    /// w5500.udp_bind(Sn0, 8080)?;
+    /// let local_addr = w5500.local_addr(Sn0)?;
     /// # Ok::<(), w5500_hl::ll::blocking::vdm::Error<_, _>>(())
     /// ```
-    fn local_addr(&mut self, socket: Socket) -> Result<SocketAddrV4, Self::Error> {
+    fn local_addr(&mut self, sn: Sn) -> Result<SocketAddrV4, Self::Error> {
         let ip: Ipv4Addr = self.sipr()?;
-        let port: u16 = self.sn_port(socket)?;
+        let port: u16 = self.sn_port(sn)?;
         Ok(SocketAddrV4::new(ip, port))
     }
 
@@ -951,14 +940,14 @@ pub trait Common: Registers {
     /// ```no_run
     /// # use embedded_hal_mock as h;
     /// # let mut w5500 = w5500_ll::blocking::vdm::W5500::new(h::spi::Mock::new(&[]), h::pin::Mock::new(&[]));
-    /// use w5500_hl::ll::{Registers, Socket::Socket0};
+    /// use w5500_hl::ll::{Registers, Sn::Sn0};
     /// use w5500_hl::Common;
     ///
-    /// w5500.close(Socket0)?;
+    /// w5500.close(Sn0)?;
     /// # Ok::<(), w5500_hl::ll::blocking::vdm::Error<_, _>>(())
     /// ```
-    fn close(&mut self, socket: Socket) -> Result<(), Self::Error> {
-        self.set_sn_cr(socket, SocketCommand::Close)
+    fn close(&mut self, sn: Sn) -> Result<(), Self::Error> {
+        self.set_sn_cr(sn, SocketCommand::Close)
     }
 
     /// Returns `true` if the socket state is [Closed].
@@ -971,20 +960,20 @@ pub trait Common: Registers {
     /// ```no_run
     /// # use embedded_hal_mock as h;
     /// # let mut w5500 = w5500_ll::blocking::vdm::W5500::new(h::spi::Mock::new(&[]), h::pin::Mock::new(&[]));
-    /// use w5500_hl::ll::{Registers, Socket::Socket0};
+    /// use w5500_hl::ll::{Registers, Sn::Sn0};
     /// use w5500_hl::{Common, Udp};
     ///
-    /// w5500.close(Socket0)?;
-    /// assert!(w5500.is_state_closed(Socket0)?);
-    /// w5500.udp_bind(Socket0, 8080)?;
-    /// assert!(!w5500.is_state_closed(Socket0)?);
+    /// w5500.close(Sn0)?;
+    /// assert!(w5500.is_state_closed(Sn0)?);
+    /// w5500.udp_bind(Sn0, 8080)?;
+    /// assert!(!w5500.is_state_closed(Sn0)?);
     /// # Ok::<(), w5500_hl::ll::blocking::vdm::Error<_, _>>(())
     /// ```
     ///
     /// [Closed]: w5500_ll::SocketStatus::Closed
     /// [Closing]: w5500_ll::SocketStatus::Closing
-    fn is_state_closed(&mut self, socket: Socket) -> Result<bool, Self::Error> {
-        Ok(self.sn_sr(socket)? == Ok(SocketStatus::Closed))
+    fn is_state_closed(&mut self, sn: Sn) -> Result<bool, Self::Error> {
+        Ok(self.sn_sr(sn)? == Ok(SocketStatus::Closed))
     }
 
     /// Returns `true` if the socket state is any valid TCP state as described
@@ -1010,13 +999,13 @@ pub trait Common: Registers {
     /// ```no_run
     /// # use embedded_hal_mock as h;
     /// # let mut w5500 = w5500_ll::blocking::vdm::W5500::new(h::spi::Mock::new(&[]), h::pin::Mock::new(&[]));
-    /// use w5500_hl::ll::{Registers, Socket::Socket0};
+    /// use w5500_hl::ll::{Registers, Sn::Sn0};
     /// use w5500_hl::{Common, Udp};
     ///
-    /// w5500.close(Socket0)?;
-    /// assert!(w5500.is_state_tcp(Socket0)?);
-    /// w5500.udp_bind(Socket0, 8080)?;
-    /// assert!(!w5500.is_state_tcp(Socket0)?);
+    /// w5500.close(Sn0)?;
+    /// assert!(w5500.is_state_tcp(Sn0)?);
+    /// w5500.udp_bind(Sn0, 8080)?;
+    /// assert!(!w5500.is_state_tcp(Sn0)?);
     /// # Ok::<(), w5500_hl::ll::blocking::vdm::Error<_, _>>(())
     /// ```
     ///
@@ -1032,12 +1021,12 @@ pub trait Common: Registers {
     /// [CloseWait]: w5500_ll::SocketStatus::CloseWait
     /// [TimeWait]: w5500_ll::SocketStatus::TimeWait
     /// [LastAck]: w5500_ll::SocketStatus::LastAck
-    fn is_state_tcp(&mut self, socket: Socket) -> Result<bool, Self::Error> {
+    fn is_state_tcp(&mut self, sn: Sn) -> Result<bool, Self::Error> {
         // Hopefully the compiler will optimize this to check that the state is
         // not MACRAW, UDP, or INIT.
         // Leaving it as-is since the code is more readable this way.
         Ok(matches!(
-            self.sn_sr(socket)?,
+            self.sn_sr(sn)?,
             Ok(SocketStatus::Closed)
                 | Ok(SocketStatus::Listen)
                 | Ok(SocketStatus::SynSent)
@@ -1058,19 +1047,19 @@ pub trait Common: Registers {
     /// ```no_run
     /// # use embedded_hal_mock as h;
     /// # let mut w5500 = w5500_ll::blocking::vdm::W5500::new(h::spi::Mock::new(&[]), h::pin::Mock::new(&[]));
-    /// use w5500_hl::ll::{Registers, Socket::Socket0};
+    /// use w5500_hl::ll::{Registers, Sn::Sn0};
     /// use w5500_hl::{Common, Udp};
     ///
-    /// w5500.close(Socket0)?;
-    /// assert!(!w5500.is_state_udp(Socket0)?);
-    /// w5500.udp_bind(Socket0, 8080)?;
-    /// assert!(w5500.is_state_udp(Socket0)?);
+    /// w5500.close(Sn0)?;
+    /// assert!(!w5500.is_state_udp(Sn0)?);
+    /// w5500.udp_bind(Sn0, 8080)?;
+    /// assert!(w5500.is_state_udp(Sn0)?);
     /// # Ok::<(), w5500_hl::ll::blocking::vdm::Error<_, _>>(())
     /// ```
     ///
     /// [Udp]: w5500_ll::SocketStatus::Udp
-    fn is_state_udp(&mut self, socket: Socket) -> Result<bool, Self::Error> {
-        Ok(self.sn_sr(socket)? == Ok(SocketStatus::Udp))
+    fn is_state_udp(&mut self, sn: Sn) -> Result<bool, Self::Error> {
+        Ok(self.sn_sr(sn)? == Ok(SocketStatus::Udp))
     }
 }
 
@@ -1099,11 +1088,11 @@ mod tests {
             unimplemented!()
         }
 
-        fn sn_port(&mut self, socket: Socket) -> Result<u16, Self::Error> {
+        fn sn_port(&mut self, socket: Sn) -> Result<u16, Self::Error> {
             Ok(self.socket_ports[usize::from(socket)])
         }
 
-        fn sn_sr(&mut self, socket: Socket) -> Result<Result<SocketStatus, u8>, Self::Error> {
+        fn sn_sr(&mut self, socket: Sn) -> Result<Result<SocketStatus, u8>, Self::Error> {
             Ok(Ok(self.socket_status[usize::from(socket)]))
         }
     }
@@ -1115,18 +1104,18 @@ mod tests {
             socket_status: [SocketStatus::Closed; SOCKETS.len()],
         };
         // basics
-        assert!(port_is_unique(&mut mock, Socket::Socket0, 0).unwrap());
-        assert!(port_is_unique(&mut mock, Socket::Socket0, 1).unwrap());
-        assert!(port_is_unique(&mut mock, Socket::Socket0, u16::MAX).unwrap());
+        assert!(port_is_unique(&mut mock, Sn::Sn0, 0).unwrap());
+        assert!(port_is_unique(&mut mock, Sn::Sn0, 1).unwrap());
+        assert!(port_is_unique(&mut mock, Sn::Sn0, u16::MAX).unwrap());
 
         // do not check our own socket
         mock.socket_status[0] = SocketStatus::Init;
-        assert!(port_is_unique(&mut mock, Socket::Socket0, 0).unwrap());
+        assert!(port_is_unique(&mut mock, Sn::Sn0, 0).unwrap());
 
         // other socket on other port
-        assert!(port_is_unique(&mut mock, Socket::Socket0, 1).unwrap());
+        assert!(port_is_unique(&mut mock, Sn::Sn0, 1).unwrap());
 
         // other socket on same port
-        assert!(!port_is_unique(&mut mock, Socket::Socket1, 0).unwrap());
+        assert!(!port_is_unique(&mut mock, Sn::Sn1, 0).unwrap());
     }
 }
