@@ -1149,6 +1149,12 @@ impl SocketInterrupt {
     /// Bit mask for the `SENDOK` field.
     pub const SENDOK_MASK: u8 = 1 << Self::SENDOK_OFFSET;
 
+    const ALL_MASK: u8 = Self::CON_MASK
+        | Self::DISCON_MASK
+        | Self::RECV_MASK
+        | Self::TIMEOUT_MASK
+        | Self::SENDOK_MASK;
+
     /// Get the value of the `CON` interrupt.
     ///
     /// This is issued once when the connection with the peer is successful.
@@ -1269,6 +1275,19 @@ impl SocketInterrupt {
     pub const fn clear_sendok(mut self) -> Self {
         self.0 |= Self::SENDOK_MASK;
         self
+    }
+
+    /// Returns `true` if any interrupt is raised.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use w5500_ll::SocketInterrupt;
+    ///
+    /// assert!(!SocketInterrupt::DEFAULT.any_raised());
+    /// ```
+    pub const fn any_raised(&self) -> bool {
+        self.0 & Self::ALL_MASK != 0
     }
 }
 

@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `Protocol::from_raw` to convert from a raw value in `const` contexts.
 - Added `OperationMode::from_raw` to convert from a raw value in `const` contexts.
 - Added `TryFrom<u8> for SocketCommand`.
+- Added `SocketInterrupt.any_raised`.
 
 ### Changed
 - Changed all field setters for registers to methods that return a modified structure.
