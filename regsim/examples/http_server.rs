@@ -10,11 +10,11 @@
 use std::{thread::sleep, time::Duration};
 
 use w5500_hl::{Common, Tcp};
-use w5500_ll::{Registers, Socket, VERSION};
+use w5500_ll::{Registers, Sn, VERSION};
 use w5500_regsim::W5500;
 
 // Socket to use for HTTP, this could be any of them
-const HTTP_SOCKET: Socket = Socket::Socket5;
+const HTTP_SOCKET: Sn = Sn::Sn5;
 // Port to server HTTP on
 const HTTP_PORT: u16 = 80;
 
@@ -26,8 +26,8 @@ const RESPONSE400: &[u8] =
 
 // This is a "large" buffer because HTTP is a large protocol.
 // Global mutable buffers are unsafe, but you probably do not want to put a
-// 256B buffer on the stack for an embedded system.
-static mut BUF: [u8; 256] = [0; 256];
+// 2048B buffer on the stack for an embedded system.
+static mut BUF: [u8; 2048] = [0; 2048];
 
 fn main() {
     // this enables the logging built into the register simulator
@@ -37,7 +37,7 @@ fn main() {
         .init()
         .unwrap();
 
-    let mut w5500: W5500 = W5500::new();
+    let mut w5500: W5500 = W5500::default();
     assert_eq!(w5500.version().unwrap(), VERSION); // sanity check
 
     // in a real embedded system there is a lot more boilerplate such as:

@@ -16,8 +16,6 @@ code, not all features of the W5500 will be fully simulated.
 ## Notes
 
 This is in an early alpha state, there are many todos throughout the code.
-Bug reports will not be accepted until this reaches `0.1.0`.
-Pull requests are always welcome.
 
 ### Not-implemented
 
@@ -73,12 +71,6 @@ Pull requests are always welcome.
 * SN_KPALVTR (Socket n Keep Alive Timer Register)
 
 Believe it or not that is not simply a list of all registers.
-
-### Assumptions
-
-* Your PC is connected to a network, and has a valid IPv4 address.
-* You are not using the `read` and `write` methods directly.
-
 
 [Wiznet W5500]: https://www.wiznet.io/product-item/w5500/
 [`std::net`]: https://doc.rust-lang.org/std/net/index.html

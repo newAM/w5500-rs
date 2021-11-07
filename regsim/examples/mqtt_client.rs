@@ -13,12 +13,12 @@ use std::{thread::sleep, time::Duration};
 use w5500_hl::Tcp;
 use w5500_ll::{
     net::{Ipv4Addr, SocketAddrV4},
-    Registers, Socket, SocketInterrupt, VERSION,
+    Registers, Sn, SocketInterrupt, VERSION,
 };
 use w5500_regsim::W5500;
 
 // socket to use for the MQTT client, any socket will work
-const MQTT_SOCKET: Socket = Socket::Socket0;
+const MQTT_SOCKET: Sn = Sn::Sn0;
 // this is unused in the register simulation
 const MQTT_SOURCE_PORT: u16 = 33650;
 // hard-coded MQTT CONNECT packet
@@ -78,7 +78,7 @@ fn main() {
 
     let mqtt_server = mqtt_server_addr();
 
-    let mut w5500: W5500 = W5500::new();
+    let mut w5500: W5500 = W5500::default();
     // sanity check
     assert_eq!(w5500.version().unwrap(), VERSION);
 

@@ -19,12 +19,12 @@ lazy_static = "1"
 log = "0.4"
 
 [dependencies.w5500-ll]
-version = "~0.8.0"
+version = "0.9"
 features = ["std"]
 
 [dev-dependencies]
 trust-dns-client = "0.20"
-w5500-hl = "0.5"
+w5500-hl = "0.6"
 version-sync = "0.9"
 nb = "1"
 stderrlog = "0.5"

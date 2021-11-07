@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Changed
 - Changed edition from 2018 to 2021.
+- Reworked internal structure to remove limitations on calling `read`/`write` methods directly.
+- Updated `w5500-ll` dependency from `0.7.0` to `0.8.0`.
+
+### Removed
+- Removed `W5500::new`, use `W5500::default` as a direct replacement.
 
 ## [0.1.0-alpha.4] - 2021-03-02
 ### Added

@@ -15,12 +15,12 @@ use std::{
 use w5500_hl::Udp;
 use w5500_ll::{
     net::{Ipv4Addr, SocketAddrV4},
-    Registers, Socket, VERSION,
+    Registers, Sn, VERSION,
 };
 use w5500_regsim::W5500;
 
 // DNS socket to use, this could be any of them
-const DNS_SOCKET: Socket = Socket::Socket3;
+const DNS_SOCKET: Sn = Sn::Sn3;
 
 // this is ignored by the register simulation
 const DNS_SOURCE_PORT: u16 = 1234;
@@ -65,7 +65,7 @@ fn main() {
         .init()
         .unwrap();
 
-    let mut w5500: W5500 = W5500::new();
+    let mut w5500: W5500 = W5500::default();
     assert_eq!(w5500.version().unwrap(), VERSION); // sanity check
 
     // in a real embedded system there is a lot more boilerplate such as:
