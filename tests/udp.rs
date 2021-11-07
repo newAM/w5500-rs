@@ -1,7 +1,7 @@
 use std::convert::Infallible;
 use w5500_hl::net::{Ipv4Addr, SocketAddrV4};
 use w5500_hl::Udp;
-use w5500_ll::{Protocol, Registers, Socket, SocketCommand, SocketMode, SocketStatus};
+use w5500_ll::{Protocol, Registers, Sn, SocketCommand, SocketMode, SocketStatus};
 
 /// Tests debug asserts that ensure the socket is opened as UDP.
 mod socket_status_debug_assert {
@@ -12,11 +12,11 @@ mod socket_status_debug_assert {
     impl Registers for MockRegisters {
         type Error = Infallible;
 
-        fn sn_rx_rsr(&mut self, _socket: Socket) -> Result<u16, Self::Error> {
+        fn sn_rx_rsr(&mut self, _socket: Sn) -> Result<u16, Self::Error> {
             Ok(1024)
         }
 
-        fn sn_sr(&mut self, _socket: Socket) -> Result<Result<SocketStatus, u8>, Self::Error> {
+        fn sn_sr(&mut self, _socket: Sn) -> Result<Result<SocketStatus, u8>, Self::Error> {
             Ok(SocketStatus::try_from(u8::from(SocketStatus::Closed)))
         }
 
@@ -34,7 +34,7 @@ mod socket_status_debug_assert {
     fn udp_recv_from() {
         let mut test = MockRegisters {};
         let mut buf: [u8; 1] = [0];
-        test.udp_recv_from(Socket::Socket0, &mut buf).ok();
+        test.udp_recv_from(Sn::Sn0, &mut buf).ok();
     }
 
     #[test]
@@ -42,14 +42,14 @@ mod socket_status_debug_assert {
     fn udp_peek_from() {
         let mut test = MockRegisters {};
         let mut buf: [u8; 1] = [0];
-        test.udp_peek_from(Socket::Socket0, &mut buf).ok();
+        test.udp_peek_from(Sn::Sn0, &mut buf).ok();
     }
 
     #[test]
     #[should_panic]
     fn udp_peek_from_header() {
         let mut test = MockRegisters {};
-        test.udp_peek_from_header(Socket::Socket0).ok();
+        test.udp_peek_from_header(Sn::Sn0).ok();
     }
 
     #[test]
@@ -57,12 +57,8 @@ mod socket_status_debug_assert {
     fn udp_send_to() {
         let mut test = MockRegisters {};
         let buf: [u8; 1] = [0];
-        test.udp_send_to(
-            Socket::Socket0,
-            &buf,
-            &SocketAddrV4::new(Ipv4Addr::UNSPECIFIED, 0),
-        )
-        .ok();
+        test.udp_send_to(Sn::Sn0, &buf, &SocketAddrV4::new(Ipv4Addr::UNSPECIFIED, 0))
+            .ok();
     }
 
     #[test]
@@ -70,7 +66,7 @@ mod socket_status_debug_assert {
     fn udp_send() {
         let mut test = MockRegisters {};
         let buf: [u8; 1] = [0];
-        test.udp_send(Socket::Socket0, &buf).ok();
+        test.udp_send(Sn::Sn0, &buf).ok();
     }
 }
 
@@ -83,7 +79,7 @@ mod udp_would_block_header {
     impl Registers for MockRegisters {
         type Error = Infallible;
 
-        fn sn_rx_rsr(&mut self, _socket: Socket) -> Result<u16, Self::Error> {
+        fn sn_rx_rsr(&mut self, _socket: Sn) -> Result<u16, Self::Error> {
             Ok(5)
         }
 
@@ -101,7 +97,7 @@ mod udp_would_block_header {
         let mut mock = MockRegisters {};
         let mut buf: [u8; 1] = [0];
         assert_eq!(
-            mock.udp_peek_from(Socket::Socket0, &mut buf),
+            mock.udp_peek_from(Sn::Sn0, &mut buf),
             Err(nb::Error::WouldBlock)
         );
     }
@@ -110,7 +106,7 @@ mod udp_would_block_header {
     fn udp_peek_from_header() {
         let mut mock = MockRegisters {};
         assert_eq!(
-            mock.udp_peek_from_header(Socket::Socket0),
+            mock.udp_peek_from_header(Sn::Sn0),
             Err(nb::Error::WouldBlock)
         );
     }
@@ -120,7 +116,7 @@ mod udp_would_block_header {
         let mut mock = MockRegisters {};
         let mut buf: [u8; 1] = [0];
         assert_eq!(
-            mock.udp_recv_from(Socket::Socket0, &mut buf),
+            mock.udp_recv_from(Sn::Sn0, &mut buf),
             Err(nb::Error::WouldBlock)
         );
     }
@@ -130,7 +126,7 @@ mod udp_would_block_header {
 mod udp_bind {
     use super::*;
 
-    const TEST_SOCKET: Socket = Socket::Socket7;
+    const TEST_SOCKET: Sn = Sn::Sn7;
     const TEST_PORT: u16 = 0xABCD;
 
     struct MockRegisters {
@@ -141,32 +137,32 @@ mod udp_bind {
     impl Registers for MockRegisters {
         type Error = Infallible;
 
-        fn set_sn_cr(&mut self, socket: Socket, cmd: SocketCommand) -> Result<(), Self::Error> {
+        fn set_sn_cr(&mut self, socket: Sn, cmd: SocketCommand) -> Result<(), Self::Error> {
             assert_eq!(socket, TEST_SOCKET);
             assert_eq!(cmd, self.sn_cr.pop().expect("Unexpected socket command"));
             Ok(())
         }
 
-        fn set_sn_port(&mut self, socket: Socket, port: u16) -> Result<(), Self::Error> {
+        fn set_sn_port(&mut self, socket: Sn, port: u16) -> Result<(), Self::Error> {
             assert_eq!(socket, TEST_SOCKET);
             assert_eq!(port, TEST_PORT);
             Ok(())
         }
 
-        fn set_sn_mr(&mut self, socket: Socket, mode: SocketMode) -> Result<(), Self::Error> {
+        fn set_sn_mr(&mut self, socket: Sn, mode: SocketMode) -> Result<(), Self::Error> {
             assert_eq!(socket, TEST_SOCKET);
             assert_eq!(mode.protocol(), Ok(Protocol::Udp));
             Ok(())
         }
 
-        fn sn_sr(&mut self, socket: Socket) -> Result<Result<SocketStatus, u8>, Self::Error> {
+        fn sn_sr(&mut self, socket: Sn) -> Result<Result<SocketStatus, u8>, Self::Error> {
             assert_eq!(socket, TEST_SOCKET);
             Ok(SocketStatus::try_from(
                 self.sn_sr.pop().expect("Unexpected socket status read"),
             ))
         }
 
-        fn sn_port(&mut self, socket: Socket) -> Result<u16, Self::Error> {
+        fn sn_port(&mut self, socket: Sn) -> Result<u16, Self::Error> {
             Ok(u16::from(u8::from(socket)))
         }
 

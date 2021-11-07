@@ -6,6 +6,5 @@ edition = "2018"
 version = "0.1.0"
 
 [dependencies]
-tokio = {version = "^1", features = ["full"]}
-reqwest = "~0.11"
+isahc = "1.5"
 testsuite-assets = { path = "../testsuite-assets" }

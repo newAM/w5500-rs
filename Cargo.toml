@@ -22,12 +22,12 @@ maintenance = { status = "experimental" }
 
 [dependencies]
 nb = "^1"
-w5500-ll = "~0.8"
+w5500-ll = "~0.9"
 
 [dev-dependencies]
 version-sync = "~0.9.3"
 embedded-hal-mock = "~0.8"
-w5500-ll = { version = "~0.8", features = ["embedded-hal", "defmt"] }
+w5500-ll = { version = "~0.9", features = ["embedded-hal", "defmt"] }
 
 [package.metadata.docs.rs]
 all-features = true
