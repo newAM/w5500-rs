@@ -40,17 +40,17 @@ UDP sockets
 use w5500_hl::ll::{
     net::{Ipv4Addr, SocketAddrV4},
     Registers,
-    Socket::Socket0,
+    Sn::Sn0,
 };
 use w5500_hl::Udp;
 
-// open Socket0 as a UDP socket on port 1234
-w5500.udp_bind(Socket0, 1234)?;
+// open Sn0 as a UDP socket on port 1234
+w5500.udp_bind(Sn0, 1234)?;
 
 // send 4 bytes to 192.168.2.4:8080, and get the number of bytes transmitted
 let data: [u8; 4] = [0, 1, 2, 3];
 let destination = SocketAddrV4::new(Ipv4Addr::new(192, 168, 2, 4), 8080);
-let tx_bytes = w5500.udp_send_to(Socket0, &data, &destination);
+let tx_bytes = w5500.udp_send_to(Sn0, &data, &destination);
 ```
 
 TCP streams (client)
@@ -58,11 +58,11 @@ TCP streams (client)
 ```rust
 use w5500_hl::ll::{
     net::{Ipv4Addr, SocketAddrV4},
-    Registers, Socket,
+    Registers, Sn,
 };
 use w5500_hl::Tcp;
 
-const MQTT_SOCKET: Socket = Socket::Socket0;
+const MQTT_SOCKET: Sn = Sn::Sn0;
 const MQTT_SOURCE_PORT: u16 = 33650;
 const MQTT_SERVER: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::new(192, 168, 2, 10), 1883);
 
@@ -75,11 +75,11 @@ TCP listeners (server)
 ```rust
 use w5500_hl::ll::{
     net::{Ipv4Addr, SocketAddrV4},
-    Registers, Socket,
+    Registers, Sn,
 };
 use w5500_hl::Tcp;
 
-const HTTP_SOCKET: Socket = Socket::Socket1;
+const HTTP_SOCKET: Sn = Sn::Sn1;
 const HTTP_PORT: u16 = 80;
 
 // serve HTTP
@@ -96,5 +96,5 @@ w5500.tcp_listen(HTTP_SOCKET, HTTP_PORT)?;
 [w5500-ll]: https://github.com/newAM/w5500-ll-rs
 [w5500-regsim]: https://github.com/newAM/w5500-regsim-rs
 [Wiznet W5500]: https://www.wiznet.io/product-item/w5500/
-[`Tcp`]: https://docs.rs/w5500-hl/0.4.0/w5500_hl/trait.Tcp.html
-[`Udp`]: https://docs.rs/w5500-hl/0.4.0/w5500_hl/trait.Udp.html
+[`Tcp`]: https://docs.rs/w5500-hl/0.6.0/w5500_hl/trait.Tcp.html
+[`Udp`]: https://docs.rs/w5500-hl/0.6.0/w5500_hl/trait.Udp.html
