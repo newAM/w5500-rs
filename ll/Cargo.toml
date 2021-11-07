@@ -1,6 +1,6 @@
 [package]
 name = "w5500-ll"
-version = "0.8.0"
+version = "0.9.0"
 authors = ["Alex M. <alexmgit@protonmail.com>"]
 edition = "2021"
 rust-version = "1.56"
