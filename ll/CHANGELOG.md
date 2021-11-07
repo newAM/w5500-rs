@@ -18,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Enables composing structures in `const` contexts.
 - Changed edition from 2018 to 2021.
 - Changed the return type of `PhyCfg::opmdc` from `Result<OperationMode, u8>` to `OperationMode`.
-- Changed the register addresses in the `reg` to `Reg` and `SnReg` enums.
+- Changed the register addresses in the `reg` module to `Reg` and `SnReg` enums.
 - Changed the name of the `Socket` enum to `Sn`.
 
 ### Removed
