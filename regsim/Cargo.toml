@@ -1,7 +1,7 @@
 [package]
 name = "w5500-regsim"
-version = "0.1.0-alpha.4"
-authors = ["Alex M. <alexmgit@protonmail.com>"]
+version = "0.1.0-alpha.5"
+authors = ["Alex Martens <alexmgit@protonmail.com>"]
 edition = "2021"
 repository = "https://github.com/newAM/w5500-regsim-rs"
 license = "MIT"
@@ -15,7 +15,6 @@ homepage = "https://github.com/newAM/w5500-regsim-rs"
 maintenance = { status = "experimental" }
 
 [dependencies]
-lazy_static = "1"
 log = "0.4"
 
 [dependencies.w5500-ll]
