@@ -1,5 +1,5 @@
 use std::convert::Infallible;
-use w5500_hl::ll::{Registers, Socket, SocketCommand, SOCKETS};
+use w5500_hl::ll::{Registers, Sn, SocketCommand, SOCKETS};
 use w5500_hl::net::{Ipv4Addr, SocketAddrV4};
 use w5500_hl::Common;
 
@@ -15,7 +15,7 @@ mod local_addr {
             Ok(Ipv4Addr::LOCALHOST)
         }
 
-        fn sn_port(&mut self, socket: Socket) -> Result<u16, Self::Error> {
+        fn sn_port(&mut self, socket: Sn) -> Result<u16, Self::Error> {
             Ok(u16::from(u8::from(socket)))
         }
 
@@ -46,8 +46,8 @@ mod close {
     impl Registers for MockRegisters {
         type Error = Infallible;
 
-        fn set_sn_cr(&mut self, socket: Socket, cmd: SocketCommand) -> Result<(), Self::Error> {
-            assert_eq!(socket, Socket::Socket3);
+        fn set_sn_cr(&mut self, socket: Sn, cmd: SocketCommand) -> Result<(), Self::Error> {
+            assert_eq!(socket, Sn::Sn3);
             assert_eq!(cmd, SocketCommand::Close);
             Ok(())
         }
@@ -64,7 +64,7 @@ mod close {
     #[test]
     fn close() {
         let mut mock = MockRegisters {};
-        mock.close(Socket::Socket3).unwrap();
+        mock.close(Sn::Sn3).unwrap();
     }
 }
 
@@ -73,7 +73,7 @@ mod is_state_closed {
 
     use super::*;
 
-    const SOCKET: Socket = Socket::Socket4;
+    const SOCKET: Sn = Sn::Sn4;
 
     struct MockRegisters {
         states: Vec<Result<SocketStatus, u8>>,
@@ -82,7 +82,7 @@ mod is_state_closed {
     impl Registers for MockRegisters {
         type Error = Infallible;
 
-        fn sn_sr(&mut self, socket: Socket) -> Result<Result<SocketStatus, u8>, Self::Error> {
+        fn sn_sr(&mut self, socket: Sn) -> Result<Result<SocketStatus, u8>, Self::Error> {
             assert_eq!(socket, SOCKET);
             Ok(self.states.pop().expect("Unexpected call to sn_sr"))
         }
@@ -133,7 +133,7 @@ mod is_state_tcp {
 
     use super::*;
 
-    const SOCKET: Socket = Socket::Socket4;
+    const SOCKET: Sn = Sn::Sn4;
 
     struct MockRegisters {
         states: Vec<Result<SocketStatus, u8>>,
@@ -142,7 +142,7 @@ mod is_state_tcp {
     impl Registers for MockRegisters {
         type Error = Infallible;
 
-        fn sn_sr(&mut self, socket: Socket) -> Result<Result<SocketStatus, u8>, Self::Error> {
+        fn sn_sr(&mut self, socket: Sn) -> Result<Result<SocketStatus, u8>, Self::Error> {
             assert_eq!(socket, SOCKET);
             Ok(self.states.pop().expect("Unexpected call to sn_sr"))
         }
@@ -195,7 +195,7 @@ mod is_state_udp {
 
     use super::*;
 
-    const SOCKET: Socket = Socket::Socket6;
+    const SOCKET: Sn = Sn::Sn6;
 
     struct MockRegisters {
         states: Vec<Result<SocketStatus, u8>>,
@@ -204,7 +204,7 @@ mod is_state_udp {
     impl Registers for MockRegisters {
         type Error = Infallible;
 
-        fn sn_sr(&mut self, socket: Socket) -> Result<Result<SocketStatus, u8>, Self::Error> {
+        fn sn_sr(&mut self, socket: Sn) -> Result<Result<SocketStatus, u8>, Self::Error> {
             assert_eq!(socket, SOCKET);
             Ok(self.states.pop().expect("Unexpected call to sn_sr"))
         }

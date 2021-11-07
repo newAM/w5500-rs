@@ -21,7 +21,7 @@ use testsuite_assets::{
     HTTP_SOCKET, PEER_TCP_ADDR, TCP_SOCKET, UDP_SOCKET, W5500_HTTP_PORT, W5500_TCP_PORT,
 };
 use w5500_hl::ll::{
-    blocking::vdm::W5500, spi::MODE as W5500_MODE, LinkStatus, PhyCfg, Registers, Socket,
+    blocking::vdm::W5500, spi::MODE as W5500_MODE, LinkStatus, PhyCfg, Registers, Sn,
     SocketInterrupt,
 };
 use w5500_hl::{Common, Tcp, Udp};
@@ -76,24 +76,23 @@ static mut BUFFER: [u8; 2048] = [0; 2048];
 /// Polling is just for testing purposes.
 /// You should use replace this with an interrupt handler,
 /// using the interrupt pin provided by the W5500.
-fn poll_int<T: Registers<Error = E>, E: core::fmt::Debug>(
-    w5500: &mut T,
-    socket: Socket,
-    interrupt: u8,
-) {
-    defmt::info!("Polling for interrupt on Socket{}", u8::from(socket));
+fn poll_int<T: Registers<Error = E>, E: core::fmt::Debug>(w5500: &mut T, sn: Sn, interrupt: u8) {
+    defmt::info!("Polling for interrupt on Socket{}", u8::from(sn));
     loop {
-        let sn_ir = w5500.sn_ir(socket).unwrap();
+        let sn_ir = w5500.sn_ir(sn).unwrap();
         if u8::from(sn_ir) & interrupt != 0x00 {
-            defmt::info!("Got interrupt on Socket{}", u8::from(socket));
-            w5500.set_sn_ir(socket, interrupt).unwrap();
+            defmt::info!("Got interrupt on Socket{}", u8::from(sn));
+            w5500.set_sn_ir(sn, interrupt).unwrap();
             break;
         }
         if sn_ir.discon_raised() {
-            panic!("{:?} disconnected while polling", socket);
+            panic!("{:?} disconnected while polling", sn);
         }
         if sn_ir.timeout_raised() {
-            panic!("{:?} timed out while polling", socket);
+            panic!("{:?} timed out while polling", sn);
+        }
+        if sn_ir.any_raised() {
+            panic!("{:?} unhandled IRQ {:02X}", sn, u8::from(sn_ir));
         }
     }
 }
@@ -249,13 +248,13 @@ mod tests {
 
             // ensure there is space for the entire chunk
             loop {
-                let fsr = w5500.sn_tx_fsr(TCP_SOCKET).unwrap();
+                let fsr: u16 = w5500.sn_tx_fsr(TCP_SOCKET).unwrap();
                 if usize::from(fsr) >= CHUNK_SIZE {
                     break;
                 }
             }
 
-            let n = w5500
+            let n: usize = w5500
                 .tcp_write(TCP_SOCKET, unsafe { &BUFFER[..CHUNK_SIZE] })
                 .unwrap();
             assert_eq!(n, CHUNK_SIZE);
