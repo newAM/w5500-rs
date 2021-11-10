@@ -1,6 +1,6 @@
 [package]
 name = "w5500-regsim"
-version = "0.1.0-alpha.5"
+version = "0.1.0-alpha.6"
 authors = ["Alex Martens <alexmgit@protonmail.com>"]
 edition = "2021"
 repository = "https://github.com/newAM/w5500-regsim-rs"
@@ -18,12 +18,12 @@ maintenance = { status = "experimental" }
 log = "0.4"
 
 [dependencies.w5500-ll]
-version = "0.9"
+version = "0.10"
 features = ["std"]
 
 [dev-dependencies]
 trust-dns-client = "0.20"
-w5500-hl = "0.6"
+w5500-hl = "0.7"
 version-sync = "0.9"
 nb = "1"
 stderrlog = "0.5"
