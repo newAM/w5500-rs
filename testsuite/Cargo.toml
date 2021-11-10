@@ -10,20 +10,20 @@ name = "test"
 harness = false
 
 [dependencies]
-nb = "^1"
-cortex-m = "~0.7.3"
-cortex-m-rt = { version = "~0.6.15" }
-defmt = "~0.2.3"
-defmt-rtt = "~0.2.0"
-defmt-test = "~0.2.3"
-embedded-hal = "~0.2.6"
-panic-probe = { version = "~0.2.0", features = ["print-defmt" ] }
+nb = "1"
+cortex-m = "0.7"
+cortex-m-rt = { version = "0.7" }
+defmt = "0.3"
+defmt-rtt = "0.3"
+defmt-test = "0.3"
+embedded-hal = "0.2.6"
+panic-probe = { version = "0.3", features = ["print-defmt" ] }
 w5500-hl = { path = "..", features = ["embedded-hal", "defmt"] }
 testsuite-assets = { path = "../testsuite-assets" }
 
 [dependencies.stm32f0xx-hal]
-git = "https://github.com/stm32-rs/stm32f0xx-hal.git"
-rev = "fba9834b59fa7567ffd604afed2bcd8d07c4e904"
+git = "https://github.com/newAM/stm32f0xx-hal.git"
+rev = "bd3ce07d349473b9d0f555941442bc70caf3505b"
 features = ["stm32f070xb"] 
 
 [features]
