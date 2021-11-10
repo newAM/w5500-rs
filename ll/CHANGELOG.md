@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Changed
 - Changed the `socket` argument name to `sn` to match the type name.
+- Updated `defmt` from `0.2` to `0.3`.
 
 ## [0.9.0] - 2021-11-07
 ### Added
