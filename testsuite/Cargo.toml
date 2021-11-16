@@ -22,20 +22,5 @@ w5500-hl = { path = "..", features = ["embedded-hal", "defmt"] }
 testsuite-assets = { path = "../testsuite-assets" }
 
 [dependencies.stm32f0xx-hal]
-git = "https://github.com/newAM/stm32f0xx-hal.git"
-rev = "bd3ce07d349473b9d0f555941442bc70caf3505b"
+version = "0.18"
 features = ["stm32f070xb"] 
-
-[features]
-# set logging levels here
-default = [
-  "defmt-trace",
-]
-
-# do NOT modify these features
-defmt-default = []
-defmt-trace = []
-defmt-debug = []
-defmt-info = []
-defmt-warn = []
-defmt-error = []
