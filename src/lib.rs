@@ -45,7 +45,7 @@
 //! // send 4 bytes to 192.168.2.4:8080, and get the number of bytes transmitted
 //! let data: [u8; 4] = [0, 1, 2, 3];
 //! let destination = SocketAddrV4::new(Ipv4Addr::new(192, 168, 2, 4), 8080);
-//! let tx_bytes = w5500.udp_send_to(Sn0, &data, &destination);
+//! let tx_bytes = w5500.udp_send_to(Sn0, &data, &destination)?;
 //! # Ok::<(), w5500_hl::ll::blocking::vdm::Error<_, _>>(())
 //! ```
 //!
