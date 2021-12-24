@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Added a new W5500 type for VDM transfers with an infallible GPIO.
+- Added `defmt::Format` for `Eui48Addr`.
 
 ## [0.10.0] - 2021-11-09
 ### Changed

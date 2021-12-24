@@ -387,6 +387,22 @@ impl ::core::fmt::Display for Eui48Addr {
     }
 }
 
+#[cfg(feature = "defmt")]
+impl defmt::Format for Eui48Addr {
+    fn format(&self, fmt: defmt::Formatter) {
+        defmt::write!(
+            fmt,
+            "{:02X}:{:02X}:{:02X}:{:02X}:{:02X}:{:02X}",
+            self.octets[0],
+            self.octets[1],
+            self.octets[2],
+            self.octets[3],
+            self.octets[4],
+            self.octets[5],
+        )
+    }
+}
+
 impl From<[u8; 6]> for Eui48Addr {
     /// Creates an `Eui48Addr` from a six element byte array.
     ///
