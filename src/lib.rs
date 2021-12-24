@@ -104,6 +104,7 @@
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![no_std]
 
+pub use nb;
 pub use w5500_ll as ll;
 
 use ll::{Protocol, Registers, Sn, SocketCommand, SocketMode, SocketStatus, SOCKETS};
