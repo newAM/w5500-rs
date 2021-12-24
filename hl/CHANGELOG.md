@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Added `send_if_free` and `send_to_if_free` to the `Udp` trait.
+- Added a re-export for `nb`.
 
 ## [0.7.0] - 2021-11-09
 ### Changed
