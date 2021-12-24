@@ -1,10 +1,10 @@
 //! Variable data length implementation of the [`Registers`] trait using the
-//! [`embedded-hal`] blocking SPI trait, and a fallible GPIO pin.
+//! [`embedded-hal`] blocking SPI trait, and an infallible GPIO pin.
 //!
 //! This uses the W5500 variable data length mode (VDM).
 //! In VDM mode the SPI frame data length is determined by the chip select pin.
-//! This is the preferred blocking implementation if your W5500 has a fallible
-//! chip select pin.
+//! This is the preferred blocking implementation if your W5500 has an
+//! infallible chip select pin.
 //!
 //! [`embedded-hal`]: https://github.com/rust-embedded/embedded-hal
 //! [`Registers`]: crate::Registers
@@ -22,21 +22,11 @@ pub struct W5500<SPI, CS> {
     cs: CS,
 }
 
-/// W5500 blocking implementation error type.
-#[derive(Debug)]
-#[cfg_attr(feature = "defmt", derive(defmt::Format))]
-pub enum Error<SpiError, PinError> {
-    /// SPI bus error wrapper.
-    Spi(SpiError),
-    /// GPIO pin error wrapper.
-    Pin(PinError),
-}
-
-impl<SPI, CS, SpiError, PinError> W5500<SPI, CS>
+impl<SPI, CS, SpiError> W5500<SPI, CS>
 where
     SPI: embedded_hal::blocking::spi::Transfer<u8, Error = SpiError>
         + embedded_hal::blocking::spi::Write<u8, Error = SpiError>,
-    CS: OutputPin<Error = PinError>,
+    CS: OutputPin<Error = core::convert::Infallible>,
 {
     /// Creates a new `W5500` driver from a SPI peripheral and a chip select
     /// digital I/O pin.
@@ -50,13 +40,17 @@ where
     /// ```
     /// # use embedded_hal_mock as hal;
     /// # let spi = hal::spi::Mock::new(&[]);
-    /// # let mut pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// # ]);
+    /// # struct Pin {};
+    /// # impl embedded_hal::digital::v2::OutputPin for Pin {
+    /// #     type Error = core::convert::Infallible;
+    /// #     fn set_low(&mut self) -> Result<(), Self::Error> { Ok(()) }
+    /// #     fn set_high(&mut self) -> Result<(), Self::Error> { Ok(()) }
+    /// # }
+    /// # let mut pin = Pin {};
     /// use embedded_hal::digital::v2::OutputPin;
-    /// use w5500_ll::blocking::vdm::W5500;
+    /// use w5500_ll::blocking::vdm_infallible_gpio::W5500;
     ///
-    /// pin.set_high()?;
+    /// pin.set_high().unwrap();
     /// let mut w5500: W5500<_, _> = W5500::new(spi, pin);
     /// # Ok::<(), hal::MockError>(())
     /// ```
@@ -71,8 +65,14 @@ where
     /// ```
     /// # use embedded_hal_mock as hal;
     /// # let spi = hal::spi::Mock::new(&[]);
-    /// # let pin = hal::pin::Mock::new(&[]);
-    /// use w5500_ll::blocking::vdm::W5500;
+    /// # struct Pin {};
+    /// # impl embedded_hal::digital::v2::OutputPin for Pin {
+    /// #     type Error = core::convert::Infallible;
+    /// #     fn set_low(&mut self) -> Result<(), Self::Error> { Ok(()) }
+    /// #     fn set_high(&mut self) -> Result<(), Self::Error> { Ok(()) }
+    /// # }
+    /// # let mut pin = Pin {};
+    /// use w5500_ll::blocking::vdm_infallible_gpio::W5500;
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// let (spi, pin) = w5500.free();
@@ -82,34 +82,33 @@ where
     }
 
     #[inline(always)]
-    fn with_chip_enable<T, E, F>(&mut self, mut f: F) -> Result<T, E>
+    fn with_chip_enable<T, F>(&mut self, mut f: F) -> Result<T, SpiError>
     where
-        F: FnMut(&mut SPI) -> Result<T, E>,
-        E: core::convert::From<Error<SpiError, PinError>>,
+        F: FnMut(&mut SPI) -> Result<T, SpiError>,
     {
-        self.cs.set_low().map_err(Error::Pin)?;
+        self.cs.set_low().unwrap();
         let result = f(&mut self.spi);
-        self.cs.set_high().map_err(Error::Pin)?;
+        self.cs.set_high().unwrap();
         result
     }
 }
 
-impl<SPI, CS, SpiError, PinError> crate::Registers for W5500<SPI, CS>
+impl<SPI, CS, SpiError> crate::Registers for W5500<SPI, CS>
 where
     SPI: embedded_hal::blocking::spi::Transfer<u8, Error = SpiError>
         + embedded_hal::blocking::spi::Write<u8, Error = SpiError>,
-    CS: OutputPin<Error = PinError>,
+    CS: OutputPin<Error = core::convert::Infallible>,
 {
     /// SPI IO error type.
-    type Error = Error<SpiError, PinError>;
+    type Error = SpiError;
 
     /// Read from the W5500.
     #[inline(always)]
     fn read(&mut self, address: u16, block: u8, data: &mut [u8]) -> Result<(), Self::Error> {
         let header = vdm_header(address, block, AccessMode::Read);
         self.with_chip_enable(|spi| {
-            spi.write(&header).map_err(Error::Spi)?;
-            spi.transfer(data).map_err(Error::Spi)?;
+            spi.write(&header)?;
+            spi.transfer(data)?;
             Ok(())
         })
     }
@@ -119,8 +118,8 @@ where
     fn write(&mut self, address: u16, block: u8, data: &[u8]) -> Result<(), Self::Error> {
         let header = vdm_header(address, block, AccessMode::Write);
         self.with_chip_enable(|spi| {
-            spi.write(&header).map_err(Error::Spi)?;
-            spi.write(data).map_err(Error::Spi)?;
+            spi.write(&header)?;
+            spi.write(data)?;
             Ok(())
         })
     }

@@ -6,3 +6,4 @@
 
 pub mod fdm;
 pub mod vdm;
+pub mod vdm_infallible_gpio;
