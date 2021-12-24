@@ -1,6 +1,6 @@
 [package]
 name = "w5500-ll"
-version = "0.10.0"
+version = "0.10.1"
 authors = ["Alex Martens <alexmgit@protonmail.com>"]
 edition = "2021"
 rust-version = "1.56"
@@ -15,9 +15,6 @@ homepage = "https://github.com/newAM/w5500-ll-rs"
 [features]
 std = []
 
-[badges]
-maintenance = { status = "passively-maintained" }
-
 [dependencies.embedded-hal]
 version = "0.2.4"
 optional = true
@@ -28,7 +25,6 @@ optional = true
 
 [dev-dependencies]
 embedded-hal-mock = "0.8"
-version-sync = "0.9"
 
 [package.metadata.docs.rs]
 all-features = true

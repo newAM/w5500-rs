@@ -50,10 +50,9 @@
 //! [w5500-hl]: https://github.com/newAM/w5500-hl-rs
 //! [w5500-regsim]: https://github.com/newAM/w5500-regsim-rs
 //! [Wiznet W5500]: https://www.wiznet.io/product-item/w5500/
-//! [`blocking`]: https://docs.rs/w5500-ll/0.10.0/w5500_ll/blocking/index.html
-//! [`Registers`]: https://docs.rs/w5500-ll/0.10.0/w5500_ll/trait.Registers.html
-//! [`w5500_ll::net`]: https://docs.rs/w5500-ll/0.10.0/w5500_ll/net/index.html
-#![doc(html_root_url = "https://docs.rs/w5500-ll/0.10.0")]
+//! [`blocking`]: https://docs.rs/w5500-ll/0.10.1/w5500_ll/blocking/index.html
+//! [`Registers`]: https://docs.rs/w5500-ll/0.10.1/w5500_ll/trait.Registers.html
+//! [`w5500_ll::net`]: https://docs.rs/w5500-ll/0.10.1/w5500_ll/net/index.html
 #![cfg_attr(docsrs, feature(doc_cfg), feature(doc_auto_cfg))]
 #![cfg_attr(not(feature = "std"), no_std)]
 #![forbid(unsafe_code)]
