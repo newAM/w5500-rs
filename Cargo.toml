@@ -1,6 +1,6 @@
 [package]
 name = "w5500-hl"
-version = "0.7.0"
+version = "0.7.1"
 authors = ["Alex Martens <alexmgit@protonmail.com>"]
 edition = "2021"
 rust-version = "1.56"
@@ -17,15 +17,11 @@ defmt = ["w5500-ll/defmt"]
 embedded-hal = ["w5500-ll/embedded-hal"]
 std = ["w5500-ll/std"]
 
-[badges]
-maintenance = { status = "experimental" }
-
 [dependencies]
 nb = "1"
 w5500-ll = "0.10"
 
 [dev-dependencies]
-version-sync = "0.9.3"
 embedded-hal-mock = "0.8"
 w5500-ll = { version = "0.10", features = ["embedded-hal", "defmt"] }
 
