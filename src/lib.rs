@@ -485,7 +485,54 @@ pub trait Udp: Registers {
         self.udp_send(sn, buf)
     }
 
+    /// Sends data on the socket to the given address.
+    /// On success, returns the number of bytes written.
+    ///
+    /// This will transmit only if there is enough free space in the W5500
+    /// transmit buffer.
+    ///
+    /// # Comparison to [`std::net::UdpSocket::send_to`]
+    ///
+    /// * You cannot transmit more than `u16::MAX` bytes at once.
+    /// * You can only provide one destination.
+    ///
+    /// # Panics
+    ///
+    /// * (debug) The socket must be opened as a UDP socket.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// # use embedded_hal_mock as h;
+    /// # let mut w5500 = w5500_ll::blocking::vdm::W5500::new(h::spi::Mock::new(&[]), h::pin::Mock::new(&[]));
+    /// use w5500_hl::{
+    ///     ll::{Registers, Sn::Sn0},
+    ///     net::{Ipv4Addr, SocketAddrV4},
+    ///     Udp,
+    /// };
+    ///
+    /// const DEST: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::new(192, 0, 2, 1), 8081);
+    ///
+    /// w5500.udp_bind(Sn0, 8080)?;
+    /// let buf: [u8; 10] = [0; 10];
+    /// let tx_bytes = w5500.udp_send_to_if_free(Sn0, &buf, &DEST)?;
+    /// assert_eq!(tx_bytes, buf.len());
+    /// # Ok::<(), w5500_hl::ll::blocking::vdm::Error<_, _>>(())
+    /// ```
+    ///
+    /// [`std::net::UdpSocket::send_to`]: https://doc.rust-lang.org/std/net/struct.UdpSocket.html#method.send_to
+    fn udp_send_to_if_free(
+        &mut self,
+        sn: Sn,
+        buf: &[u8],
+        addr: &SocketAddrV4,
+    ) -> Result<usize, Self::Error> {
+        self.set_sn_dest(sn, addr)?;
+        self.udp_send_if_free(sn, buf)
+    }
+
     /// Sends data to the currently configured destination.
+    /// On success, returns the number of bytes written.
     ///
     /// The destination is set by the last call to [`set_sn_dest`] or
     /// [`send_to`].
@@ -509,10 +556,10 @@ pub trait Udp: Registers {
     ///
     /// w5500.udp_bind(Sn0, 8080)?;
     /// let buf: [u8; 10] = [0; 10];
-    /// let tx_bytes = w5500.udp_send_to(Sn0, &buf, &DEST)?;
+    /// let tx_bytes: usize = w5500.udp_send_to(Sn0, &buf, &DEST)?;
     /// assert_eq!(tx_bytes, buf.len());
     /// // send the same to the same destination
-    /// let tx_bytes = w5500.udp_send(Sn0, &buf)?;
+    /// let tx_bytes: usize = w5500.udp_send(Sn0, &buf)?;
     /// assert_eq!(tx_bytes, buf.len());
     /// # Ok::<(), w5500_hl::ll::blocking::vdm::Error<_, _>>(())
     /// ```
@@ -532,6 +579,61 @@ pub trait Udp: Registers {
             self.set_sn_cr(sn, SocketCommand::Send)?;
         }
         Ok(usize::from(tx_bytes))
+    }
+
+    /// Sends data to the currently configured destination.
+    /// On success, returns the number of bytes written.
+    ///
+    /// The destination is set by the last call to [`set_sn_dest`] or
+    /// [`send_to`].
+    ///
+    /// This will transmit only if there is enough free space in the W5500
+    /// transmit buffer.
+    ///
+    /// # Panics
+    ///
+    /// * (debug) The socket must be opened as a UDP socket.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// # use embedded_hal_mock as h;
+    /// # let mut w5500 = w5500_ll::blocking::vdm::W5500::new(h::spi::Mock::new(&[]), h::pin::Mock::new(&[]));
+    /// use w5500_hl::{
+    ///     ll::{Registers, Sn::Sn0},
+    ///     net::{Ipv4Addr, SocketAddrV4},
+    ///     Udp,
+    /// };
+    ///
+    /// const DEST: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::new(192, 0, 2, 1), 8081);
+    ///
+    /// w5500.udp_bind(Sn0, 8080)?;
+    /// let buf: [u8; 10] = [0; 10];
+    /// let tx_bytes: usize = w5500.udp_send_to_if_free(Sn0, &buf, &DEST)?;
+    /// assert_eq!(tx_bytes, buf.len());
+    /// // send the same to the same destination
+    /// let tx_bytes: usize = w5500.udp_send_if_free(Sn0, &buf)?;
+    /// assert_eq!(tx_bytes, buf.len());
+    /// # Ok::<(), w5500_hl::ll::blocking::vdm::Error<_, _>>(())
+    /// ```
+    ///
+    /// [`set_sn_dest`]: w5500_ll::Registers::set_sn_dest
+    /// [`send_to`]: Udp::udp_send_to
+    fn udp_send_if_free(&mut self, sn: Sn, buf: &[u8]) -> Result<usize, Self::Error> {
+        debug_assert_eq!(self.sn_sr(sn)?, Ok(SocketStatus::Udp));
+
+        let data_len: u16 = match u16::try_from(buf.len()) {
+            Ok(l) => l,
+            Err(_) => return Ok(0),
+        };
+        let free_size: u16 = self.sn_tx_fsr(sn)?;
+        if data_len <= free_size {
+            let ptr: u16 = self.sn_tx_wr(sn)?;
+            self.set_sn_tx_buf(sn, ptr, &buf[..usize::from(data_len)])?;
+            self.set_sn_tx_wr(sn, ptr.wrapping_add(data_len))?;
+            self.set_sn_cr(sn, SocketCommand::Send)?;
+        }
+        Ok(usize::from(data_len))
     }
 }
 
