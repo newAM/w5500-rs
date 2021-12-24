@@ -630,7 +630,7 @@ pub trait Udp: Registers {
         let free_size: u16 = self.sn_tx_fsr(sn)?;
         if data_len <= free_size {
             let ptr: u16 = self.sn_tx_wr(sn)?;
-            self.set_sn_tx_buf(sn, ptr, &buf[..usize::from(data_len)])?;
+            self.set_sn_tx_buf(sn, ptr, buf)?;
             self.set_sn_tx_wr(sn, ptr.wrapping_add(data_len))?;
             self.set_sn_cr(sn, SocketCommand::Send)?;
         }
