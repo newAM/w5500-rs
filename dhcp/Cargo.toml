@@ -1,0 +1,31 @@
+[package]
+name = "w5500-dhcp"
+version = "0.1.0"
+authors = ["Alex Martens <alexmgit@protonmail.com>"]
+edition = "2021"
+rust-version = "1.56"
+repository = "https://github.com/newAM/w5500-dhcp-rs"
+license = "MIT"
+description = "Simple DHCP client for the Wiznet W5500 internet offload chip."
+readme = "README.md"
+keywords = ["spi", "driver", "embedded-hal-driver", "W5500", "wiznet"]
+categories = ["embedded", "hardware-support", "no-std"]
+homepage = "https://github.com/newAM/w5500-dhcp-rs"
+
+[features]
+embedded-hal = ["w5500-hl/embedded-hal"]
+defmt = ["w5500-hl/defmt", "dfmt"]
+std = ["w5500-hl/std"]
+
+[dependencies]
+w5500-hl = "0.7.1"
+dfmt = { package = "defmt", version = "0.3", optional = true }
+log = { version = "0.4", optional = true }
+
+[dev-dependencies]
+rand_core = { version = "0.6", features = ["getrandom"] }
+
+[package.metadata.docs.rs]
+all-features = false
+features = ["log", "std", "embedded-hal"]
+rustdoc-args = ["--cfg", "docsrs"]
