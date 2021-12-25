@@ -31,6 +31,7 @@ jobs:
       - run: cargo build --target ${{ matrix.target }} --features log
       - run: cargo build --target ${{ matrix.target }} --features defmt
       - run: cargo build --target ${{ matrix.target }} --features std
+        if: ${{ contains(matrix.target, 'linux') }}
       - run: cargo build --target ${{ matrix.target }} --features embedded-hal
 
   test:
