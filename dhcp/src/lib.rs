@@ -293,7 +293,8 @@ where
 
                             self.dhcp.t1 = renewal_time;
                             self.dhcp.t2 = rebinding_time;
-                            self.dhcp.lease = lease_time;
+                            // de-rate lease time by 12%
+                            self.dhcp.lease = lease_time.saturating_sub(lease_time / 8);
                             self.dhcp.lease_monotonic_secs = monotonic_secs;
 
                             info!("dhcp.ip: {}", self.dhcp.ip);
