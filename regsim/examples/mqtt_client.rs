@@ -43,7 +43,7 @@ fn mqtt_server_addr() -> SocketAddrV4 {
     let response: DnsResponse = client.query(&name, DNSClass::IN, RecordType::A).unwrap();
     let answers: &[Record] = response.answers();
 
-    if let &RData::A(ref ip) = answers[0].rdata() {
+    if let Some(&RData::A(ref ip)) = answers[0].data() {
         // this conversion occurs because there are no core networking types
         // see: https://github.com/rust-lang/rfcs/pull/2832
         SocketAddrV4::new(

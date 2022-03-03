@@ -22,7 +22,7 @@ version = "0.10"
 features = ["std"]
 
 [dev-dependencies]
-trust-dns-client = "0.20"
+trust-dns-client = "0.21"
 w5500-hl = "0.7"
 version-sync = "0.9"
 nb = "1"
