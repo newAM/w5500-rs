@@ -90,16 +90,18 @@
 //!
 //! # Related Crates
 //!
+//! * [w5500-dhcp] - DHCP client for the W5500.
 //! * [w5500-ll] - Low level W5500 register accessors.
 //! * [w5500-regsim] - Register simulation using [`std::net`].
 //!
 //! [`Registers`]: https://docs.rs/w5500-ll/latest/w5500_ll/trait.Registers.html
 //! [`std::net`]: https://doc.rust-lang.org/std/net/index.html
+//! [`Tcp`]: https://docs.rs/w5500-hl/0.7.1/w5500_hl/trait.Tcp.html
+//! [`Udp`]: https://docs.rs/w5500-hl/0.7.1/w5500_hl/trait.Udp.html
+//! [w5500-dhcp]: https://github.com/newAM/w5500-dhcp-rs
 //! [w5500-ll]: https://github.com/newAM/w5500-ll-rs
 //! [w5500-regsim]: https://github.com/newAM/w5500-regsim-rs
 //! [Wiznet W5500]: https://www.wiznet.io/product-item/w5500/
-//! [`Tcp`]: https://docs.rs/w5500-hl/0.7.1/w5500_hl/trait.Tcp.html
-//! [`Udp`]: https://docs.rs/w5500-hl/0.7.1/w5500_hl/trait.Udp.html
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![no_std]
 
