@@ -39,9 +39,11 @@ All features are disabled by default.
 
 ## Related Crates
 
+* [w5500-dhcp] - DHCP client for the W5500.
 * [w5500-hl] - Higher level socket operations.
 * [w5500-regsim] - Register simulation using [`std::net`].
 
+[w5500-dhcp]: https://github.com/newAM/w5500-dhcp-rs
 [`std::net`]: https://doc.rust-lang.org/std/net/index.html
 [w5500-hl]: https://github.com/newAM/w5500-hl-rs
 [w5500-regsim]: https://github.com/newAM/w5500-regsim-rs
