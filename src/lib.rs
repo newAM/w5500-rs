@@ -160,15 +160,51 @@ where
     Ok(true)
 }
 
+/// Streaming writer for a UDP socket buffer.
+///
+/// Created with [`Udp::udp_writer`].
+///
+/// # Example
+///
+/// ```no_run
+/// # use embedded_hal_mock as h;
+/// # let mut w5500 = w5500_ll::blocking::vdm::W5500::new(h::spi::Mock::new(&[]), h::pin::Mock::new(&[]));
+/// use w5500_hl::{
+///     ll::{Registers, Sn::Sn0},
+///     net::{Ipv4Addr, SocketAddrV4},
+///     Udp,
+///     UdpWriter,
+///     nb::block,
+/// };
+///
+/// const DEST: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::new(192, 0, 2, 1), 8081);
+///
+/// w5500.udp_bind(Sn0, 8080)?;
+///
+/// let mut udp_writer: UdpWriter<_> = w5500.udp_writer(Sn0)?;
+///
+/// let data_header: [u8; 10] = [0; 10];
+/// block!(udp_writer.write(&data_header))?;
+///
+/// let data: [u8; 123] = [0; 123];
+/// block!(udp_writer.write(&data))?;
+///
+/// udp_writer.send_to(&DEST)?;
+/// # Ok::<(), w5500_hl::ll::blocking::vdm::Error<_, _>>(())
+/// ```
 #[derive(Debug)]
-pub struct UdpWrite<'a, W: Registers> {
+pub struct UdpWriter<'a, W: Registers> {
     w5500: &'a mut W,
     sn: Sn,
     sn_tx_fsr: u16,
     sn_tx_wr: u16,
 }
 
-impl<'a, W: Registers> UdpWrite<'a, W> {
+impl<'a, W: Registers> UdpWriter<'a, W> {
+    /// Write data to the UDP socket.
+    ///
+    /// This will return [`nb::Error::WouldBlock`] without modifying the W5500
+    /// socket buffer if there is not enough free space to write all of `buf`.
     pub fn write(&mut self, buf: &[u8]) -> nb::Result<(), W::Error> {
         let data_len: u16 = match u16::try_from(buf.len()) {
             Ok(data_len) => data_len,
@@ -581,8 +617,8 @@ pub trait Udp: Registers {
     /// Sends data to the currently configured destination.
     /// On success, returns the number of bytes written.
     ///
-    /// The destination is set by the last call to [`set_sn_dest`] or
-    /// [`send_to`].
+    /// The destination is set by the last call to [`Registers::set_sn_dest`],
+    /// [`Udp::send_to`], or [`UdpWrite::send_to`].
     ///
     /// # Panics
     ///
@@ -611,8 +647,9 @@ pub trait Udp: Registers {
     /// # Ok::<(), w5500_hl::ll::blocking::vdm::Error<_, _>>(())
     /// ```
     ///
-    /// [`set_sn_dest`]: w5500_ll::Registers::set_sn_dest
-    /// [`send_to`]: Udp::udp_send_to
+    /// [`Registers::set_sn_dest`]: w5500_ll::Registers::set_sn_dest
+    /// [`Udp::send_to`]: Udp::udp_send_to
+    /// [`UdpWrite::send_to`]: UdpWrite::udp_send_to
     fn udp_send(&mut self, sn: Sn, buf: &[u8]) -> Result<usize, Self::Error> {
         debug_assert_eq!(self.sn_sr(sn)?, Ok(SocketStatus::Udp));
 
@@ -631,8 +668,8 @@ pub trait Udp: Registers {
     /// Sends data to the currently configured destination.
     /// On success, returns the number of bytes written.
     ///
-    /// The destination is set by the last call to [`set_sn_dest`] or
-    /// [`send_to`].
+    /// The destination is set by the last call to [`Registers::set_sn_dest`],
+    /// [`Udp::send_to`], or [`UdpWrite::send_to`].
     ///
     /// This will transmit only if there is enough free space in the W5500
     /// transmit buffer.
@@ -664,8 +701,9 @@ pub trait Udp: Registers {
     /// # Ok::<(), w5500_hl::ll::blocking::vdm::Error<_, _>>(())
     /// ```
     ///
-    /// [`set_sn_dest`]: w5500_ll::Registers::set_sn_dest
-    /// [`send_to`]: Udp::udp_send_to
+    /// [`Registers::set_sn_dest`]: w5500_ll::Registers::set_sn_dest
+    /// [`Udp::send_to`]: Udp::udp_send_to
+    /// [`UdpWrite::send_to`]: UdpWrite::udp_send_to
     fn udp_send_if_free(&mut self, sn: Sn, buf: &[u8]) -> Result<usize, Self::Error> {
         debug_assert_eq!(self.sn_sr(sn)?, Ok(SocketStatus::Udp));
 
@@ -685,7 +723,7 @@ pub trait Udp: Registers {
 
     /// Create a UDP writer.
     ///
-    /// This returns a [`UdpWrite`] structure, which contains functions to
+    /// This returns a [`UdpWriter`] structure, which contains functions to
     /// stream data into the W5500 socket buffers before sending the data.
     ///
     /// The other UDP functions requires the data to be in a single continuous
@@ -695,17 +733,15 @@ pub trait Udp: Registers {
     ///
     /// # Example
     ///
-    /// ```
-    /// todo!()
-    /// ```
-    fn udp_write<'a>(&'a mut self, sn: Sn) -> Result<UdpWrite<'a, Self>, Self::Error>
+    /// See [`UdpWriter`].
+    fn udp_writer(&mut self, sn: Sn) -> Result<UdpWriter<Self>, Self::Error>
     where
         Self: Sized,
     {
         let sn_tx_fsr: u16 = self.sn_tx_fsr(sn)?;
         let sn_tx_wr: u16 = self.sn_tx_wr(sn)?;
 
-        Ok(UdpWrite {
+        Ok(UdpWriter {
             w5500: self,
             sn,
             sn_tx_fsr,
