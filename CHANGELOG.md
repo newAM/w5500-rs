@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Added APIs for IO streaming to the socket buffers.
 
+## Changed
+- Changed `udp_peek_from` to return `(usize, UdpHeader)` instead of `(usize, SocketAddrV4)`.
+- Changed `udp_peek_from_header` to return `UdpHeader` instead of `(usize, SocketAddrV4)`.
+
 ## [0.7.1] - 2021-12-24
 ### Added
 - Added `send_if_free` and `send_to_if_free` to the `Udp` trait.
