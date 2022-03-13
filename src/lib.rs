@@ -160,6 +160,51 @@ where
     Ok(true)
 }
 
+#[derive(Debug)]
+pub struct UdpWrite<'a, W: Registers> {
+    w5500: &'a mut W,
+    sn: Sn,
+    sn_tx_fsr: u16,
+    sn_tx_wr: u16,
+}
+
+impl<'a, W: Registers> UdpWrite<'a, W> {
+    pub fn write(&mut self, buf: &[u8]) -> nb::Result<(), W::Error> {
+        let data_len: u16 = match u16::try_from(buf.len()) {
+            Ok(data_len) => data_len,
+            Err(_) => return Err(nb::Error::WouldBlock),
+        };
+        self.sn_tx_fsr = match self.sn_tx_fsr.checked_sub(data_len) {
+            Some(sn_tx_fsr) => sn_tx_fsr,
+            None => return Err(nb::Error::WouldBlock),
+        };
+
+        self.w5500.set_sn_tx_buf(self.sn, self.sn_tx_wr, buf)?;
+        self.sn_tx_wr = self.sn_tx_wr.wrapping_add(data_len);
+        Ok(())
+    }
+
+    /// Send all data previously written with [`write`].
+    ///
+    /// The destination is set by the last call to [`Registers::set_sn_dest`],
+    /// [`Udp::send_to`], or [`UdpWrite::send_to`].
+    ///
+    /// [`Registers::set_sn_dest`]: w5500_ll::Registers::set_sn_dest
+    /// [`Udp::send_to`]: Udp::udp_send_to
+    /// [`UdpWrite::send_to`]: UdpWrite::udp_send_to
+    pub fn send(self) -> Result<&'a mut W, W::Error> {
+        self.w5500.set_sn_tx_wr(self.sn, self.sn_tx_wr)?;
+        self.w5500.set_sn_cr(self.sn, SocketCommand::Send)?;
+        Ok(self.w5500)
+    }
+
+    /// Send all data previously written with [`write`] to the given address.
+    pub fn send_to(self, addr: &SocketAddrV4) -> Result<&'a mut W, W::Error> {
+        self.w5500.set_sn_dest(self.sn, addr)?;
+        self.send()
+    }
+}
+
 /// A W5500 UDP socket trait.
 ///
 /// After creating a `UdpSocket` by [`bind`]ing it to a socket address,
@@ -636,6 +681,36 @@ pub trait Udp: Registers {
             self.set_sn_cr(sn, SocketCommand::Send)?;
         }
         Ok(usize::from(data_len))
+    }
+
+    /// Create a UDP writer.
+    ///
+    /// This returns a [`UdpWrite`] structure, which contains functions to
+    /// stream data into the W5500 socket buffers before sending the data.
+    ///
+    /// The other UDP functions requires the data to be in a single continuous
+    /// data buffer.
+    /// A single buffers reduces the number of bus transactions and improves
+    /// throughput at the cost of memory.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// todo!()
+    /// ```
+    fn udp_write<'a>(&'a mut self, sn: Sn) -> Result<UdpWrite<'a, Self>, Self::Error>
+    where
+        Self: Sized,
+    {
+        let sn_tx_fsr: u16 = self.sn_tx_fsr(sn)?;
+        let sn_tx_wr: u16 = self.sn_tx_wr(sn)?;
+
+        Ok(UdpWrite {
+            w5500: self,
+            sn,
+            sn_tx_fsr,
+            sn_tx_wr,
+        })
     }
 }
 
