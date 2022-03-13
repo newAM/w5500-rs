@@ -171,6 +171,39 @@ where
     Ok(true)
 }
 
+/// Enumeration of all possible methods to seek the W5500 socket buffers.
+///
+/// This is designed to be similar to [`std::io::SeekFrom`].
+///
+/// [`std::io::SeekFrom`]: https://doc.rust-lang.org/std/io/enum.SeekFrom.html
+pub enum SeekFrom {
+    /// Sets the offset to the provided number of bytes.
+    Start(u16),
+    /// Sets the offset to the end plus the specified number of bytes.
+    End(i16),
+    /// Sets the offset to the current position plus the specified number of bytes.
+    Current(i16),
+}
+
+impl SeekFrom {
+    #[must_use]
+    #[inline]
+    fn new_ptr(self, ptr: u16, head: u16, tail: u16) -> u16 {
+        match self {
+            SeekFrom::Start(offset) => head.wrapping_add(offset),
+            SeekFrom::End(offset) => wrapping_add_signed(tail, offset),
+            SeekFrom::Current(offset) => wrapping_add_signed(ptr, offset),
+        }
+    }
+}
+
+// TODO: use wrapping_add_signed when stabilized
+// https://github.com/rust-lang/rust/issues/87840
+// https://github.com/rust-lang/rust/blob/21b0325c68421b00c6c91055ac330bd5ffe1ea6b/library/core/src/num/uint_macros.rs#L1205
+fn wrapping_add_signed(ptr: u16, offset: i16) -> u16 {
+    ptr.wrapping_add(offset as u16)
+}
+
 /// Streaming writer for a UDP socket buffer.
 ///
 /// Created with [`Udp::udp_writer`].
@@ -195,10 +228,12 @@ where
 /// let mut udp_writer: UdpWriter<_> = w5500.udp_writer(Sn0)?;
 ///
 /// let data_header: [u8; 10] = [0; 10];
-/// block!(udp_writer.write(&data_header))?;
+/// let n_written: usize = udp_writer.write(&data_header)?;
+/// assert_eq!(n_written, data_header.len());
 ///
 /// let data: [u8; 123] = [0; 123];
-/// block!(udp_writer.write(&data))?;
+/// let n_written: usize = udp_writer.write(&data)?;
+/// assert_eq!(n_written, data.len());
 ///
 /// udp_writer.send_to(&DEST)?;
 /// # Ok::<(), w5500_hl::ll::blocking::vdm::Error<_, _>>(())
@@ -207,32 +242,41 @@ where
 pub struct UdpWriter<'a, W: Registers> {
     w5500: &'a mut W,
     sn: Sn,
-    sn_tx_fsr: u16,
-    sn_tx_wr: u16,
+    head_ptr: u16,
+    tail_ptr: u16,
+    ptr: u16,
 }
 
 impl<'a, W: Registers> UdpWriter<'a, W> {
-    /// Write data to the UDP socket.
+    /// Seek to an offset of the socket buffer.
+    pub fn seek(&mut self, seek: SeekFrom) {
+        self.ptr = seek.new_ptr(self.ptr, self.head_ptr, self.tail_ptr);
+    }
+
+    /// Returns the current seek position from the start of the socket buffer.
+    #[inline]
+    pub fn position(&self) -> u16 {
+        self.ptr
+    }
+
+    /// Write data to the UDP socket, and return the number of bytes written.
     ///
     /// This will return [`nb::Error::WouldBlock`] without modifying the W5500
     /// socket buffer if there is not enough free space to write all of `buf`.
-    pub fn write(&mut self, buf: &[u8]) -> nb::Result<(), W::Error> {
-        if buf.is_empty() {
-            return Ok(());
+    pub fn write(&mut self, buf: &[u8]) -> Result<usize, W::Error> {
+        let write_size: u16 = min(
+            self.tail_ptr.wrapping_sub(self.ptr),
+            buf.len().try_into().unwrap_or(u16::MAX),
+        );
+        if write_size != 0 {
+            self.w5500
+                .set_sn_tx_buf(self.sn, self.ptr, &buf[..(write_size as usize)])?;
+            self.ptr = self.ptr.wrapping_add(write_size);
+
+            Ok(write_size as usize)
+        } else {
+            Ok(0)
         }
-
-        let data_len: u16 = match u16::try_from(buf.len()) {
-            Ok(data_len) => data_len,
-            Err(_) => return Err(nb::Error::WouldBlock),
-        };
-        self.sn_tx_fsr = match self.sn_tx_fsr.checked_sub(data_len) {
-            Some(sn_tx_fsr) => sn_tx_fsr,
-            None => return Err(nb::Error::WouldBlock),
-        };
-
-        self.w5500.set_sn_tx_buf(self.sn, self.sn_tx_wr, buf)?;
-        self.sn_tx_wr = self.sn_tx_wr.wrapping_add(data_len);
-        Ok(())
     }
 
     /// Send all data previously written with [`write`].
@@ -244,7 +288,7 @@ impl<'a, W: Registers> UdpWriter<'a, W> {
     /// [`Udp::send_to`]: Udp::udp_send_to
     /// [`UdpWrite::send_to`]: UdpWrite::udp_send_to
     pub fn send(self) -> Result<&'a mut W, W::Error> {
-        self.w5500.set_sn_tx_wr(self.sn, self.sn_tx_wr)?;
+        self.w5500.set_sn_tx_wr(self.sn, self.ptr)?;
         self.w5500.set_sn_cr(self.sn, SocketCommand::Send)?;
         Ok(self.w5500)
     }
@@ -262,7 +306,7 @@ pub struct UdpReader<'a, W: Registers> {
     sn: Sn,
     header: UdpHeader,
     tail_ptr: u16,
-    sn_rx_rsr: u16,
+    ptr: u16,
 }
 
 impl<'a, W: Registers> UdpReader<'a, W> {
@@ -272,28 +316,32 @@ impl<'a, W: Registers> UdpReader<'a, W> {
         &self.header
     }
 
-    /// Remaining bytes to be read.
-    pub fn remain(&self) -> u16 {
-        self.sn_rx_rsr
+    /// Head pointer, from the start of the UDP packet without the header.
+    fn head_ptr(&self) -> u16 {
+        self.tail_ptr.wrapping_sub(self.header.data_len)
     }
 
-    /// Skip ahead `n` bytes.
-    pub fn skip(&mut self, n: usize) {
-        self.sn_rx_rsr = self
-            .sn_rx_rsr
-            .saturating_sub(n.try_into().unwrap_or(u16::MAX));
+    /// Seek to an offset of the UDP packet.
+    pub fn seek(&mut self, seek: SeekFrom) {
+        self.ptr = seek.new_ptr(self.ptr, self.head_ptr(), self.tail_ptr);
+    }
+
+    /// Returns the current seek position from the start of the UDP packet.
+    #[inline]
+    pub fn position(&self) -> u16 {
+        self.ptr
     }
 
     /// Read data from the UDP socket, and return the number of bytes read.
     pub fn read(&mut self, buf: &mut [u8]) -> Result<usize, W::Error> {
-        let read_size: u16 = min(self.sn_rx_rsr, buf.len().try_into().unwrap_or(u16::MAX));
+        let read_size: u16 = min(
+            self.tail_ptr.wrapping_sub(self.ptr),
+            buf.len().try_into().unwrap_or(u16::MAX),
+        );
         if read_size != 0 {
-            let ptr: u16 = self.tail_ptr.wrapping_sub(self.sn_rx_rsr);
             self.w5500
-                .sn_rx_buf(self.sn, ptr, &mut buf[..(read_size as usize)])?;
-
-            // self.sn_rx_rd = self.sn_rx_rd.wrapping_add(read_size);
-            self.sn_rx_rsr = self.sn_rx_rsr.saturating_sub(read_size);
+                .sn_rx_buf(self.sn, self.ptr, &mut buf[..(read_size as usize)])?;
+            self.ptr = self.ptr.wrapping_add(read_size);
 
             Ok(read_size as usize)
         } else {
@@ -306,6 +354,12 @@ impl<'a, W: Registers> UdpReader<'a, W> {
         self.w5500.set_sn_rx_rd(self.sn, self.tail_ptr)?;
         self.w5500.set_sn_cr(self.sn, SocketCommand::Recv)?;
         Ok(self.w5500)
+    }
+
+    /// Ignore all read data, and put the UDP packet back into the queue.
+    #[inline]
+    pub fn ignore(self) -> &'a mut W {
+        self.w5500
     }
 }
 
@@ -808,8 +862,9 @@ pub trait Udp: Registers {
         Ok(UdpWriter {
             w5500: self,
             sn,
-            sn_tx_fsr,
-            sn_tx_wr,
+            head_ptr: sn_tx_wr,
+            tail_ptr: sn_tx_wr.wrapping_add(sn_tx_fsr),
+            ptr: sn_tx_fsr,
         })
     }
 
@@ -851,7 +906,7 @@ pub trait Udp: Registers {
             tail_ptr: sn_rx_rd
                 .wrapping_add(UdpHeader::LEN)
                 .wrapping_add(header.data_len),
-            sn_rx_rsr: header.data_len,
+            ptr: sn_rx_rd.wrapping_add(UdpHeader::LEN),
             header,
         })
     }
