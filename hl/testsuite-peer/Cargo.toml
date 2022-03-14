@@ -6,5 +6,5 @@ edition = "2018"
 version = "0.1.0"
 
 [dependencies]
-isahc = "1.5"
+isahc = "1.7"
 testsuite-assets = { path = "../testsuite-assets" }
