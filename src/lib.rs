@@ -253,10 +253,23 @@ impl<'a, W: Registers> UdpWriter<'a, W> {
         self.ptr = seek.new_ptr(self.ptr, self.head_ptr, self.tail_ptr);
     }
 
+    /// Rewind to the beginning of the socket buffer.
+    ///
+    /// This is a convenience method, equivalent to `seek(SeekFrom::Start(0))`.
+    pub fn rewind(&mut self) {
+        self.seek(SeekFrom::Start(0))
+    }
+
     /// Returns the current seek position from the start of the socket buffer.
     #[inline]
     pub fn position(&self) -> u16 {
         self.ptr
+    }
+
+    /// Remaining bytes in the socket buffer from the current seek position.
+    #[inline]
+    pub fn remain(&self) -> u16 {
+        self.tail_ptr.wrapping_sub(self.ptr)
     }
 
     /// Write data to the UDP socket, and return the number of bytes written.
@@ -326,10 +339,23 @@ impl<'a, W: Registers> UdpReader<'a, W> {
         self.ptr = seek.new_ptr(self.ptr, self.head_ptr(), self.tail_ptr);
     }
 
+    /// Rewind to the beginning of the UDP packet.
+    ///
+    /// This is a convenience method, equivalent to `seek(SeekFrom::Start(0))`.
+    pub fn rewind(&mut self) {
+        self.seek(SeekFrom::Start(0))
+    }
+
     /// Returns the current seek position from the start of the UDP packet.
     #[inline]
     pub fn position(&self) -> u16 {
         self.ptr
+    }
+
+    /// Remaining bytes in the UDP packet from the current seek position.
+    #[inline]
+    pub fn remain(&self) -> u16 {
+        self.tail_ptr.wrapping_sub(self.ptr)
     }
 
     /// Read data from the UDP socket, and return the number of bytes read.
