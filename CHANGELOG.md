@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.2] - 2022-03-14
+### Fixed
+- Fixed `udp_peek_from` and `udp_recv_from` returning `nb::Error::WouldBlock` instead of truncating when receiving a UDP packet larger than the buffer capacity.
+
 ## [0.7.1] - 2021-12-24
 ### Added
 - Added `send_if_free` and `send_to_if_free` to the `Udp` trait.

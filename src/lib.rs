@@ -309,12 +309,7 @@ pub trait Udp: Registers {
         ptr = ptr.wrapping_add(UDP_HEADER_LEN);
         let (pkt_size, origin) = deser_hdr(header);
 
-        // not all data as indicated by the header has been buffered
-        if rsr < pkt_size {
-            return Err(nb::Error::WouldBlock);
-        }
-
-        let read_size: usize = min(usize::from(pkt_size), buf.len());
+        let read_size: usize = min(min(usize::from(pkt_size), buf.len()), usize::from(rsr));
         if read_size != 0 {
             self.sn_rx_buf(sn, ptr, &mut buf[..read_size])?;
         }
@@ -382,12 +377,7 @@ pub trait Udp: Registers {
         ptr = ptr.wrapping_add(UDP_HEADER_LEN);
         let (pkt_size, origin) = deser_hdr(header);
 
-        // not all data as indicated by the header has been buffered
-        if rsr < pkt_size {
-            return Err(nb::Error::WouldBlock);
-        }
-
-        let read_size: usize = min(usize::from(pkt_size), buf.len());
+        let read_size: usize = min(min(usize::from(pkt_size), buf.len()), usize::from(rsr));
         if read_size != 0 {
             self.sn_rx_buf(sn, ptr, &mut buf[..read_size])?;
         }
