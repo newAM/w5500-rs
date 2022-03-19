@@ -7,12 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Added APIs for IO streaming to the socket buffers.
+- Added an `Error` type to support `read_exact` and `write_all` methods.
+- Added a `UdpHeader` type.
 
 ## Changed
 - Changed `udp_peek_from` to return `(usize, UdpHeader)` instead of `(usize, SocketAddrV4)`.
 - Changed `udp_peek_from_header` to return `UdpHeader` instead of `(usize, SocketAddrV4)`.
+
+## Removed
 - Removed the `nb` dependency to consolidate error types.
-  - Replace `nb::block!` with `w5500_hl::block!` in your code.
+  - Replace `nb::block!` with `w5500_hl::block!` for these methods:
+    - `udp_peek_from_header`
+    - `udp_peek_from`
+    - `udp_recv_from`
 
 ## [0.7.1] - 2021-12-24
 ### Added

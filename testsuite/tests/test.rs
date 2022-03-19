@@ -24,7 +24,7 @@ use w5500_hl::ll::{
     blocking::vdm::W5500, spi::MODE as W5500_MODE, LinkStatus, PhyCfg, Registers, Sn,
     SocketInterrupt,
 };
-use w5500_hl::{Common, Tcp, Udp};
+use w5500_hl::{Common, Error, Tcp, Udp, UdpHeader};
 
 // same panicking *behavior* as `panic-probe` but doesn't print a panic message
 // this prevents the panic message being printed *twice* when `defmt::panic` is invoked
@@ -172,21 +172,21 @@ mod tests {
         assert!(
             matches!(
                 w5500.udp_peek_from(UDP_SOCKET, &mut buf).unwrap_err(),
-                nb::Error::WouldBlock
+                Error::WouldBlock
             ),
             "udp_peek_from should block"
         );
         assert!(
             matches!(
                 w5500.udp_peek_from_header(UDP_SOCKET).unwrap_err(),
-                nb::Error::WouldBlock
+                Error::WouldBlock
             ),
             "udp_peek_from_header should block"
         );
         assert!(
             matches!(
                 w5500.udp_recv_from(UDP_SOCKET, &mut buf).unwrap_err(),
-                nb::Error::WouldBlock
+                Error::WouldBlock
             ),
             "udp_recv_from should block"
         );
@@ -287,14 +287,15 @@ mod tests {
         poll_int(w5500, UDP_SOCKET, SocketInterrupt::SENDOK_MASK);
         poll_int(w5500, UDP_SOCKET, SocketInterrupt::RECV_MASK);
 
-        let (n, from) = w5500.udp_peek_from_header(UDP_SOCKET).unwrap();
-        assert_eq!(n, UDP_DATA.len());
-        assert_eq!(from, PEER_UDP_ADDR);
+        let header: UdpHeader = w5500.udp_peek_from_header(UDP_SOCKET).unwrap();
+        assert_eq!(header.len as usize, UDP_DATA.len());
+        assert_eq!(header.origin, PEER_UDP_ADDR);
 
         let mut buf: [u8; UDP_DATA.len()] = [0; UDP_DATA.len()];
-        let (n, from) = w5500.udp_peek_from(UDP_SOCKET, &mut buf).unwrap();
+        let (n, header) = w5500.udp_peek_from(UDP_SOCKET, &mut buf).unwrap();
         assert_eq!(n, UDP_DATA.len());
-        assert_eq!(from, PEER_UDP_ADDR);
+        assert_eq!(n, header.len as usize);
+        assert_eq!(header.origin, PEER_UDP_ADDR);
         assert_eq!(buf, UDP_DATA);
 
         let mut buf: [u8; UDP_DATA.len()] = [0; UDP_DATA.len()];
@@ -307,7 +308,7 @@ mod tests {
         assert!(
             matches!(
                 w5500.udp_peek_from_header(UDP_SOCKET).unwrap_err(),
-                nb::Error::WouldBlock
+                Error::WouldBlock
             ),
             "udp_peek_from_header should block"
         );

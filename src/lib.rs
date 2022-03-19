@@ -130,7 +130,10 @@ pub struct UdpHeader {
     /// Origin IP address and port.
     pub origin: SocketAddrV4,
     /// Length of the UDP packet in bytes.
-    pub data_len: u16,
+    ///
+    /// This may not be equal to the length of the data in the socket buffer if
+    /// the UDP packet was truncated.
+    pub len: u16,
 }
 
 impl UdpHeader {
@@ -149,7 +152,7 @@ impl UdpHeader {
                 Ipv4Addr::new(buf[0], buf[1], buf[2], buf[3]),
                 u16::from_be_bytes([buf[4], buf[5]]),
             ),
-            data_len: u16::from_be_bytes([buf[6], buf[7]]),
+            len: u16::from_be_bytes([buf[6], buf[7]]),
         }
     }
 }
@@ -185,6 +188,8 @@ pub enum Error<E> {
     /// number of bytes but only a smaller number of bytes could be read; for
     /// example this may occur when a UDP packet is truncated.
     UnexpectedEof,
+    /// A write operation ran out of memory in the socket buffer.
+    OutOfMemory,
     /// The operation needs to block to complete, but the blocking operation was
     /// requested to not occur.
     ///
@@ -236,6 +241,7 @@ macro_rules! block {
 ///
 /// [`std::io::SeekFrom`]: https://doc.rust-lang.org/std/io/enum.SeekFrom.html
 #[derive(Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "defmt", derive(defmt::Format))]
 pub enum SeekFrom {
     /// Sets the offset to the provided number of bytes.
     Start(u16),
@@ -298,6 +304,7 @@ fn wrapping_add_signed(ptr: u16, offset: i16) -> u16 {
 /// # Ok::<(), w5500_hl::ll::blocking::vdm::Error<_, _>>(())
 /// ```
 #[derive(Debug)]
+#[cfg_attr(feature = "defmt", derive(defmt::Format))]
 pub struct UdpWriter<'a, W: Registers> {
     w5500: &'a mut W,
     sn: Sn,
@@ -351,6 +358,27 @@ impl<'a, W: Registers> UdpWriter<'a, W> {
         }
     }
 
+    /// Writes all the data, returning [`Error::OutOfMemory`] if the size of
+    /// `buf` exceeds the free memory available in the socket buffer.
+    ///
+    /// # Errors
+    ///
+    /// This method can only return:
+    ///
+    /// * [`Error::Other`]
+    /// * [`Error::OutOfMemory`]
+    pub fn write_all(&mut self, buf: &[u8]) -> Result<(), Error<W::Error>> {
+        let buf_len: u16 = buf.len().try_into().unwrap_or(u16::MAX);
+        let write_size: u16 = min(self.tail_ptr.wrapping_sub(self.ptr), buf_len);
+        if write_size != buf_len {
+            Err(Error::OutOfMemory)
+        } else {
+            self.w5500.set_sn_tx_buf(self.sn, self.ptr, buf)?;
+            self.ptr = self.ptr.wrapping_add(write_size);
+            Ok(())
+        }
+    }
+
     /// Send all data previously written with [`write`].
     ///
     /// The destination is set by the last call to [`Registers::set_sn_dest`],
@@ -373,6 +401,7 @@ impl<'a, W: Registers> UdpWriter<'a, W> {
 }
 
 #[derive(Debug)]
+#[cfg_attr(feature = "defmt", derive(defmt::Format))]
 pub struct UdpReader<'a, W: Registers> {
     w5500: &'a mut W,
     sn: Sn,
@@ -390,7 +419,7 @@ impl<'a, W: Registers> UdpReader<'a, W> {
 
     /// Head pointer, from the start of the UDP packet without the header.
     fn head_ptr(&self) -> u16 {
-        self.tail_ptr.wrapping_sub(self.header.data_len)
+        self.tail_ptr.wrapping_sub(self.header.len)
     }
 
     /// Seek to an offset of the UDP packet.
@@ -438,15 +467,20 @@ impl<'a, W: Registers> UdpReader<'a, W> {
     ///
     /// This function reads as many bytes as necessary to completely fill the
     /// specified buffer `buf`.
+    ///
+    /// # Errors
+    ///
+    /// This method can only return:
+    ///
+    /// * [`Error::Other`]
+    /// * [`Error::UnexpectedEof`]
     pub fn read_exact(&mut self, buf: &mut [u8]) -> Result<(), Error<W::Error>> {
         let buf_len: u16 = buf.len().try_into().unwrap_or(u16::MAX);
         let read_size: u16 = min(self.tail_ptr.wrapping_sub(self.ptr), buf_len);
         if read_size != buf_len {
             Err(Error::UnexpectedEof)
         } else {
-            self.w5500
-                .sn_rx_buf(self.sn, self.ptr, &mut buf[..(read_size as usize)])
-                .map_err(Error::Other)?;
+            self.w5500.sn_rx_buf(self.sn, self.ptr, buf)?;
             self.ptr = self.ptr.wrapping_add(read_size);
             Ok(())
         }
@@ -568,7 +602,10 @@ pub trait Udp: Registers {
     ///
     /// # Errors
     ///
-    /// This method can only return [`Error::WouldBlock`] or [`Error::Other`].
+    /// This method can only return:
+    ///
+    /// * [`Error::Other`]
+    /// * [`Error::WouldBlock`]
     ///
     /// # Panics
     ///
@@ -620,15 +657,15 @@ pub trait Udp: Registers {
         let header: UdpHeader = UdpHeader::deser(header);
 
         // not all data as indicated by the header has been buffered
-        if rsr < header.data_len {
+        if rsr < header.len {
             return Err(Error::WouldBlock);
         }
 
-        let read_size: usize = min(usize::from(header.data_len), buf.len());
+        let read_size: usize = min(usize::from(header.len), buf.len());
         if read_size != 0 {
             self.sn_rx_buf(sn, ptr, &mut buf[..read_size])?;
         }
-        ptr = ptr.wrapping_add(header.data_len);
+        ptr = ptr.wrapping_add(header.len);
         self.set_sn_rx_rd(sn, ptr)?;
         self.set_sn_cr(sn, SocketCommand::Recv)?;
         Ok((read_size, header.origin))
@@ -645,7 +682,10 @@ pub trait Udp: Registers {
     ///
     /// # Errors
     ///
-    /// This method can only return [`Error::WouldBlock`] or [`Error::Other`].
+    /// This method can only return:
+    ///
+    /// * [`Error::Other`]
+    /// * [`Error::WouldBlock`]
     ///
     /// # Panics
     ///
@@ -670,7 +710,7 @@ pub trait Udp: Registers {
     /// assert!(
     ///     number_of_bytes > buf.len(),
     ///     "Buffer was of len {} too small to receive all data: {} / {} bytes read",
-    ///     buf.len(), number_of_bytes, udp_header.data_len
+    ///     buf.len(), number_of_bytes, udp_header.len
     /// );
     ///
     /// let filled_buf = &mut buf[..number_of_bytes];
@@ -698,11 +738,11 @@ pub trait Udp: Registers {
         let header: UdpHeader = UdpHeader::deser(header);
 
         // not all data as indicated by the header has been buffered
-        if rsr < header.data_len {
+        if rsr < header.len {
             return Err(Error::WouldBlock);
         }
 
-        let read_size: usize = min(usize::from(header.data_len), buf.len());
+        let read_size: usize = min(usize::from(header.len), buf.len());
         if read_size != 0 {
             self.sn_rx_buf(sn, ptr, &mut buf[..read_size])?;
         }
@@ -718,7 +758,10 @@ pub trait Udp: Registers {
     ///
     /// # Errors
     ///
-    /// This method can only return [`Error::WouldBlock`] or [`Error::Other`].
+    /// This method can only return:
+    ///
+    /// * [`Error::Other`]
+    /// * [`Error::WouldBlock`]
     ///
     /// # Panics
     ///
@@ -739,7 +782,7 @@ pub trait Udp: Registers {
     ///
     /// w5500.udp_bind(Sn0, 8080)?;
     /// let udp_header: UdpHeader = block!(w5500.udp_peek_from_header(Sn0))?;
-    /// let bytes_to_allocate: usize = udp_header.data_len as usize;
+    /// let bytes_to_allocate: usize = udp_header.len as usize;
     ///
     /// let mut buf: Vec<u8> = vec![0; bytes_to_allocate];
     /// let (number_of_bytes, source) = block!(w5500.udp_recv_from(Sn0, &mut buf))?;
@@ -991,7 +1034,10 @@ pub trait Udp: Registers {
     ///
     /// # Errors
     ///
-    /// This method can only return [`Error::WouldBlock`] or [`Error::Other`].
+    /// This method can only return:
+    ///
+    /// * [`Error::Other`]
+    /// * [`Error::WouldBlock`]
     ///
     /// # Example
     ///
