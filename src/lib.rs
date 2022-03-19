@@ -103,7 +103,7 @@
 //! [w5500-regsim]: https://github.com/newAM/w5500-regsim-rs
 //! [Wiznet W5500]: https://www.wiznet.io/product-item/w5500/
 #![cfg_attr(docsrs, feature(doc_cfg))]
-#![no_std]
+#![cfg_attr(all(not(feature = "std"), not(test)), no_std)]
 
 #[cfg(feature = "defmt")]
 use dfmt as defmt;
@@ -329,7 +329,7 @@ impl<'a, W: Registers> UdpWriter<'a, W> {
     /// Returns the current seek position from the start of the socket buffer.
     #[inline]
     pub fn position(&self) -> u16 {
-        self.ptr
+        self.ptr.wrapping_sub(self.head_ptr)
     }
 
     /// Remaining bytes in the socket buffer from the current seek position.
@@ -343,10 +343,7 @@ impl<'a, W: Registers> UdpWriter<'a, W> {
     /// This will return [`nb::Error::WouldBlock`] without modifying the W5500
     /// socket buffer if there is not enough free space to write all of `buf`.
     pub fn write(&mut self, buf: &[u8]) -> Result<usize, W::Error> {
-        let write_size: u16 = min(
-            self.tail_ptr.wrapping_sub(self.ptr),
-            buf.len().try_into().unwrap_or(u16::MAX),
-        );
+        let write_size: u16 = min(self.remain(), buf.len().try_into().unwrap_or(u16::MAX));
         if write_size != 0 {
             self.w5500
                 .set_sn_tx_buf(self.sn, self.ptr, &buf[..(write_size as usize)])?;
@@ -369,7 +366,7 @@ impl<'a, W: Registers> UdpWriter<'a, W> {
     /// * [`Error::OutOfMemory`]
     pub fn write_all(&mut self, buf: &[u8]) -> Result<(), Error<W::Error>> {
         let buf_len: u16 = buf.len().try_into().unwrap_or(u16::MAX);
-        let write_size: u16 = min(self.tail_ptr.wrapping_sub(self.ptr), buf_len);
+        let write_size: u16 = min(self.remain(), buf_len);
         if write_size != buf_len {
             Err(Error::OutOfMemory)
         } else {
@@ -406,6 +403,7 @@ pub struct UdpReader<'a, W: Registers> {
     w5500: &'a mut W,
     sn: Sn,
     header: UdpHeader,
+    head_ptr: u16,
     tail_ptr: u16,
     ptr: u16,
 }
@@ -417,14 +415,9 @@ impl<'a, W: Registers> UdpReader<'a, W> {
         &self.header
     }
 
-    /// Head pointer, from the start of the UDP packet without the header.
-    fn head_ptr(&self) -> u16 {
-        self.tail_ptr.wrapping_sub(self.header.len)
-    }
-
     /// Seek to an offset of the UDP packet.
     pub fn seek(&mut self, seek: SeekFrom) {
-        self.ptr = seek.new_ptr(self.ptr, self.head_ptr(), self.tail_ptr);
+        self.ptr = seek.new_ptr(self.ptr, self.head_ptr, self.tail_ptr);
     }
 
     /// Rewind to the beginning of the UDP packet.
@@ -437,7 +430,7 @@ impl<'a, W: Registers> UdpReader<'a, W> {
     /// Returns the current seek position from the start of the UDP packet.
     #[inline]
     pub fn position(&self) -> u16 {
-        self.ptr
+        self.ptr.wrapping_sub(self.head_ptr)
     }
 
     /// Remaining bytes in the UDP packet from the current seek position.
@@ -448,10 +441,7 @@ impl<'a, W: Registers> UdpReader<'a, W> {
 
     /// Read data from the UDP socket, and return the number of bytes read.
     pub fn read(&mut self, buf: &mut [u8]) -> Result<usize, W::Error> {
-        let read_size: u16 = min(
-            self.tail_ptr.wrapping_sub(self.ptr),
-            buf.len().try_into().unwrap_or(u16::MAX),
-        );
+        let read_size: u16 = min(self.remain(), buf.len().try_into().unwrap_or(u16::MAX));
         if read_size != 0 {
             self.w5500
                 .sn_rx_buf(self.sn, self.ptr, &mut buf[..(read_size as usize)])?;
@@ -476,7 +466,7 @@ impl<'a, W: Registers> UdpReader<'a, W> {
     /// * [`Error::UnexpectedEof`]
     pub fn read_exact(&mut self, buf: &mut [u8]) -> Result<(), Error<W::Error>> {
         let buf_len: u16 = buf.len().try_into().unwrap_or(u16::MAX);
-        let read_size: u16 = min(self.tail_ptr.wrapping_sub(self.ptr), buf_len);
+        let read_size: u16 = min(self.remain(), buf_len);
         if read_size != buf_len {
             Err(Error::UnexpectedEof)
         } else {
@@ -1021,7 +1011,7 @@ pub trait Udp: Registers {
             sn,
             head_ptr: sn_tx_wr,
             tail_ptr: sn_tx_wr.wrapping_add(sn_tx_fsr),
-            ptr: sn_tx_fsr,
+            ptr: sn_tx_wr,
         })
     }
 
@@ -1046,11 +1036,10 @@ pub trait Udp: Registers {
     where
         Self: Sized,
     {
-        let sn_rx_rsr: u16 = match self.sn_rx_rsr(sn)?.checked_sub(UdpHeader::LEN) {
-            Some(rsr) => rsr,
-            // nothing to recieve
-            None => return Err(Error::WouldBlock),
-        };
+        let sn_rx_rsr: u16 = self.sn_rx_rsr(sn)?;
+        if sn_rx_rsr < UdpHeader::LEN {
+            return Err(Error::WouldBlock);
+        }
 
         debug_assert_eq!(self.sn_sr(sn)?, Ok(SocketStatus::Udp));
 
@@ -1059,11 +1048,14 @@ pub trait Udp: Registers {
         self.sn_rx_buf(sn, sn_rx_rd, &mut header)?;
         let header: UdpHeader = UdpHeader::deser(header);
 
+        let head_ptr: u16 = sn_rx_rd.wrapping_add(UdpHeader::LEN);
+
         Ok(UdpReader {
             w5500: self,
             sn,
+            head_ptr,
             tail_ptr: sn_rx_rd.wrapping_add(sn_rx_rsr),
-            ptr: sn_rx_rd.wrapping_add(UdpHeader::LEN),
+            ptr: head_ptr,
             header,
         })
     }
