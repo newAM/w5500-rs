@@ -941,8 +941,8 @@ dependencies = [
 name = "w5500-hl"
 version = "0.7.1"
 dependencies = [
+ "defmt",
  "embedded-hal-mock",
- "nb 1.0.0",
  "w5500-ll",
 ]
 

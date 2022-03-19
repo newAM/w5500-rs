@@ -105,7 +105,9 @@
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![no_std]
 
-pub use nb;
+#[cfg(feature = "defmt")]
+use dfmt as defmt;
+
 pub use w5500_ll as ll;
 
 use ll::{Protocol, Registers, Sn, SocketCommand, SocketMode, SocketStatus, SOCKETS};
@@ -123,6 +125,7 @@ use net::{Ipv4Addr, SocketAddrV4};
 
 /// W5500 UDP Header.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "defmt", derive(defmt::Format))]
 pub struct UdpHeader {
     /// Origin IP address and port.
     pub origin: SocketAddrV4,
@@ -171,11 +174,68 @@ where
     Ok(true)
 }
 
+/// Higher level W5500 errors.
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+#[cfg_attr(feature = "defmt", derive(defmt::Format))]
+#[non_exhaustive]
+pub enum Error<E> {
+    /// Unexpected "end of file".
+    ///
+    /// Returned when an operation could only succeed if it read a particular
+    /// number of bytes but only a smaller number of bytes could be read; for
+    /// example this may occur when a UDP packet is truncated.
+    UnexpectedEof,
+    /// The operation needs to block to complete, but the blocking operation was
+    /// requested to not occur.
+    ///
+    /// This is the same concept as the [`nb`] crate, but expanded to prevent
+    /// needless abstraction.
+    ///
+    /// [`nb`]: (https://docs.rs/nb/latest/nb/index.html)
+    WouldBlock,
+    /// Errors from the [`Registers`] trait implementation.
+    Other(E),
+}
+
+impl<E> From<E> for Error<E> {
+    fn from(error: E) -> Error<E> {
+        Error::Other(error)
+    }
+}
+
+/// Turns a non-blocking W5500 expression `$e` into a blocking operation.
+///
+/// This is accomplished by continuously calling the expression `$e` until it no
+/// longer returns [`Error::WouldBlock`].
+///
+/// # Input
+///
+/// An expression `$e` that evaluates to `Result<T, Error<E>>`
+///
+/// # Output
+///
+/// - `Ok(t)` if `$e` evaluates to `Ok(t)`
+/// - `Err(e)` if `$e` evaluates to any error that is not `Err(Error::WouldBlock)`
+#[macro_export]
+macro_rules! block {
+    ($e:expr) => {
+        loop {
+            #[allow(unreachable_patterns)]
+            match $e {
+                Err($crate::Error::WouldBlock) => {}
+                Err(e) => break Err(e),
+                Ok(x) => break Ok(x),
+            }
+        }
+    };
+}
+
 /// Enumeration of all possible methods to seek the W5500 socket buffers.
 ///
 /// This is designed to be similar to [`std::io::SeekFrom`].
 ///
 /// [`std::io::SeekFrom`]: https://doc.rust-lang.org/std/io/enum.SeekFrom.html
+#[derive(Debug, PartialEq, Eq)]
 pub enum SeekFrom {
     /// Sets the offset to the provided number of bytes.
     Start(u16),
@@ -218,7 +278,6 @@ fn wrapping_add_signed(ptr: u16, offset: i16) -> u16 {
 ///     net::{Ipv4Addr, SocketAddrV4},
 ///     Udp,
 ///     UdpWriter,
-///     nb::block,
 /// };
 ///
 /// const DEST: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::new(192, 0, 2, 1), 8081);
@@ -375,6 +434,24 @@ impl<'a, W: Registers> UdpReader<'a, W> {
         }
     }
 
+    /// Read the exact number of bytes required to fill `buf`.
+    ///
+    /// This function reads as many bytes as necessary to completely fill the
+    /// specified buffer `buf`.
+    pub fn read_exact(&mut self, buf: &mut [u8]) -> Result<(), Error<W::Error>> {
+        let buf_len: u16 = buf.len().try_into().unwrap_or(u16::MAX);
+        let read_size: u16 = min(self.tail_ptr.wrapping_sub(self.ptr), buf_len);
+        if read_size != buf_len {
+            Err(Error::UnexpectedEof)
+        } else {
+            self.w5500
+                .sn_rx_buf(self.sn, self.ptr, &mut buf[..(read_size as usize)])
+                .map_err(Error::Other)?;
+            self.ptr = self.ptr.wrapping_add(read_size);
+            Ok(())
+        }
+    }
+
     /// Mark the UDP packet as read, discarding any unread data.
     pub fn done(self) -> Result<&'a mut W, W::Error> {
         self.w5500.set_sn_rx_rd(self.sn, self.tail_ptr)?;
@@ -487,7 +564,11 @@ pub trait Udp: Registers {
     /// # Comparison to [`std::net::UdpSocket::recv_from`]
     ///
     /// * This method will always discard excess bytes from the socket buffer.
-    /// * This method is non-blocking, use [`nb::block`] to treat it as blocking.
+    /// * This method is non-blocking, use [`block`] to treat it as blocking.
+    ///
+    /// # Errors
+    ///
+    /// This method can only return [`Error::WouldBlock`] or [`Error::Other`].
     ///
     /// # Panics
     ///
@@ -498,9 +579,9 @@ pub trait Udp: Registers {
     /// ```no_run
     /// # use embedded_hal_mock as h;
     /// # let mut w5500 = w5500_ll::blocking::vdm::W5500::new(h::spi::Mock::new(&[]), h::pin::Mock::new(&[]));
-    /// use nb::block;
     /// use w5500_hl::{
     ///     ll::{Registers, Sn::Sn0},
+    ///     block,
     ///     Udp,
     /// };
     ///
@@ -515,7 +596,7 @@ pub trait Udp: Registers {
     /// );
     ///
     /// let filled_buf = &mut buf[..number_of_bytes];
-    /// # Ok::<(), w5500_hl::ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), w5500_hl::Error<_>>(())
     /// ```
     ///
     /// [`std::net::UdpSocket::recv_from`]: https://doc.rust-lang.org/std/net/struct.UdpSocket.html#method.recv_from
@@ -523,11 +604,11 @@ pub trait Udp: Registers {
         &mut self,
         sn: Sn,
         buf: &mut [u8],
-    ) -> nb::Result<(usize, SocketAddrV4), Self::Error> {
+    ) -> Result<(usize, SocketAddrV4), Error<Self::Error>> {
         let rsr: u16 = match self.sn_rx_rsr(sn)?.checked_sub(UdpHeader::LEN) {
             Some(rsr) => rsr,
             // nothing to recieve
-            None => return Err(nb::Error::WouldBlock),
+            None => return Err(Error::WouldBlock),
         };
 
         debug_assert_eq!(self.sn_sr(sn)?, Ok(SocketStatus::Udp));
@@ -540,7 +621,7 @@ pub trait Udp: Registers {
 
         // not all data as indicated by the header has been buffered
         if rsr < header.data_len {
-            return Err(nb::Error::WouldBlock);
+            return Err(Error::WouldBlock);
         }
 
         let read_size: usize = min(usize::from(header.data_len), buf.len());
@@ -560,7 +641,11 @@ pub trait Udp: Registers {
     /// # Comparison to [`std::net::UdpSocket::peek_from`]
     ///
     /// * This method will never discard excess bytes from the socket buffer.
-    /// * This method is non-blocking, use [`nb::block`] to treat it as blocking.
+    /// * This method is non-blocking, use [`block`] to treat it as blocking.
+    ///
+    /// # Errors
+    ///
+    /// This method can only return [`Error::WouldBlock`] or [`Error::Other`].
     ///
     /// # Panics
     ///
@@ -571,9 +656,9 @@ pub trait Udp: Registers {
     /// ```no_run
     /// # use embedded_hal_mock as h;
     /// # let mut w5500 = w5500_ll::blocking::vdm::W5500::new(h::spi::Mock::new(&[]), h::pin::Mock::new(&[]));
-    /// use nb::block;
     /// use w5500_hl::{
     ///     ll::{Registers, Sn::Sn0},
+    ///     block,
     ///     Udp,
     /// };
     ///
@@ -589,7 +674,7 @@ pub trait Udp: Registers {
     /// );
     ///
     /// let filled_buf = &mut buf[..number_of_bytes];
-    /// # Ok::<(), w5500_hl::ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), w5500_hl::Error<_>>(())
     /// ```
     ///
     /// [`std::net::UdpSocket::peek_from`]: https://doc.rust-lang.org/std/net/struct.UdpSocket.html#method.peek_from
@@ -597,11 +682,11 @@ pub trait Udp: Registers {
         &mut self,
         sn: Sn,
         buf: &mut [u8],
-    ) -> nb::Result<(usize, UdpHeader), Self::Error> {
+    ) -> Result<(usize, UdpHeader), Error<Self::Error>> {
         let rsr: u16 = match self.sn_rx_rsr(sn)?.checked_sub(UdpHeader::LEN) {
             Some(rsr) => rsr,
             // nothing to recieve
-            None => return Err(nb::Error::WouldBlock),
+            None => return Err(Error::WouldBlock),
         };
 
         debug_assert_eq!(self.sn_sr(sn)?, Ok(SocketStatus::Udp));
@@ -614,7 +699,7 @@ pub trait Udp: Registers {
 
         // not all data as indicated by the header has been buffered
         if rsr < header.data_len {
-            return Err(nb::Error::WouldBlock);
+            return Err(Error::WouldBlock);
         }
 
         let read_size: usize = min(usize::from(header.data_len), buf.len());
@@ -631,6 +716,10 @@ pub trait Udp: Registers {
     /// There is no [`std::net`](https://doc.rust-lang.org/std/net) equivalent
     /// for this method.
     ///
+    /// # Errors
+    ///
+    /// This method can only return [`Error::WouldBlock`] or [`Error::Other`].
+    ///
     /// # Panics
     ///
     /// * (debug) The socket must be opened as a UDP socket.
@@ -640,10 +729,9 @@ pub trait Udp: Registers {
     /// ```no_run
     /// # use embedded_hal_mock as h;
     /// # let mut w5500 = w5500_ll::blocking::vdm::W5500::new(h::spi::Mock::new(&[]), h::pin::Mock::new(&[]));
-    /// use nb::block;
     /// use w5500_hl::{
     ///     ll::{Registers, Sn::Sn0},
-    ///     Udp, UdpHeader
+    ///     Udp, UdpHeader, block
     /// };
     /// // global_allocator is currently avaliable on nightly for embedded rust
     /// extern crate alloc;
@@ -656,14 +744,14 @@ pub trait Udp: Registers {
     /// let mut buf: Vec<u8> = vec![0; bytes_to_allocate];
     /// let (number_of_bytes, source) = block!(w5500.udp_recv_from(Sn0, &mut buf))?;
     /// debug_assert_eq!(bytes_to_allocate, number_of_bytes);
-    /// # Ok::<(), w5500_hl::ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), w5500_hl::Error<_>>(())
     /// ```
-    fn udp_peek_from_header(&mut self, sn: Sn) -> nb::Result<UdpHeader, Self::Error> {
+    fn udp_peek_from_header(&mut self, sn: Sn) -> Result<UdpHeader, Error<Self::Error>> {
         let rsr: u16 = self.sn_rx_rsr(sn)?;
 
         // nothing to recieve
         if rsr < UdpHeader::LEN {
-            return Err(nb::Error::WouldBlock);
+            return Err(Error::WouldBlock);
         }
 
         debug_assert_eq!(self.sn_sr(sn)?, Ok(SocketStatus::Udp));
@@ -901,17 +989,21 @@ pub trait Udp: Registers {
     ///
     /// This will return [`nb::Result::WouldBlock`] if there is no data to read.
     ///
+    /// # Errors
+    ///
+    /// This method can only return [`Error::WouldBlock`] or [`Error::Other`].
+    ///
     /// # Example
     ///
     /// See [`UdpReader`].
-    fn udp_reader(&mut self, sn: Sn) -> nb::Result<UdpReader<Self>, Self::Error>
+    fn udp_reader(&mut self, sn: Sn) -> Result<UdpReader<Self>, Error<Self::Error>>
     where
         Self: Sized,
     {
         let sn_rx_rsr: u16 = match self.sn_rx_rsr(sn)?.checked_sub(UdpHeader::LEN) {
             Some(rsr) => rsr,
             // nothing to recieve
-            None => return Err(nb::Error::WouldBlock),
+            None => return Err(Error::WouldBlock),
         };
 
         debug_assert_eq!(self.sn_sr(sn)?, Ok(SocketStatus::Udp));
@@ -921,17 +1013,10 @@ pub trait Udp: Registers {
         self.sn_rx_buf(sn, sn_rx_rd, &mut header)?;
         let header: UdpHeader = UdpHeader::deser(header);
 
-        // not all data as indicated by the header has been buffered
-        if sn_rx_rsr < header.data_len {
-            return Err(nb::Error::WouldBlock);
-        }
-
         Ok(UdpReader {
             w5500: self,
             sn,
-            tail_ptr: sn_rx_rd
-                .wrapping_add(UdpHeader::LEN)
-                .wrapping_add(header.data_len),
+            tail_ptr: sn_rx_rd.wrapping_add(sn_rx_rsr),
             ptr: sn_rx_rd.wrapping_add(UdpHeader::LEN),
             header,
         })
