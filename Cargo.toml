@@ -1,0 +1,16 @@
+[workspace]
+members = [
+    "dhcp",
+    "hl",
+    "hl/testsuite-assets",
+    "hl/testsuite-peer",
+    "hl/testsuite",
+    "ll",
+    "regsim",
+]
+default-members = [
+    "dhcp",
+    "hl",
+    "ll",
+    "regsim",
+]

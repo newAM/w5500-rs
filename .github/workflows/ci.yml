@@ -1,0 +1,132 @@
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - '*'
+  pull_request:
+  schedule:
+    - cron: "13 3 * * *"
+
+name: CI
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    env: {"RUSTFLAGS": "-D warnings"}
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: x86_64-unknown-linux-gnu
+      - run: cargo build
+      - run: cargo build --features log
+      - run: cargo build --features defmt
+      - run: cargo build --features std
+      - run: cargo build --features embedded-hal
+
+  build_no_std:
+    name: Build no_std
+    runs-on: ubuntu-latest
+    env: {"RUSTFLAGS": "-D warnings"}
+    strategy:
+      matrix:
+        target:
+          - "thumbv6m-none-eabi"
+          - "thumbv7em-none-eabi"
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: ${{ matrix.target }}
+      - run: cargo build --target ${{ matrix.target }} -p w5500-ll
+      - run: cargo build --target ${{ matrix.target }} -p w5500-hl
+      - run: cargo build --target ${{ matrix.target }} -p w5500-dhcp
+      - run: cargo build --target ${{ matrix.target }} -p w5500-ll   --features defmt
+      - run: cargo build --target ${{ matrix.target }} -p w5500-hl   --features defmt
+      - run: cargo build --target ${{ matrix.target }} -p w5500-dhcp --features defmt
+      - run: cargo build --target ${{ matrix.target }} -p w5500-ll   --features embedded-hal
+      - run: cargo build --target ${{ matrix.target }} -p w5500-hl   --features embedded-hal
+      - run: cargo build --target ${{ matrix.target }} -p w5500-dhcp --features embedded-hal
+      - run: cargo build --target ${{ matrix.target }} -p w5500-dhcp --features log
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    env: {"RUSTFLAGS": "-D warnings"}
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - run: cargo test --features std,log,embedded-hal
+
+  clippy:
+    name: Clippy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          components: clippy
+      # not using clippy-check due to this issue:
+      # https://github.com/actions-rs/clippy-check/issues/2
+      - run: cargo clippy --features std,log,embedded-hal -- --deny warnings
+
+  format:
+    name: Format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly
+          components: rustfmt
+      - run: cargo +nightly fmt -- --check
+
+  rustdoc:
+    name: rustdoc
+    runs-on: ubuntu-latest
+    env: {"RUSTDOCFLAGS": "-D warnings --cfg docsrs"}
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly
+      - name: rustdoc
+        run: |
+          cd ll
+          cargo +nightly rustdoc --features std,defmt,embedded-hal
+          cd ../hl
+          cargo +nightly rustdoc --features std,defmt,embedded-hal
+          cd ../dhcp
+          cargo +nightly rustdoc --features std,defmt,embedded-hal
+          cd ../regsim
+          cargo +nightly rustdoc
+
+  hl-testsuite:
+    name: testsuite
+    runs-on: ubuntu-latest
+    env: {"RUSTFLAGS": "-D warnings"}
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: thumbv6m-none-eabi
+      - run: cargo test -p testsuite --target thumbv6m-none-eabi --no-run
+
+  hl-testsuite-peer:
+    name: testsuite-peer
+    runs-on: ubuntu-latest
+    env: {"RUSTFLAGS": "-D warnings"}
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - run: cargo build -p testsuite-peer

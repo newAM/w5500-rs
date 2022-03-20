@@ -17,22 +17,14 @@
 //!
 //! All features are disabled by default.
 //!
-//! * `embedded-hal`: Passthrough to [w5500-hl].
-//! * `std`: Passthrough to [w5500-hl].
+//! * `embedded-hal`: Passthrough to [`w5500-hl`].
+//! * `std`: Passthrough to [`w5500-hl`].
 //! * `defmt`: Enable logging with `defmt`.  Mutually exclusive with `log`.
-//!   Also a passthrough to [w5500-hl].
+//!   Also a passthrough to [`w5500-hl`].
 //! * `log`: Enable logging with `log`.  Mutually exclusive with `defmt`.
 //!
-//! # Related Crates
-//!
-//! * [w5500-ll] - Low level W5500 register accessors.
-//! * [w5500-hl] - Higher level socket operations.
-//! * [w5500-regsim] - Register simulation using [`std::net`].
-//!
 //! [`std::net`]: https://doc.rust-lang.org/std/net/index.html
-//! [w5500-hl]: https://github.com/newAM/w5500-hl-rs
-//! [w5500-ll]: https://github.com/newAM/w5500-ll-rs
-//! [w5500-regsim]: https://github.com/newAM/w5500-regsim-rs
+//! [`w5500-hl`]: https://github.com/newAM/w5500-hl-rs
 //! [Wiznet W5500]: https://www.wiznet.io/product-item/w5500/
 #![cfg_attr(docsrs, feature(doc_cfg), feature(doc_auto_cfg))]
 #![cfg_attr(all(not(feature = "std"), not(test)), no_std)]

@@ -4,13 +4,13 @@ version = "0.7.1"
 authors = ["Alex Martens <alex@thinglab.org>"]
 edition = "2021"
 rust-version = "1.56"
-repository = "https://github.com/newAM/w5500-hl-rs"
+repository = "https://github.com/newAM/w5500-rs"
 license = "MIT"
 description = "Driver for the Wiznet W5500 internet offload chip."
 readme = "README.md"
 keywords = ["spi", "driver", "embedded-hal-driver", "W5500", "wiznet"]
 categories = ["embedded", "hardware-support", "no-std"]
-homepage = "https://github.com/newAM/w5500-hl-rs"
+homepage = "https://github.com/newAM/w5500-rs"
 
 [features]
 defmt = ["w5500-ll/defmt"]
@@ -28,6 +28,3 @@ w5500-ll = { version = "0.10", features = ["embedded-hal", "defmt"] }
 [package.metadata.docs.rs]
 all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
-
-[workspace]
-members = ["testsuite", "testsuite-peer", "testsuite-assets"]

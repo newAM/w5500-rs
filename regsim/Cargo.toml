@@ -3,16 +3,13 @@ name = "w5500-regsim"
 version = "0.1.0-alpha.6"
 authors = ["Alex Martens <alex@thinglab.org>"]
 edition = "2021"
-repository = "https://github.com/newAM/w5500-regsim-rs"
+repository = "https://github.com/newAM/w5500-rs"
 license = "MIT"
 description = "Register simulation for the Wiznet W5500 internet offload chip."
 readme = "README.md"
 keywords = ["W5500", "wiznet"]
 categories = ["embedded", "development-tools"]
-homepage = "https://github.com/newAM/w5500-regsim-rs"
-
-[badges]
-maintenance = { status = "experimental" }
+homepage = "https://github.com/newAM/w5500-rs"
 
 [dependencies]
 log = "0.4"

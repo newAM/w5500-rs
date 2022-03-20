@@ -41,16 +41,7 @@
 //!   This is for testing purposes only, the `std` flag will not work on
 //!   embedded systems because it uses the standard library.
 //!
-//! # Related Crates
-//!
-//! * [w5500-dhcp] - DHCP client for the W5500.
-//! * [w5500-hl] - Higher level socket operations.
-//! * [w5500-regsim] - Register simulation using [`std::net`].
-//!
-//! [w5500-dhcp]: https://github.com/newAM/w5500-dhcp-rs
 //! [`std::net`]: https://doc.rust-lang.org/std/net/index.html
-//! [w5500-hl]: https://github.com/newAM/w5500-hl-rs
-//! [w5500-regsim]: https://github.com/newAM/w5500-regsim-rs
 //! [Wiznet W5500]: https://www.wiznet.io/product-item/w5500/
 //! [`blocking`]: https://docs.rs/w5500-ll/0.10.1/w5500_ll/blocking/index.html
 //! [`Registers`]: https://docs.rs/w5500-ll/0.10.1/w5500_ll/trait.Registers.html

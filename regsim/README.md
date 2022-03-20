@@ -1,8 +1,3 @@
-![Maintenance](https://img.shields.io/badge/maintenance-experimental-blue.svg)
-[![crates.io](https://img.shields.io/crates/v/w5500-regsim.svg)](https://crates.io/crates/w5500-regsim)
-[![docs.rs](https://docs.rs/w5500-regsim/badge.svg)](https://docs.rs/w5500-regsim/)
-[![CI](https://github.com/newAM/w5500-regsim-rs/workflows/CI/badge.svg)](https://github.com/newAM/w5500-regsim-rs/actions)
-
 # w5500-regsim
 
 Register simulation for the [Wiznet W5500] internet offload chip.

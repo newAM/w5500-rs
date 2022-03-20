@@ -1,7 +1,3 @@
-[![crates.io](https://img.shields.io/crates/v/w5500-hl.svg)](https://crates.io/crates/w5500-hl)
-[![docs.rs](https://docs.rs/w5500-hl/badge.svg)](https://docs.rs/w5500-hl/)
-[![CI](https://github.com/newAM/w5500-hl-rs/workflows/CI/badge.svg)](https://github.com/newAM/w5500-hl-rs/actions)
-
 # w5500-hl
 
 Platform agnostic rust driver for the [Wiznet W5500] internet offload chip.
@@ -85,17 +81,9 @@ const HTTP_PORT: u16 = 80;
 w5500.tcp_listen(HTTP_SOCKET, HTTP_PORT)?;
 ```
 
-## Related Crates
-
-* [w5500-dhcp] - DHCP client for the W5500.
-* [w5500-ll] - Low level W5500 register accessors.
-* [w5500-regsim] - Register simulation using [`std::net`].
-
 [`Registers`]: https://docs.rs/w5500-ll/latest/w5500_ll/trait.Registers.html
 [`std::net`]: https://doc.rust-lang.org/std/net/index.html
 [`Tcp`]: https://docs.rs/w5500-hl/0.7.1/w5500_hl/trait.Tcp.html
 [`Udp`]: https://docs.rs/w5500-hl/0.7.1/w5500_hl/trait.Udp.html
-[w5500-dhcp]: https://github.com/newAM/w5500-dhcp-rs
 [w5500-ll]: https://github.com/newAM/w5500-ll-rs
-[w5500-regsim]: https://github.com/newAM/w5500-regsim-rs
 [Wiznet W5500]: https://www.wiznet.io/product-item/w5500/
