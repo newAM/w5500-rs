@@ -130,3 +130,97 @@ jobs:
         with:
           toolchain: stable
       - run: cargo build -p testsuite-peer
+
+  release-ll:
+    name: w5500-ll crates.io release
+    if: startsWith(github.ref, 'refs/tags/ll/v')
+    needs:
+      - build
+      - build_no_std
+      - test
+      - clippy
+      - format
+      - rustdoc
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - name: Publish
+        run: |
+          cd ll
+          cargo publish --no-verify --token ${CRATES_IO_TOKEN}
+        env:
+          CRATES_IO_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
+
+  release-hl:
+    name: w5500-hl crates.io release
+    if: startsWith(github.ref, 'refs/tags/hl/v')
+    needs:
+      - build
+      - build_no_std
+      - test
+      - clippy
+      - format
+      - rustdoc
+      - hl-testsuite
+      - hl-testsuite-peer
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - name: Publish
+        run: |
+          cd hl
+          cargo publish --no-verify --token ${CRATES_IO_TOKEN}
+        env:
+          CRATES_IO_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
+
+  release-dhcp:
+    name: w5500-dhcp crates.io release
+    if: startsWith(github.ref, 'refs/tags/dhcp/v')
+    needs:
+      - build
+      - build_no_std
+      - test
+      - clippy
+      - format
+      - rustdoc
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - name: Publish
+        run: |
+          cd dhcp
+          cargo publish --no-verify --token ${CRATES_IO_TOKEN}
+        env:
+          CRATES_IO_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
+
+  release-regsim:
+    name: w5500-regsim crates.io release
+    if: startsWith(github.ref, 'refs/tags/regsim/v')
+    needs:
+      - build
+      - build_no_std
+      - test
+      - clippy
+      - format
+      - rustdoc
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - name: Publish
+        run: |
+          cd regsim
+          cargo publish --no-verify --token ${CRATES_IO_TOKEN}
+        env:
+          CRATES_IO_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}

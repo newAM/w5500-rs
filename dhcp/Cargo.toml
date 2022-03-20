@@ -18,7 +18,7 @@ defmt = ["w5500-hl/defmt", "dfmt"]
 std = ["w5500-hl/std"]
 
 [dependencies]
-w5500-hl = "0.7.1"
+w5500-hl = { path = "../hl", version = "0.7.1" }
 dfmt = { package = "defmt", version = "0.3", optional = true }
 log = { version = "0.4", optional = true }
 
