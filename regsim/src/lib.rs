@@ -532,15 +532,14 @@ impl W5500 {
                         }
                     };
                     log::info!("[{:?}] recv datagram of len {} from {}", sn, num, origin);
-                    let numu16 = u16::try_from(num).unwrap();
+                    let num: u16 = u16::try_from(num).unwrap_or(u16::MAX);
                     // write out the header
                     self.sim_set_sn_rx_buf(sn, &origin.ip().octets());
                     self.sim_set_sn_rx_buf(sn, &origin.port().to_be_bytes());
-                    self.sim_set_sn_rx_buf(sn, &numu16.to_be_bytes());
+                    self.sim_set_sn_rx_buf(sn, &num.to_be_bytes());
                     // write the rest of the data
-                    self.sim_set_sn_rx_buf(sn, &buf[..num]);
+                    self.sim_set_sn_rx_buf(sn, &buf[..usize::from(num)]);
                     self.raise_sn_ir(sn, SocketInterrupt::RECV_MASK);
-                    log::warn!("TODO: shorten buf by 8 for a UDP socket");
                 }
                 Err(e) => match e.kind() {
                     io::ErrorKind::WouldBlock => {}
