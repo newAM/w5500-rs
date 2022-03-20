@@ -405,7 +405,7 @@ where
             )
             .ok_or(Error::UnexpectedEof)?;
 
-        let mut writer = self.w5500.writer(self.dhcp.sn)?;
+        let mut writer: Writer<W5500> = self.w5500.writer(self.dhcp.sn)?;
         writer.write_all(buf)?;
         writer.send()?;
 

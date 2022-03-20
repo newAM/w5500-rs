@@ -109,7 +109,7 @@ fn main() {
     let tx_bytes = w5500
         .tcp_write(MQTT_SOCKET, &MQTT_CONNECT)
         .expect("Failed to send CONNECT");
-    assert_eq!(tx_bytes, MQTT_CONNECT.len());
+    assert_eq!(usize::from(tx_bytes), MQTT_CONNECT.len());
 
     // wait for the RECV interrupt, indicating there is data to read
     loop {
@@ -133,7 +133,7 @@ fn main() {
     let rx_bytes = w5500
         .tcp_read(MQTT_SOCKET, &mut buf)
         .expect("Failed to read CONNACK");
-    let filled_buf = &buf[..rx_bytes];
+    let filled_buf = &buf[..rx_bytes.into()];
 
     // check the recieved packet is a CONNACK
     assert_eq!(filled_buf[0], 2 << 4);
