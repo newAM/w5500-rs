@@ -326,7 +326,11 @@ pub trait Write<'a, W: Registers> {
     /// Send all data previously written with [`write`] and [`write_all`].
     ///
     /// For [`UdpWriter`] the destination is set by the last call to
-    /// [`Registers::set_sn_dest`], [`Udp::send_to`], or [`UdpWriter::send_to`].
+    /// [`Registers::set_sn_dest`], [`Udp::udp_send_to`], or
+    /// [`UdpWriter::send_to`].
+    ///
+    /// [`write`]: Write::write
+    /// [`write_all`]: Write::write_all
     fn send(self) -> Result<&'a mut W, W::Error>;
 }
 

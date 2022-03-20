@@ -55,6 +55,7 @@ impl UdpHeader {
 ///     ll::{Registers, Sn::Sn0},
 ///     net::{Ipv4Addr, SocketAddrV4},
 ///     Udp,
+///     Write,
 ///     UdpWriter,
 /// };
 ///
@@ -274,6 +275,7 @@ pub trait Udp: Registers {
     /// # Ok::<(), w5500_hl::ll::blocking::vdm::Error<_, _>>(())
     /// ```
     ///
+    /// [`net::SocketAddrV4`]: [crate::net::SocketAddrV4]
     /// [`std::net::UdpSocket::bind`]: https://doc.rust-lang.org/std/net/struct.UdpSocket.html#method.bind
     /// [source IP register]: w5500_ll::Registers::sipr
     fn udp_bind(&mut self, sn: Sn, port: u16) -> Result<(), Self::Error> {
@@ -613,7 +615,7 @@ pub trait Udp: Registers {
     /// On success, returns the number of bytes written.
     ///
     /// The destination is set by the last call to [`Registers::set_sn_dest`],
-    /// [`Udp::send_to`], or [`UdpWrite::send_to`].
+    /// [`Udp::udp_send_to`], or [`UdpWriter::send_to`].
     ///
     /// # Panics
     ///
@@ -641,10 +643,6 @@ pub trait Udp: Registers {
     /// assert_eq!(usize::from(tx_bytes), buf.len());
     /// # Ok::<(), w5500_hl::ll::blocking::vdm::Error<_, _>>(())
     /// ```
-    ///
-    /// [`Registers::set_sn_dest`]: w5500_ll::Registers::set_sn_dest
-    /// [`Udp::send_to`]: Udp::udp_send_to
-    /// [`UdpWrite::send_to`]: UdpWrite::udp_send_to
     fn udp_send(&mut self, sn: Sn, buf: &[u8]) -> Result<u16, Self::Error> {
         debug_assert_eq!(self.sn_sr(sn)?, Ok(SocketStatus::Udp));
 
@@ -664,7 +662,7 @@ pub trait Udp: Registers {
     /// On success, returns the number of bytes written.
     ///
     /// The destination is set by the last call to [`Registers::set_sn_dest`],
-    /// [`Udp::send_to`], or [`UdpWrite::send_to`].
+    /// [`Udp::udp_send_to`], or [`UdpWriter::send_to`].
     ///
     /// This will transmit only if there is enough free space in the W5500
     /// transmit buffer.
@@ -695,10 +693,6 @@ pub trait Udp: Registers {
     /// assert_eq!(usize::from(tx_bytes), buf.len());
     /// # Ok::<(), w5500_hl::ll::blocking::vdm::Error<_, _>>(())
     /// ```
-    ///
-    /// [`Registers::set_sn_dest`]: w5500_ll::Registers::set_sn_dest
-    /// [`Udp::send_to`]: Udp::udp_send_to
-    /// [`UdpWrite::send_to`]: UdpWrite::udp_send_to
     fn udp_send_if_free(&mut self, sn: Sn, buf: &[u8]) -> Result<u16, Self::Error> {
         debug_assert_eq!(self.sn_sr(sn)?, Ok(SocketStatus::Udp));
 
