@@ -46,10 +46,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.0-alpha.1] - 2021-01-31
 - Initial release
 
-[Unreleased]: https://github.com/newAM/w5500-regsim-rs/compare/v0.1.0-alpha.6...HEAD
-[0.1.0-alpha.6]: https://github.com/newAM/w5500-regsim-rs/compare/v0.1.0-alpha.5...v0.1.0-alpha.6
-[0.1.0-alpha.5]: https://github.com/newAM/w5500-regsim-rs/compare/v0.1.0-alpha.4...v0.1.0-alpha.5
-[0.1.0-alpha.4]: https://github.com/newAM/w5500-regsim-rs/compare/v0.1.0-alpha.3...v0.1.0-alpha.4
-[0.1.0-alpha.3]: https://github.com/newAM/w5500-regsim-rs/compare/v0.1.0-alpha.2...v0.1.0-alpha.3
-[0.1.0-alpha.2]: https://github.com/newAM/w5500-regsim-rs/compare/v0.1.0-alpha.1...v0.1.0-alpha.2
-[0.1.0-alpha.1]: https://github.com/newAM/w5500-regsim-rs/releases/tag/v0.1.0-alpha.1
+[Unreleased]: https://github.com/newAM/w5500-rs/compare/regsim%2Fv0.1.0-alpha.6...HEAD
+[0.1.0-alpha.6]: https://github.com/newAM/w5500-rs/compare/regsim%2Fv0.1.0-alpha.5...regsim%2Fv0.1.0-alpha.6
+[0.1.0-alpha.5]: https://github.com/newAM/w5500-rs/compare/regsim%2Fv0.1.0-alpha.4...regsim%2Fv0.1.0-alpha.5
+[0.1.0-alpha.4]: https://github.com/newAM/w5500-rs/compare/regsim%2Fv0.1.0-alpha.3...regsim%2Fv0.1.0-alpha.4
+[0.1.0-alpha.3]: https://github.com/newAM/w5500-rs/compare/regsim%2Fv0.1.0-alpha.2...regsim%2Fv0.1.0-alpha.3
+[0.1.0-alpha.2]: https://github.com/newAM/w5500-rs/compare/regsim%2Fv0.1.0-alpha.1...regsim%2Fv0.1.0-alpha.2
+[0.1.0-alpha.1]: https://github.com/newAM/w5500-rs/releases/tag/regsim%2Fv0.1.0-alpha.1

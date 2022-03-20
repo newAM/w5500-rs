@@ -68,14 +68,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.0-alpha.1] - 2021-01-31
 - Initial release
 
-[Unreleased]: https://github.com/newAM/w5500-hl-rs/compare/v0.7.1...HEAD
-[0.7.1]: https://github.com/newAM/w5500-hl-rs/compare/v0.7.0...v0.7.1
-[0.7.0]: https://github.com/newAM/w5500-hl-rs/compare/v0.6.0...v0.7.0
-[0.6.0]: https://github.com/newAM/w5500-hl-rs/compare/v0.5.0...v0.6.0
-[0.5.0]: https://github.com/newAM/w5500-hl-rs/compare/v0.4.0...v0.5.0
-[0.4.0]: https://github.com/newAM/w5500-hl-rs/compare/v0.3.0...v0.4.0
-[0.3.0]: https://github.com/newAM/w5500-hl-rs/compare/v0.2.0...v0.3.0
-[0.2.0]: https://github.com/newAM/w5500-hl-rs/compare/v0.1.0...v0.2.0
-[0.1.0]: https://github.com/newAM/w5500-hl-rs/compare/v0.1.0-alpha.2...v0.1.0
-[0.1.0-alpha.2]: https://github.com/newAM/w5500-hl-rs/compare/v0.1.0-alpha.1...v0.1.0-alpha.2
-[0.1.0-alpha.1]: https://github.com/newAM/w5500-hl-rs/releases/tag/v0.1.0-alpha.1
+[Unreleased]: https://github.com/newAM/w5500-rs/compare/hl%2Fv0.7.1...HEAD
+[0.7.1]: https://github.com/newAM/w5500-rs/compare/hl%2Fv0.7.0...hl%2Fv0.7.1
+[0.7.0]: https://github.com/newAM/w5500-rs/compare/hl%2Fv0.6.0...hl%2Fv0.7.0
+[0.6.0]: https://github.com/newAM/w5500-rs/compare/hl%2Fv0.5.0...hl%2Fv0.6.0
+[0.5.0]: https://github.com/newAM/w5500-rs/compare/hl%2Fv0.4.0...hl%2Fv0.5.0
+[0.4.0]: https://github.com/newAM/w5500-rs/compare/hl%2Fv0.3.0...hl%2Fv0.4.0
+[0.3.0]: https://github.com/newAM/w5500-rs/compare/hl%2Fv0.2.0...hl%2Fv0.3.0
+[0.2.0]: https://github.com/newAM/w5500-rs/compare/hl%2Fv0.1.0...hl%2Fv0.2.0
+[0.1.0]: https://github.com/newAM/w5500-rs/compare/hl%2Fv0.1.0-alpha.2...hl%2Fv0.1.0
+[0.1.0-alpha.2]: https://github.com/newAM/w5500-rs/compare/hl%2Fv0.1.0-alpha.1...hl%2Fv0.1.0-alpha.2
+[0.1.0-alpha.1]: https://github.com/newAM/w5500-rs/releases/tag/hl%2Fv0.1.0-alpha.1
