@@ -319,15 +319,15 @@ pub trait Read<'a, W: Registers> {
 ///     ll::{Registers, Sn::Sn0},
 ///     net::{Ipv4Addr, SocketAddrV4},
 ///     Udp,
-///     Write,
-///     UdpWriter,
+///     Common,
+///     Writer,
 /// };
 ///
 /// const DEST: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::new(192, 0, 2, 1), 8081);
 ///
 /// w5500.udp_bind(Sn0, 8080)?;
 ///
-/// let mut udp_writer: UdpWriter<_> = w5500.udp_writer(Sn0)?;
+/// let mut udp_writer: Writer<_> = w5500.writer(Sn0)?;
 ///
 /// let data_header: [u8; 10] = [0; 10];
 /// let n_written: u16 = udp_writer.write(&data_header)?;
@@ -337,7 +337,7 @@ pub trait Read<'a, W: Registers> {
 /// let n_written: u16 = udp_writer.write(&data)?;
 /// assert_eq!(usize::from(n_written), data.len());
 ///
-/// udp_writer.send_to(&DEST)?;
+/// udp_writer.udp_send_to(&DEST)?;
 /// # Ok::<(), w5500_hl::ll::blocking::vdm::Error<_, _>>(())
 /// ```
 #[derive(Debug)]

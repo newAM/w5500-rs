@@ -7,6 +7,56 @@ use w5500_ll::{
     net::SocketAddrV4, Protocol, Registers, Sn, SocketCommand, SocketMode, SocketStatus,
 };
 
+/// Streaming reader for a TCP socket buffer.
+///
+/// This implements the [`Read`] and [`Seek`] traits.
+///
+/// Created with [`Tcp::tcp_reader`].
+///
+/// # Example
+///
+/// ```no_run
+/// # use embedded_hal_mock as h;
+/// # let mut w5500 = w5500_ll::blocking::vdm::W5500::new(h::spi::Mock::new(&[]), h::pin::Mock::new(&[]));
+/// use w5500_hl::{
+///     ll::{Registers, Sn, SocketInterrupt},
+///     net::{Ipv4Addr, SocketAddrV4},
+///     Tcp,
+///     TcpReader,
+///     Read,
+/// };
+///
+/// const MQTT_SOCKET: Sn = Sn::Sn0;
+/// const MQTT_SOURCE_PORT: u16 = 33650;
+/// const MQTT_SERVER: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::new(192, 168, 2, 10), 1883);
+///
+/// w5500.tcp_connect(MQTT_SOCKET, MQTT_SOURCE_PORT, &MQTT_SERVER)?;
+///
+/// // ... wait for a CON interrupt
+///
+/// const CONNECT: [u8; 14] = [
+///     0x10, 0x0C, 0x00, 0x04, b'M', b'Q', b'T', b'T', 0x04, 0x02, 0x0E, 0x10, 0x00, 0x00,
+/// ];
+/// let tx_bytes: u16 = w5500.tcp_write(MQTT_SOCKET, &CONNECT)?;
+/// assert_eq!(usize::from(tx_bytes), CONNECT.len());
+///
+/// // ... wait for a RECV interrupt
+///
+/// let mut reader: TcpReader<_> = w5500.tcp_reader(MQTT_SOCKET)?;
+/// let mut buf = [0; 2];
+///
+/// // read the first two bytes
+/// reader.read_exact(&mut buf)?;
+/// // ... do something with the data
+///
+/// // read another two bytes into the same buffer
+/// reader.read_exact(&mut buf)?;
+/// // ... do something with the data
+///
+/// // mark the data as read
+/// reader.done()?;
+/// # Ok::<(), w5500_hl::Error<_>>(())
+/// ```
 #[derive(Debug)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
 pub struct TcpReader<'a, W: Registers> {

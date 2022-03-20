@@ -42,6 +42,11 @@ impl UdpHeader {
     }
 }
 
+/// Streaming reader for a UDP socket buffer.
+///
+/// This implements the [`Read`] and [`Seek`] traits.
+///
+/// Created with [`Udp::udp_reader`].
 #[derive(Debug)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
 pub struct UdpReader<'a, W: Registers> {
