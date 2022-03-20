@@ -275,6 +275,7 @@ impl W5500 {
     }
 
     fn socket_cmd_open(&mut self, sn: Sn) -> io::Result<()> {
+        let sipr = self.regs.sipr;
         let socket = self.socket_mut(sn);
 
         // These registers are initialized by the OPEN command
@@ -295,8 +296,7 @@ impl W5500 {
                 self.sim_set_sn_sr(sn, SocketStatus::Init);
             }
             Ok(Protocol::Udp) => {
-                let local =
-                    SocketAddrV4::new(std::net::Ipv4Addr::new(0, 0, 0, 0), socket.regs.dport);
+                let local = SocketAddrV4::new(sipr.into(), socket.regs.port);
                 log::info!("[{:?}] binding UDP socket to {}", sn, local);
 
                 match UdpSocket::bind(local) {
