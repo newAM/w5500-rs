@@ -343,7 +343,7 @@ impl<'a, W: Registers> PktSer<'a, W> {
     }
 }
 
-pub fn send_dhcp_discover<'a, W: Registers>(
+pub fn send_dhcp_discover<W: Registers>(
     w5500: &mut W,
     sn: Sn,
     mac: &Eui48Addr,
@@ -357,7 +357,7 @@ pub fn send_dhcp_discover<'a, W: Registers>(
     Ok(())
 }
 
-pub fn send_dhcp_request<'a, W: Registers>(
+pub fn send_dhcp_request<W: Registers>(
     w5500: &mut W,
     sn: Sn,
     mac: &Eui48Addr,
