@@ -40,6 +40,7 @@ use dfmt as defmt;
 mod pkt;
 mod rand;
 
+use hl::{Common, Read, UdpReader};
 pub use w5500_hl as hl;
 pub use w5500_hl::ll;
 
@@ -49,9 +50,8 @@ use w5500_hl::{
         net::{Ipv4Addr, SocketAddrV4},
         Registers, Sn,
     },
-    nb::{self, Error::WouldBlock},
     net::Eui48Addr,
-    Udp,
+    Error, Udp, Writer,
 };
 
 /// DHCP destination port.
@@ -174,30 +174,6 @@ impl Dhcp {
     }
 }
 
-/// DHCP client errors.
-#[derive(Debug)]
-#[cfg_attr(feature = "defmt", derive(defmt::Format))]
-pub enum Error<W5500> {
-    /// Error from the W5500.
-    W5500(W5500),
-    /// DHCP buffer is too small.
-    ///
-    /// When this error is returned the state of the W5500 has not changed.
-    /// The function should be called again with a larger buffer.
-    BufOverflow,
-    /// W5500 TX buffer is too small.
-    ///
-    /// When this error is returned the state of the W5500 may have changed;
-    /// but no data is transmitted.
-    /// The function should be called again after adjusting the W5500 TX buffer
-    /// size.
-    TxOverflow,
-    /// A requested DHCP option is missing.
-    ///
-    /// W5500 state was modified, reset the DHCP server and re-initialize.
-    MissingOption,
-}
-
 /// DHCP client.
 ///
 /// # Hardware Requirements
@@ -243,8 +219,8 @@ where
     /// This is intended to be called before before calling
     /// [`on_recv_interrupt`] or [`poll`].
     ///
-    /// You will to use a large buffer for the DHCP client, typically 800 bytes
-    /// is sufficient.
+    /// At the moment you will need to use a large buffer for the DHCP client,
+    /// typically 800 bytes is sufficient.
     ///
     /// [`poll`]: Client::poll
     /// [`on_recv_interrupt`]: Client::on_recv_interrupt
@@ -266,21 +242,21 @@ where
                     self.request(monotonic_secs)?;
                 }
                 State::Requesting | State::Renewing | State::Rebinding => {
-                    match pkt.msg_type().ok_or(Error::MissingOption)? {
+                    match pkt.msg_type().ok_or(Error::UnexpectedEof)? {
                         MsgType::Ack => {
                             let subnet_mask: Ipv4Addr =
-                                pkt.subnet_mask().ok_or(Error::MissingOption)?;
+                                pkt.subnet_mask().ok_or(Error::UnexpectedEof)?;
                             info!("subnet_mask: {}", subnet_mask);
                             let gateway: Ipv4Addr =
-                                pkt.dhcp_server().ok_or(Error::MissingOption)?;
+                                pkt.dhcp_server().ok_or(Error::UnexpectedEof)?;
                             info!("gateway: {}", gateway);
                             let renewal_time: u32 =
-                                pkt.renewal_time().ok_or(Error::MissingOption)?;
+                                pkt.renewal_time().ok_or(Error::UnexpectedEof)?;
                             info!("renewal_time: {}", renewal_time);
                             let rebinding_time: u32 =
-                                pkt.rebinding_time().ok_or(Error::MissingOption)?;
+                                pkt.rebinding_time().ok_or(Error::UnexpectedEof)?;
                             info!("rebinding_time: {}", rebinding_time);
-                            let lease_time: u32 = pkt.lease_time().ok_or(Error::MissingOption)?;
+                            let lease_time: u32 = pkt.lease_time().ok_or(Error::UnexpectedEof)?;
                             info!("lease_time: {}", lease_time);
 
                             self.dhcp.t1 = renewal_time;
@@ -291,9 +267,9 @@ where
 
                             info!("dhcp.ip: {}", self.dhcp.ip);
 
-                            self.w5500.set_subr(&subnet_mask).map_err(Error::W5500)?;
-                            self.w5500.set_sipr(&self.dhcp.ip).map_err(Error::W5500)?;
-                            self.w5500.set_gar(&gateway).map_err(Error::W5500)?;
+                            self.w5500.set_subr(&subnet_mask)?;
+                            self.w5500.set_sipr(&self.dhcp.ip)?;
+                            self.w5500.set_gar(&gateway)?;
 
                             self.dhcp.state = State::Bound;
                             self.dhcp.timeout = None;
@@ -361,64 +337,58 @@ where
         let mut pkt = PktSer::new(self.buf);
         let buf: &[u8] = pkt
             .dhcp_discover(&self.dhcp.mac, self.dhcp.hostname, self.dhcp.xid)
-            .ok_or(Error::BufOverflow)?;
+            .ok_or(Error::UnexpectedEof)?;
 
-        self.w5500.set_sipr(&self.dhcp.ip).map_err(Error::W5500)?;
-        self.w5500
-            .udp_bind(self.dhcp.sn, DHCP_SOURCE_PORT)
-            .map_err(Error::W5500)?;
+        self.w5500.set_sipr(&self.dhcp.ip)?;
+        self.w5500.udp_bind(self.dhcp.sn, DHCP_SOURCE_PORT)?;
 
-        let tx_bytes: usize = self
-            .w5500
-            .udp_send_to_if_free(self.dhcp.sn, buf, &DHCP_BROADCAST)
-            .map_err(Error::W5500)?;
-
-        if tx_bytes == 0 {
-            Err(Error::TxOverflow)
-        } else {
-            self.dhcp.state = State::Selecting;
-            self.dhcp.timeout = Some(monotonic_secs);
-            Ok(())
-        }
+        let mut writer: Writer<_> = self.w5500.writer(self.dhcp.sn)?;
+        writer.write_all(buf)?;
+        writer.udp_send_to(&DHCP_BROADCAST)?;
+        self.dhcp.state = State::Selecting;
+        self.dhcp.timeout = Some(monotonic_secs);
+        Ok(())
     }
 
     fn recv(&mut self) -> Result<Option<PktDe>, Error<E>> {
-        match self.w5500.udp_peek_from_header(self.dhcp.sn) {
-            Ok((len, _)) => {
-                if len > self.buf.len() {
-                    Err(Error::BufOverflow)
-                } else {
-                    let (len, src) = nb::block!(self.w5500.udp_recv_from(self.dhcp.sn, self.buf))
-                        .map_err(Error::W5500)?;
-
-                    debug!("RX {} B from {}", len, src);
-
-                    let pkt: PktDe = PktDe::new(self.buf);
-
-                    if pkt.is_bootreply() {
-                        debug!("packet is not a bootreply");
-                        return Ok(None);
-                    }
-
-                    let recv_xid: u32 = pkt.xid().ok_or(Error::BufOverflow)?;
-
-                    if recv_xid != self.dhcp.xid {
-                        debug!(
-                            "recv xid {:08X} does not match ours {:08X}",
-                            recv_xid, self.dhcp.xid
-                        );
-                        return Ok(None);
-                    }
-
-                    Ok(Some(pkt))
-                }
-            }
-            Err(WouldBlock) => {
+        let mut reader: UdpReader<_> = match self.w5500.udp_reader(self.dhcp.sn) {
+            Ok(r) => r,
+            Err(Error::WouldBlock) => {
                 error!("interrupt is misconfigured");
-                Ok(None)
+                return Ok(None);
             }
-            Err(nb::Error::Other(e)) => Err(Error::W5500(e)),
+            Err(e) => return Err(e),
+        };
+        let n: u16 = reader.read(self.buf)?;
+        if n < reader.header().len {
+            warn!(
+                "failed to buffer entire UDP datagram {}/{}",
+                n,
+                reader.header().len
+            );
         }
+
+        debug!(
+            "RX {} B from {}",
+            reader.header().len,
+            reader.header().origin
+        );
+
+        let pkt: PktDe = PktDe::new(self.buf);
+        if pkt.is_bootreply() {
+            debug!("packet is not a bootreply");
+            return Ok(None);
+        }
+        let recv_xid: u32 = pkt.xid().ok_or(Error::UnexpectedEof)?;
+        if recv_xid != self.dhcp.xid {
+            debug!(
+                "recv xid {:08X} does not match ours {:08X}",
+                recv_xid, self.dhcp.xid
+            );
+            return Ok(None);
+        }
+
+        Ok(Some(pkt))
     }
 
     fn request(&mut self, monotonic_secs: u32) -> Result<(), Error<E>> {
@@ -433,19 +403,14 @@ where
                 self.dhcp.hostname,
                 self.dhcp.xid,
             )
-            .ok_or(Error::BufOverflow)?;
+            .ok_or(Error::UnexpectedEof)?;
 
-        let tx_bytes: usize = self
-            .w5500
-            .udp_send_if_free(self.dhcp.sn, buf)
-            .map_err(Error::W5500)?;
+        let mut writer = self.w5500.writer(self.dhcp.sn)?;
+        writer.write_all(buf)?;
+        writer.send()?;
 
-        if tx_bytes == 0 {
-            Err(Error::TxOverflow)
-        } else {
-            self.dhcp.state = State::Requesting;
-            self.dhcp.timeout = Some(monotonic_secs);
-            Ok(())
-        }
+        self.dhcp.state = State::Requesting;
+        self.dhcp.timeout = Some(monotonic_secs);
+        Ok(())
     }
 }
