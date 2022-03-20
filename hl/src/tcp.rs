@@ -1,7 +1,7 @@
 #[cfg(feature = "defmt")]
 use dfmt as defmt;
 
-use crate::{port_is_unique, Error, Read, Seek, SeekFrom, Write};
+use crate::{port_is_unique, Error, Read, Seek, SeekFrom};
 use core::cmp::min;
 use w5500_ll::{
     net::SocketAddrV4, Protocol, Registers, Sn, SocketCommand, SocketMode, SocketStatus,
@@ -9,73 +9,12 @@ use w5500_ll::{
 
 #[derive(Debug)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
-pub struct TcpWriter<'a, W: Registers> {
-    w5500: &'a mut W,
-    sn: Sn,
-    head_ptr: u16,
-    tail_ptr: u16,
-    ptr: u16,
-}
-
-impl<'a, W: Registers> Seek for TcpWriter<'a, W> {
-    fn seek(&mut self, pos: SeekFrom) {
-        self.ptr = pos.new_ptr(self.ptr, self.head_ptr, self.tail_ptr);
-    }
-
-    fn stream_len(&self) -> u16 {
-        self.tail_ptr.wrapping_sub(self.head_ptr)
-    }
-
-    fn stream_position(&self) -> u16 {
-        self.ptr.wrapping_sub(self.head_ptr)
-    }
-
-    fn remain(&self) -> u16 {
-        self.tail_ptr.wrapping_sub(self.ptr)
-    }
-}
-
-impl<'a, W: Registers> Write<'a, W> for TcpWriter<'a, W> {
-    fn write(&mut self, buf: &[u8]) -> Result<u16, W::Error> {
-        let write_size: u16 = min(self.remain(), buf.len().try_into().unwrap_or(u16::MAX));
-        if write_size != 0 {
-            self.w5500
-                .set_sn_tx_buf(self.sn, self.ptr, &buf[..usize::from(write_size)])?;
-            self.ptr = self.ptr.wrapping_add(write_size);
-
-            Ok(write_size)
-        } else {
-            Ok(0)
-        }
-    }
-
-    fn write_all(&mut self, buf: &[u8]) -> Result<(), Error<W::Error>> {
-        let buf_len: u16 = buf.len().try_into().unwrap_or(u16::MAX);
-        let write_size: u16 = min(self.remain(), buf_len);
-        if write_size != buf_len {
-            Err(Error::OutOfMemory)
-        } else {
-            self.w5500.set_sn_tx_buf(self.sn, self.ptr, buf)?;
-            self.ptr = self.ptr.wrapping_add(write_size);
-            Ok(())
-        }
-    }
-
-    fn send(self) -> Result<&'a mut W, W::Error> {
-        self.w5500.set_sn_tx_wr(self.sn, self.ptr)?;
-        self.w5500.set_sn_cr(self.sn, SocketCommand::Send)?;
-        Ok(self.w5500)
-    }
-}
-
-#[derive(Debug)]
-#[cfg_attr(feature = "defmt", derive(defmt::Format))]
 pub struct TcpReader<'a, W: Registers> {
-    w5500: &'a mut W,
-    sn: Sn,
-    head_ptr: u16,
-    tail_ptr: u16,
-    ptr: u16,
+    pub(crate) w5500: &'a mut W,
+    pub(crate) sn: Sn,
+    pub(crate) head_ptr: u16,
+    pub(crate) tail_ptr: u16,
+    pub(crate) ptr: u16,
 }
 
 impl<'a, W: Registers> Seek for TcpReader<'a, W> {
@@ -492,35 +431,6 @@ pub trait Tcp: Registers {
             Ok(SocketStatus::Udp) | Ok(SocketStatus::Init) | Ok(SocketStatus::Macraw)
         ));
         self.set_sn_cr(sn, SocketCommand::Disconnect)
-    }
-
-    /// Create a TCP writer.
-    ///
-    /// This returns a [`TcpWriter`] structure, which contains functions to
-    /// stream data into the W5500 socket buffers incrementally.
-    ///
-    /// # Example
-    ///
-    /// See [`TcpWriter`].
-    fn tcp_writer(&mut self, sn: Sn) -> Result<TcpWriter<Self>, Self::Error>
-    where
-        Self: Sized,
-    {
-        debug_assert!(!matches!(
-            self.sn_sr(sn)?,
-            Ok(SocketStatus::Udp) | Ok(SocketStatus::Init) | Ok(SocketStatus::Macraw)
-        ));
-
-        let sn_tx_fsr: u16 = self.sn_tx_fsr(sn)?;
-        let sn_tx_wr: u16 = self.sn_tx_wr(sn)?;
-
-        Ok(TcpWriter {
-            w5500: self,
-            sn,
-            head_ptr: sn_tx_wr,
-            tail_ptr: sn_tx_wr.wrapping_add(sn_tx_fsr),
-            ptr: sn_tx_wr,
-        })
     }
 
     /// Create a TCP reader.

@@ -1,7 +1,7 @@
 #[cfg(feature = "defmt")]
 use dfmt as defmt;
 
-use crate::{port_is_unique, Error, Read, Seek, SeekFrom, Write};
+use crate::{port_is_unique, Error, Read, Seek, SeekFrom, TcpReader};
 use core::cmp::min;
 use w5500_ll::{
     net::{Ipv4Addr, SocketAddrV4},
@@ -42,174 +42,47 @@ impl UdpHeader {
     }
 }
 
-/// Streaming writer for a UDP socket buffer.
-///
-/// Created with [`Udp::udp_writer`].
-///
-/// # Example
-///
-/// ```no_run
-/// # use embedded_hal_mock as h;
-/// # let mut w5500 = w5500_ll::blocking::vdm::W5500::new(h::spi::Mock::new(&[]), h::pin::Mock::new(&[]));
-/// use w5500_hl::{
-///     ll::{Registers, Sn::Sn0},
-///     net::{Ipv4Addr, SocketAddrV4},
-///     Udp,
-///     Write,
-///     UdpWriter,
-/// };
-///
-/// const DEST: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::new(192, 0, 2, 1), 8081);
-///
-/// w5500.udp_bind(Sn0, 8080)?;
-///
-/// let mut udp_writer: UdpWriter<_> = w5500.udp_writer(Sn0)?;
-///
-/// let data_header: [u8; 10] = [0; 10];
-/// let n_written: u16 = udp_writer.write(&data_header)?;
-/// assert_eq!(usize::from(n_written), data_header.len());
-///
-/// let data: [u8; 123] = [0; 123];
-/// let n_written: u16 = udp_writer.write(&data)?;
-/// assert_eq!(usize::from(n_written), data.len());
-///
-/// udp_writer.send_to(&DEST)?;
-/// # Ok::<(), w5500_hl::ll::blocking::vdm::Error<_, _>>(())
-/// ```
-#[derive(Debug)]
-#[cfg_attr(feature = "defmt", derive(defmt::Format))]
-pub struct UdpWriter<'a, W: Registers> {
-    w5500: &'a mut W,
-    sn: Sn,
-    head_ptr: u16,
-    tail_ptr: u16,
-    ptr: u16,
-}
-
-impl<'a, W: Registers> Seek for UdpWriter<'a, W> {
-    fn seek(&mut self, pos: SeekFrom) {
-        self.ptr = pos.new_ptr(self.ptr, self.head_ptr, self.tail_ptr);
-    }
-
-    fn stream_len(&self) -> u16 {
-        self.tail_ptr.wrapping_sub(self.head_ptr)
-    }
-
-    fn stream_position(&self) -> u16 {
-        self.ptr.wrapping_sub(self.head_ptr)
-    }
-
-    fn remain(&self) -> u16 {
-        self.tail_ptr.wrapping_sub(self.ptr)
-    }
-}
-
-impl<'a, W: Registers> Write<'a, W> for UdpWriter<'a, W> {
-    fn write(&mut self, buf: &[u8]) -> Result<u16, W::Error> {
-        let write_size: u16 = min(self.remain(), buf.len().try_into().unwrap_or(u16::MAX));
-        if write_size != 0 {
-            self.w5500
-                .set_sn_tx_buf(self.sn, self.ptr, &buf[..usize::from(write_size)])?;
-            self.ptr = self.ptr.wrapping_add(write_size);
-
-            Ok(write_size)
-        } else {
-            Ok(0)
-        }
-    }
-
-    fn write_all(&mut self, buf: &[u8]) -> Result<(), Error<W::Error>> {
-        let buf_len: u16 = buf.len().try_into().unwrap_or(u16::MAX);
-        let write_size: u16 = min(self.remain(), buf_len);
-        if write_size != buf_len {
-            Err(Error::OutOfMemory)
-        } else {
-            self.w5500.set_sn_tx_buf(self.sn, self.ptr, buf)?;
-            self.ptr = self.ptr.wrapping_add(write_size);
-            Ok(())
-        }
-    }
-
-    fn send(self) -> Result<&'a mut W, W::Error> {
-        self.w5500.set_sn_tx_wr(self.sn, self.ptr)?;
-        self.w5500.set_sn_cr(self.sn, SocketCommand::Send)?;
-        Ok(self.w5500)
-    }
-}
-
-impl<'a, W: Registers> UdpWriter<'a, W> {
-    /// Send all data previously written with [`Write::write`] and
-    /// [`Write::write_all`] to the given address.
-    pub fn send_to(self, addr: &SocketAddrV4) -> Result<&'a mut W, W::Error> {
-        self.w5500.set_sn_dest(self.sn, addr)?;
-        self.send()
-    }
-}
-
 #[derive(Debug)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
 pub struct UdpReader<'a, W: Registers> {
-    w5500: &'a mut W,
-    sn: Sn,
+    inner: TcpReader<'a, W>,
     header: UdpHeader,
-    head_ptr: u16,
-    tail_ptr: u16,
-    ptr: u16,
 }
 
 impl<'a, W: Registers> Seek for UdpReader<'a, W> {
     fn seek(&mut self, pos: SeekFrom) {
-        self.ptr = pos.new_ptr(self.ptr, self.head_ptr, self.tail_ptr);
+        self.inner.seek(pos)
     }
 
     fn stream_len(&self) -> u16 {
-        self.tail_ptr.wrapping_sub(self.head_ptr)
+        self.inner.stream_len()
     }
 
     fn stream_position(&self) -> u16 {
-        self.ptr.wrapping_sub(self.head_ptr)
+        self.inner.stream_position()
     }
 
     fn remain(&self) -> u16 {
-        self.tail_ptr.wrapping_sub(self.ptr)
+        self.inner.remain()
     }
 }
 
 impl<'a, W: Registers> Read<'a, W> for UdpReader<'a, W> {
     fn read(&mut self, buf: &mut [u8]) -> Result<u16, W::Error> {
-        let read_size: u16 = min(self.remain(), buf.len().try_into().unwrap_or(u16::MAX));
-        if read_size != 0 {
-            self.w5500
-                .sn_rx_buf(self.sn, self.ptr, &mut buf[..usize::from(read_size)])?;
-            self.ptr = self.ptr.wrapping_add(read_size);
-
-            Ok(read_size)
-        } else {
-            Ok(0)
-        }
+        self.inner.read(buf)
     }
 
     fn read_exact(&mut self, buf: &mut [u8]) -> Result<(), Error<W::Error>> {
-        let buf_len: u16 = buf.len().try_into().unwrap_or(u16::MAX);
-        let read_size: u16 = min(self.remain(), buf_len);
-        if read_size != buf_len {
-            Err(Error::UnexpectedEof)
-        } else {
-            self.w5500.sn_rx_buf(self.sn, self.ptr, buf)?;
-            self.ptr = self.ptr.wrapping_add(read_size);
-            Ok(())
-        }
+        self.inner.read_exact(buf)
     }
 
     fn done(self) -> Result<&'a mut W, W::Error> {
-        self.w5500.set_sn_rx_rd(self.sn, self.tail_ptr)?;
-        self.w5500.set_sn_cr(self.sn, SocketCommand::Recv)?;
-        Ok(self.w5500)
+        self.inner.done()
     }
 
     #[inline]
     fn ignore(self) -> &'a mut W {
-        self.w5500
+        self.inner.ignore()
     }
 }
 
@@ -710,32 +583,6 @@ pub trait Udp: Registers {
         Ok(data_len)
     }
 
-    /// Create a UDP writer.
-    ///
-    /// This returns a [`UdpWriter`] structure, which contains functions to
-    /// stream data into the W5500 socket buffers incrementally.
-    ///
-    /// # Example
-    ///
-    /// See [`UdpWriter`].
-    fn udp_writer(&mut self, sn: Sn) -> Result<UdpWriter<Self>, Self::Error>
-    where
-        Self: Sized,
-    {
-        debug_assert_eq!(self.sn_sr(sn)?, Ok(SocketStatus::Udp));
-
-        let sn_tx_fsr: u16 = self.sn_tx_fsr(sn)?;
-        let sn_tx_wr: u16 = self.sn_tx_wr(sn)?;
-
-        Ok(UdpWriter {
-            w5500: self,
-            sn,
-            head_ptr: sn_tx_wr,
-            tail_ptr: sn_tx_wr.wrapping_add(sn_tx_fsr),
-            ptr: sn_tx_wr,
-        })
-    }
-
     /// Create a UDP reader.
     ///
     /// This returns a [`UdpReader`] structure, which contains functions to
@@ -777,11 +624,13 @@ pub trait Udp: Registers {
         let head_ptr: u16 = sn_rx_rd.wrapping_add(UdpHeader::LEN);
 
         Ok(UdpReader {
-            w5500: self,
-            sn,
-            head_ptr,
-            tail_ptr: head_ptr.wrapping_add(rsr_or_datagram_len),
-            ptr: head_ptr,
+            inner: TcpReader {
+                w5500: self,
+                sn,
+                head_ptr,
+                tail_ptr: head_ptr.wrapping_add(rsr_or_datagram_len),
+                ptr: head_ptr,
+            },
             header,
         })
     }

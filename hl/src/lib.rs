@@ -103,10 +103,11 @@ mod udp;
 #[cfg(feature = "defmt")]
 use dfmt as defmt;
 
+use core::cmp::min;
 use ll::{Registers, Sn, SocketCommand, SocketStatus, SOCKETS};
 
-pub use tcp::{Tcp, TcpReader, TcpWriter};
-pub use udp::{Udp, UdpHeader, UdpReader, UdpWriter};
+pub use tcp::{Tcp, TcpReader};
+pub use udp::{Udp, UdpHeader, UdpReader};
 pub use w5500_ll as ll;
 
 /// Networking data types.
@@ -305,12 +306,85 @@ pub trait Read<'a, W: Registers> {
     fn ignore(self) -> &'a mut W;
 }
 
+/// Streaming writer for a TCP or UDP socket buffer.
+///
+/// Created with [`Common::writer`].
+///
+/// # Example
+///
+/// ```no_run
+/// # use embedded_hal_mock as h;
+/// # let mut w5500 = w5500_ll::blocking::vdm::W5500::new(h::spi::Mock::new(&[]), h::pin::Mock::new(&[]));
+/// use w5500_hl::{
+///     ll::{Registers, Sn::Sn0},
+///     net::{Ipv4Addr, SocketAddrV4},
+///     Udp,
+///     Write,
+///     UdpWriter,
+/// };
+///
+/// const DEST: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::new(192, 0, 2, 1), 8081);
+///
+/// w5500.udp_bind(Sn0, 8080)?;
+///
+/// let mut udp_writer: UdpWriter<_> = w5500.udp_writer(Sn0)?;
+///
+/// let data_header: [u8; 10] = [0; 10];
+/// let n_written: u16 = udp_writer.write(&data_header)?;
+/// assert_eq!(usize::from(n_written), data_header.len());
+///
+/// let data: [u8; 123] = [0; 123];
+/// let n_written: u16 = udp_writer.write(&data)?;
+/// assert_eq!(usize::from(n_written), data.len());
+///
+/// udp_writer.send_to(&DEST)?;
+/// # Ok::<(), w5500_hl::ll::blocking::vdm::Error<_, _>>(())
+/// ```
+#[derive(Debug)]
+#[cfg_attr(feature = "defmt", derive(defmt::Format))]
+pub struct Writer<'a, W: Registers> {
+    w5500: &'a mut W,
+    sn: Sn,
+    head_ptr: u16,
+    tail_ptr: u16,
+    ptr: u16,
+}
+
+impl<'a, W: Registers> Seek for Writer<'a, W> {
+    fn seek(&mut self, pos: SeekFrom) {
+        self.ptr = pos.new_ptr(self.ptr, self.head_ptr, self.tail_ptr);
+    }
+
+    fn stream_len(&self) -> u16 {
+        self.tail_ptr.wrapping_sub(self.head_ptr)
+    }
+
+    fn stream_position(&self) -> u16 {
+        self.ptr.wrapping_sub(self.head_ptr)
+    }
+
+    fn remain(&self) -> u16 {
+        self.tail_ptr.wrapping_sub(self.ptr)
+    }
+}
+
 /// Socket writer trait.
 ///
 /// This is implemented by [`TcpWriter`] and [`UdpWriter`].
-pub trait Write<'a, W: Registers> {
+impl<'a, W: Registers> Writer<'a, W> {
     /// Write data to the socket buffer, and return the number of bytes written.
-    fn write(&mut self, buf: &[u8]) -> Result<u16, W::Error>;
+    pub fn write(&mut self, buf: &[u8]) -> Result<u16, W::Error> {
+        let write_size: u16 = min(self.remain(), buf.len().try_into().unwrap_or(u16::MAX));
+        if write_size != 0 {
+            self.w5500
+                .set_sn_tx_buf(self.sn, self.ptr, &buf[..usize::from(write_size)])?;
+            self.ptr = self.ptr.wrapping_add(write_size);
+
+            Ok(write_size)
+        } else {
+            Ok(0)
+        }
+    }
 
     /// Writes all the data, returning [`Error::OutOfMemory`] if the size of
     /// `buf` exceeds the free memory available in the socket buffer.
@@ -321,7 +395,17 @@ pub trait Write<'a, W: Registers> {
     ///
     /// * [`Error::Other`]
     /// * [`Error::OutOfMemory`]
-    fn write_all(&mut self, buf: &[u8]) -> Result<(), Error<W::Error>>;
+    pub fn write_all(&mut self, buf: &[u8]) -> Result<(), Error<W::Error>> {
+        let buf_len: u16 = buf.len().try_into().unwrap_or(u16::MAX);
+        let write_size: u16 = min(self.remain(), buf_len);
+        if write_size != buf_len {
+            Err(Error::OutOfMemory)
+        } else {
+            self.w5500.set_sn_tx_buf(self.sn, self.ptr, buf)?;
+            self.ptr = self.ptr.wrapping_add(write_size);
+            Ok(())
+        }
+    }
 
     /// Send all data previously written with [`write`] and [`write_all`].
     ///
@@ -331,7 +415,24 @@ pub trait Write<'a, W: Registers> {
     ///
     /// [`write`]: Write::write
     /// [`write_all`]: Write::write_all
-    fn send(self) -> Result<&'a mut W, W::Error>;
+    pub fn send(self) -> Result<&'a mut W, W::Error> {
+        self.w5500.set_sn_tx_wr(self.sn, self.ptr)?;
+        self.w5500.set_sn_cr(self.sn, SocketCommand::Send)?;
+        Ok(self.w5500)
+    }
+
+    /// Send all data previously written with [`Write::write`] and
+    /// [`Write::write_all`] to the given address.
+    ///
+    /// # Panics
+    ///
+    /// * (debug) The socket must be opened as a UDP socket.
+    pub fn udp_send_to(self, addr: &SocketAddrV4) -> Result<&'a mut W, W::Error> {
+        debug_assert_eq!(self.w5500.sn_sr(self.sn)?, Ok(SocketStatus::Udp));
+
+        self.w5500.set_sn_dest(self.sn, addr)?;
+        self.send()
+    }
 }
 
 /// Methods common to all W5500 socket types.
@@ -486,6 +587,51 @@ pub trait Common: Registers {
     /// [Udp]: w5500_ll::SocketStatus::Udp
     fn is_state_udp(&mut self, sn: Sn) -> Result<bool, Self::Error> {
         Ok(self.sn_sr(sn)? == Ok(SocketStatus::Udp))
+    }
+
+    /// Create a socket writer.
+    ///
+    /// This returns a [`Writer`] structure, which contains functions to
+    /// stream data into the W5500 socket buffers incrementally.
+    ///
+    /// This is useful for writing large packets that are too large to stage
+    /// in the memory of your microcontroller.
+    ///
+    /// The socket should be opened as a TCP / UDP socket before calling this
+    /// method.
+    ///
+    /// # Example
+    ///
+    /// ```no_std
+    /// # use embedded_hal_mock as h;
+    /// # let mut w5500 = w5500_ll::blocking::vdm::W5500::new(h::spi::Mock::new(&[]), h::pin::Mock::new(&[]));
+    /// use w5500_hl::{
+    ///     ll::{Registers, Sn::Sn0},
+    ///     net::{Ipv4Addr, SocketAddrV4},
+    ///     Udp,
+    ///     Writer,
+    /// };
+    ///
+    /// const DEST: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::new(192, 0, 2, 1), 8081);
+    ///
+    /// w5500.udp_bind(Sn0, 8080)?;
+    ///
+    /// let mut udp_writer: Writer<_> = w5500.writer(Sn0)?;
+    /// ```
+    fn writer(&mut self, sn: Sn) -> Result<Writer<Self>, Self::Error>
+    where
+        Self: Sized,
+    {
+        let sn_tx_fsr: u16 = self.sn_tx_fsr(sn)?;
+        let sn_tx_wr: u16 = self.sn_tx_wr(sn)?;
+
+        Ok(Writer {
+            w5500: self,
+            sn,
+            head_ptr: sn_tx_wr,
+            tail_ptr: sn_tx_wr.wrapping_add(sn_tx_fsr),
+            ptr: sn_tx_wr,
+        })
     }
 }
 
