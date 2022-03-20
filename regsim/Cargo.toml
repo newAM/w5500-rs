@@ -13,14 +13,11 @@ homepage = "https://github.com/newAM/w5500-rs"
 
 [dependencies]
 log = "0.4"
-
-[dependencies.w5500-ll]
-version = "0.10"
-features = ["std"]
+w5500-ll = { path = "../ll", version = "0.10", features = ["std"] }
 
 [dev-dependencies]
 trust-dns-client = "0.21"
-w5500-hl = "0.7"
+w5500-hl = { path = "../hl", version = "0.7" }
 version-sync = "0.9"
 nb = "1"
 stderrlog = "0.5"

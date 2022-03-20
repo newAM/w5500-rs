@@ -19,11 +19,11 @@ std = ["w5500-ll/std"]
 
 [dependencies]
 nb = "1"
-w5500-ll = "0.10"
+w5500-ll = { path = "../ll", version = "0.10" }
 
 [dev-dependencies]
 embedded-hal-mock = "0.8"
-w5500-ll = { version = "0.10", features = ["embedded-hal", "defmt"] }
+w5500-ll = { path = "../ll", version = "0.10", features = ["embedded-hal", "defmt"] }
 
 [package.metadata.docs.rs]
 all-features = true
