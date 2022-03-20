@@ -141,19 +141,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.0] - 2021-01-02
 - Initial release
 
-[Unreleased]: https://github.com/newAM/w5500-ll-rs/compare/v0.10.1...HEAD
-[0.10.1]: https://github.com/newAM/w5500-ll-rs/compare/v0.10.0...v0.10.1
-[0.10.0]: https://github.com/newAM/w5500-ll-rs/compare/v0.9.0...v0.10.0
-[0.9.0]: https://github.com/newAM/w5500-ll-rs/compare/v0.8.0...v0.9.0
-[0.8.0]: https://github.com/newAM/w5500-ll-rs/compare/v0.7.0...v0.8.0
-[0.7.0]: https://github.com/newAM/w5500-ll-rs/compare/v0.6.2...v0.7.0
-[0.6.2]: https://github.com/newAM/w5500-ll-rs/compare/v0.6.1...v0.6.2
-[0.6.1]: https://github.com/newAM/w5500-ll-rs/compare/v0.6.0...v0.6.1
-[0.6.0]: https://github.com/newAM/w5500-ll-rs/compare/v0.5.1...v0.6.0
-[0.5.1]: https://github.com/newAM/w5500-ll-rs/compare/v0.5.0...v0.5.1
-[0.5.0]: https://github.com/newAM/w5500-ll-rs/compare/v0.4.0...v0.5.0
-[0.4.0]: https://github.com/newAM/w5500-ll-rs/compare/v0.3.0...v0.4.0
-[0.3.0]: https://github.com/newAM/w5500-ll-rs/compare/v0.2.1...v0.3.0
-[0.2.1]: https://github.com/newAM/w5500-ll-rs/compare/v0.2.0...v0.2.1
-[0.2.0]: https://github.com/newAM/w5500-ll-rs/compare/v0.1.0...v0.2.0
-[0.1.0]: https://github.com/newAM/w5500-ll-rs/releases/tag/v0.1.0
+[Unreleased]: https://github.com/newAM/w5500-rs/compare/ll%2Fv0.10.1...HEAD
+[0.10.1]: https://github.com/newAM/w5500-rs/compare/ll%2Fv0.10.0...ll%2Fv0.10.1
+[0.10.0]: https://github.com/newAM/w5500-rs/compare/ll%2Fv0.9.0...ll%2Fv0.10.0
+[0.9.0]: https://github.com/newAM/w5500-rs/compare/ll%2Fv0.8.0...ll%2Fv0.9.0
+[0.8.0]: https://github.com/newAM/w5500-rs/compare/ll%2Fv0.7.0...ll%2Fv0.8.0
+[0.7.0]: https://github.com/newAM/w5500-rs/compare/ll%2Fv0.6.2...ll%2Fv0.7.0
+[0.6.2]: https://github.com/newAM/w5500-rs/compare/ll%2Fv0.6.1...ll%2Fv0.6.2
+[0.6.1]: https://github.com/newAM/w5500-rs/compare/ll%2Fv0.6.0...ll%2Fv0.6.1
+[0.6.0]: https://github.com/newAM/w5500-rs/compare/ll%2Fv0.5.1...ll%2Fv0.6.0
+[0.5.1]: https://github.com/newAM/w5500-rs/compare/ll%2Fv0.5.0...ll%2Fv0.5.1
+[0.5.0]: https://github.com/newAM/w5500-rs/compare/ll%2Fv0.4.0...ll%2Fv0.5.0
+[0.4.0]: https://github.com/newAM/w5500-rs/compare/ll%2Fv0.3.0...ll%2Fv0.4.0
+[0.3.0]: https://github.com/newAM/w5500-rs/compare/ll%2Fv0.2.1...ll%2Fv0.3.0
+[0.2.1]: https://github.com/newAM/w5500-rs/compare/ll%2Fv0.2.0...ll%2Fv0.2.1
+[0.2.0]: https://github.com/newAM/w5500-rs/compare/ll%2Fv0.1.0...ll%2Fv0.2.0
+[0.1.0]: https://github.com/newAM/w5500-rs/releases/tag/ll%2Fv0.1.0
