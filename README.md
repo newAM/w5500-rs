@@ -1,4 +1,4 @@
-# W5500 Embedded Driver
+# w5500-rs
 
 [![CI](https://github.com/newAM/w5500-rs/workflows/CI/badge.svg)](https://github.com/newAM/w5500-rs/actions)
 
