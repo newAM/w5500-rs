@@ -1,0 +1,26 @@
+[package]
+authors = ["Alex Martens <alex@thinglab.org>"]
+name = "testsuite"
+publish = false
+edition = "2018"
+version = "0.1.0"
+
+[[test]]
+name = "test"
+harness = false
+
+[dependencies]
+nb = "1"
+cortex-m = "0.7"
+cortex-m-rt = { version = "0.7" }
+defmt = "0.3"
+defmt-rtt = "0.3"
+defmt-test = "0.3"
+embedded-hal = "0.2.7"
+panic-probe = { version = "0.3", features = ["print-defmt" ] }
+w5500-hl = { path = "..", features = ["embedded-hal", "defmt"] }
+testsuite-assets = { path = "../testsuite-assets" }
+
+[dependencies.stm32f0xx-hal]
+version = "0.18"
+features = ["stm32f070xb"] 
