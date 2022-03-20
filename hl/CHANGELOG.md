@@ -11,8 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added a `UdpHeader` type.
 
 ## Changed
-- Changed `udp_peek_from` to return `(usize, UdpHeader)` instead of `(usize, SocketAddrV4)`.
-- Changed `udp_peek_from_header` to return `UdpHeader` instead of `(usize, SocketAddrV4)`.
+- Changed all methods that return a `usize` of the bytes read / written to return a `u16` instead.  This helps avoid lossy conversions from `usize` to `u16` in some applications.
+- Changed `udp_peek_from` to return `(u16, UdpHeader)` instead of `(u16, SocketAddrV4)`.
+- Changed `udp_peek_from_header` to return `UdpHeader` instead of `(u16, SocketAddrV4)`.
 
 ## Removed
 - Removed the `nb` dependency to consolidate error types.
