@@ -155,7 +155,7 @@ pub enum Error<E> {
     /// The operation needs to block to complete, but the blocking operation was
     /// requested to not occur.
     ///
-    /// This is the same concept as the [`nb`] crate, but expanded to prevent
+    /// This is the same concept as the [`nb`] crate, but localized to prevent
     /// needless abstraction.
     ///
     /// [`nb`]: (https://docs.rs/nb/latest/nb/index.html)
@@ -247,7 +247,7 @@ pub trait Seek {
     ///
     /// # Limits
     ///
-    /// * [`TcpWriter`] and [`UdpWriter`] are limited by socket free size.
+    /// * [`Writer`] is limited by socket free size.
     /// * [`UdpReader`] is limited by the received size or the UDP datagram length,
     ///   whichever is less.
     /// * [`TcpReader`] is limited by the received size.
@@ -262,7 +262,7 @@ pub trait Seek {
 
     /// Return the length of the stream, in bytes.
     ///
-    /// * For [`TcpWriter`] and [`UdpWriter`] this returns the socket free size.
+    /// * For [`Writer`] this returns the socket free size.
     /// * For [`TcpReader`] this returns the received size.
     /// * For [`UdpReader`] this returns the received size or the UDP datagram
     ///   length, whichever is less.
@@ -368,9 +368,6 @@ impl<'a, W: Registers> Seek for Writer<'a, W> {
     }
 }
 
-/// Socket writer trait.
-///
-/// This is implemented by [`TcpWriter`] and [`UdpWriter`].
 impl<'a, W: Registers> Writer<'a, W> {
     /// Write data to the socket buffer, and return the number of bytes written.
     pub fn write(&mut self, buf: &[u8]) -> Result<u16, W::Error> {
@@ -409,20 +406,20 @@ impl<'a, W: Registers> Writer<'a, W> {
 
     /// Send all data previously written with [`write`] and [`write_all`].
     ///
-    /// For [`UdpWriter`] the destination is set by the last call to
+    /// For UDP sockets the destination is set by the last call to
     /// [`Registers::set_sn_dest`], [`Udp::udp_send_to`], or
-    /// [`UdpWriter::send_to`].
+    /// [`Writer::udp_send_to`].
     ///
-    /// [`write`]: Write::write
-    /// [`write_all`]: Write::write_all
+    /// [`write`]: Writer::write
+    /// [`write_all`]: Writer::write_all
     pub fn send(self) -> Result<&'a mut W, W::Error> {
         self.w5500.set_sn_tx_wr(self.sn, self.ptr)?;
         self.w5500.set_sn_cr(self.sn, SocketCommand::Send)?;
         Ok(self.w5500)
     }
 
-    /// Send all data previously written with [`Write::write`] and
-    /// [`Write::write_all`] to the given address.
+    /// Send all data previously written with [`Writer::write`] and
+    /// [`Writer::write_all`] to the given address.
     ///
     /// # Panics
     ///
