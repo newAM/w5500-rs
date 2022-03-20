@@ -412,10 +412,9 @@ impl<'a, W: Registers> Writer<'a, W> {
     ///
     /// [`write`]: Writer::write
     /// [`write_all`]: Writer::write_all
-    pub fn send(self) -> Result<&'a mut W, W::Error> {
+    pub fn send(self) -> Result<(), W::Error> {
         self.w5500.set_sn_tx_wr(self.sn, self.ptr)?;
-        self.w5500.set_sn_cr(self.sn, SocketCommand::Send)?;
-        Ok(self.w5500)
+        self.w5500.set_sn_cr(self.sn, SocketCommand::Send)
     }
 
     /// Send all data previously written with [`Writer::write`] and
@@ -424,7 +423,7 @@ impl<'a, W: Registers> Writer<'a, W> {
     /// # Panics
     ///
     /// * (debug) The socket must be opened as a UDP socket.
-    pub fn udp_send_to(self, addr: &SocketAddrV4) -> Result<&'a mut W, W::Error> {
+    pub fn udp_send_to(self, addr: &SocketAddrV4) -> Result<(), W::Error> {
         debug_assert_eq!(self.w5500.sn_sr(self.sn)?, Ok(SocketStatus::Udp));
 
         self.w5500.set_sn_dest(self.sn, addr)?;

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Changed
 - `w5500_dhcp::Error` was replaced with `w5500_hl::Error`.
+- The socket buffer is used instead of a local buffer.
+  - `Client::new` no longer accepts a `buf` argument.
 
 ## [0.2.0] - 2022-01-02
 ### Changed

@@ -1,4 +1,8 @@
-use w5500_hl::net::{Eui48Addr, Ipv4Addr};
+use w5500_hl::{
+    ll::{Registers, Sn},
+    net::{Eui48Addr, Ipv4Addr},
+    Common, Error, Read, Seek, SeekFrom, UdpReader, Writer,
+};
 
 /// DHCP options.
 #[repr(u8)]
@@ -117,20 +121,21 @@ impl From<HardwareType> for u8 {
 const HW_ADDR_LEN: u8 = 6;
 
 #[derive(Debug)]
-pub struct PktSer<'a> {
-    buf: &'a mut [u8],
-    ptr: usize,
+struct PktSer<'a, W: Registers> {
+    writer: Writer<'a, W>,
 }
 
-impl<'a> PktSer<'a> {
-    pub fn new(buf: &'a mut [u8]) -> Self {
-        Self { buf, ptr: 0 }
+impl<'a, W: Registers> From<Writer<'a, W>> for PktSer<'a, W> {
+    fn from(writer: Writer<'a, W>) -> Self {
+        Self { writer }
     }
+}
 
+impl<'a, W: Registers> PktSer<'a, W> {
     /// Prepares the buffer for a new DHCP message.
     ///
     /// From [RFC 2131 Section 2](https://tools.ietf.org/html/rfc2131#section-2)
-    fn prepare_message(&mut self, mac: &Eui48Addr, xid: u32) -> Option<()> {
+    fn prepare_message(&mut self, mac: &Eui48Addr, xid: u32) -> Result<(), Error<W::Error>> {
         // self.zero();
         self.set_op(Op::BOOTREQUEST)?;
         self.set_htype_ethernet()?;
@@ -147,105 +152,108 @@ impl<'a> PktSer<'a> {
         self.set_sname_zero()?;
         self.set_file_zero()?;
         self.set_magic_cookie()?;
-        self.ptr = 240;
-        Some(())
+        self.writer.seek(SeekFrom::Start(240));
+
+        Ok(())
     }
 
     /// Set the message operation code.
-    fn set_op(&mut self, op: Op) -> Option<()> {
-        *self.buf.get_mut(0)? = u8::from(op);
-        Some(())
+    fn set_op(&mut self, op: Op) -> Result<(), Error<W::Error>> {
+        self.writer.seek(SeekFrom::Start(0));
+        self.writer.write_all(&[u8::from(op)])
     }
 
     /// Set the hardware type to Ethernet.
-    fn set_htype_ethernet(&mut self) -> Option<()> {
-        *self.buf.get_mut(1)? = u8::from(HardwareType::Ethernet);
-        Some(())
+    fn set_htype_ethernet(&mut self) -> Result<(), Error<W::Error>> {
+        self.writer.seek(SeekFrom::Start(1));
+        self.writer.write_all(&[u8::from(HardwareType::Ethernet)])
     }
 
     /// Set the hardware address length
-    fn set_hlen(&mut self, len: u8) -> Option<()> {
-        *self.buf.get_mut(2)? = len;
-        Some(())
+    fn set_hlen(&mut self, len: u8) -> Result<(), Error<W::Error>> {
+        self.writer.seek(SeekFrom::Start(2));
+        self.writer.write_all(&[len])
     }
 
     /// Set the hops field.
     ///
     /// Client sets to zero, optionally used by relay agents when booting via a
     /// relay agent.
-    fn set_hops(&mut self, hops: u8) -> Option<()> {
-        *self.buf.get_mut(3)? = hops;
-        Some(())
+    fn set_hops(&mut self, hops: u8) -> Result<(), Error<W::Error>> {
+        self.writer.seek(SeekFrom::Start(3));
+        self.writer.write_all(&[hops])
     }
 
     /// Set the transaction ID.
-    fn set_xid(&mut self, xid: u32) -> Option<()> {
-        self.buf.get_mut(4..8)?.copy_from_slice(&xid.to_be_bytes());
-        Some(())
+    fn set_xid(&mut self, xid: u32) -> Result<(), Error<W::Error>> {
+        self.writer.seek(SeekFrom::Start(4));
+        self.writer.write_all(&xid.to_be_bytes())
     }
 
     /// Set the number of seconds elapsed since client began address acquisition
     /// or renewal process.
-    fn set_secs(&mut self, secs: u16) -> Option<()> {
-        self.buf
-            .get_mut(8..10)?
-            .copy_from_slice(&secs.to_be_bytes());
-        Some(())
+    fn set_secs(&mut self, secs: u16) -> Result<(), Error<W::Error>> {
+        self.writer.seek(SeekFrom::Start(8));
+        self.writer.write_all(&secs.to_be_bytes())
     }
 
-    fn set_flags(&mut self, broadcast: bool) -> Option<()> {
-        *self.buf.get_mut(10)? = (broadcast as u8) << 7;
-        *self.buf.get_mut(11)? = 0;
-        Some(())
+    fn set_flags(&mut self, broadcast: bool) -> Result<(), Error<W::Error>> {
+        self.writer.seek(SeekFrom::Start(10));
+        self.writer.write_all(&[(broadcast as u8) << 7, 0])
     }
 
     /// Set the client IP address
     ///
     /// Only filled in if client is in BOUND, RENEW or REBINDING state and can
     /// respond to ARP requests.
-    fn set_ciaddr(&mut self, addr: &Ipv4Addr) -> Option<()> {
-        self.buf.get_mut(12..16)?.copy_from_slice(&addr.octets);
-        Some(())
+    fn set_ciaddr(&mut self, addr: &Ipv4Addr) -> Result<(), Error<W::Error>> {
+        self.writer.seek(SeekFrom::Start(12));
+        self.writer.write_all(&addr.octets)
     }
 
     /// 'your' (client) IP address;
     /// filled by server if client doesn't
     /// know its own address (ciaddr was 0).
-    fn set_yiaddr(&mut self, addr: &Ipv4Addr) -> Option<()> {
-        self.buf.get_mut(16..20)?.copy_from_slice(&addr.octets);
-        Some(())
+    fn set_yiaddr(&mut self, addr: &Ipv4Addr) -> Result<(), Error<W::Error>> {
+        self.writer.seek(SeekFrom::Start(16));
+        self.writer.write_all(&addr.octets)
     }
 
     /// Set the IP address of next server to use in bootstrap;
     /// returned in DHCPOFFER, DHCPACK by server.
-    fn set_siaddr(&mut self, addr: &Ipv4Addr) -> Option<()> {
-        self.buf.get_mut(20..24)?.copy_from_slice(&addr.octets);
-        Some(())
+    fn set_siaddr(&mut self, addr: &Ipv4Addr) -> Result<(), Error<W::Error>> {
+        self.writer.seek(SeekFrom::Start(20));
+        self.writer.write_all(&addr.octets)
     }
 
     /// Relay agent IP address, used in booting via a relay agent.
-    fn set_giaddr(&mut self, addr: &Ipv4Addr) -> Option<()> {
-        self.buf.get_mut(24..28)?.copy_from_slice(&addr.octets);
-        Some(())
+    fn set_giaddr(&mut self, addr: &Ipv4Addr) -> Result<(), Error<W::Error>> {
+        self.writer.seek(SeekFrom::Start(24));
+        self.writer.write_all(&addr.octets)
     }
 
     /// Set the hardware address
-    fn set_chaddr(&mut self, mac: &Eui48Addr) -> Option<()> {
-        self.buf.get_mut(28..34)?.copy_from_slice(&mac.octets);
-        self.buf.get_mut(34..44)?.iter_mut().for_each(|b| *b = 0);
-        Some(())
+    fn set_chaddr(&mut self, mac: &Eui48Addr) -> Result<(), Error<W::Error>> {
+        self.writer.seek(SeekFrom::Start(28));
+        self.writer.write_all(&mac.octets)?;
+        let zeros: [u8; 10] = [0; 10];
+        self.writer.write_all(&zeros)
     }
 
     /// Set the sname field to 0
-    fn set_sname_zero(&mut self) -> Option<()> {
-        self.buf.get_mut(44..108)?.iter_mut().for_each(|b| *b = 0);
-        Some(())
+    fn set_sname_zero(&mut self) -> Result<(), Error<W::Error>> {
+        self.writer.seek(SeekFrom::Start(44));
+        let buf: [u8; 64] = [0; 64]; // perhaps a bit much for the stack?
+        self.writer.write_all(&buf)
     }
 
     /// Set the file field to 0
-    fn set_file_zero(&mut self) -> Option<()> {
-        self.buf.get_mut(108..236)?.iter_mut().for_each(|b| *b = 0);
-        Some(())
+    fn set_file_zero(&mut self) -> Result<(), Error<W::Error>> {
+        self.writer.seek(SeekFrom::Start(108));
+        let buf: [u8; 64] = [0; 64]; // perhaps a bit much for the stack?
+                                     // needs 128 bytes, write it twice
+        self.writer.write_all(&buf)?;
+        self.writer.write_all(&buf)
     }
 
     /// Set the magic cookie.
@@ -253,91 +261,77 @@ impl<'a> PktSer<'a> {
     /// Sets the first four octets of the options field to 99, 138, 83, 99.
     ///
     /// From [RFC 2131 Section 3](https://tools.ietf.org/html/rfc2131#section-3)
-    fn set_magic_cookie(&mut self) -> Option<()> {
+    fn set_magic_cookie(&mut self) -> Result<(), Error<W::Error>> {
         const MAGIC_COOKIE: [u8; 4] = [0x63, 0x82, 0x53, 0x63];
-        self.buf
-            .get_mut(236..236 + MAGIC_COOKIE.len())?
-            .copy_from_slice(&MAGIC_COOKIE);
-        Some(())
+        self.writer.seek(SeekFrom::Start(236));
+        self.writer.write_all(&MAGIC_COOKIE)
     }
 
-    #[inline]
-    fn write_byte(&mut self, data: u8) -> Option<()> {
-        *self.buf.get_mut(self.ptr)? = data;
-        self.ptr += 1;
-        Some(())
+    fn set_option_msg_type(&mut self, msg_type: MsgType) -> Result<(), Error<W::Error>> {
+        self.writer
+            .write_all(&[Options::MessageType.into(), 1, msg_type.into()])
     }
 
-    fn set_option_msg_type(&mut self, msg_type: MsgType) -> Option<()> {
-        self.write_byte(Options::MessageType.into())?;
-        self.write_byte(1)?;
-        self.write_byte(msg_type.into())?;
-        Some(())
+    fn set_option_client_id(&mut self, mac: &Eui48Addr) -> Result<(), Error<W::Error>> {
+        self.writer.write_all(&[
+            Options::ClientId.into(),
+            HW_ADDR_LEN + 1,
+            HardwareType::Ethernet.into(),
+        ])?;
+        self.writer.write_all(&mac.octets)
     }
 
-    fn set_option_client_id(&mut self, mac: &Eui48Addr) -> Option<()> {
-        self.write_byte(Options::ClientId.into())?;
-        self.write_byte(HW_ADDR_LEN + 1)?;
-        self.write_byte(HardwareType::Ethernet.into())?;
-        for o in mac.octets {
-            self.write_byte(o)?
-        }
-        Some(())
+    fn set_option_hostname(&mut self, hostname: &str) -> Result<(), Error<W::Error>> {
+        let hostname_len: u8 = hostname.len().try_into().unwrap(); // TODO, use a validated hostname
+        self.writer
+            .write_all(&[Options::Hostname.into(), hostname_len])?;
+        self.writer.write_all(hostname.as_bytes())
     }
 
-    fn set_option_hostname(&mut self, hostname: &str) -> Option<()> {
-        let hostname_len: u8 = hostname.len().try_into().ok()?;
-        self.write_byte(Options::Hostname.into())?;
-        self.write_byte(hostname_len)?;
-        for byte in hostname.as_bytes() {
-            self.write_byte(*byte)?;
-        }
-        Some(())
+    fn set_option_parameter_request(&mut self) -> Result<(), Error<W::Error>> {
+        self.writer.write_all(&[
+            Options::ParameterRequest.into(),
+            5,
+            Options::SubnetMask.into(),
+            Options::Router.into(),
+            Options::Dns.into(),
+            Options::RenewalTime.into(),
+            Options::RebindingTime.into(),
+        ])
     }
 
-    fn set_option_parameter_request(&mut self) -> Option<()> {
-        self.write_byte(Options::ParameterRequest.into());
-        self.write_byte(5);
-        self.write_byte(Options::SubnetMask.into());
-        self.write_byte(Options::Router.into());
-        self.write_byte(Options::Dns.into());
-        self.write_byte(Options::RenewalTime.into());
-        self.write_byte(Options::RebindingTime.into());
-        Some(())
+    fn set_option_requested_ip(&mut self, ip: &Ipv4Addr) -> Result<(), Error<W::Error>> {
+        self.writer.write_all(&[Options::RequestedIp.into(), 4])?;
+        self.writer.write_all(&ip.octets)
     }
 
-    fn set_option_requested_ip(&mut self, ip: &Ipv4Addr) -> Option<()> {
-        self.write_byte(Options::RequestedIp.into())?;
-        self.write_byte(4)?;
-        for o in ip.octets {
-            self.write_byte(o)?
-        }
-        Some(())
-    }
-
-    fn set_option_end(&mut self) -> Option<()> {
-        self.write_byte(Options::End.into())?;
-        Some(())
+    fn set_option_end(&mut self) -> Result<(), Error<W::Error>> {
+        self.writer.write_all(&[Options::End.into()])
     }
 
     /// Create a DHCP discover.
-    pub fn dhcp_discover(&mut self, mac: &Eui48Addr, hostname: &str, xid: u32) -> Option<&[u8]> {
+    fn dhcp_discover(
+        mut self,
+        mac: &Eui48Addr,
+        hostname: &str,
+        xid: u32,
+    ) -> Result<Writer<'a, W>, Error<W::Error>> {
         self.prepare_message(mac, xid)?;
         self.set_option_msg_type(MsgType::Discover)?;
         self.set_option_client_id(mac)?;
         self.set_option_hostname(hostname)?;
         self.set_option_end()?;
-        Some(&self.buf[..self.ptr])
+        Ok(self.writer)
     }
 
     /// Create a DHCP request.
-    pub fn dhcp_request(
-        &mut self,
+    fn dhcp_request(
+        mut self,
         mac: &Eui48Addr,
         ip: &Ipv4Addr,
         hostname: &str,
         xid: u32,
-    ) -> Option<&[u8]> {
+    ) -> Result<Writer<'a, W>, Error<W::Error>> {
         self.prepare_message(mac, xid)?;
         self.set_option_msg_type(MsgType::Request)?;
         self.set_option_client_id(mac)?;
@@ -345,145 +339,173 @@ impl<'a> PktSer<'a> {
         self.set_option_parameter_request()?;
         self.set_option_requested_ip(ip)?;
         self.set_option_end()?;
-        Some(&self.buf[..self.ptr])
+        Ok(self.writer)
     }
+}
+
+pub fn send_dhcp_discover<'a, W: Registers>(
+    w5500: &mut W,
+    sn: Sn,
+    mac: &Eui48Addr,
+    hostname: &str,
+    xid: u32,
+) -> Result<(), Error<W::Error>> {
+    let writer: Writer<W> = w5500.writer(sn)?;
+    PktSer::from(writer)
+        .dhcp_discover(mac, hostname, xid)?
+        .udp_send_to(&crate::DHCP_BROADCAST)?;
+    Ok(())
+}
+
+pub fn send_dhcp_request<'a, W: Registers>(
+    w5500: &mut W,
+    sn: Sn,
+    mac: &Eui48Addr,
+    ip: &Ipv4Addr,
+    hostname: &str,
+    xid: u32,
+) -> Result<(), Error<W::Error>> {
+    let writer: Writer<W> = w5500.writer(sn)?;
+    PktSer::from(writer)
+        .dhcp_request(mac, ip, hostname, xid)?
+        .send()?;
+    Ok(())
 }
 
 #[derive(Debug)]
-pub struct PktDe<'a> {
-    buf: &'a [u8],
+pub struct PktDe<'a, W: Registers> {
+    reader: UdpReader<'a, W>,
 }
 
-impl<'a> PktDe<'a> {
-    pub fn new(buf: &'a [u8]) -> Self {
-        Self { buf }
+impl<'a, W: Registers> From<UdpReader<'a, W>> for PktDe<'a, W> {
+    fn from(reader: UdpReader<'a, W>) -> Self {
+        Self { reader }
+    }
+}
+
+impl<'a, W: Registers> PktDe<'a, W> {
+    pub fn is_bootreply(&mut self) -> Result<bool, Error<W::Error>> {
+        self.reader.seek(SeekFrom::Start(0));
+        let mut buf: [u8; 1] = [0];
+        self.reader.read_exact(&mut buf)?;
+        Ok(buf[0] == u8::from(Op::BOOTREQUEST))
     }
 
-    pub fn is_bootreply(&self) -> bool {
-        self.buf.get(0).unwrap_or(&0).eq(&u8::from(Op::BOOTREQUEST))
-    }
-
-    pub fn xid(&self) -> Option<u32> {
-        Some(u32::from_be_bytes(self.buf.get(4..8)?.try_into().unwrap()))
+    pub fn xid(&mut self) -> Result<u32, Error<W::Error>> {
+        self.reader.seek(SeekFrom::Start(4));
+        let mut buf: [u8; 4] = [0; 4];
+        self.reader.read_exact(&mut buf)?;
+        Ok(u32::from_be_bytes(buf))
     }
 
     /// 'your' (client) IP address;
     /// filled by server if client doesn't
     /// know its own address (ciaddr was 0).
-    pub fn yiaddr(&self) -> Option<Ipv4Addr> {
-        let bytes: [u8; 4] = self.buf.get(16..20)?.try_into().unwrap();
-        Some(bytes.into())
+    pub fn yiaddr(&mut self) -> Result<Ipv4Addr, Error<W::Error>> {
+        self.reader.seek(SeekFrom::Start(16));
+        let mut buf: [u8; 4] = [0; 4];
+        self.reader.read_exact(&mut buf)?;
+        Ok(buf.into())
     }
 
-    fn find_option_index(&self, option: Options) -> Option<usize> {
+    /// Seeks to an option and returns the length if it exists.
+    fn seek_to_option(&mut self, option: Options) -> Result<Option<u8>, Error<W::Error>> {
         let option: u8 = option.into();
-        let mut idx: usize = 240;
+        self.reader.seek(SeekFrom::Start(240));
         loop {
-            let byte: u8 = self.buf.get(idx).copied()?;
+            let (byte, len): (u8, u8) = {
+                let mut buf: [u8; 2] = [0; 2];
+                self.reader.read_exact(&mut buf)?;
+                (buf[0], buf[1])
+            };
             if byte == 0xFF {
-                return None;
+                return Ok(None);
             } else if byte == 0x00 {
-                idx += 1;
+                if len == 0x00 {
+                    continue;
+                } else {
+                    self.reader.seek(SeekFrom::Current(-1))
+                }
             } else if byte == option {
-                return Some(idx);
+                return Ok(Some(len));
             } else {
-                idx += 2 + usize::from(self.buf.get(idx + 1).copied()?);
+                self.reader.seek(SeekFrom::Current(len.into()));
             }
         }
     }
 
-    fn find_option_fixed_size(&self, option: Options, size: u8) -> Option<&[u8]> {
-        let idx: usize = self.find_option_index(option)?;
-        let option_size: u8 = self.buf.get(idx + 1).copied()?;
-        if size != option_size {
+    fn find_option_fixed_size<const N: usize>(
+        &mut self,
+        option: Options,
+    ) -> Result<Option<[u8; N]>, Error<W::Error>> {
+        let option_size: u8 = match self.seek_to_option(option)? {
+            Some(len) => len,
+            None => return Ok(None),
+        };
+        if usize::from(option_size) != N {
             warn!(
                 "malformed option {} size is {} expected {}",
-                option as u8, option_size, size
+                option as u8, option_size, N
             );
-            None
+            Ok(None)
         } else {
-            Some(self.buf.get(idx + 2..idx + 2 + usize::from(size))?)
+            let mut buf: [u8; N] = [0; N];
+            self.reader.read_exact(&mut buf)?;
+            Ok(Some(buf))
         }
     }
 
-    fn find_option_u32(&self, option: Options) -> Option<u32> {
-        let bytes: [u8; 4] = self.find_option_fixed_size(option, 4)?.try_into().unwrap();
-        Some(u32::from_be_bytes(bytes))
+    fn find_option_u32(&mut self, option: Options) -> Result<Option<u32>, Error<W::Error>> {
+        match self.find_option_fixed_size(option)? {
+            Some(bytes) => Ok(Some(u32::from_be_bytes(bytes))),
+            None => Ok(None),
+        }
     }
 
-    fn find_option_ipv4(&self, option: Options) -> Option<Ipv4Addr> {
-        let bytes: [u8; 4] = self.find_option_fixed_size(option, 4)?.try_into().unwrap();
-        Some(bytes.into())
+    fn find_option_ipv4(&mut self, option: Options) -> Result<Option<Ipv4Addr>, Error<W::Error>> {
+        match self.find_option_fixed_size(option)? {
+            Some(bytes) => Ok(Some(bytes.into())),
+            None => Ok(None),
+        }
     }
 
     /// Returns the subnet mask (option 1) if it exists.
-    pub fn subnet_mask(&self) -> Option<Ipv4Addr> {
+    pub fn subnet_mask(&mut self) -> Result<Option<Ipv4Addr>, Error<W::Error>> {
         self.find_option_ipv4(Options::SubnetMask)
     }
 
     /// Returns the lease time (option 51) if it exists.
-    pub fn lease_time(&self) -> Option<u32> {
+    pub fn lease_time(&mut self) -> Result<Option<u32>, Error<W::Error>> {
         self.find_option_u32(Options::LeaseTime)
     }
 
     /// Returns the DHCP message type (option 53) if it exists.
-    pub fn msg_type(&self) -> Option<MsgType> {
-        let idx: usize = self.find_option_index(Options::MessageType)?;
-        let size: u8 = self.buf.get(idx + 1).copied()?;
-        if size != 1 {
-            warn!("malformed option 53 size == {}", size);
-            None
-        } else {
-            match MsgType::try_from(self.buf.get(idx + 2).copied()?) {
-                Ok(mt) => Some(mt),
-                Err(x) => {
-                    warn!("not a message type value: {}", x);
-                    None
-                }
+    pub fn msg_type(&mut self) -> Result<Option<MsgType>, Error<W::Error>> {
+        let buf: [u8; 1] = match self.find_option_fixed_size(Options::MessageType)? {
+            Some(bytes) => bytes,
+            None => return Ok(None),
+        };
+        match MsgType::try_from(buf[0]) {
+            Ok(mt) => Ok(Some(mt)),
+            Err(x) => {
+                warn!("not a message type value: {}", x);
+                Ok(None)
             }
         }
     }
 
     /// Returns the DHCP server identifier (option 54) if it exists
-    pub fn dhcp_server(&self) -> Option<Ipv4Addr> {
+    pub fn dhcp_server(&mut self) -> Result<Option<Ipv4Addr>, Error<W::Error>> {
         self.find_option_ipv4(Options::ServerId)
     }
 
     /// Returns the rebinding time (option 59) if it exists.
-    pub fn rebinding_time(&self) -> Option<u32> {
+    pub fn rebinding_time(&mut self) -> Result<Option<u32>, Error<W::Error>> {
         self.find_option_u32(Options::RebindingTime)
     }
 
     /// Returns the renewal time (option 58) if it exists.
-    pub fn renewal_time(&self) -> Option<u32> {
+    pub fn renewal_time(&mut self) -> Result<Option<u32>, Error<W::Error>> {
         self.find_option_u32(Options::RenewalTime)
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn dhcp_discover_smoke() {
-        let mut buf = vec![0u8; 1024];
-        let mut pkt = PktSer {
-            buf: &mut buf,
-            ptr: 0,
-        };
-
-        pkt.dhcp_discover(&Eui48Addr::UNSPECIFIED, "", 0).unwrap();
-    }
-
-    #[test]
-    fn dhcp_request_smoke() {
-        let mut buf = vec![0u8; 1024];
-        let mut pkt = PktSer {
-            buf: &mut buf,
-            ptr: 0,
-        };
-
-        pkt.dhcp_request(&Eui48Addr::UNSPECIFIED, &Ipv4Addr::UNSPECIFIED, "", 0)
-            .unwrap();
     }
 }
