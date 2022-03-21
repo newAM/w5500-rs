@@ -67,7 +67,7 @@ impl Monotonic {
 #[test]
 fn end_to_end() {
     stderrlog::new()
-        .verbosity(4)
+        .verbosity(3)
         .timestamp(stderrlog::Timestamp::Nanosecond)
         .init()
         .unwrap();
