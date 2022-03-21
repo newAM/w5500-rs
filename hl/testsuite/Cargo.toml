@@ -10,7 +10,6 @@ name = "test"
 harness = false
 
 [dependencies]
-nb = "1"
 cortex-m = "0.7"
 cortex-m-rt = { version = "0.7" }
 defmt = "0.3"
