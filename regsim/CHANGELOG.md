@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Fixed UDP sockets binding to `dport` instead of `port`.
 - Fixed UDP sockets binding to `0.0.0.0` instead of `sipr`.
+- Fixed `SocketCommand::Send` not updating the `sn_tx_rd` pointer.
 
 ### Removed
 - Removed an unused warning about the UDP socket buffer size.
