@@ -124,13 +124,13 @@ fn block_type(block: u8) -> BlockType {
         BlockType::Common
     } else {
         let sn_val: u8 = block / SOCKET_SPACING;
-        let sn: Sn = Sn::try_from(sn_val)
-            .unwrap_or_else(|_| panic!("Invalid block address: 0x{:02X}", block));
+        let sn: Sn =
+            Sn::try_from(sn_val).unwrap_or_else(|_| panic!("Invalid block address: 0x{block:02X}"));
         match block - (sn_val * SOCKET_SPACING) {
             1 => BlockType::Socket(sn),
             2 => BlockType::Tx(sn),
             3 => BlockType::Rx(sn),
-            _ => panic!("Invalid block address: 0x{:02X}", block),
+            _ => panic!("Invalid block address: 0x{block:02X}"),
         }
     }
 }
@@ -275,6 +275,7 @@ impl W5500 {
     }
 
     fn socket_cmd_open(&mut self, sn: Sn) -> io::Result<()> {
+        let sipr = self.regs.sipr;
         let socket = self.socket_mut(sn);
 
         // These registers are initialized by the OPEN command
@@ -286,28 +287,26 @@ impl W5500 {
         let mr = SocketMode::from(socket.regs.mr);
 
         match mr.protocol() {
-            Ok(Protocol::Closed) => log::error!(
-                "[{:?}] ignoring OPEN command, socket protocol is not yet",
-                sn
-            ),
+            Ok(Protocol::Closed) => {
+                log::error!("[{sn:?}] ignoring OPEN command, socket protocol is not yet")
+            }
             Ok(Protocol::Tcp) => {
                 socket.inner = None;
                 self.sim_set_sn_sr(sn, SocketStatus::Init);
             }
             Ok(Protocol::Udp) => {
-                let local =
-                    SocketAddrV4::new(std::net::Ipv4Addr::new(0, 0, 0, 0), socket.regs.dport);
-                log::info!("[{:?}] binding UDP socket to {}", sn, local);
+                let local = SocketAddrV4::new(sipr.into(), socket.regs.port);
+                log::info!("[{sn:?}] binding UDP socket to {local}");
 
                 match UdpSocket::bind(local) {
                     Ok(udp_socket) => {
-                        log::info!("[{:?}] bound to {}", sn, local);
+                        log::info!("[{sn:?}] bound to {local}");
                         udp_socket.set_nonblocking(true)?;
                         socket.inner = Some(SocketType::Udp(udp_socket));
                         self.sim_set_sn_sr(sn, SocketStatus::Udp);
                     }
                     Err(e) => {
-                        log::warn!("[{:?}] failed to bind socket {}: {}", sn, local, e);
+                        log::warn!("[{sn:?}] failed to bind socket {local}: {e}");
                         self.sim_set_sn_sr(sn, SocketStatus::Closed);
                     }
                 }
@@ -316,17 +315,10 @@ impl W5500 {
                 if sn == Sn::Sn0 {
                     unimplemented!("MACRAW")
                 } else {
-                    log::error!(
-                        "[{:?}] ignoring OPEN command, MACRAW can only be used on Sn0",
-                        sn
-                    )
+                    log::error!("[{sn:?}] ignoring OPEN command, MACRAW can only be used on Sn0")
                 }
             }
-            Err(x) => log::error!(
-                "[{:?}] ignoring OPEN command, invalid protocol bits {:#02X}",
-                sn,
-                x
-            ),
+            Err(x) => log::error!("[{sn:?}] ignoring OPEN command, invalid protocol bits {x:#02X}"),
         }
         Ok(())
     }
@@ -336,18 +328,18 @@ impl W5500 {
         assert_eq!(socket.regs.sr, SocketStatus::Init);
 
         let addr = socket.regs.dest();
-        log::info!("[{:?}] opening a TCP stream to {}", sn, addr);
+        log::info!("[{sn:?}] opening a TCP stream to {addr}");
 
         match TcpStream::connect(addr) {
             Ok(stream) => {
-                log::info!("[{:?}] established TCP connection with {}", sn, addr);
+                log::info!("[{sn:?}] established TCP connection with {addr}");
                 stream.set_nonblocking(true)?;
                 socket.inner = Some(SocketType::TcpStream(stream));
                 self.raise_sn_ir(sn, SocketInterrupt::CON_MASK);
                 self.sim_set_sn_sr(sn, SocketStatus::Established);
             }
             Err(e) => {
-                log::warn!("[{:?}] TCP stream to {} failed: {}", sn, addr, e);
+                log::warn!("[{sn:?}] TCP stream to {addr} failed: {e}");
                 self.raise_sn_ir(sn, SocketInterrupt::DISCON_MASK);
                 self.sim_set_sn_sr(sn, SocketStatus::Closed);
             }
@@ -361,16 +353,16 @@ impl W5500 {
         assert_eq!(socket.regs.sr, SocketStatus::Init);
 
         let addr = std::net::SocketAddrV4::new(std::net::Ipv4Addr::LOCALHOST, socket.regs.port);
-        log::info!("[{:?}] Opening a TCP listener on port {}", sn, addr);
+        log::info!("[{sn:?}] Opening a TCP listener on port {addr}");
         match TcpListener::bind(addr) {
             Ok(listener) => {
-                log::info!("[{:?}] Bound listener on {}", sn, addr);
+                log::info!("[{sn:?}] Bound listener on {addr}");
                 listener.set_nonblocking(true)?;
                 socket.inner = Some(SocketType::TcpListener(listener));
                 self.sim_set_sn_sr(sn, SocketStatus::Listen);
             }
             Err(e) => {
-                log::warn!("[{:?}] TCP listener failed to bind to {}: {}", sn, addr, e);
+                log::warn!("[{sn:?}] TCP listener failed to bind to {addr}: {e}");
                 self.sim_set_sn_sr(sn, SocketStatus::Closed);
                 self.raise_sn_ir(sn, SocketInterrupt::TIMEOUT_MASK);
             }
@@ -392,7 +384,7 @@ impl W5500 {
         let old: SocketStatus = socket.regs.sr;
         socket.regs.sr = status;
         if old != status {
-            log::info!("[{:?}] {:?} -> {:?}", sn, old, status);
+            log::info!("[{sn:?}] {old:?} -> {status:?}");
         }
     }
 
@@ -407,7 +399,7 @@ impl W5500 {
         let tail: usize = socket.regs.tx_rd.into();
         let head: usize = socket.regs.tx_wr.into();
         if head == tail {
-            log::error!("[{:?}] nothing to send", sn);
+            log::error!("[{sn:?}] nothing to send");
             return Ok(());
         }
         let size: usize = if head >= tail {
@@ -416,9 +408,9 @@ impl W5500 {
             usize::from(u16::MAX) + head - tail
         };
 
-        log::debug!("[{:?}] tx_rd=0x{:04X}", sn, tail);
-        log::debug!("[{:?}] tx_wr=0x{:04X}", sn, head);
-        log::debug!("[{:?}] size=0x{:04X}", sn, size);
+        log::debug!("[{sn:?}] tx_rd=0x{tail:04X}");
+        log::debug!("[{sn:?}] tx_wr=0x{head:04X}");
+        log::debug!("[{sn:?}] size=0x{size:04X}");
 
         debug_assert!(
             size <= socket.regs.txbuf_size.size_in_bytes(),
@@ -455,7 +447,7 @@ impl W5500 {
                 stream.flush()?;
             }
             Some(SocketType::Udp(ref mut udp)) => {
-                log::info!("[{:?}] sending to {}", sn, dest);
+                log::info!("[{sn:?}] sending to {dest}");
                 let num: usize = udp.send_to(&local_tx_buf, &dest)?;
                 assert_eq!(num, local_tx_buf.len());
             }
@@ -466,9 +458,11 @@ impl W5500 {
                 }
             }
             None => {
-                panic!("[{:?}] Unable to send data, socket is closed", sn)
+                panic!("[{sn:?}] Unable to send data, socket is closed")
             }
         }
+
+        socket.regs.tx_rd = socket.regs.tx_wr;
 
         Ok(())
     }
@@ -501,7 +495,7 @@ impl W5500 {
             match socket.regs.rx_rsr.checked_add(1) {
                 Some(rsr) => socket.regs.rx_rsr = rsr,
                 None => {
-                    log::warn!("[{:?}] RX buffer overflow", sn);
+                    log::warn!("[{sn:?}] RX buffer overflow");
                     return;
                 }
             }
@@ -525,13 +519,10 @@ impl W5500 {
                     let origin = match origin {
                         std::net::SocketAddr::V4(origin) => origin,
                         other => {
-                            panic!(
-                                "Internal error, got a non-IPV4 addr from recv_from: {:?}",
-                                other
-                            )
+                            panic!("Internal error, got a non-IPV4 addr from recv_from: {other:?}")
                         }
                     };
-                    log::info!("[{:?}] recv datagram of len {} from {}", sn, num, origin);
+                    log::info!("[{sn:?}] recv datagram of len {num} from {origin}");
                     let num: u16 = u16::try_from(num).unwrap_or(u16::MAX);
                     // write out the header
                     self.sim_set_sn_rx_buf(sn, &origin.ip().octets());
@@ -562,7 +553,7 @@ impl W5500 {
                 if let Some(ref mut stream) = socket.client {
                     match stream.read(&mut buf) {
                         Ok(num @ 1..=usize::MAX) => {
-                            log::info!("[{:?}] recv {} bytes", sn, num);
+                            log::info!("[{sn:?}] recv {num} bytes");
                             self.sim_set_sn_rx_buf(sn, &buf[..num]);
                             self.raise_sn_ir(sn, SocketInterrupt::RECV_MASK);
                         }
@@ -575,7 +566,7 @@ impl W5500 {
                 } else {
                     match listener.accept() {
                         Ok((stream, addr)) => {
-                            log::info!("[{:?}] Accepted a new stream from {}", sn, addr);
+                            log::info!("[{sn:?}] Accepted a new stream from {addr}");
                             stream.set_nonblocking(true)?;
                             socket.client = Some(stream);
                             self.raise_sn_ir(sn, SocketInterrupt::CON_MASK);
@@ -649,10 +640,10 @@ impl W5500 {
         };
 
         let (name, level): (String, log::Level) = match decoded {
-            Ok(reg) => (format!("{:?}", reg), log::Level::Trace),
+            Ok(reg) => (format!("{reg:?}"), log::Level::Trace),
             Err(_) => (String::from("INVALID"), log::Level::Error),
         };
-        log::log!(level, "[R] [COM] {:04X} -> {:02X} {}", addr, ret, name);
+        log::log!(level, "[R] [COM] {addr:04X} -> {ret:02X} {name}");
 
         ret
     }
@@ -757,15 +748,15 @@ impl W5500 {
         let (name, level): (String, log::Level) = match decoded {
             Ok(reg) => {
                 if reg.is_ro() {
-                    (format!("{:?} is read-only", reg), log::Level::Error)
+                    (format!("{reg:?} is read-only"), log::Level::Error)
                 } else {
-                    (format!("{:?}", reg), log::Level::Trace)
+                    (format!("{reg:?}"), log::Level::Trace)
                 }
             }
             Err(_) => (String::from("INVALID"), log::Level::Error),
         };
 
-        log::log!(level, "[W] [COM] {:04X} <- {:02X} {}", addr, byte, name);
+        log::log!(level, "[W] [COM] {addr:04X} <- {byte:02X} {name}");
 
         Ok(())
     }
@@ -820,10 +811,10 @@ impl W5500 {
         };
 
         let (name, level): (String, log::Level) = match decoded {
-            Ok(reg) => (format!("{:?}", reg), log::Level::Trace),
+            Ok(reg) => (format!("{reg:?}"), log::Level::Trace),
             Err(_) => (String::from("INVALID"), log::Level::Error),
         };
-        log::log!(level, "[R] [{:?}] {:04X} -> {:02X} {}", sn, addr, ret, name);
+        log::log!(level, "[R] [{sn:?}] {addr:04X} -> {ret:02X} {name}");
 
         Ok(ret)
     }
@@ -843,29 +834,29 @@ impl W5500 {
                 Ok(SocketCommand::Send) => self.socket_cmd_send(sn)?,
                 Ok(SocketCommand::Recv) => self.socket_cmd_recv(sn)?,
                 Ok(SocketCommand::Listen) => self.socket_cmd_listen(sn)?,
-                cmd => unimplemented!("[W] [{:?}] command {:?}", sn, cmd),
+                cmd => unimplemented!("[W] [{sn:?}] command {cmd:?}"),
             },
             Ok(SnReg::IR) => {
                 let ir: SocketInterrupt = byte.into();
 
                 if socket.regs.ir.con_raised() & ir.con_raised() {
-                    log::debug!("[{:?}] clearing CON_MASK interrupt", sn);
+                    log::debug!("[{sn:?}] clearing CON_MASK interrupt");
                     socket.regs.ir = socket.regs.ir.clear_con();
                 }
                 if socket.regs.ir.discon_raised() & ir.discon_raised() {
-                    log::debug!("[{:?}] clearing DISCON_MASK interrupt", sn);
+                    log::debug!("[{sn:?}] clearing DISCON_MASK interrupt");
                     socket.regs.ir = socket.regs.ir.clear_discon();
                 }
                 if socket.regs.ir.recv_raised() & ir.recv_raised() {
-                    log::debug!("[{:?}] clearing RECV_MASK interrupt", sn);
+                    log::debug!("[{sn:?}] clearing RECV_MASK interrupt");
                     socket.regs.ir = socket.regs.ir.clear_recv();
                 }
                 if socket.regs.ir.timeout_raised() & ir.timeout_raised() {
-                    log::debug!("[{:?}] clearing TIMEOUT_MASK interrupt", sn);
+                    log::debug!("[{sn:?}] clearing TIMEOUT_MASK interrupt");
                     socket.regs.ir = socket.regs.ir.clear_timeout();
                 }
                 if socket.regs.ir.sendok_raised() & ir.sendok_raised() {
-                    log::debug!("[{:?}] clearing SENDOK_MASK interrupt", sn);
+                    log::debug!("[{sn:?}] clearing SENDOK_MASK interrupt");
                     socket.regs.ir = socket.regs.ir.clear_sendok();
                 }
 
@@ -940,22 +931,15 @@ impl W5500 {
         let (name, level): (String, log::Level) = match decoded {
             Ok(reg) => {
                 if reg.is_ro() {
-                    (format!("{:?} is read-only", reg), log::Level::Error)
+                    (format!("{reg:?} is read-only"), log::Level::Error)
                 } else {
-                    (format!("{:?}", reg), log::Level::Trace)
+                    (format!("{reg:?}"), log::Level::Trace)
                 }
             }
             Err(_) => (String::from("INVALID"), log::Level::Error),
         };
 
-        log::log!(
-            level,
-            "[W] [{:?}] {:04X} <- {:02X} {}",
-            sn,
-            addr,
-            byte,
-            name
-        );
+        log::log!(level, "[W] [{sn:?}] {addr:04X} <- {byte:02X} {name}");
 
         Ok(())
     }
@@ -994,7 +978,7 @@ impl Registers for W5500 {
             BlockType::Rx(sn) => {
                 data.iter_mut().for_each(|byte| {
                     *byte = self.sn[usize::from(sn)].rx_buf[usize::from(addr)];
-                    log::trace!("[R] [RXB] {:04X} -> {:02X}", addr, *byte);
+                    log::trace!("[R] [RXB] {addr:04X} -> {:02X}", *byte);
                     addr = addr.wrapping_add(1);
                 });
                 Ok(())
@@ -1002,7 +986,7 @@ impl Registers for W5500 {
             BlockType::Tx(sn) => {
                 data.iter_mut().for_each(|byte| {
                     *byte = self.sn[usize::from(sn)].tx_buf[usize::from(addr)];
-                    log::trace!("[R] [TXB] {:04X} -> {:02X}", addr, *byte);
+                    log::trace!("[R] [TXB] {addr:04X} -> {:02X}", *byte);
                     addr = addr.wrapping_add(1);
                 });
                 Ok(())
@@ -1031,7 +1015,7 @@ impl Registers for W5500 {
             }
             BlockType::Rx(sn) => {
                 data.iter().for_each(|byte| {
-                    log::trace!("[W] [RXB] {:04X} <- {:02X}", addr, *byte);
+                    log::trace!("[W] [RXB] {addr:04X} <- {:02X}", *byte);
                     self.sn[usize::from(sn)].rx_buf[usize::from(addr)] = *byte;
                     addr = addr.wrapping_add(1);
                 });
@@ -1039,7 +1023,7 @@ impl Registers for W5500 {
             }
             BlockType::Tx(sn) => {
                 data.iter().for_each(|byte| {
-                    log::trace!("[W] [TXB] {:04X} <- {:02X}", addr, *byte);
+                    log::trace!("[W] [TXB] {addr:04X} <- {:02X}", *byte);
                     self.sn[usize::from(sn)].tx_buf[usize::from(addr)] = *byte;
                     addr = addr.wrapping_add(1);
                 });
