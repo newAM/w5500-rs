@@ -508,4 +508,8 @@ impl<'a, W: Registers> PktDe<'a, W> {
     pub fn renewal_time(&mut self) -> Result<Option<u32>, Error<W::Error>> {
         self.find_option_u32(Options::RenewalTime)
     }
+
+    pub fn done(self) -> Result<(), W::Error> {
+        self.reader.done()
+    }
 }

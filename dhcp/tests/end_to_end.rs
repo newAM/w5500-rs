@@ -91,8 +91,7 @@ fn end_to_end() {
     const DHCP_SN: Sn = Sn::Sn0;
 
     let mut server: Server = Server::default();
-    let mut client_buf: Vec<u8> = vec![0; 2048];
-    let mut client: Client<W5500> = Client::new(&mut w5500, &mut dhcp, &mut client_buf);
+    let mut client: Client<W5500> = Client::new(&mut w5500, &mut dhcp);
 
     let mono: Monotonic = Monotonic::default();
     client.poll(mono.monotonic_secs()).expect("poll");

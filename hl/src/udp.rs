@@ -81,13 +81,8 @@ impl<'a, W: Registers> Read<'a, W> for UdpReader<'a, W> {
         self.inner.read_exact(buf)
     }
 
-    fn done(self) -> Result<&'a mut W, W::Error> {
+    fn done(self) -> Result<(), W::Error> {
         self.inner.done()
-    }
-
-    #[inline]
-    fn ignore(self) -> &'a mut W {
-        self.inner.ignore()
     }
 }
 

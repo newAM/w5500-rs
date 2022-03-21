@@ -243,10 +243,45 @@ where
     pub fn on_recv_interrupt(&mut self, monotonic_secs: u32) -> Result<(), Error<E>> {
         let state: State = self.dhcp.state;
 
-        if let Some(mut pkt) = self.recv()? {
+        fn recv<W5500: Registers>(
+            w5500: &mut W5500,
+            sn: Sn,
+            xid: u32,
+        ) -> Result<Option<PktDe<W5500>>, Error<W5500::Error>> {
+            let reader: UdpReader<W5500> = match w5500.udp_reader(sn) {
+                Ok(r) => r,
+                Err(Error::WouldBlock) => {
+                    error!("interrupt is misconfigured");
+                    return Ok(None);
+                }
+                Err(e) => return Err(e),
+            };
+
+            debug!(
+                "RX {} B from {}",
+                reader.header().len,
+                reader.header().origin
+            );
+
+            let mut pkt: PktDe<W5500> = PktDe::from(reader);
+            if pkt.is_bootreply()? {
+                debug!("packet is not a bootreply");
+                return Ok(None);
+            }
+            let recv_xid: u32 = pkt.xid()?;
+            if recv_xid != xid {
+                debug!("recv xid {:08X} does not match ours {:08X}", recv_xid, xid);
+                return Ok(None);
+            }
+
+            Ok(Some(pkt))
+        }
+
+        if let Some(mut pkt) = recv(self.w5500, self.dhcp.sn, self.dhcp.xid)? {
             match state {
                 State::Selecting => {
                     self.dhcp.ip = pkt.yiaddr()?;
+                    pkt.done()?;
                     self.request(monotonic_secs)?;
                 }
                 State::Requesting | State::Renewing | State::Rebinding => {
@@ -301,6 +336,7 @@ where
 
                             info!("dhcp.ip: {}", self.dhcp.ip);
 
+                            pkt.done()?;
                             self.w5500.set_subr(&subnet_mask)?;
                             self.w5500.set_sipr(&self.dhcp.ip)?;
                             self.w5500.set_gar(&gateway)?;
@@ -310,13 +346,23 @@ where
                         }
                         Some(MsgType::Nak) => {
                             info!("request was NAK'd");
+                            pkt.done()?;
                             self.discover(monotonic_secs)?;
                         }
-                        Some(mt) => info!("ignoring message type {:?}", mt),
-                        None => error!("message type option missing"),
+                        Some(mt) => {
+                            info!("ignoring message type {:?}", mt);
+                            pkt.done()?;
+                        }
+                        None => {
+                            error!("message type option missing");
+                            pkt.done()?;
+                        }
                     }
                 }
-                state => debug!("ignored IRQ in state={:?}", state),
+                state => {
+                    debug!("ignored IRQ in state={:?}", state);
+                    pkt.done()?;
+                }
             }
         }
 
@@ -382,35 +428,6 @@ where
         self.dhcp.state = State::Selecting;
         self.dhcp.timeout = Some(monotonic_secs);
         Ok(())
-    }
-
-    fn recv(&mut self) -> Result<Option<PktDe<W5500>>, Error<E>> {
-        let reader: UdpReader<W5500> = match self.w5500.udp_reader(self.dhcp.sn) {
-            Ok(r) => r,
-            Err(Error::WouldBlock) => {
-                error!("interrupt is misconfigured");
-                return Ok(None);
-            }
-            Err(e) => return Err(e),
-        };
-
-        debug!("RX {:?}", reader.header());
-
-        let mut pkt: PktDe<W5500> = PktDe::from(reader);
-        if pkt.is_bootreply()? {
-            debug!("packet is not a bootreply");
-            return Ok(None);
-        }
-        let recv_xid: u32 = pkt.xid()?;
-        if recv_xid != self.dhcp.xid {
-            debug!(
-                "recv xid {:08X} does not match ours {:08X}",
-                recv_xid, self.dhcp.xid
-            );
-            return Ok(None);
-        }
-
-        Ok(Some(pkt))
     }
 
     fn request(&mut self, monotonic_secs: u32) -> Result<(), Error<E>> {

@@ -111,15 +111,10 @@ impl<'a, W: Registers> Read<'a, W> for TcpReader<'a, W> {
         }
     }
 
-    fn done(self) -> Result<&'a mut W, W::Error> {
+    fn done(self) -> Result<(), W::Error> {
         self.w5500.set_sn_rx_rd(self.sn, self.tail_ptr)?;
         self.w5500.set_sn_cr(self.sn, SocketCommand::Recv)?;
-        Ok(self.w5500)
-    }
-
-    #[inline]
-    fn ignore(self) -> &'a mut W {
-        self.w5500
+        Ok(())
     }
 }
 

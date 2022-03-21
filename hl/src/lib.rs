@@ -298,12 +298,11 @@ pub trait Read<'a, W: Registers> {
     /// Mark the data as read, removing the data from the queue.
     ///
     /// For a UDP reader this removes the UDP datagram from the queue.
-    fn done(self) -> Result<&'a mut W, W::Error>;
-
-    /// All data and return it to the queue.
     ///
-    /// For a UDP reader this returns the UDP datagram to the queue.
-    fn ignore(self) -> &'a mut W;
+    /// To complete a read without marking the data as read simply use
+    /// [`mem::drop`](https://doc.rust-lang.org/core/mem/fn.drop.html) on the
+    /// reader.
+    fn done(self) -> Result<(), W::Error>;
 }
 
 /// Streaming writer for a TCP or UDP socket buffer.
