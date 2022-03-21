@@ -462,6 +462,8 @@ impl W5500 {
             }
         }
 
+        socket.regs.tx_rd = socket.regs.tx_wr;
+
         Ok(())
     }
 
