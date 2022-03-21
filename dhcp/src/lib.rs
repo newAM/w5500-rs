@@ -55,11 +55,23 @@ use w5500_hl::{
 };
 
 /// DHCP destination port.
+#[cfg(target_os = "none")]
 pub const DHCP_DESTINATION_PORT: u16 = 67;
-/// DHCP source port.
-pub const DHCP_SOURCE_PORT: u16 = 68;
+/// DHCP destination port.
+#[cfg(not(target_os = "none"))]
+pub const DHCP_DESTINATION_PORT: u16 = 2050;
 
+/// DHCP source port.
+#[cfg(target_os = "none")]
+pub const DHCP_SOURCE_PORT: u16 = 68;
+/// DHCP source port.
+#[cfg(not(target_os = "none"))]
+pub const DHCP_SOURCE_PORT: u16 = 2051;
+
+#[cfg(target_os = "none")]
 const DHCP_BROADCAST: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::BROADCAST, DHCP_DESTINATION_PORT);
+#[cfg(not(target_os = "none"))]
+const DHCP_BROADCAST: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::LOCALHOST, DHCP_DESTINATION_PORT);
 
 /// DHCP client states.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
