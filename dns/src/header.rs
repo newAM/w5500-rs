@@ -137,7 +137,6 @@ impl Header {
         self
     }
 
-    #[must_use]
     pub(crate) fn rcode(&self) -> Result<ResponseCode, u8> {
         ResponseCode::try_from(self.buf[3] & 0xF)
     }
