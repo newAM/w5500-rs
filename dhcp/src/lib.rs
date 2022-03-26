@@ -218,12 +218,12 @@ impl<'a> Dhcp<'a> {
 /// [`poll`]: Client::poll
 /// [`on_recv_interrupt`]: Client::on_recv_interrupt
 #[derive(Debug)]
-pub struct Client<'a, W5500> {
+pub struct Client<'a, 'b, W5500> {
     w5500: &'a mut W5500,
-    dhcp: &'a mut Dhcp<'a>,
+    dhcp: &'a mut Dhcp<'b>,
 }
 
-impl<'a, W5500, E> Client<'a, W5500>
+impl<'a, 'b, W5500, E> Client<'a, 'b, W5500>
 where
     W5500: Udp<Error = E> + Registers<Error = E>,
 {
@@ -235,7 +235,7 @@ where
     /// [`poll`]: Client::poll
     /// [`on_recv_interrupt`]: Client::on_recv_interrupt
     #[inline]
-    pub fn new(w5500: &'a mut W5500, dhcp: &'a mut Dhcp<'a>) -> Self {
+    pub fn new(w5500: &'a mut W5500, dhcp: &'a mut Dhcp<'b>) -> Self {
         Self { w5500, dhcp }
     }
 
