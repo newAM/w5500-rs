@@ -246,6 +246,39 @@ impl Sn {
     pub const fn bitmask(self) -> u8 {
         1 << (self as u8)
     }
+
+    /// Iterate over all sockets.
+    ///
+    /// # Example
+    ///
+    /// Check all sockets for a pending interrupt.
+    ///
+    /// ```
+    /// # use embedded_hal_mock as hal;
+    /// # let spi = hal::spi::Mock::new(&[
+    /// #   hal::spi::Transaction::write(vec![0x00, 0x17, 0x00]),
+    /// #   hal::spi::Transaction::transfer(vec![0], vec![0]),
+    /// # ]);
+    /// # let pin = hal::pin::Mock::new(&[
+    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
+    /// #    hal::pin::Transaction::set(hal::pin::State::High),
+    /// # ]);
+    /// use w5500_ll::{blocking::vdm::W5500, Registers, Sn, SocketCommand};
+    ///
+    /// let mut w5500 = W5500::new(spi, pin);
+    ///
+    /// let sir: u8 = w5500.sir()?;
+    /// for sn in Sn::iter() {
+    ///     let mask: u8 = sn.bitmask();
+    ///     if sir & sn.bitmask() != 0 {
+    ///         // handle socket interrupt
+    ///     }
+    /// }
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// ```
+    pub fn iter() -> core::slice::Iter<'static, Self> {
+        SOCKETS.iter()
+    }
 }
 
 impl From<Sn> for u8 {
