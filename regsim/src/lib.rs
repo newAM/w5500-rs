@@ -539,7 +539,7 @@ impl W5500 {
             },
             Some(SocketType::TcpStream(ref mut stream)) => match stream.read(&mut buf) {
                 Ok(num @ 1..=usize::MAX) => {
-                    log::info!("[{:?}] recv {} bytes", sn, num);
+                    log::info!("[{sn:?}] recv {num} bytes");
                     self.sim_set_sn_rx_buf(sn, &buf[..num]);
                     self.raise_sn_ir(sn, SocketInterrupt::RECV_MASK);
                 }
