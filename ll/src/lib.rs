@@ -276,18 +276,21 @@ impl Sn {
     /// }
     /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
+    #[inline]
     pub fn iter() -> core::slice::Iter<'static, Self> {
         SOCKETS.iter()
     }
 }
 
 impl From<Sn> for u8 {
+    #[inline]
     fn from(s: Sn) -> Self {
         s as u8
     }
 }
 
 impl From<Sn> for usize {
+    #[inline]
     fn from(s: Sn) -> Self {
         usize::from(u8::from(s))
     }
@@ -295,6 +298,7 @@ impl From<Sn> for usize {
 
 impl TryFrom<u8> for Sn {
     type Error = u8;
+
     fn try_from(val: u8) -> Result<Sn, u8> {
         match val {
             0 => Ok(Sn::Sn0),
