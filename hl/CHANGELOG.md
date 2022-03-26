@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added APIs for IO streaming to the socket buffers.
 - Added an `Error` type to support `read_exact` and `write_all` methods.
 - Added a `UdpHeader` type.
+- Added a `Hostname` type for use with DNS and DHCP.
 
 ## Changed
 - Changed all methods that return a `usize` of the bytes read / written to return a `u16` instead.  This helps avoid lossy conversions from `usize` to `u16` in some applications.

@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Changed `w5500_dhcp::Error` for `w5500_hl::Error`.
 - Changed DHCP packet processing from a local buffer to streaming from the W5500 socket buffer.
   - `Client::new` no longer accepts a `buf` argument.
+- Changed the type of the `hostname` argument in `Dhcp::new` from an unvalidated `&str` to a validated `Hostname`.
+- Changed hostnames in `Dhcp` from `'static` to a generic lifetime.
 
 ## [0.2.0] - 2022-01-02
 ### Changed

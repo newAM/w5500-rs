@@ -1,7 +1,7 @@
 use w5500_hl::{
     ll::{Registers, Sn},
     net::{Eui48Addr, Ipv4Addr},
-    Common, Error, Read, Seek, SeekFrom, UdpReader, Writer,
+    Common, Error, Hostname, Read, Seek, SeekFrom, UdpReader, Writer,
 };
 
 /// DHCP options.
@@ -281,8 +281,8 @@ impl<'a, W: Registers> PktSer<'a, W> {
         self.writer.write_all(&mac.octets)
     }
 
-    fn set_option_hostname(&mut self, hostname: &str) -> Result<(), Error<W::Error>> {
-        let hostname_len: u8 = hostname.len().try_into().unwrap(); // TODO, use a validated hostname
+    fn set_option_hostname(&mut self, hostname: Hostname) -> Result<(), Error<W::Error>> {
+        let hostname_len: u8 = hostname.len();
         self.writer
             .write_all(&[Options::Hostname.into(), hostname_len])?;
         self.writer.write_all(hostname.as_bytes())
@@ -313,7 +313,7 @@ impl<'a, W: Registers> PktSer<'a, W> {
     fn dhcp_discover(
         mut self,
         mac: &Eui48Addr,
-        hostname: &str,
+        hostname: Hostname,
         xid: u32,
     ) -> Result<Writer<'a, W>, Error<W::Error>> {
         self.prepare_message(mac, xid)?;
@@ -329,7 +329,7 @@ impl<'a, W: Registers> PktSer<'a, W> {
         mut self,
         mac: &Eui48Addr,
         ip: &Ipv4Addr,
-        hostname: &str,
+        hostname: Hostname,
         xid: u32,
     ) -> Result<Writer<'a, W>, Error<W::Error>> {
         self.prepare_message(mac, xid)?;
@@ -347,7 +347,7 @@ pub fn send_dhcp_discover<W: Registers>(
     w5500: &mut W,
     sn: Sn,
     mac: &Eui48Addr,
-    hostname: &str,
+    hostname: Hostname,
     xid: u32,
 ) -> Result<(), Error<W::Error>> {
     let writer: Writer<W> = w5500.writer(sn)?;
@@ -362,7 +362,7 @@ pub fn send_dhcp_request<W: Registers>(
     sn: Sn,
     mac: &Eui48Addr,
     ip: &Ipv4Addr,
-    hostname: &str,
+    hostname: Hostname,
     xid: u32,
 ) -> Result<(), Error<W::Error>> {
     let writer: Writer<W> = w5500.writer(sn)?;
