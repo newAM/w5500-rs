@@ -12,7 +12,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-use w5500_hl::Udp;
+use w5500_hl::{Common, Error, Read, Udp, UdpReader, Writer};
 use w5500_ll::{
     net::{Ipv4Addr, SocketAddrV4},
     Registers, Sn, VERSION,
@@ -20,7 +20,7 @@ use w5500_ll::{
 use w5500_regsim::W5500;
 
 // DNS socket to use, this could be any of them
-const DNS_SOCKET: Sn = Sn::Sn3;
+const DNS_SN: Sn = Sn::Sn3;
 
 // this is ignored by the register simulation
 const DNS_SOURCE_PORT: u16 = 1234;
@@ -57,6 +57,8 @@ const QUERY: [u8; 25] = [
     0x00, 0x01,
 ];
 
+const TIMEOUT: Duration = Duration::from_secs(3);
+
 fn main() {
     // this enables the logging built into the register simulator
     stderrlog::new()
@@ -77,31 +79,40 @@ fn main() {
     // (hopefully) already has a valid IP/MAC/Gateway/subnet mask
 
     w5500
-        .udp_bind(DNS_SOCKET, DNS_SOURCE_PORT)
+        .udp_bind(DNS_SN, DNS_SOURCE_PORT)
         .expect("Failed to bind the socket as UDP");
 
-    let tx_bytes = w5500.udp_send_to(DNS_SOCKET, &QUERY, &DNS_SERVER).unwrap();
-    assert_eq!(tx_bytes, QUERY.len());
+    let mut writer: Writer<_> = w5500.writer(DNS_SN).expect("Failed to create writer");
+    writer.write_all(&QUERY).expect("Failed to write query");
+    writer
+        .udp_send_to(&DNS_SERVER)
+        .expect("Failed to send query");
 
     // in an embedded system you should wait for a socket interrupt
     // or at the very least have a timeout
     let start = Instant::now();
     let mut buf: [u8; 100] = [0; 100];
-    let (rx_bytes, origin) = loop {
-        match w5500.udp_recv_from(DNS_SOCKET, &mut buf) {
-            Ok((num_bytes, origin)) => break (num_bytes, origin),
-            Err(nb::Error::WouldBlock) => {
-                sleep(Duration::from_millis(100));
-                if Instant::now() - start > Duration::from_secs(3) {
-                    panic!("Timeout waiting for udp_recv_from");
+
+    let mut reader: UdpReader<_> = loop {
+        match w5500.udp_reader(DNS_SN) {
+            Ok(reader) => break reader,
+            Err(Error::WouldBlock) => {
+                if Instant::now() - start > TIMEOUT {
+                    panic!("Timeout waiting for udp_reader");
                 }
+                sleep(Duration::from_millis(10));
             }
-            Err(nb::Error::Other(e)) => panic!("Bus error: {}", e),
+            Err(Error::Other(e)) => panic!("Bus error: {e:?}"),
+            Err(e) => unreachable!("Error: {e:?}"),
         }
     };
 
-    assert_eq!(origin.ip(), DNS_SERVER.ip());
-    let filled_buf = &buf[..rx_bytes];
+    assert_eq!(reader.header().origin.ip(), DNS_SERVER.ip());
+
+    let rx_bytes: u16 = reader
+        .read(&mut buf)
+        .expect("Failed to read from UDP socket");
+    let filled_buf = &buf[..rx_bytes.into()];
     let mut buf_iter = filled_buf.iter();
 
     let mut next = || *buf_iter.next().expect("Buf is shorter than we expected");

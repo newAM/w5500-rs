@@ -71,10 +71,10 @@ fn main() {
 
     // Read the HTTP request from the client
     // Safety: buf is only borrowed mutably in one location
-    let rx_bytes: usize = w5500.tcp_read(HTTP_SOCKET, unsafe { &mut BUF }).unwrap();
+    let rx_bytes: u16 = w5500.tcp_read(HTTP_SOCKET, unsafe { &mut BUF }).unwrap();
     // Truncate the buffer to the number of bytes read
     // Safety: BUF is only borrowed mutably in one location
-    let filled_buf: &[u8] = unsafe { &BUF[..rx_bytes] };
+    let filled_buf: &[u8] = unsafe { &BUF[..rx_bytes.into()] };
 
     // httparse is avaliable for embedded systems
     let mut headers = [httparse::EMPTY_HEADER; 64];

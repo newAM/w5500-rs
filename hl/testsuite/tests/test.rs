@@ -24,7 +24,7 @@ use w5500_hl::ll::{
     blocking::vdm::W5500, spi::MODE as W5500_MODE, LinkStatus, PhyCfg, Registers, Sn,
     SocketInterrupt,
 };
-use w5500_hl::{Common, Tcp, Udp};
+use w5500_hl::{Common, Error, Tcp, Udp, UdpHeader};
 
 // same panicking *behavior* as `panic-probe` but doesn't print a panic message
 // this prevents the panic message being printed *twice* when `defmt::panic` is invoked
@@ -172,21 +172,21 @@ mod tests {
         assert!(
             matches!(
                 w5500.udp_peek_from(UDP_SOCKET, &mut buf).unwrap_err(),
-                nb::Error::WouldBlock
+                Error::WouldBlock
             ),
             "udp_peek_from should block"
         );
         assert!(
             matches!(
                 w5500.udp_peek_from_header(UDP_SOCKET).unwrap_err(),
-                nb::Error::WouldBlock
+                Error::WouldBlock
             ),
             "udp_peek_from_header should block"
         );
         assert!(
             matches!(
                 w5500.udp_recv_from(UDP_SOCKET, &mut buf).unwrap_err(),
-                nb::Error::WouldBlock
+                Error::WouldBlock
             ),
             "udp_recv_from should block"
         );
@@ -201,8 +201,8 @@ mod tests {
         poll_int(w5500, HTTP_SOCKET, SocketInterrupt::RECV_MASK);
 
         // safety: BUFFER is only borrowed mutably once
-        let bytes_read: usize = w5500.tcp_read(HTTP_SOCKET, unsafe { &mut BUFFER }).unwrap();
-        let filled_buffer: &[u8] = unsafe { &BUFFER[..bytes_read] };
+        let bytes_read: u16 = w5500.tcp_read(HTTP_SOCKET, unsafe { &mut BUFFER }).unwrap();
+        let filled_buffer: &[u8] = unsafe { &BUFFER[..bytes_read.into()] };
 
         // request method
         assert_eq!(filled_buffer[..4], [b'G', b'E', b'T', b' ']);
@@ -217,8 +217,8 @@ mod tests {
         const RESPONSE200: &[u8] =
             b"HTTP/1.1 200 OK\r\nServer: W5500\r\nContent-Type: text/plain;charset=UTF-8\r\n\r\nHello World";
 
-        let bytes_sent: usize = w5500.tcp_write(HTTP_SOCKET, RESPONSE200).unwrap();
-        assert_eq!(bytes_sent, RESPONSE200.len());
+        let bytes_sent: u16 = w5500.tcp_write(HTTP_SOCKET, RESPONSE200).unwrap();
+        assert_eq!(usize::from(bytes_sent), RESPONSE200.len());
 
         poll_int(w5500, HTTP_SOCKET, SocketInterrupt::SENDOK_MASK);
 
@@ -254,10 +254,10 @@ mod tests {
                 }
             }
 
-            let n: usize = w5500
+            let n: u16 = w5500
                 .tcp_write(TCP_SOCKET, unsafe { &BUFFER[..CHUNK_SIZE] })
                 .unwrap();
-            assert_eq!(n, CHUNK_SIZE);
+            assert_eq!(usize::from(n), CHUNK_SIZE);
 
             poll_int(w5500, TCP_SOCKET, SocketInterrupt::SENDOK_MASK);
         }
@@ -273,33 +273,34 @@ mod tests {
 
         assert_eq!(w5500.local_addr(UDP_SOCKET).unwrap(), W5500_UDP_ADDR);
 
-        let n: usize = w5500
+        let n: u16 = w5500
             .udp_send_to(UDP_SOCKET, UDP_DATA, &testsuite_assets::PEER_UDP_ADDR)
             .unwrap();
-        assert_eq!(n, UDP_DATA.len());
+        assert_eq!(usize::from(n), UDP_DATA.len());
 
         poll_int(w5500, UDP_SOCKET, SocketInterrupt::SENDOK_MASK);
 
         // this should go to the same address
-        let n: usize = w5500.udp_send(UDP_SOCKET, UDP_DATA).unwrap();
-        assert_eq!(n, UDP_DATA.len());
+        let n: u16 = w5500.udp_send(UDP_SOCKET, UDP_DATA).unwrap();
+        assert_eq!(usize::from(n), UDP_DATA.len());
 
         poll_int(w5500, UDP_SOCKET, SocketInterrupt::SENDOK_MASK);
         poll_int(w5500, UDP_SOCKET, SocketInterrupt::RECV_MASK);
 
-        let (n, from) = w5500.udp_peek_from_header(UDP_SOCKET).unwrap();
-        assert_eq!(n, UDP_DATA.len());
-        assert_eq!(from, PEER_UDP_ADDR);
+        let header: UdpHeader = w5500.udp_peek_from_header(UDP_SOCKET).unwrap();
+        assert_eq!(header.len as usize, UDP_DATA.len());
+        assert_eq!(header.origin, PEER_UDP_ADDR);
 
         let mut buf: [u8; UDP_DATA.len()] = [0; UDP_DATA.len()];
-        let (n, from) = w5500.udp_peek_from(UDP_SOCKET, &mut buf).unwrap();
-        assert_eq!(n, UDP_DATA.len());
-        assert_eq!(from, PEER_UDP_ADDR);
+        let (n, header) = w5500.udp_peek_from(UDP_SOCKET, &mut buf).unwrap();
+        assert_eq!(usize::from(n), UDP_DATA.len());
+        assert_eq!(n, header.len);
+        assert_eq!(header.origin, PEER_UDP_ADDR);
         assert_eq!(buf, UDP_DATA);
 
         let mut buf: [u8; UDP_DATA.len()] = [0; UDP_DATA.len()];
         let (n, from) = w5500.udp_recv_from(UDP_SOCKET, &mut buf).unwrap();
-        assert_eq!(n, UDP_DATA.len());
+        assert_eq!(usize::from(n), UDP_DATA.len());
         assert_eq!(from, PEER_UDP_ADDR);
         assert_eq!(buf, UDP_DATA);
 
@@ -307,7 +308,7 @@ mod tests {
         assert!(
             matches!(
                 w5500.udp_peek_from_header(UDP_SOCKET).unwrap_err(),
-                nb::Error::WouldBlock
+                Error::WouldBlock
             ),
             "udp_peek_from_header should block"
         );

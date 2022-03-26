@@ -18,6 +18,5 @@ w5500-ll = { path = "../ll", version = "0.10", features = ["std"] }
 [dev-dependencies]
 trust-dns-client = "0.21"
 w5500-hl = { path = "../hl", version = "0.7" }
-nb = "1"
 stderrlog = "0.5"
 httparse = { version = "1", default-features = false }

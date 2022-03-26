@@ -1,7 +1,9 @@
 use std::convert::Infallible;
-use w5500_hl::net::{Ipv4Addr, SocketAddrV4};
-use w5500_hl::Udp;
-use w5500_ll::{Protocol, Registers, Sn, SocketCommand, SocketMode, SocketStatus};
+use w5500_hl::{Error, Udp};
+use w5500_ll::{
+    net::{Ipv4Addr, SocketAddrV4},
+    Protocol, Registers, Sn, SocketCommand, SocketMode, SocketStatus,
+};
 
 /// Tests debug asserts that ensure the socket is opened as UDP.
 mod socket_status_debug_assert {
@@ -98,17 +100,14 @@ mod udp_would_block_header {
         let mut buf: [u8; 1] = [0];
         assert_eq!(
             mock.udp_peek_from(Sn::Sn0, &mut buf),
-            Err(nb::Error::WouldBlock)
+            Err(Error::WouldBlock)
         );
     }
 
     #[test]
     fn udp_peek_from_header() {
         let mut mock = MockRegisters {};
-        assert_eq!(
-            mock.udp_peek_from_header(Sn::Sn0),
-            Err(nb::Error::WouldBlock)
-        );
+        assert_eq!(mock.udp_peek_from_header(Sn::Sn0), Err(Error::WouldBlock));
     }
 
     #[test]
@@ -117,7 +116,7 @@ mod udp_would_block_header {
         let mut buf: [u8; 1] = [0];
         assert_eq!(
             mock.udp_recv_from(Sn::Sn0, &mut buf),
-            Err(nb::Error::WouldBlock)
+            Err(Error::WouldBlock)
         );
     }
 }
