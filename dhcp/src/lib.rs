@@ -130,7 +130,7 @@ impl<'a> Dhcp<'a> {
     /// use rand_core::RngCore;
     /// use w5500_dhcp::{
     ///     ll::{net::Eui48Addr, Sn},
-    ///     Dhcp, Hostname
+    ///     Dhcp, Hostname,
     /// };
     /// # let mut rng = rand_core::OsRng;
     ///
