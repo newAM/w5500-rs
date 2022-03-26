@@ -841,23 +841,27 @@ impl W5500 {
 
                 if socket.regs.ir.con_raised() & ir.con_raised() {
                     log::debug!("[{sn:?}] clearing CON_MASK interrupt");
-                    socket.regs.ir = socket.regs.ir.clear_con();
+                    socket.regs.ir = (!SocketInterrupt::CON_MASK & u8::from(socket.regs.ir)).into();
                 }
                 if socket.regs.ir.discon_raised() & ir.discon_raised() {
                     log::debug!("[{sn:?}] clearing DISCON_MASK interrupt");
-                    socket.regs.ir = socket.regs.ir.clear_discon();
+                    socket.regs.ir =
+                        (!SocketInterrupt::DISCON_MASK & u8::from(socket.regs.ir)).into();
                 }
                 if socket.regs.ir.recv_raised() & ir.recv_raised() {
                     log::debug!("[{sn:?}] clearing RECV_MASK interrupt");
-                    socket.regs.ir = socket.regs.ir.clear_recv();
+                    socket.regs.ir =
+                        (!SocketInterrupt::RECV_MASK & u8::from(socket.regs.ir)).into();
                 }
                 if socket.regs.ir.timeout_raised() & ir.timeout_raised() {
                     log::debug!("[{sn:?}] clearing TIMEOUT_MASK interrupt");
-                    socket.regs.ir = socket.regs.ir.clear_timeout();
+                    socket.regs.ir =
+                        (!SocketInterrupt::TIMEOUT_MASK & u8::from(socket.regs.ir)).into();
                 }
                 if socket.regs.ir.sendok_raised() & ir.sendok_raised() {
                     log::debug!("[{sn:?}] clearing SENDOK_MASK interrupt");
-                    socket.regs.ir = socket.regs.ir.clear_sendok();
+                    socket.regs.ir =
+                        (!SocketInterrupt::SENDOK_MASK & u8::from(socket.regs.ir)).into();
                 }
 
                 if u8::from(socket.regs.ir) & socket.regs.imr & 0x1F == 0 {
@@ -921,7 +925,7 @@ impl W5500 {
             }
             Ok(SnReg::RX_WR0) => todo!(),
             Ok(SnReg::RX_WR1) => todo!(),
-            Ok(SnReg::IMR) => todo!(),
+            Ok(SnReg::IMR) => socket.regs.imr = byte,
             Ok(SnReg::FRAG0) => todo!(),
             Ok(SnReg::FRAG1) => todo!(),
             Ok(SnReg::KPALVTR) => todo!(),
