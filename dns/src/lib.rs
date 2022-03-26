@@ -68,28 +68,25 @@
 pub(crate) mod fmt;
 
 mod header;
-mod hostname;
 mod qclass;
 mod qtype;
 mod rand;
 
 pub use header::ResponseCode;
 use header::{Header, Qr};
-pub use hostname::Hostname;
-pub use qclass::Qclass;
-pub use qtype::Qtype;
-
-#[cfg(feature = "defmt")]
-use dfmt as defmt;
-
-pub use w5500_hl as hl;
-pub use w5500_hl::ll;
-
+pub use hl::Hostname;
 use hl::{Common, Error, Read, Seek, SeekFrom, Udp, UdpReader, Writer};
 use ll::{
     net::{Ipv4Addr, SocketAddrV4},
     Sn,
 };
+pub use qclass::Qclass;
+pub use qtype::Qtype;
+pub use w5500_hl as hl;
+pub use w5500_hl::ll;
+
+#[cfg(feature = "defmt")]
+use dfmt as defmt;
 
 /// DNS destination port.
 pub const DNS_DST_PORT: u16 = 53;
