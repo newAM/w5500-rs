@@ -97,6 +97,7 @@
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![cfg_attr(all(not(feature = "std"), not(test)), no_std)]
 
+mod hostname;
 mod tcp;
 mod udp;
 
@@ -106,6 +107,7 @@ use dfmt as defmt;
 use core::cmp::min;
 use ll::{Registers, Sn, SocketCommand, SocketStatus, SOCKETS};
 
+pub use hostname::Hostname;
 pub use tcp::{Tcp, TcpReader};
 pub use udp::{Udp, UdpHeader, UdpReader};
 pub use w5500_ll as ll;

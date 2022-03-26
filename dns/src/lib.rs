@@ -68,28 +68,25 @@
 pub(crate) mod fmt;
 
 mod header;
-mod hostname;
 mod qclass;
 mod qtype;
 mod rand;
 
 pub use header::ResponseCode;
 use header::{Header, Qr};
-pub use hostname::Hostname;
-pub use qclass::Qclass;
-pub use qtype::Qtype;
-
-#[cfg(feature = "defmt")]
-use dfmt as defmt;
-
-pub use w5500_hl as hl;
-pub use w5500_hl::ll;
-
+pub use hl::Hostname;
 use hl::{Common, Error, Read, Seek, SeekFrom, Udp, UdpReader, Writer};
 use ll::{
     net::{Ipv4Addr, SocketAddrV4},
     Sn,
 };
+pub use qclass::Qclass;
+pub use qtype::Qtype;
+pub use w5500_hl as hl;
+pub use w5500_hl::ll;
+
+#[cfg(feature = "defmt")]
+use dfmt as defmt;
 
 /// DNS destination port.
 pub const DNS_DST_PORT: u16 = 53;
@@ -184,7 +181,6 @@ impl<'a, W: Udp> Response<'a, W> {
     /// Response code from the server.
     ///
     /// This will return `Err(u8)` if the server uses a reserved value.
-    #[must_use]
     pub fn response_code(&self) -> Result<ResponseCode, u8> {
         self.header.rcode()
     }
@@ -195,7 +191,7 @@ impl<'a, W: Udp> Response<'a, W> {
         self.header.ancount()
     }
 
-    fn read_label_to_buf<'b>(&'b mut self) -> Result<usize, Error<W::Error>> {
+    fn read_label_to_buf(&mut self) -> Result<usize, Error<W::Error>> {
         let mut label_idx: usize = 0;
         loop {
             let label_len: u8 = {
@@ -324,9 +320,9 @@ impl<'a, W5500: Udp> Query<'a, W5500> {
     ///
     /// * [RFC 1035 Section 4.1.2](https://www.rfc-editor.org/rfc/rfc1035#section-4.1.2)
     pub fn question(mut self, qname: &Hostname) -> Result<Self, Error<W5500::Error>> {
-        const REMAIN_LEN: usize = 5;
+        const REMAIN_LEN: u16 = 5;
 
-        if (self.writer.remain() as usize) < qname.len() + REMAIN_LEN {
+        if self.writer.remain() < u16::from(qname.len()) + REMAIN_LEN {
             return Err(Error::OutOfMemory);
         }
 
@@ -339,7 +335,7 @@ impl<'a, W5500: Udp> Query<'a, W5500> {
             self.writer.write_all(label.as_bytes())?;
         }
 
-        let question_remainder: [u8; REMAIN_LEN] = [
+        let question_remainder: [u8; REMAIN_LEN as usize] = [
             0, // null terminator for above labels
             Qtype::A.high_byte(),
             Qtype::A.low_byte(),

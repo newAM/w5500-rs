@@ -45,6 +45,7 @@ pub use w5500_hl as hl;
 pub use w5500_hl::ll;
 
 use pkt::{send_dhcp_discover, send_dhcp_request, MsgType, PktDe};
+pub use w5500_hl::Hostname;
 use w5500_hl::{
     ll::{
         net::{Ipv4Addr, SocketAddrV4},
@@ -91,7 +92,7 @@ pub enum State {
 /// DHCP client storage.
 #[derive(Debug)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
-pub struct Dhcp {
+pub struct Dhcp<'a> {
     /// Socket to use for the DHCP client.
     sn: Sn,
     /// DHCP client state
@@ -115,10 +116,10 @@ pub struct Dhcp {
     /// IP address
     ip: Ipv4Addr,
     /// Client hostname
-    hostname: &'static str,
+    hostname: Hostname<'a>,
 }
 
-impl Dhcp {
+impl<'a> Dhcp<'a> {
     /// Create a new DHCP client storage structure.
     ///
     /// The DHCP client can be reset by re-creating this structure.
@@ -129,19 +130,20 @@ impl Dhcp {
     /// use rand_core::RngCore;
     /// use w5500_dhcp::{
     ///     ll::{net::Eui48Addr, Sn},
-    ///     Dhcp,
+    ///     Dhcp, Hostname,
     /// };
     /// # let mut rng = rand_core::OsRng;
     ///
     /// const DHCP_SN: Sn = Sn::Sn0;
     /// // locally administered MAC address
     /// const MAC_ADDRESS: Eui48Addr = Eui48Addr::new(0x02, 0x00, 0x11, 0x22, 0x33, 0x44);
-    /// const HOSTNAME: &str = "demo";
+    /// // safety: hostname is valid
+    /// const HOSTNAME: Hostname = unsafe { Hostname::new_unchecked("example.com") };
     /// let seed: u64 = rng.next_u64();
     ///
     /// let dhcp: Dhcp = Dhcp::new(DHCP_SN, seed, MAC_ADDRESS, HOSTNAME);
     /// ```
-    pub fn new(sn: Sn, seed: u64, mac: Eui48Addr, hostname: &'static str) -> Self {
+    pub fn new(sn: Sn, seed: u64, mac: Eui48Addr, hostname: Hostname<'a>) -> Self {
         let mut rand: rand::Rand = rand::Rand::new(seed);
 
         Self {
@@ -168,7 +170,7 @@ impl Dhcp {
     /// use rand_core::RngCore;
     /// use w5500_dhcp::{
     ///     ll::{net::Eui48Addr, Sn},
-    ///     Dhcp,
+    ///     Dhcp, Hostname,
     /// };
     /// # let mut rng = rand_core::OsRng;
     ///
@@ -176,7 +178,7 @@ impl Dhcp {
     ///     Sn::Sn0,
     ///     rng.next_u64(),
     ///     Eui48Addr::new(0x02, 0x00, 0x11, 0x22, 0x33, 0x44),
-    ///     "demo",
+    ///     Hostname::new("demo").unwrap(),
     /// );
     /// assert_eq!(dhcp.is_bound(), false);
     /// ```
@@ -218,7 +220,7 @@ impl Dhcp {
 #[derive(Debug)]
 pub struct Client<'a, W5500> {
     w5500: &'a mut W5500,
-    dhcp: &'a mut Dhcp,
+    dhcp: &'a mut Dhcp<'a>,
 }
 
 impl<'a, W5500, E> Client<'a, W5500>
@@ -233,7 +235,7 @@ where
     /// [`poll`]: Client::poll
     /// [`on_recv_interrupt`]: Client::on_recv_interrupt
     #[inline]
-    pub fn new(w5500: &'a mut W5500, dhcp: &'a mut Dhcp) -> Self {
+    pub fn new(w5500: &'a mut W5500, dhcp: &'a mut Dhcp<'a>) -> Self {
         Self { w5500, dhcp }
     }
 

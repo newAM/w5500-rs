@@ -3,7 +3,7 @@ use dhcproto::v4::{
     OptionCode,
 };
 use std::{net::UdpSocket, time::Instant};
-use w5500_dhcp::{ll::Sn, Client, Dhcp};
+use w5500_dhcp::{ll::Sn, Client, Dhcp, Hostname};
 use w5500_hl::net::{Eui48Addr, Ipv4Addr};
 use w5500_regsim::{Registers, W5500};
 
@@ -74,7 +74,9 @@ fn end_to_end() {
 
     const SEED: u64 = 0x1234; // normally random, but we want a deterministic XID
     const MAC: Eui48Addr = Eui48Addr::new(0x02, 0x34, 0x56, 0x78, 0xAB, 0xDE);
-    const HOSTNAME: &str = "TESTING";
+    // safety: hostname is valid
+    const HOSTNAME_STR: &str = "TESTING";
+    const HOSTNAME: Hostname = unsafe { Hostname::new_unchecked(HOSTNAME_STR) };
     let mac_with_hardware_type: Vec<u8> = {
         let mut buf: Vec<u8> = Vec::with_capacity(16);
         buf.push(0x01);
@@ -129,7 +131,7 @@ fn end_to_end() {
         msg.opts()
             .get(OptionCode::Hostname)
             .expect("Hostname is missing"),
-        &DhcpOption::Hostname(HOSTNAME.to_string())
+        &DhcpOption::Hostname(HOSTNAME_STR.to_string())
     );
 
     const YIADDR: [u8; 4] = [1, 2, 3, 4];
@@ -184,7 +186,7 @@ fn end_to_end() {
         msg.opts()
             .get(OptionCode::Hostname)
             .expect("Hostname is missing"),
-        &DhcpOption::Hostname(HOSTNAME.to_string())
+        &DhcpOption::Hostname(HOSTNAME_STR.to_string())
     );
     assert_eq!(
         msg.opts()
