@@ -19,14 +19,7 @@
 //! ```no_run
 //! # let mut w5500 = w5500_regsim::W5500::default();
 //! # let random_number: u64 = 0;
-//! use w5500_dns::{
-//!     hl::block,
-//!     ll::Sn,
-//!     servers,
-//!     Client as DnsClient,
-//!     Hostname,
-//!     Response,
-//! };
+//! use w5500_dns::{hl::block, ll::Sn, servers, Client as DnsClient, Hostname, Response};
 //!
 //! const DNS_SOCKET: Sn = Sn::Sn3;
 //! const DNS_SRC_PORT: u16 = 45917;

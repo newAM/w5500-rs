@@ -19,14 +19,7 @@ This code was developed for one-off hobby projects.
 ## Example
 
 ```rust
-use w5500_dns::{
-    hl::block,
-    ll::Sn,
-    servers,
-    Client as DnsClient,
-    Hostname,
-    Response,
-};
+use w5500_dns::{hl::block, ll::Sn, servers, Client as DnsClient, Hostname, Response};
 
 const DNS_SOCKET: Sn = Sn::Sn3;
 const DNS_SRC_PORT: u16 = 45917;
