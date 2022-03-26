@@ -597,7 +597,7 @@ pub trait Common: Registers {
     ///
     /// # Example
     ///
-    /// ```no_std
+    /// ```no_run
     /// # use embedded_hal_mock as h;
     /// # let mut w5500 = w5500_ll::blocking::vdm::W5500::new(h::spi::Mock::new(&[]), h::pin::Mock::new(&[]));
     /// use w5500_hl::{
@@ -605,13 +605,26 @@ pub trait Common: Registers {
     ///     net::{Ipv4Addr, SocketAddrV4},
     ///     Udp,
     ///     Writer,
+    ///     Common,
     /// };
     ///
     /// const DEST: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::new(192, 0, 2, 1), 8081);
     ///
     /// w5500.udp_bind(Sn0, 8080)?;
     ///
-    /// let mut udp_writer: Writer<_> = w5500.writer(Sn0)?;
+    /// let mut writer: Writer<_> = w5500.writer(Sn0)?;
+    ///
+    /// // write part of a packet
+    /// let buf: [u8; 8] = [0; 8];
+    /// writer.write_all(&buf)?;
+    ///
+    /// // write another part
+    /// let other_buf: [u8; 16]  = [0; 16];
+    /// writer.write_all(&buf)?;
+    ///
+    /// // send all previously written data to the destination
+    /// writer.udp_send_to(&DEST)?;
+    /// # Ok::<(), w5500_hl::Error<_>>(())
     /// ```
     fn writer(&mut self, sn: Sn) -> Result<Writer<Self>, Self::Error>
     where

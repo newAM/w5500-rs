@@ -47,6 +47,36 @@ impl UdpHeader {
 /// This implements the [`Read`] and [`Seek`] traits.
 ///
 /// Created with [`Udp::udp_reader`].
+///
+/// # Example
+///
+/// ```no_run
+/// # use embedded_hal_mock as h;
+/// # let mut w5500 = w5500_ll::blocking::vdm::W5500::new(h::spi::Mock::new(&[]), h::pin::Mock::new(&[]));
+/// use w5500_hl::{
+///     ll::{Registers, Sn::Sn0},
+///     net::{Ipv4Addr, SocketAddrV4},
+///     Udp,
+///     UdpReader,
+///     Read,
+/// };
+///
+/// const DEST: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::new(192, 0, 2, 1), 8081);
+///
+/// w5500.udp_bind(Sn0, 8080)?;
+///
+/// let mut reader: UdpReader<_> = w5500.udp_reader(Sn0)?;
+///
+/// let mut buf: [u8; 8] = [0; 8];
+/// reader.read_exact(&mut buf)?;
+///
+/// let mut other_buf: [u8; 16] = [0; 16];
+/// reader.read_exact(&mut buf)?;
+///
+/// // mark the datagram as done, removing it from the queue
+/// reader.done()?;
+/// # Ok::<(), w5500_hl::Error<_>>(())
+/// ```
 #[derive(Debug)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
 pub struct UdpReader<'a, W: Registers> {
@@ -88,6 +118,28 @@ impl<'a, W: Registers> Read<'a, W> for UdpReader<'a, W> {
 
 impl<'a, W: Registers> UdpReader<'a, W> {
     /// Get the UDP header.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// # use embedded_hal_mock as h;
+    /// # let mut w5500 = w5500_ll::blocking::vdm::W5500::new(h::spi::Mock::new(&[]), h::pin::Mock::new(&[]));
+    /// use w5500_hl::{
+    ///     ll::{Registers, Sn::Sn0},
+    ///     net::{Ipv4Addr, SocketAddrV4},
+    ///     Udp,
+    ///     UdpReader,
+    ///     UdpHeader
+    /// };
+    ///
+    /// const DEST: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::new(192, 0, 2, 1), 8081);
+    ///
+    /// w5500.udp_bind(Sn0, 8080)?;
+    ///
+    /// let reader: UdpReader<_> = w5500.udp_reader(Sn0)?;
+    /// let header: &UdpHeader = reader.header();
+    /// # Ok::<(), w5500_hl::Error<_>>(())
+    /// ```
     #[inline]
     pub fn header(&self) -> &UdpHeader {
         &self.header
