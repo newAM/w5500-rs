@@ -128,7 +128,8 @@ enum State {
 ///
 /// dhcp.setup_socket(&mut w5500)?;
 ///
-/// dhcp.process(&mut w5500, monotonic_seconds())?;
+/// let call_after_secs: u32 = dhcp.process(&mut w5500, monotonic_seconds())?;
+/// // call process again after call_after_secs, or on the next interrupt
 /// # Ok::<(), w5500_hl::Error<std::io::Error>>(())
 /// ```
 #[derive(Debug)]
