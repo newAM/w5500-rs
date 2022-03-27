@@ -40,7 +40,10 @@ use dfmt as defmt;
 mod pkt;
 mod rand;
 
-use hl::UdpReader;
+use hl::{
+    ll::{SocketInterrupt, SocketInterruptMask},
+    Common, UdpReader,
+};
 pub use w5500_hl as hl;
 pub use w5500_hl::ll;
 
@@ -58,14 +61,14 @@ use w5500_hl::{
 /// DHCP destination port.
 #[cfg(target_os = "none")]
 pub const DHCP_DESTINATION_PORT: u16 = 67;
-/// DHCP destination port.
+/// DHCP destination port for testing on `std` targets.
 #[cfg(not(target_os = "none"))]
 pub const DHCP_DESTINATION_PORT: u16 = 2050;
 
 /// DHCP source port.
 #[cfg(target_os = "none")]
 pub const DHCP_SOURCE_PORT: u16 = 68;
-/// DHCP source port.
+/// DHCP source port for testing on `std` targets.
 #[cfg(not(target_os = "none"))]
 pub const DHCP_SOURCE_PORT: u16 = 2051;
 
@@ -74,11 +77,14 @@ const DHCP_BROADCAST: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::BROADCAST, DHCP
 #[cfg(not(target_os = "none"))]
 const DHCP_BROADCAST: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::LOCALHOST, DHCP_DESTINATION_PORT);
 
+/// Duration in seconds to wait for the DHCP server to send a response.
+const TIMEOUT_SECS: u32 = 10;
+
 /// DHCP client states.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
-#[allow(missing_docs)]
-pub enum State {
+#[allow(dead_code)]
+enum State {
     Init,
     Selecting,
     Requesting,
@@ -89,10 +95,46 @@ pub enum State {
     Rebinding,
 }
 
-/// DHCP client storage.
+/// DHCP client.
+///
+/// This requires the W5500 interrupt pin configured for a falling edge trigger.
+///
+/// # Example
+///
+/// ```no_run
+/// use rand_core::RngCore;
+/// use w5500_dhcp::{
+///     ll::{net::Eui48Addr, Sn},
+///     Client, Hostname,
+/// };
+/// # let mut w5500 = w5500_regsim::W5500::default();
+/// # let mut rng = rand_core::OsRng;
+/// # fn this_is_where_you_setup_the_w5500_int_pin_for_a_falling_edge_trigger() { }
+/// # fn monotonic_seconds() -> u32 { 0 }
+///
+/// const DHCP_SN: Sn = Sn::Sn0;
+///
+/// // locally administered MAC address
+/// const MAC_ADDRESS: Eui48Addr = Eui48Addr::new(0x02, 0x00, 0x11, 0x22, 0x33, 0x44);
+///
+/// // safety: hostname is valid
+/// const HOSTNAME: Hostname = unsafe { Hostname::new_unchecked("example") };
+///
+/// this_is_where_you_setup_the_w5500_int_pin_for_a_falling_edge_trigger();
+///
+/// let seed: u64 = rng.next_u64();
+///
+/// let mut dhcp: Client = Client::new(DHCP_SN, seed, MAC_ADDRESS, HOSTNAME);
+///
+/// dhcp.setup_socket(&mut w5500)?;
+///
+/// let call_after_secs: u32 = dhcp.process(&mut w5500, monotonic_seconds())?;
+/// // call process again after call_after_secs, or on the next interrupt
+/// # Ok::<(), w5500_hl::Error<std::io::Error>>(())
+/// ```
 #[derive(Debug)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
-pub struct Dhcp<'a> {
+pub struct Client<'a> {
     /// Socket to use for the DHCP client.
     sn: Sn,
     /// DHCP client state
@@ -119,7 +161,7 @@ pub struct Dhcp<'a> {
     hostname: Hostname<'a>,
 }
 
-impl<'a> Dhcp<'a> {
+impl<'a> Client<'a> {
     /// Create a new DHCP client storage structure.
     ///
     /// The DHCP client can be reset by re-creating this structure.
@@ -130,7 +172,7 @@ impl<'a> Dhcp<'a> {
     /// use rand_core::RngCore;
     /// use w5500_dhcp::{
     ///     ll::{net::Eui48Addr, Sn},
-    ///     Dhcp, Hostname,
+    ///     Client, Hostname,
     /// };
     /// # let mut rng = rand_core::OsRng;
     ///
@@ -138,10 +180,10 @@ impl<'a> Dhcp<'a> {
     /// // locally administered MAC address
     /// const MAC_ADDRESS: Eui48Addr = Eui48Addr::new(0x02, 0x00, 0x11, 0x22, 0x33, 0x44);
     /// // safety: hostname is valid
-    /// const HOSTNAME: Hostname = unsafe { Hostname::new_unchecked("example.com") };
+    /// const HOSTNAME: Hostname = unsafe { Hostname::new_unchecked("example") };
     /// let seed: u64 = rng.next_u64();
     ///
-    /// let dhcp: Dhcp = Dhcp::new(DHCP_SN, seed, MAC_ADDRESS, HOSTNAME);
+    /// let dhcp: Client = Client::new(DHCP_SN, seed, MAC_ADDRESS, HOSTNAME);
     /// ```
     pub fn new(sn: Sn, seed: u64, mac: Eui48Addr, hostname: Hostname<'a>) -> Self {
         let mut rand: rand::Rand = rand::Rand::new(seed);
@@ -170,11 +212,11 @@ impl<'a> Dhcp<'a> {
     /// use rand_core::RngCore;
     /// use w5500_dhcp::{
     ///     ll::{net::Eui48Addr, Sn},
-    ///     Dhcp, Hostname,
+    ///     Client, Hostname,
     /// };
     /// # let mut rng = rand_core::OsRng;
     ///
-    /// let dhcp: Dhcp = Dhcp::new(
+    /// let dhcp: Client = Client::new(
     ///     Sn::Sn0,
     ///     rng.next_u64(),
     ///     Eui48Addr::new(0x02, 0x00, 0x11, 0x22, 0x33, 0x44),
@@ -186,64 +228,68 @@ impl<'a> Dhcp<'a> {
     pub fn is_bound(&self) -> bool {
         self.state == State::Bound
     }
-}
 
-/// DHCP client.
-///
-/// # Hardware Requirements
-///
-/// * The W5500 INT pin must be connected to the micronctroller.
-///
-/// # External Setup
-///
-/// 1. The W5500 INT pin must be configured for a falling edge trigger.
-/// 2. RECV interrupts for the DHCP socket must be enabled with `set_simr`.
-///
-/// # System Time
-///
-/// You must supply a monotonic `u32` that counts the number of seconds since
-/// system boot to the [`poll`] and [`on_recv_interrupt`] methods.
-///
-/// This is required for timeouts, and tracking the DHCP lease timers.
-///
-/// # Usage
-///
-/// Call the [`poll`] method approximately every second.
-/// [`poll`] handles DHCP timer expiry, and timeouts if the DHCP
-/// server fails to respond to DHCPDISCOVER or DHCPREQUEST.
-///
-/// Call [`on_recv_interrupt`] when there is a RECV interrupt on the DHCP
-/// socket.  This will handle packet RX from the DHCP server.
-///
-/// [`poll`]: Client::poll
-/// [`on_recv_interrupt`]: Client::on_recv_interrupt
-#[derive(Debug)]
-pub struct Client<'a, 'b, W5500> {
-    w5500: &'a mut W5500,
-    dhcp: &'a mut Dhcp<'b>,
-}
-
-impl<'a, 'b, W5500, E> Client<'a, 'b, W5500>
-where
-    W5500: Udp<Error = E> + Registers<Error = E>,
-{
-    /// Create a new DHCP client.
+    /// Setup the DHCP socket interrupts.
     ///
-    /// This is intended to be called before before calling
-    /// [`on_recv_interrupt`] or [`poll`].
+    /// This should be called once during initialization.
     ///
-    /// [`poll`]: Client::poll
-    /// [`on_recv_interrupt`]: Client::on_recv_interrupt
-    #[inline]
-    pub fn new(w5500: &'a mut W5500, dhcp: &'a mut Dhcp<'b>) -> Self {
-        Self { w5500, dhcp }
+    /// This only sets up the W5500 interrupts, you must configure the W5500
+    /// interrupt pin for a falling edge trigger yourself.
+    pub fn setup_socket<W5500: Registers>(&self, w5500: &mut W5500) -> Result<(), W5500::Error> {
+        let simr: u8 = w5500.simr()?;
+        w5500.set_simr(self.sn.bitmask() | simr)?;
+        const MASK: SocketInterruptMask = SocketInterruptMask::ALL_MASKED.unmask_recv();
+        w5500.set_sn_imr(self.sn, MASK)?;
+        w5500.close(self.sn)?;
+        w5500.set_sipr(&self.ip)?;
+        w5500.udp_bind(self.sn, DHCP_SOURCE_PORT)
     }
 
-    /// Handle a RECV interrupt on the DHCP socket.
+    fn timeout_elapsed_secs(&self, monotonic_secs: u32) -> Option<u32> {
+        self.timeout.map(|to| monotonic_secs - to)
+    }
+
+    fn next_call(&self, monotonic_secs: u32) -> u32 {
+        if let Some(timeout_elapsed_secs) = self.timeout_elapsed_secs(monotonic_secs) {
+            TIMEOUT_SECS.saturating_sub(timeout_elapsed_secs)
+        } else {
+            self.lease
+                .saturating_sub(monotonic_secs.saturating_sub(self.lease_monotonic_secs))
+        }
+        .saturating_add(1)
+    }
+
+    /// Process DHCP client events.
     ///
-    /// This will **NOT** clear the socket interrupt.
-    pub fn on_recv_interrupt(&mut self, monotonic_secs: u32) -> Result<(), Error<E>> {
-        let state: State = self.dhcp.state;
+    /// This should be called in these conditions:
+    ///
+    /// 1. After power-on-reset, to start the DHCP client.
+    /// 2. A W5500 interrupt on the DHCP socket is received.
+    /// 3. After the duration indicated by the return value.
+    ///
+    /// This will clear any pending DHCP socket interrupts.
+    ///
+    /// # System Time
+    ///
+    /// You must supply a monotonic `u32` that counts the number of seconds
+    /// since system boot to this method.
+    ///
+    /// This is required for timeouts, and tracking the DHCP lease timers.
+    ///
+    /// # Return Value
+    ///
+    /// The return value is a number of seconds into the future you should
+    /// call this method.
+    /// You may call this method before that time, but nothing will happen.
+    pub fn process<W5500: Registers>(
+        &mut self,
+        w5500: &mut W5500,
+        monotonic_secs: u32,
+    ) -> Result<u32, Error<W5500::Error>> {
+        let sn_ir: SocketInterrupt = w5500.sn_ir(self.sn)?;
+        if sn_ir.any_raised() {
+            w5500.set_sn_ir(self.sn, sn_ir)?;
+        }
 
         fn recv<W5500: Registers>(
             w5500: &mut W5500,
@@ -252,10 +298,7 @@ where
         ) -> Result<Option<PktDe<W5500>>, Error<W5500::Error>> {
             let reader: UdpReader<W5500> = match w5500.udp_reader(sn) {
                 Ok(r) => r,
-                Err(Error::WouldBlock) => {
-                    error!("interrupt is misconfigured");
-                    return Ok(None);
-                }
+                Err(Error::WouldBlock) => return Ok(None),
                 Err(e) => return Err(e),
             };
 
@@ -279,12 +322,12 @@ where
             Ok(Some(pkt))
         }
 
-        if let Some(mut pkt) = recv(self.w5500, self.dhcp.sn, self.dhcp.xid)? {
-            match state {
+        if let Some(mut pkt) = recv(w5500, self.sn, self.xid)? {
+            match self.state {
                 State::Selecting => {
-                    self.dhcp.ip = pkt.yiaddr()?;
+                    self.ip = pkt.yiaddr()?;
                     pkt.done()?;
-                    self.request(monotonic_secs)?;
+                    self.request(w5500, monotonic_secs)?;
                 }
                 State::Requesting | State::Renewing | State::Rebinding => {
                     match pkt.msg_type()? {
@@ -293,7 +336,7 @@ where
                                 Some(x) => x,
                                 None => {
                                     error!("subnet_mask option missing");
-                                    return Ok(());
+                                    return Ok(self.next_call(monotonic_secs));
                                 }
                             };
                             info!("subnet_mask: {}", subnet_mask);
@@ -301,7 +344,7 @@ where
                                 Some(x) => x,
                                 None => {
                                     error!("gateway option missing");
-                                    return Ok(());
+                                    return Ok(self.next_call(monotonic_secs));
                                 }
                             };
                             info!("gateway: {}", gateway);
@@ -309,7 +352,7 @@ where
                                 Some(x) => x,
                                 None => {
                                     error!("renewal_time option missing");
-                                    return Ok(());
+                                    return Ok(self.next_call(monotonic_secs));
                                 }
                             };
                             info!("renewal_time: {}", renewal_time);
@@ -317,7 +360,7 @@ where
                                 Some(x) => x,
                                 None => {
                                     error!("rebinding_time option missing");
-                                    return Ok(());
+                                    return Ok(self.next_call(monotonic_secs));
                                 }
                             };
                             info!("rebinding_time: {}", rebinding_time);
@@ -325,31 +368,31 @@ where
                                 Some(x) => x,
                                 None => {
                                     error!("lease_time option missing");
-                                    return Ok(());
+                                    return Ok(self.next_call(monotonic_secs));
                                 }
                             };
                             info!("lease_time: {}", lease_time);
 
-                            self.dhcp.t1 = renewal_time;
-                            self.dhcp.t2 = rebinding_time;
+                            self.t1 = renewal_time;
+                            self.t2 = rebinding_time;
                             // de-rate lease time by 12%
-                            self.dhcp.lease = lease_time.saturating_sub(lease_time / 8);
-                            self.dhcp.lease_monotonic_secs = monotonic_secs;
+                            self.lease = lease_time.saturating_sub(lease_time / 8);
+                            self.lease_monotonic_secs = monotonic_secs;
 
-                            info!("dhcp.ip: {}", self.dhcp.ip);
+                            info!("dhcp.ip: {}", self.ip);
 
                             pkt.done()?;
-                            self.w5500.set_subr(&subnet_mask)?;
-                            self.w5500.set_sipr(&self.dhcp.ip)?;
-                            self.w5500.set_gar(&gateway)?;
+                            w5500.set_subr(&subnet_mask)?;
+                            w5500.set_sipr(&self.ip)?;
+                            w5500.set_gar(&gateway)?;
 
-                            self.dhcp.state = State::Bound;
-                            self.dhcp.timeout = None;
+                            self.state = State::Bound;
+                            self.timeout = None;
                         }
                         Some(MsgType::Nak) => {
                             info!("request was NAK'd");
                             pkt.done()?;
-                            self.discover(monotonic_secs)?;
+                            self.discover(w5500, monotonic_secs)?;
                         }
                         Some(mt) => {
                             info!("ignoring message type {:?}", mt);
@@ -368,85 +411,70 @@ where
             }
         }
 
-        Ok(())
-    }
-
-    /// Poll the DHCP client.
-    ///
-    /// This should be called approximately every second.
-    pub fn poll(&mut self, monotonic_secs: u32) -> Result<(), Error<E>> {
-        match self.dhcp.timeout {
-            Some(to) => {
-                if monotonic_secs.wrapping_sub(to) > 10 {
-                    info!(
-                        "timeout waiting for state to transition from {:?}",
-                        self.dhcp.state
-                    );
-                    self.discover(monotonic_secs)?;
-                }
+        if let Some(elapsed_secs) = self.timeout_elapsed_secs(monotonic_secs) {
+            if elapsed_secs > TIMEOUT_SECS {
+                info!(
+                    "timeout waiting for state to transition from {:?}",
+                    self.state
+                );
+                self.discover(w5500, monotonic_secs)?;
             }
-            None => match self.dhcp.state {
-                State::Init => {
-                    self.discover(monotonic_secs)?;
-                }
+        } else {
+            match self.state {
+                State::Init => self.discover(w5500, monotonic_secs)?,
                 // states handled by IRQs and timeouts
                 State::Selecting | State::Requesting | State::Renewing | State::Rebinding => (),
                 // states we do not care about (yet)
                 State::InitReboot | State::Rebooting => (),
                 State::Bound => {
-                    let elapsed: u32 = monotonic_secs.wrapping_sub(self.dhcp.lease_monotonic_secs);
-                    if elapsed > self.dhcp.t1 {
+                    let elapsed: u32 = monotonic_secs.wrapping_sub(self.lease_monotonic_secs);
+                    if elapsed > self.t1 {
                         warn!("t1 expired, taking no action");
                     }
-                    if elapsed > self.dhcp.t2 {
+                    if elapsed > self.t2 {
                         warn!("t2 expired, taking no action");
                     }
-                    if elapsed > self.dhcp.lease {
+                    if elapsed > self.lease {
                         info!("lease expired");
-                        self.discover(monotonic_secs)?;
+                        self.discover(w5500, monotonic_secs)?;
                     }
                 }
-            },
+            }
         }
 
+        Ok(self.next_call(monotonic_secs))
+    }
+
+    fn discover<W5500: Registers>(
+        &mut self,
+        w5500: &mut W5500,
+        monotonic_secs: u32,
+    ) -> Result<(), Error<W5500::Error>> {
+        self.ip = Ipv4Addr::UNSPECIFIED;
+        self.xid = self.rand.next_u32();
+        debug!("sending DHCPDISCOVER xid={:08X}", self.xid);
+
+        w5500.set_sipr(&self.ip)?;
+        w5500.udp_bind(self.sn, DHCP_SOURCE_PORT)?;
+
+        send_dhcp_discover(w5500, self.sn, &self.mac, self.hostname, self.xid)?;
+        self.state = State::Selecting;
+        self.timeout = Some(monotonic_secs);
         Ok(())
     }
 
-    fn discover(&mut self, monotonic_secs: u32) -> Result<(), Error<E>> {
-        self.dhcp.ip = Ipv4Addr::UNSPECIFIED;
-        self.dhcp.xid = self.dhcp.rand.next_u32();
-        debug!("sending DHCPDISCOVER xid={:08X}", self.dhcp.xid);
+    fn request<W5500: Registers>(
+        &mut self,
+        w5500: &mut W5500,
+        monotonic_secs: u32,
+    ) -> Result<(), Error<W5500::Error>> {
+        self.xid = self.rand.next_u32();
+        debug!("sending DHCPREQUEST xid={:08X}", self.xid);
 
-        self.w5500.set_sipr(&self.dhcp.ip)?;
-        self.w5500.udp_bind(self.dhcp.sn, DHCP_SOURCE_PORT)?;
+        send_dhcp_request(w5500, self.sn, &self.mac, &self.ip, self.hostname, self.xid)?;
 
-        send_dhcp_discover(
-            self.w5500,
-            self.dhcp.sn,
-            &self.dhcp.mac,
-            self.dhcp.hostname,
-            self.dhcp.xid,
-        )?;
-        self.dhcp.state = State::Selecting;
-        self.dhcp.timeout = Some(monotonic_secs);
-        Ok(())
-    }
-
-    fn request(&mut self, monotonic_secs: u32) -> Result<(), Error<E>> {
-        self.dhcp.xid = self.dhcp.rand.next_u32();
-        debug!("sending DHCPREQUEST xid={:08X}", self.dhcp.xid);
-
-        send_dhcp_request(
-            self.w5500,
-            self.dhcp.sn,
-            &self.dhcp.mac,
-            &self.dhcp.ip,
-            self.dhcp.hostname,
-            self.dhcp.xid,
-        )?;
-
-        self.dhcp.state = State::Requesting;
-        self.dhcp.timeout = Some(monotonic_secs);
+        self.state = State::Requesting;
+        self.timeout = Some(monotonic_secs);
         Ok(())
     }
 }
