@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - The structure previously named `Client` has been removed.
 - Changed the type of the `hostname` argument in `Client::new` from an unvalidated `&str` to a validated `Hostname`.
 - Changed hostnames in `Client` from `'static` to a generic lifetime.
+- Changed `State` from public to private.
 
 ### Removed
 - Removed `on_recv_interrupt`, use `process` instead.

@@ -61,14 +61,14 @@ use w5500_hl::{
 /// DHCP destination port.
 #[cfg(target_os = "none")]
 pub const DHCP_DESTINATION_PORT: u16 = 67;
-/// DHCP destination port.
+/// DHCP destination port for testing on `std` targets.
 #[cfg(not(target_os = "none"))]
 pub const DHCP_DESTINATION_PORT: u16 = 2050;
 
 /// DHCP source port.
 #[cfg(target_os = "none")]
 pub const DHCP_SOURCE_PORT: u16 = 68;
-/// DHCP source port.
+/// DHCP source port for testing on `std` targets.
 #[cfg(not(target_os = "none"))]
 pub const DHCP_SOURCE_PORT: u16 = 2051;
 
@@ -83,8 +83,8 @@ const TIMEOUT_SECS: u32 = 10;
 /// DHCP client states.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
-#[allow(missing_docs)]
-pub enum State {
+#[allow(dead_code)]
+enum State {
     Init,
     Selecting,
     Requesting,
