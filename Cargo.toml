@@ -12,6 +12,7 @@ members = [
 ]
 default-members = [
     "dhcp",
+    "dns",
     "hl",
     "ll",
     "regsim",

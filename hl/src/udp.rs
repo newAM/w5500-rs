@@ -112,7 +112,13 @@ impl<'a, W: Registers> Read<'a, W> for UdpReader<'a, W> {
     }
 
     fn done(self) -> Result<(), W::Error> {
-        self.inner.done()
+        self.inner
+            .w5500
+            .set_sn_rx_rd(self.inner.sn, self.inner.tail_ptr)?;
+        self.inner
+            .w5500
+            .set_sn_cr(self.inner.sn, SocketCommand::Recv)?;
+        Ok(())
     }
 }
 
