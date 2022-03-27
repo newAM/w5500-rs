@@ -3,7 +3,7 @@ use dhcproto::v4::{
     OptionCode,
 };
 use std::{net::UdpSocket, time::Instant};
-use w5500_dhcp::{ll::Sn, Client, Dhcp, Hostname};
+use w5500_dhcp::{ll::Sn, Client, Hostname};
 use w5500_hl::net::{Eui48Addr, Ipv4Addr};
 use w5500_regsim::{Registers, W5500};
 
@@ -88,15 +88,16 @@ fn end_to_end() {
     w5500
         .set_sipr(&Ipv4Addr::LOCALHOST)
         .expect("Failed to set source IP");
-    let mut dhcp: Dhcp = Dhcp::new(DHCP_SN, SEED, MAC, HOSTNAME);
+    let mut dhcp: Client = Client::new(DHCP_SN, SEED, MAC, HOSTNAME);
+    dhcp.setup_socket(&mut w5500).unwrap();
 
     const DHCP_SN: Sn = Sn::Sn0;
 
     let mut server: Server = Server::default();
-    let mut client: Client<W5500> = Client::new(&mut w5500, &mut dhcp);
 
     let mono: Monotonic = Monotonic::default();
-    client.poll(mono.monotonic_secs()).expect("poll");
+    let next_call: u32 = dhcp.process(&mut w5500, mono.monotonic_secs()).unwrap();
+    assert_eq!(next_call, 11);
 
     let msg: Message = server.recv();
 
@@ -150,9 +151,8 @@ fn end_to_end() {
 
     server.send(offer);
 
-    client
-        .on_recv_interrupt(mono.monotonic_secs())
-        .expect("on_recv_interrupt");
+    let next_call: u32 = dhcp.process(&mut w5500, mono.monotonic_secs()).unwrap();
+    assert_eq!(next_call, 11);
 
     let msg: Message = server.recv();
 
@@ -239,15 +239,20 @@ fn end_to_end() {
     offer
         .opts_mut()
         .insert(DhcpOption::DomainNameServer(vec![DNS.into()]));
-    offer.opts_mut().insert(DhcpOption::AddressLeaseTime(444));
+    const LEASE_TIME: u32 = 444;
+    offer
+        .opts_mut()
+        .insert(DhcpOption::AddressLeaseTime(LEASE_TIME));
     offer.opts_mut().insert(DhcpOption::Renewal(555));
     offer.opts_mut().insert(DhcpOption::Rebinding(666));
 
     server.send(offer);
 
-    client
-        .on_recv_interrupt(mono.monotonic_secs())
-        .expect("on_recv_interrupt");
+    let next_call: u32 = dhcp.process(&mut w5500, mono.monotonic_secs()).unwrap();
+    assert_eq!(
+        next_call,
+        LEASE_TIME.saturating_sub(LEASE_TIME / 8).saturating_add(1)
+    );
 
     assert_eq!(w5500.sipr().unwrap(), Ipv4Addr::from(YIADDR));
     assert_eq!(w5500.gar().unwrap(), Ipv4Addr::from(ROUTER));

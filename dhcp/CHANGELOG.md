@@ -5,12 +5,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- Added `Client.setup_socket` to setup socket the socket.
+
 ### Changed
-- Changed `w5500_dhcp::Error` for `w5500_hl::Error`.
+- Changed `w5500_dhcp::Error` to `w5500_hl::Error`.
 - Changed DHCP packet processing from a local buffer to streaming from the W5500 socket buffer.
   - `Client::new` no longer accepts a `buf` argument.
-- Changed the type of the `hostname` argument in `Dhcp::new` from an unvalidated `&str` to a validated `Hostname`.
-- Changed hostnames in `Dhcp` from `'static` to a generic lifetime.
+- Changed the `Dhcp` structure name to `Client`.
+  - The structure previously named `Client` has been removed.
+- Changed the type of the `hostname` argument in `Client::new` from an unvalidated `&str` to a validated `Hostname`.
+- Changed hostnames in `Client` from `'static` to a generic lifetime.
+
+### Removed
+- Removed `on_recv_interrupt`, use `process` instead.
+- Removed `poll`, use `process` instead.
 
 ## [0.2.0] - 2022-01-02
 ### Changed
