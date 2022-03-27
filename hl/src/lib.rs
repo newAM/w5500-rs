@@ -299,6 +299,9 @@ pub trait Read<'a, W: Registers> {
 
     /// Mark the data as read, removing the data from the queue.
     ///
+    /// For a TCP reader this removes all data up to the curernt pointer
+    /// position from the queue.
+    ///
     /// For a UDP reader this removes the UDP datagram from the queue.
     ///
     /// To complete a read without marking the data as read simply use

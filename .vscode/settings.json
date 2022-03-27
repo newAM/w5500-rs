@@ -1,0 +1,7 @@
+{
+    "rust-analyzer.cargo.features": ["log", "embedded-hal", "std"],
+    "rust-analyzer.cargo.allFeatures": false,
+    "rust-analyzer.checkOnSave.features": ["log", "embedded-hal", "std"],
+    "rust-analyzer.checkOnSave.allFeatures": false,
+    "rust-analyzer.checkOnSave.allTargets": false,
+}

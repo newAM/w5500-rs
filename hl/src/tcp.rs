@@ -112,7 +112,7 @@ impl<'a, W: Registers> Read<'a, W> for TcpReader<'a, W> {
     }
 
     fn done(self) -> Result<(), W::Error> {
-        self.w5500.set_sn_rx_rd(self.sn, self.tail_ptr)?;
+        self.w5500.set_sn_rx_rd(self.sn, self.ptr)?;
         self.w5500.set_sn_cr(self.sn, SocketCommand::Recv)?;
         Ok(())
     }
@@ -505,6 +505,10 @@ pub trait Tcp: Registers {
         ));
 
         let sn_rx_rsr: u16 = self.sn_rx_rsr(sn)?;
+        if sn_rx_rsr == 0 {
+            return Err(Error::WouldBlock);
+        }
+
         let sn_rx_rd: u16 = self.sn_rx_rd(sn)?;
 
         Ok(TcpReader {
