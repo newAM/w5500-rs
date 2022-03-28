@@ -41,22 +41,17 @@ mod pkt;
 mod rand;
 
 use hl::{
-    ll::{SocketInterrupt, SocketInterruptMask},
-    Common, UdpReader,
+    ll::{
+        net::{Eui48Addr, Ipv4Addr, SocketAddrV4},
+        LinkStatus, PhyCfg, Registers, Sn, SocketInterrupt, SocketInterruptMask,
+    },
+    Common, Error, Udp, UdpReader,
 };
 pub use w5500_hl as hl;
 pub use w5500_hl::ll;
 
 use pkt::{send_dhcp_discover, send_dhcp_request, MsgType, PktDe};
 pub use w5500_hl::Hostname;
-use w5500_hl::{
-    ll::{
-        net::{Ipv4Addr, SocketAddrV4},
-        Registers, Sn,
-    },
-    net::Eui48Addr,
-    Error, Udp,
-};
 
 /// DHCP destination port.
 #[cfg(target_os = "none")]
@@ -79,6 +74,9 @@ const DHCP_BROADCAST: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::LOCALHOST, DHCP
 
 /// Duration in seconds to wait for the DHCP server to send a response.
 const TIMEOUT_SECS: u32 = 10;
+
+/// Duration in seconds to wait for physical link-up.
+const LINK_UP_TIMEOUT_SECS: u32 = 2;
 
 /// DHCP client states.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -289,6 +287,14 @@ impl<'a> Client<'a> {
         let sn_ir: SocketInterrupt = w5500.sn_ir(self.sn)?;
         if sn_ir.any_raised() {
             w5500.set_sn_ir(self.sn, sn_ir)?;
+        }
+
+        if self.state == State::Init {
+            let phy_cfg: PhyCfg = w5500.phycfgr()?;
+            if phy_cfg.lnk() != LinkStatus::Up {
+                debug!("Link is not up: {}", phy_cfg);
+                return Ok(LINK_UP_TIMEOUT_SECS);
+            };
         }
 
         fn recv<W5500: Registers>(
