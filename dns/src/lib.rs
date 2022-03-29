@@ -504,6 +504,7 @@ impl Client {
     /// This method can only return:
     ///
     /// * [`Error::Other`]
+    /// * [`Error::UnexpectedEof`]
     /// * [`Error::WouldBlock`]
     ///
     /// [`a_question`]: Self::a_question
