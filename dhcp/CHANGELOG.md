@@ -23,6 +23,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed `on_recv_interrupt`, use `process` instead.
 - Removed `poll`, use `process` instead.
 
+### Fixed
+- Fixed handling for receiving multiple consecutive packets.
+
 ## [0.2.0] - 2022-01-02
 ### Changed
 - DHCP lease time is de-rated by 12%.
