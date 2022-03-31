@@ -204,7 +204,7 @@ macro_rules! block {
 /// This is designed to be similar to [`std::io::SeekFrom`].
 ///
 /// [`std::io::SeekFrom`]: https://doc.rust-lang.org/std/io/enum.SeekFrom.html
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
 pub enum SeekFrom {
     /// Sets the offset to the provided number of bytes.
