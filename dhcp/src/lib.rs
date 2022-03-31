@@ -328,7 +328,7 @@ impl<'a> Client<'a> {
             Ok(Some(pkt))
         }
 
-        if let Some(mut pkt) = recv(w5500, self.sn, self.xid)? {
+        while let Some(mut pkt) = recv(w5500, self.sn, self.xid)? {
             match self.state {
                 State::Selecting => {
                     self.ip = pkt.yiaddr()?;
