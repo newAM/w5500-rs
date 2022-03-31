@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed UDP sockets binding to `0.0.0.0` instead of `sipr`.
 - Fixed `SocketCommand::Send` not updating the `sn_tx_rd` pointer.
 - Fixed `set_sn_ir` not clearing socket interrupts.
+- Fixed overflow handling for socket RX buffers.
 
 ### Removed
 - Removed an unused warning about the UDP socket buffer size.

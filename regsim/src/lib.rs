@@ -490,15 +490,13 @@ impl W5500 {
 
         for byte in data.iter() {
             let buf_idx: usize = usize::from(socket.regs.rx_wr) % buf_len;
+            if usize::from(socket.regs.rx_rsr).saturating_add(1) > buf_len {
+                log::warn!("[{sn:?}] RX buffer overflow");
+                return;
+            }
             socket.rx_buf[buf_idx] = *byte;
             socket.regs.rx_wr = socket.regs.rx_wr.wrapping_add(1);
-            match socket.regs.rx_rsr.checked_add(1) {
-                Some(rsr) => socket.regs.rx_rsr = rsr,
-                None => {
-                    log::warn!("[{sn:?}] RX buffer overflow");
-                    return;
-                }
-            }
+            socket.regs.rx_rsr = socket.regs.rx_rsr.checked_add(1).unwrap();
         }
     }
 
