@@ -1,6 +1,3 @@
-#[cfg(feature = "defmt")]
-use dfmt as defmt;
-
 /// The class of a DNS query.
 ///
 /// # References

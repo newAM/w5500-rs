@@ -13,7 +13,7 @@ macro_rules! assert {
             #[cfg(not(feature = "defmt"))]
             ::core::assert!($($x)*);
             #[cfg(feature = "defmt")]
-            ::dfmt::assert!($($x)*);
+            ::defmt::assert!($($x)*);
         }
     };
 }
@@ -24,7 +24,7 @@ macro_rules! assert_eq {
             #[cfg(not(feature = "defmt"))]
             ::core::assert_eq!($($x)*);
             #[cfg(feature = "defmt")]
-            ::dfmt::assert_eq!($($x)*);
+            ::defmt::assert_eq!($($x)*);
         }
     };
 }
@@ -35,7 +35,7 @@ macro_rules! assert_ne {
             #[cfg(not(feature = "defmt"))]
             ::core::assert_ne!($($x)*);
             #[cfg(feature = "defmt")]
-            ::dfmt::assert_ne!($($x)*);
+            ::defmt::assert_ne!($($x)*);
         }
     };
 }
@@ -46,7 +46,7 @@ macro_rules! debug_assert {
             #[cfg(not(feature = "defmt"))]
             ::core::debug_assert!($($x)*);
             #[cfg(feature = "defmt")]
-            ::dfmt::debug_assert!($($x)*);
+            ::defmt::debug_assert!($($x)*);
         }
     };
 }
@@ -57,7 +57,7 @@ macro_rules! debug_assert_eq {
             #[cfg(not(feature = "defmt"))]
             ::core::debug_assert_eq!($($x)*);
             #[cfg(feature = "defmt")]
-            ::dfmt::debug_assert_eq!($($x)*);
+            ::defmt::debug_assert_eq!($($x)*);
         }
     };
 }
@@ -68,7 +68,7 @@ macro_rules! debug_assert_ne {
             #[cfg(not(feature = "defmt"))]
             ::core::debug_assert_ne!($($x)*);
             #[cfg(feature = "defmt")]
-            ::dfmt::debug_assert_ne!($($x)*);
+            ::defmt::debug_assert_ne!($($x)*);
         }
     };
 }
@@ -79,7 +79,7 @@ macro_rules! todo {
             #[cfg(not(feature = "defmt"))]
             ::core::todo!($($x)*);
             #[cfg(feature = "defmt")]
-            ::dfmt::todo!($($x)*);
+            ::defmt::todo!($($x)*);
         }
     };
 }
@@ -90,7 +90,7 @@ macro_rules! unreachable {
             #[cfg(not(feature = "defmt"))]
             ::core::unreachable!($($x)*);
             #[cfg(feature = "defmt")]
-            ::dfmt::unreachable!($($x)*);
+            ::defmt::unreachable!($($x)*);
         }
     };
 }
@@ -101,7 +101,7 @@ macro_rules! panic {
             #[cfg(not(feature = "defmt"))]
             ::core::panic!($($x)*);
             #[cfg(feature = "defmt")]
-            ::dfmt::panic!($($x)*);
+            ::defmt::panic!($($x)*);
         }
     };
 }
@@ -112,7 +112,7 @@ macro_rules! trace {
             #[cfg(feature = "log")]
             ::log::trace!($s $(, $x)*);
             #[cfg(feature = "defmt")]
-            ::dfmt::trace!($s $(, $x)*);
+            ::defmt::trace!($s $(, $x)*);
             #[cfg(not(any(feature = "log", feature="defmt")))]
             let _ = ($( & $x ),*);
         }
@@ -125,7 +125,7 @@ macro_rules! debug {
             #[cfg(feature = "log")]
             ::log::debug!($s $(, $x)*);
             #[cfg(feature = "defmt")]
-            ::dfmt::debug!($s $(, $x)*);
+            ::defmt::debug!($s $(, $x)*);
             #[cfg(not(any(feature = "log", feature="defmt")))]
             let _ = ($( & $x ),*);
         }
@@ -138,7 +138,7 @@ macro_rules! info {
             #[cfg(feature = "log")]
             ::log::info!($s $(, $x)*);
             #[cfg(feature = "defmt")]
-            ::dfmt::info!($s $(, $x)*);
+            ::defmt::info!($s $(, $x)*);
             #[cfg(not(any(feature = "log", feature="defmt")))]
             let _ = ($( & $x ),*);
         }
@@ -151,7 +151,7 @@ macro_rules! warn {
             #[cfg(feature = "log")]
             ::log::warn!($s $(, $x)*);
             #[cfg(feature = "defmt")]
-            ::dfmt::warn!($s $(, $x)*);
+            ::defmt::warn!($s $(, $x)*);
             #[cfg(not(any(feature = "log", feature="defmt")))]
             let _ = ($( & $x ),*);
         }
@@ -164,7 +164,7 @@ macro_rules! error {
             #[cfg(feature = "log")]
             ::log::error!($s $(, $x)*);
             #[cfg(feature = "defmt")]
-            ::dfmt::error!($s $(, $x)*);
+            ::defmt::error!($s $(, $x)*);
             #[cfg(not(any(feature = "log", feature="defmt")))]
             let _ = ($( & $x ),*);
         }
@@ -174,7 +174,7 @@ macro_rules! error {
 #[cfg(feature = "defmt")]
 macro_rules! unwrap {
     ($($x:tt)*) => {
-        ::dfmt::unwrap!($($x)*)
+        ::defmt::unwrap!($($x)*)
     };
 }
 

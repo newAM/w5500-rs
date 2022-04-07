@@ -85,9 +85,6 @@ pub use qtype::Qtype;
 pub use w5500_hl as hl;
 pub use w5500_hl::ll;
 
-#[cfg(feature = "defmt")]
-use dfmt as defmt;
-
 /// DNS destination port.
 pub const DNS_DST_PORT: u16 = 53;
 

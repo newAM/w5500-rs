@@ -1,6 +1,3 @@
-#[cfg(feature = "defmt")]
-use dfmt as defmt;
-
 /// A validated hostname.
 ///
 /// This is not used within this crate, it is provided here for crates

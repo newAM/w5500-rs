@@ -1,9 +1,6 @@
 // borrowed from smoltcp
 // https://github.com/smoltcp-rs/smoltcp/blob/774b375cb04e694199e27c7b9e36628436a4fac3/src/rand.rs
 
-#[cfg(feature = "defmt")]
-use dfmt as defmt;
-
 #[derive(Debug)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
 pub(crate) struct Rand {
