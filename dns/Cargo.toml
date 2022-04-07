@@ -13,12 +13,12 @@ homepage = "https://github.com/newAM/w5500-rs"
 
 [features]
 embedded-hal = ["w5500-hl/embedded-hal"]
-defmt = ["w5500-hl/defmt", "dfmt"]
+defmt = ["w5500-hl/defmt", "dep:defmt"]
 std = ["w5500-hl/std"]
 
 [dependencies]
 w5500-hl = { path = "../hl", version = "0.7.1" }
-dfmt = { package = "defmt", version = "0.3", optional = true }
+defmt = { version = "0.3", optional = true }
 log = { version = "0.4", optional = true }
 
 [dev-dependencies]

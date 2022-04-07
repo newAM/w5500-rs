@@ -1,6 +1,3 @@
-#[cfg(feature = "defmt")]
-use dfmt as defmt;
-
 /// DNS question query type.
 ///
 /// # References

@@ -13,12 +13,12 @@ categories = ["embedded", "hardware-support", "no-std"]
 homepage = "https://github.com/newAM/w5500-rs"
 
 [features]
-defmt = ["w5500-ll/defmt", "dfmt"]
+defmt = ["w5500-ll/defmt", "dep:defmt"]
 embedded-hal = ["w5500-ll/embedded-hal"]
 std = ["w5500-ll/std"]
 
 [dependencies]
-dfmt = { package = "defmt", version = "0.3", optional = true }
+defmt = { version = "0.3", optional = true }
 w5500-ll = { path = "../ll", version = "0.10" }
 
 [dev-dependencies]

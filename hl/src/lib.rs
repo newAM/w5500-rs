@@ -101,9 +101,6 @@ mod hostname;
 mod tcp;
 mod udp;
 
-#[cfg(feature = "defmt")]
-use dfmt as defmt;
-
 use core::cmp::min;
 use ll::{Registers, Sn, SocketCommand, SocketStatus, SOCKETS};
 

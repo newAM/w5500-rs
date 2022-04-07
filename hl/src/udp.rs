@@ -1,6 +1,3 @@
-#[cfg(feature = "defmt")]
-use dfmt as defmt;
-
 use crate::{port_is_unique, Error, Read, Seek, SeekFrom, TcpReader};
 use core::cmp::min;
 use w5500_ll::{
