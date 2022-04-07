@@ -496,6 +496,7 @@ pub trait Common: Registers {
     ///
     /// [Closed]: w5500_ll::SocketStatus::Closed
     /// [Closing]: w5500_ll::SocketStatus::Closing
+    #[allow(clippy::wrong_self_convention)]
     fn is_state_closed(&mut self, sn: Sn) -> Result<bool, Self::Error> {
         Ok(self.sn_sr(sn)? == Ok(SocketStatus::Closed))
     }
@@ -545,6 +546,7 @@ pub trait Common: Registers {
     /// [CloseWait]: w5500_ll::SocketStatus::CloseWait
     /// [TimeWait]: w5500_ll::SocketStatus::TimeWait
     /// [LastAck]: w5500_ll::SocketStatus::LastAck
+    #[allow(clippy::wrong_self_convention)]
     fn is_state_tcp(&mut self, sn: Sn) -> Result<bool, Self::Error> {
         // Hopefully the compiler will optimize this to check that the state is
         // not MACRAW, UDP, or INIT.
@@ -582,6 +584,7 @@ pub trait Common: Registers {
     /// ```
     ///
     /// [Udp]: w5500_ll::SocketStatus::Udp
+    #[allow(clippy::wrong_self_convention)]
     fn is_state_udp(&mut self, sn: Sn) -> Result<bool, Self::Error> {
         Ok(self.sn_sr(sn)? == Ok(SocketStatus::Udp))
     }
