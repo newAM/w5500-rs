@@ -2,7 +2,7 @@
 ///
 /// This is not used within this crate, it is provided here for crates
 /// implementing protocols such as DNS and DHCP to use.
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, Clone, Copy)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
 pub struct Hostname<'a> {
     hostname: &'a str,
@@ -132,13 +132,6 @@ impl<'a> Hostname<'a> {
     #[inline]
     pub const fn as_bytes(&self) -> &[u8] {
         self.hostname.as_bytes()
-    }
-}
-
-impl<'a> From<Hostname<'a>> for &'a str {
-    #[inline]
-    fn from(hn: Hostname<'a>) -> Self {
-        hn.hostname
     }
 }
 
