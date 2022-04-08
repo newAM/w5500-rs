@@ -211,7 +211,7 @@ impl<'a, W: Udp> Response<'a, W> {
                     self.reader.read_exact(label_buf)?;
                     label_idx += expected_len;
                 } else {
-                    self.reader.seek(SeekFrom::Current(label_len.into()));
+                    self.reader.seek(SeekFrom::Current(label_len.into()))?;
                     label_idx += expected_len;
                 }
             }
@@ -243,13 +243,13 @@ impl<'a, W: Udp> Response<'a, W> {
             let ptr: u16 = u16::from_be_bytes(ptr_buf);
             // name is not a pointer
             let buf_idx: usize = if ptr & NAME_PTR_MASK == 0 {
-                self.reader.seek(SeekFrom::Current(-2));
+                self.reader.seek(SeekFrom::Current(-2))?;
                 self.read_label_to_buf()?
             } else {
                 let prev_idx: u16 = self.reader.stream_position();
-                self.reader.seek(SeekFrom::Start(ptr & !NAME_PTR_MASK));
+                self.reader.seek(SeekFrom::Start(ptr & !NAME_PTR_MASK))?;
                 let ret: Result<usize, Error<W::Error>> = self.read_label_to_buf();
-                self.reader.seek(SeekFrom::Start(prev_idx));
+                self.reader.seek(SeekFrom::Start(prev_idx))?;
                 ret?
             };
 
@@ -355,7 +355,7 @@ impl<'a, W5500: Udp> Query<'a, W5500> {
             let restore: u16 = self.writer.stream_position();
             self.writer.rewind();
             self.writer.write_all(self.header.as_bytes())?;
-            self.writer.seek(SeekFrom::Start(restore));
+            self.writer.seek(SeekFrom::Start(restore))?;
             self.writer.send()?;
             Ok(self.header.id())
         }
@@ -452,12 +452,12 @@ impl Client {
     fn query<'a, W5500: Udp>(
         &mut self,
         w5500: &'a mut W5500,
-    ) -> Result<Query<'a, W5500>, W5500::Error> {
+    ) -> Result<Query<'a, W5500>, Error<W5500::Error>> {
         w5500.udp_bind(self.sn, self.port)?;
         w5500.set_sn_dest(self.sn, &self.server)?;
         const HEADER_SEEK: SeekFrom = SeekFrom::Start(Header::LEN);
         let mut writer: Writer<W5500> = w5500.writer(self.sn)?;
-        writer.seek(HEADER_SEEK);
+        writer.seek(HEADER_SEEK)?;
         let id: u16 = self.rng.next_u16();
         Ok(Query {
             writer,
@@ -537,7 +537,7 @@ impl Client {
             // seek to the label and class fields
             let mut ptr_buf: [u8; 2] = [0; 2];
             reader.read_exact(&mut ptr_buf)?;
-            reader.seek(SeekFrom::Current(-2));
+            reader.seek(SeekFrom::Current(-2))?;
             let ptr: u16 = u16::from_be_bytes(ptr_buf);
             // name is not a pointer, seek over it.
             if ptr & NAME_PTR_MASK == 0 {
@@ -551,13 +551,13 @@ impl Client {
                     if label_len == 0 {
                         break;
                     } else {
-                        reader.seek(SeekFrom::Current(label_len.into()));
+                        reader.seek(SeekFrom::Current(label_len.into()))?;
                     }
                 }
             }
 
             // skip over label and class
-            reader.seek(SeekFrom::Current(4));
+            reader.seek(SeekFrom::Current(4))?;
         }
 
         Ok(Response {

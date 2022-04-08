@@ -151,26 +151,26 @@ impl<'a, W: Registers> PktSer<'a, W> {
         self.set_sname_zero()?;
         self.set_file_zero()?;
         self.set_magic_cookie()?;
-        self.writer.seek(SeekFrom::Start(240));
+        self.writer.seek(SeekFrom::Start(240))?;
 
         Ok(())
     }
 
     /// Set the message operation code.
     fn set_op(&mut self, op: Op) -> Result<(), Error<W::Error>> {
-        self.writer.seek(SeekFrom::Start(0));
+        self.writer.seek(SeekFrom::Start(0))?;
         self.writer.write_all(&[u8::from(op)])
     }
 
     /// Set the hardware type to Ethernet.
     fn set_htype_ethernet(&mut self) -> Result<(), Error<W::Error>> {
-        self.writer.seek(SeekFrom::Start(1));
+        self.writer.seek(SeekFrom::Start(1))?;
         self.writer.write_all(&[u8::from(HardwareType::Ethernet)])
     }
 
     /// Set the hardware address length
     fn set_hlen(&mut self, len: u8) -> Result<(), Error<W::Error>> {
-        self.writer.seek(SeekFrom::Start(2));
+        self.writer.seek(SeekFrom::Start(2))?;
         self.writer.write_all(&[len])
     }
 
@@ -179,25 +179,25 @@ impl<'a, W: Registers> PktSer<'a, W> {
     /// Client sets to zero, optionally used by relay agents when booting via a
     /// relay agent.
     fn set_hops(&mut self, hops: u8) -> Result<(), Error<W::Error>> {
-        self.writer.seek(SeekFrom::Start(3));
+        self.writer.seek(SeekFrom::Start(3))?;
         self.writer.write_all(&[hops])
     }
 
     /// Set the transaction ID.
     fn set_xid(&mut self, xid: u32) -> Result<(), Error<W::Error>> {
-        self.writer.seek(SeekFrom::Start(4));
+        self.writer.seek(SeekFrom::Start(4))?;
         self.writer.write_all(&xid.to_be_bytes())
     }
 
     /// Set the number of seconds elapsed since client began address acquisition
     /// or renewal process.
     fn set_secs(&mut self, secs: u16) -> Result<(), Error<W::Error>> {
-        self.writer.seek(SeekFrom::Start(8));
+        self.writer.seek(SeekFrom::Start(8))?;
         self.writer.write_all(&secs.to_be_bytes())
     }
 
     fn set_flags(&mut self, broadcast: bool) -> Result<(), Error<W::Error>> {
-        self.writer.seek(SeekFrom::Start(10));
+        self.writer.seek(SeekFrom::Start(10))?;
         self.writer.write_all(&[(broadcast as u8) << 7, 0])
     }
 
@@ -206,7 +206,7 @@ impl<'a, W: Registers> PktSer<'a, W> {
     /// Only filled in if client is in BOUND, RENEW or REBINDING state and can
     /// respond to ARP requests.
     fn set_ciaddr(&mut self, addr: &Ipv4Addr) -> Result<(), Error<W::Error>> {
-        self.writer.seek(SeekFrom::Start(12));
+        self.writer.seek(SeekFrom::Start(12))?;
         self.writer.write_all(&addr.octets)
     }
 
@@ -214,26 +214,26 @@ impl<'a, W: Registers> PktSer<'a, W> {
     /// filled by server if client doesn't
     /// know its own address (ciaddr was 0).
     fn set_yiaddr(&mut self, addr: &Ipv4Addr) -> Result<(), Error<W::Error>> {
-        self.writer.seek(SeekFrom::Start(16));
+        self.writer.seek(SeekFrom::Start(16))?;
         self.writer.write_all(&addr.octets)
     }
 
     /// Set the IP address of next server to use in bootstrap;
     /// returned in DHCPOFFER, DHCPACK by server.
     fn set_siaddr(&mut self, addr: &Ipv4Addr) -> Result<(), Error<W::Error>> {
-        self.writer.seek(SeekFrom::Start(20));
+        self.writer.seek(SeekFrom::Start(20))?;
         self.writer.write_all(&addr.octets)
     }
 
     /// Relay agent IP address, used in booting via a relay agent.
     fn set_giaddr(&mut self, addr: &Ipv4Addr) -> Result<(), Error<W::Error>> {
-        self.writer.seek(SeekFrom::Start(24));
+        self.writer.seek(SeekFrom::Start(24))?;
         self.writer.write_all(&addr.octets)
     }
 
     /// Set the hardware address
     fn set_chaddr(&mut self, mac: &Eui48Addr) -> Result<(), Error<W::Error>> {
-        self.writer.seek(SeekFrom::Start(28));
+        self.writer.seek(SeekFrom::Start(28))?;
         self.writer.write_all(&mac.octets)?;
         let zeros: [u8; 10] = [0; 10];
         self.writer.write_all(&zeros)
@@ -241,14 +241,14 @@ impl<'a, W: Registers> PktSer<'a, W> {
 
     /// Set the sname field to 0
     fn set_sname_zero(&mut self) -> Result<(), Error<W::Error>> {
-        self.writer.seek(SeekFrom::Start(44));
+        self.writer.seek(SeekFrom::Start(44))?;
         let buf: [u8; 64] = [0; 64]; // perhaps a bit much for the stack?
         self.writer.write_all(&buf)
     }
 
     /// Set the file field to 0
     fn set_file_zero(&mut self) -> Result<(), Error<W::Error>> {
-        self.writer.seek(SeekFrom::Start(108));
+        self.writer.seek(SeekFrom::Start(108))?;
         // perhaps a bit much for the stack?
         let buf: [u8; 64] = [0; 64];
         // needs 128 bytes, write it twice
@@ -263,7 +263,7 @@ impl<'a, W: Registers> PktSer<'a, W> {
     /// From [RFC 2131 Section 3](https://tools.ietf.org/html/rfc2131#section-3)
     fn set_magic_cookie(&mut self) -> Result<(), Error<W::Error>> {
         const MAGIC_COOKIE: [u8; 4] = [0x63, 0x82, 0x53, 0x63];
-        self.writer.seek(SeekFrom::Start(236));
+        self.writer.seek(SeekFrom::Start(236))?;
         self.writer.write_all(&MAGIC_COOKIE)
     }
 
@@ -386,14 +386,14 @@ impl<'a, W: Registers> From<UdpReader<'a, W>> for PktDe<'a, W> {
 impl<'a, W: Registers> PktDe<'a, W> {
     #[allow(clippy::wrong_self_convention)]
     pub fn is_bootreply(&mut self) -> Result<bool, Error<W::Error>> {
-        self.reader.seek(SeekFrom::Start(0));
+        self.reader.seek(SeekFrom::Start(0))?;
         let mut buf: [u8; 1] = [0];
         self.reader.read_exact(&mut buf)?;
         Ok(buf[0] == u8::from(Op::BOOTREQUEST))
     }
 
     pub fn xid(&mut self) -> Result<u32, Error<W::Error>> {
-        self.reader.seek(SeekFrom::Start(4));
+        self.reader.seek(SeekFrom::Start(4))?;
         let mut buf: [u8; 4] = [0; 4];
         self.reader.read_exact(&mut buf)?;
         Ok(u32::from_be_bytes(buf))
@@ -403,7 +403,7 @@ impl<'a, W: Registers> PktDe<'a, W> {
     /// filled by server if client doesn't
     /// know its own address (ciaddr was 0).
     pub fn yiaddr(&mut self) -> Result<Ipv4Addr, Error<W::Error>> {
-        self.reader.seek(SeekFrom::Start(16));
+        self.reader.seek(SeekFrom::Start(16))?;
         let mut buf: [u8; 4] = [0; 4];
         self.reader.read_exact(&mut buf)?;
         Ok(buf.into())
@@ -412,7 +412,7 @@ impl<'a, W: Registers> PktDe<'a, W> {
     /// Seeks to an option and returns the length if it exists.
     fn seek_to_option(&mut self, option: Options) -> Result<Option<u8>, Error<W::Error>> {
         let option: u8 = option.into();
-        self.reader.seek(SeekFrom::Start(240));
+        self.reader.seek(SeekFrom::Start(240))?;
         loop {
             let (byte, len): (u8, u8) = {
                 let mut buf: [u8; 2] = [0; 2];
@@ -425,12 +425,12 @@ impl<'a, W: Registers> PktDe<'a, W> {
                 if len == 0x00 {
                     continue;
                 } else {
-                    self.reader.seek(SeekFrom::Current(-1))
+                    self.reader.seek(SeekFrom::Current(-1))?;
                 }
             } else if byte == option {
                 return Ok(Some(len));
             } else {
-                self.reader.seek(SeekFrom::Current(len.into()));
+                self.reader.seek(SeekFrom::Current(len.into()))?;
             }
         }
     }
