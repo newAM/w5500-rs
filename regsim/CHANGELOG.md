@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Added handling for `set_sn_rxbuf_size` and `set_sn_txbuf_size`.
 - Added `W5500.socket_buffer_logging` to disable socket buffer logging at runtime.
 
 ### Changed

@@ -59,8 +59,6 @@ This is in an early alpha state, there are many todos throughout the code.
 * SN_MSSR (Socket n Maximum Segment Size Register)
 * SN_TOS (Socket n IP TOS Register)
 * SN_TTL (Socket n IP TTL)
-* SN_RXBUF_SIZE (Socket n Receive Buffer Size Register)
-* SN_TXBUF_SIZE (Socket n Transmit Buffer Size Register)
 * SN_IMR (Socket n Interrupt Mask Register)
 * SN_FRAG (Socket n Fragment Offset in IP Header Register)
 * SN_KPALVTR (Socket n Keep Alive Timer Register)
