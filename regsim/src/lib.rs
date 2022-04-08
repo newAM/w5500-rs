@@ -919,8 +919,24 @@ impl W5500 {
             Ok(SnReg::MSSR1) => todo!(),
             Ok(SnReg::TOS) => todo!(),
             Ok(SnReg::TTL) => todo!(),
-            Ok(SnReg::RXBUF_SIZE) => todo!(),
-            Ok(SnReg::TXBUF_SIZE) => todo!(),
+            Ok(SnReg::RXBUF_SIZE) => {
+                socket.regs.rxbuf_size = match BufferSize::try_from(byte) {
+                    Ok(bs) => {
+                        socket.rx_buf.resize(bs.size_in_bytes(), 0);
+                        bs
+                    }
+                    Err(e) => panic!("RX buffer size of {e:#02X} is invalid"),
+                }
+            }
+            Ok(SnReg::TXBUF_SIZE) => {
+                socket.regs.txbuf_size = match BufferSize::try_from(byte) {
+                    Ok(bs) => {
+                        socket.tx_buf.resize(bs.size_in_bytes(), 0);
+                        bs
+                    }
+                    Err(e) => panic!("TX buffer size of {e:#02X} is invalid"),
+                }
+            }
             Ok(SnReg::TX_FSR0) => (),
             Ok(SnReg::TX_FSR1) => (),
             Ok(SnReg::TX_RD0) => (),
