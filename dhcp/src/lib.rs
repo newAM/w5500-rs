@@ -2,11 +2,10 @@
 //!
 //! # Warning
 //!
-//! Please proceed with caution, and review the code before use in a production
-//! environment.
+//! Please review the code before use in a production environment.
 //!
-//! This code was developed for one-off hobby projects.
-//! It works for my network, but it likely has bugs.
+//! The code has only been tested with a single DHCP server, and has not gone
+//! through any fuzzing.
 //!
 //! ## Limitations
 //!

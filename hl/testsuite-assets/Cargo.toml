@@ -6,4 +6,4 @@ edition = "2021"
 version = "0.1.0"
 
 [dependencies]
-w5500-hl = { path = ".." }
+w5500-hl.path = ".."
