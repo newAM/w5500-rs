@@ -64,9 +64,14 @@ pub struct TcpReader<'a, W: Registers> {
     pub(crate) ptr: u16,
 }
 
-impl<'a, W: Registers> Seek for TcpReader<'a, W> {
-    fn seek(&mut self, pos: SeekFrom) {
-        self.ptr = pos.new_ptr(self.ptr, self.head_ptr, self.tail_ptr);
+impl<'a, W: Registers> Seek<W::Error> for TcpReader<'a, W> {
+    fn seek(&mut self, pos: SeekFrom) -> Result<(), Error<W::Error>> {
+        self.ptr = pos.new_ptr(self.ptr, self.head_ptr, self.tail_ptr)?;
+        Ok(())
+    }
+
+    fn rewind(&mut self) {
+        self.ptr = self.head_ptr
     }
 
     fn stream_len(&self) -> u16 {

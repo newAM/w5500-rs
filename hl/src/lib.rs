@@ -220,13 +220,34 @@ fn wrapping_add_signed(ptr: u16, offset: i16) -> u16 {
 }
 
 impl SeekFrom {
-    #[must_use]
     #[inline]
-    fn new_ptr(self, ptr: u16, head: u16, tail: u16) -> u16 {
+    fn new_ptr<E>(self, ptr: u16, head: u16, tail: u16) -> Result<u16, Error<E>> {
         match self {
-            SeekFrom::Start(offset) => head.wrapping_add(offset),
-            SeekFrom::End(offset) => wrapping_add_signed(tail, offset),
-            SeekFrom::Current(offset) => wrapping_add_signed(ptr, offset),
+            SeekFrom::Start(offset) => {
+                if offset > tail.wrapping_sub(head) {
+                    Err(Error::UnexpectedEof)
+                } else {
+                    Ok(head.wrapping_add(offset))
+                }
+            }
+            SeekFrom::End(offset) => {
+                if offset > 0 || (offset.abs() as u16) > tail.wrapping_sub(head) {
+                    Err(Error::UnexpectedEof)
+                } else {
+                    Ok(wrapping_add_signed(tail, offset))
+                }
+            }
+            SeekFrom::Current(offset) => {
+                let max_pos: u16 = tail.wrapping_sub(ptr);
+                let max_neg: u16 = ptr.wrapping_sub(head);
+                if (offset > 0 && (offset.abs() as u16) > max_pos)
+                    || (offset < 0 && (offset.abs() as u16) > max_neg)
+                {
+                    Err(Error::UnexpectedEof)
+                } else {
+                    Ok(wrapping_add_signed(ptr, offset))
+                }
+            }
         }
     }
 }
@@ -238,11 +259,10 @@ impl SeekFrom {
 /// similar to [`std::io::Seek`].
 ///
 /// [`std::io::Seek`]: https://doc.rust-lang.org/stable/std/io/trait.Seek.html
-pub trait Seek {
+pub trait Seek<E> {
     /// Seek to an offset, in bytes, within the socket buffer.
     ///
-    /// Seeking beyond the limits will result in wrapping around to the next
-    /// valid address.
+    /// Seeking beyond the limits will result [`Error::UnexpectedEof`].
     ///
     /// # Limits
     ///
@@ -250,14 +270,12 @@ pub trait Seek {
     /// * [`UdpReader`] is limited by the received size or the UDP datagram length,
     ///   whichever is less.
     /// * [`TcpReader`] is limited by the received size.
-    fn seek(&mut self, pos: SeekFrom);
+    fn seek(&mut self, pos: SeekFrom) -> Result<(), Error<E>>;
 
     /// Rewind to the beginning of the stream.
     ///
     /// This is a convenience method, equivalent to `seek(SeekFrom::Start(0))`.
-    fn rewind(&mut self) {
-        self.seek(SeekFrom::Start(0))
-    }
+    fn rewind(&mut self);
 
     /// Return the length of the stream, in bytes.
     ///
@@ -351,9 +369,14 @@ pub struct Writer<'a, W: Registers> {
     ptr: u16,
 }
 
-impl<'a, W: Registers> Seek for Writer<'a, W> {
-    fn seek(&mut self, pos: SeekFrom) {
-        self.ptr = pos.new_ptr(self.ptr, self.head_ptr, self.tail_ptr);
+impl<'a, W: Registers> Seek<W::Error> for Writer<'a, W> {
+    fn seek(&mut self, pos: SeekFrom) -> Result<(), Error<W::Error>> {
+        self.ptr = pos.new_ptr(self.ptr, self.head_ptr, self.tail_ptr)?;
+        Ok(())
+    }
+
+    fn rewind(&mut self) {
+        self.ptr = self.head_ptr
     }
 
     fn stream_len(&self) -> u16 {
@@ -702,5 +725,53 @@ mod tests {
 
         // other socket on same port
         assert!(!port_is_unique(&mut mock, Sn::Sn1, 0).unwrap());
+    }
+
+    #[test]
+    fn seek_from_current_pos() {
+        const E: Error<()> = Error::UnexpectedEof;
+        type S = SeekFrom;
+        assert_eq!(S::Current(0).new_ptr::<()>(0, 0, 0), Ok(0));
+        assert_eq!(S::Current(1).new_ptr::<()>(0, 0, 1), Ok(1));
+        assert_eq!(S::Current(1).new_ptr::<()>(1, 0, 1), Err(E));
+        assert_eq!(S::Current(1).new_ptr::<()>(1, 0, 2), Ok(2));
+        assert_eq!(S::Current(1).new_ptr::<()>(1, 1, 3), Ok(2));
+        assert_eq!(S::Current(4096).new_ptr::<()>(0, 0, 4096), Ok(4096));
+        assert_eq!(S::Current(1).new_ptr::<()>(u16::MAX, u16::MAX, 0), Ok(0));
+    }
+
+    #[test]
+    fn seek_from_current_neg() {
+        const E: Error<()> = Error::UnexpectedEof;
+        type S = SeekFrom;
+        assert_eq!(S::Current(-1).new_ptr::<()>(0, 0, 0), Err(E));
+        assert_eq!(S::Current(-1).new_ptr::<()>(1, 0, 1), Ok(0));
+        assert_eq!(S::Current(-2).new_ptr::<()>(1, 0, 1), Err(E));
+        assert_eq!(S::Current(-1).new_ptr::<()>(0, u16::MAX, 0), Ok(u16::MAX));
+        assert_eq!(S::Current(-2).new_ptr::<()>(0, u16::MAX, 0), Err(E));
+    }
+
+    #[test]
+    fn seek_from_start() {
+        const E: Error<()> = Error::UnexpectedEof;
+        type S = SeekFrom;
+        assert_eq!(S::Start(0).new_ptr::<()>(0, 0, 0), Ok(0));
+        assert_eq!(S::Start(1).new_ptr::<()>(0, 0, 1), Ok(1));
+        assert_eq!(S::Start(1).new_ptr::<()>(1, 0, 1), Ok(1));
+        assert_eq!(S::Start(2).new_ptr::<()>(1, 0, 1), Err(E));
+        assert_eq!(S::Start(2048).new_ptr::<()>(0, 2048, 8192), Ok(4096));
+        assert_eq!(S::Start(1).new_ptr::<()>(0, u16::MAX, 0), Ok(0));
+    }
+
+    #[test]
+    fn seek_from_end() {
+        const E: Error<()> = Error::UnexpectedEof;
+        type S = SeekFrom;
+        assert_eq!(S::End(0).new_ptr::<()>(0, 0, 0), Ok(0));
+        assert_eq!(S::End(-1).new_ptr::<()>(0, 0, 1), Ok(0));
+        assert_eq!(S::End(-1).new_ptr::<()>(1, 0, 1), Ok(0));
+        assert_eq!(S::End(-2).new_ptr::<()>(1, 0, 1), Err(E));
+        assert_eq!(S::End(-2048).new_ptr::<()>(0, 2048, 8192), Ok(6144));
+        assert_eq!(S::End(-1).new_ptr::<()>(0, u16::MAX, 0), Ok(u16::MAX));
     }
 }

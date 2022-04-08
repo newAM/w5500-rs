@@ -81,9 +81,13 @@ pub struct UdpReader<'a, W: Registers> {
     header: UdpHeader,
 }
 
-impl<'a, W: Registers> Seek for UdpReader<'a, W> {
-    fn seek(&mut self, pos: SeekFrom) {
+impl<'a, W: Registers> Seek<W::Error> for UdpReader<'a, W> {
+    fn seek(&mut self, pos: SeekFrom) -> Result<(), Error<W::Error>> {
         self.inner.seek(pos)
+    }
+
+    fn rewind(&mut self) {
+        self.inner.rewind()
     }
 
     fn stream_len(&self) -> u16 {
