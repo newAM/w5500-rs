@@ -136,7 +136,6 @@ impl<'a, W: Registers> PktSer<'a, W> {
     ///
     /// From [RFC 2131 Section 2](https://tools.ietf.org/html/rfc2131#section-2)
     fn prepare_message(&mut self, mac: &Eui48Addr, xid: u32) -> Result<(), Error<W::Error>> {
-        // self.zero();
         self.set_op(Op::BOOTREQUEST)?;
         self.set_htype_ethernet()?;
         self.set_hlen(HW_ADDR_LEN)?;
@@ -250,8 +249,9 @@ impl<'a, W: Registers> PktSer<'a, W> {
     /// Set the file field to 0
     fn set_file_zero(&mut self) -> Result<(), Error<W::Error>> {
         self.writer.seek(SeekFrom::Start(108));
-        let buf: [u8; 64] = [0; 64]; // perhaps a bit much for the stack?
-                                     // needs 128 bytes, write it twice
+        // perhaps a bit much for the stack?
+        let buf: [u8; 64] = [0; 64];
+        // needs 128 bytes, write it twice
         self.writer.write_all(&buf)?;
         self.writer.write_all(&buf)
     }

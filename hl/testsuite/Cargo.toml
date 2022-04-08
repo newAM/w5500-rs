@@ -11,14 +11,14 @@ harness = false
 
 [dependencies]
 cortex-m = "0.7"
-cortex-m-rt = { version = "0.7" }
+cortex-m-rt = "0.7"
 defmt = "0.3"
 defmt-rtt = "0.3"
 defmt-test = "0.3"
 embedded-hal = "0.2.7"
 panic-probe = { version = "0.3", features = ["print-defmt" ] }
 w5500-hl = { path = "..", features = ["embedded-hal", "defmt"] }
-testsuite-assets = { path = "../testsuite-assets" }
+testsuite-assets.path = "../testsuite-assets"
 
 [dependencies.stm32f0xx-hal]
 version = "0.18"

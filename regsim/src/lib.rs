@@ -267,9 +267,31 @@ impl Default for Socket {
 pub struct W5500 {
     regs: CommonRegs,
     sn: [Socket; NUM_SOCKETS],
+    socket_buffer_logging: bool,
 }
 
 impl W5500 {
+    /// Enable or disable socket buffer logging.
+    ///
+    /// Socket buffer reads and writes get logged at the trace level.
+    /// For some protocols with large packets you may trace logs without the
+    /// verbose socket buffer logging.
+    ///
+    /// This is enabled by default.
+    ///
+    /// # Example
+    ///
+    /// Disable socket buffer logging.
+    ///
+    /// ```
+    /// let mut w5500 = w5500_regsim::W5500::default();
+    ///
+    /// w5500.set_socket_buffer_logging(false);
+    /// ```
+    pub fn set_socket_buffer_logging(&mut self, enable: bool) {
+        self.socket_buffer_logging = enable
+    }
+
     fn reset(&mut self) {
         *self = Self::default();
     }
@@ -491,7 +513,7 @@ impl W5500 {
         for byte in data.iter() {
             let buf_idx: usize = usize::from(socket.regs.rx_wr) % buf_len;
             if usize::from(socket.regs.rx_rsr).saturating_add(1) > buf_len {
-                log::warn!("[{sn:?}] RX buffer overflow");
+                log::error!("[{sn:?}] RX buffer overflow");
                 return;
             }
             socket.rx_buf[buf_idx] = *byte;
@@ -952,6 +974,7 @@ impl Default for W5500 {
         Self {
             regs: CommonRegs::RESET,
             sn: Default::default(),
+            socket_buffer_logging: true,
         }
     }
 }
@@ -980,7 +1003,9 @@ impl Registers for W5500 {
             BlockType::Rx(sn) => {
                 data.iter_mut().for_each(|byte| {
                     *byte = self.sn[usize::from(sn)].rx_buf[usize::from(addr)];
-                    log::trace!("[R] [RXB] {addr:04X} -> {:02X}", *byte);
+                    if self.socket_buffer_logging {
+                        log::trace!("[R] [RXB] {addr:04X} -> {:02X}", *byte);
+                    }
                     addr = addr.wrapping_add(1);
                 });
                 Ok(())
@@ -988,7 +1013,9 @@ impl Registers for W5500 {
             BlockType::Tx(sn) => {
                 data.iter_mut().for_each(|byte| {
                     *byte = self.sn[usize::from(sn)].tx_buf[usize::from(addr)];
-                    log::trace!("[R] [TXB] {addr:04X} -> {:02X}", *byte);
+                    if self.socket_buffer_logging {
+                        log::trace!("[R] [TXB] {addr:04X} -> {:02X}", *byte);
+                    }
                     addr = addr.wrapping_add(1);
                 });
                 Ok(())
@@ -1017,7 +1044,9 @@ impl Registers for W5500 {
             }
             BlockType::Rx(sn) => {
                 data.iter().for_each(|byte| {
-                    log::trace!("[W] [RXB] {addr:04X} <- {:02X}", *byte);
+                    if self.socket_buffer_logging {
+                        log::trace!("[W] [RXB] {addr:04X} <- {:02X}", *byte);
+                    }
                     self.sn[usize::from(sn)].rx_buf[usize::from(addr)] = *byte;
                     addr = addr.wrapping_add(1);
                 });
@@ -1025,7 +1054,9 @@ impl Registers for W5500 {
             }
             BlockType::Tx(sn) => {
                 data.iter().for_each(|byte| {
-                    log::trace!("[W] [TXB] {addr:04X} <- {:02X}", *byte);
+                    if self.socket_buffer_logging {
+                        log::trace!("[W] [TXB] {addr:04X} <- {:02X}", *byte);
+                    }
                     self.sn[usize::from(sn)].tx_buf[usize::from(addr)] = *byte;
                     addr = addr.wrapping_add(1);
                 });
