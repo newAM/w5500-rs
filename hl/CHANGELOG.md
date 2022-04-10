@@ -4,9 +4,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.8.0] - 2022-04-10
 ### Added
-- Added APIs for IO streaming to the socket buffers.
+- Added APIs for streaming IO to the socket buffers.
 - Added an `Error` type to support `read_exact` and `write_all` methods.
 - Added a `UdpHeader` type.
 - Added a `Hostname` type for use with DNS and DHCP.
@@ -18,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Removed
 - Removed the `nb` dependency to consolidate error types.
-  - Replace `nb::block!` with `w5500_hl::block!` for these methods:
+  - To update replace `nb::block!` with `w5500_hl::block!` for these methods:
     - `udp_peek_from_header`
     - `udp_peek_from`
     - `udp_recv_from`
@@ -87,7 +87,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.0-alpha.1] - 2021-01-31
 - Initial release
 
-[Unreleased]: https://github.com/newAM/w5500-rs/compare/hl%2Fv0.7.1...HEAD
+[Unreleased]: https://github.com/newAM/w5500-rs/compare/hl%2Fv0.8.0...HEAD
+[0.8.0]: https://github.com/newAM/w5500-rs/compare/hl%2Fv0.7.1...hl%2Fv0.8.0
 [0.7.1]: https://github.com/newAM/w5500-rs/compare/hl%2Fv0.7.0...hl%2Fv0.7.1
 [0.7.0]: https://github.com/newAM/w5500-rs/compare/hl%2Fv0.6.0...hl%2Fv0.7.0
 [0.6.0]: https://github.com/newAM/w5500-rs/compare/hl%2Fv0.5.0...hl%2Fv0.6.0
