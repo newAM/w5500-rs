@@ -1,6 +1,6 @@
 # w5500-dns
 
-DNS client implementation for use with the W5500.
+DNS client for the [Wiznet W5500] SPI internet offload chip.
 
 ## Warning
 

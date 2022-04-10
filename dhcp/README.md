@@ -1,6 +1,6 @@
 # w5500-dhcp
 
-Simple DHCP client for the [Wiznet W5500] SPI internet offload chip.
+DHCP client for the [Wiznet W5500] SPI internet offload chip.
 
 ## Warning
 
