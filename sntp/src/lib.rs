@@ -174,6 +174,8 @@ impl Client {
     /// sntp_client.request(&mut w5500)?;
     /// # Ok::<(), w5500_hl::Error<std::io::Error>>(())
     /// ```
+    ///
+    /// [`on_recv_interrupt`]: Self::on_recv_interrupt
     pub fn request<W5500: Registers>(&self, w5500: &mut W5500) -> Result<(), Error<W5500::Error>> {
         const LI: u8 = (LeapIndicator::NoWarning as u8) << 6;
         const VN: u8 = VERSION_NUMBER << 3;
