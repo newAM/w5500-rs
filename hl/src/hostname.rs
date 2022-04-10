@@ -201,6 +201,13 @@ impl<'a> TryFrom<&'a str> for Hostname<'a> {
     }
 }
 
+impl<'a> From<Hostname<'a>> for &'a str {
+    #[inline]
+    fn from(hostname: Hostname<'a>) -> Self {
+        hostname.hostname
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::Hostname;
