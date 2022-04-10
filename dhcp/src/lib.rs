@@ -1,4 +1,4 @@
-//! Simple DHCP client for the [Wiznet W5500] SPI internet offload chip.
+//! DHCP client for the [Wiznet W5500] SPI internet offload chip.
 //!
 //! # Warning
 //!
@@ -50,22 +50,22 @@ pub use w5500_hl::Hostname;
 
 /// DHCP destination port.
 #[cfg(target_os = "none")]
-pub const DHCP_DESTINATION_PORT: u16 = 67;
+pub const DST_PORT: u16 = 67;
 /// DHCP destination port for testing on `std` targets.
 #[cfg(not(target_os = "none"))]
-pub const DHCP_DESTINATION_PORT: u16 = 2050;
+pub const DST_PORT: u16 = 2050;
 
 /// DHCP source port.
 #[cfg(target_os = "none")]
-pub const DHCP_SOURCE_PORT: u16 = 68;
+pub const SRC_PORT: u16 = 68;
 /// DHCP source port for testing on `std` targets.
 #[cfg(not(target_os = "none"))]
-pub const DHCP_SOURCE_PORT: u16 = 2051;
+pub const SRC_PORT: u16 = 2051;
 
 #[cfg(target_os = "none")]
-const DHCP_BROADCAST: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::BROADCAST, DHCP_DESTINATION_PORT);
+const DHCP_BROADCAST: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::BROADCAST, DST_PORT);
 #[cfg(not(target_os = "none"))]
-const DHCP_BROADCAST: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::LOCALHOST, DHCP_DESTINATION_PORT);
+const DHCP_BROADCAST: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::LOCALHOST, DST_PORT);
 
 /// Duration in seconds to wait for the DHCP server to send a response.
 const TIMEOUT_SECS: u32 = 10;
@@ -247,7 +247,7 @@ impl<'a> Client<'a> {
         w5500.set_sn_imr(self.sn, MASK)?;
         w5500.close(self.sn)?;
         w5500.set_sipr(&self.ip)?;
-        w5500.udp_bind(self.sn, DHCP_SOURCE_PORT)
+        w5500.udp_bind(self.sn, SRC_PORT)
     }
 
     fn timeout_elapsed_secs(&self, monotonic_secs: u32) -> Option<u32> {
@@ -501,7 +501,7 @@ impl<'a> Client<'a> {
         debug!("sending DHCPDISCOVER xid={:08X}", self.xid);
 
         w5500.set_sipr(&self.ip)?;
-        w5500.udp_bind(self.sn, DHCP_SOURCE_PORT)?;
+        w5500.udp_bind(self.sn, SRC_PORT)?;
 
         send_dhcp_discover(w5500, self.sn, &self.mac, self.hostname, self.xid)?;
         self.state = State::Selecting;

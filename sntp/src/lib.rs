@@ -222,7 +222,7 @@ impl Client {
     /// Read a reply from the server.
     ///
     /// You should only call this method after sending a [`request`] and
-    /// recieving a RECV interrupt.
+    /// receiving a RECV interrupt.
     ///
     /// This will clear the pending RECV interrupt.
     ///

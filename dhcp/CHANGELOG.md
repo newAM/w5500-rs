@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Changed hostnames in `Client` from `'static` to a generic lifetime.
 - Changed `State` from public to private.
 - Improved handling for a physically broken link.
+- Renamed `DHCP_DESTINATION_PORT` to `DST_PORT`.
+- Renamed `DHCP_SOURCE_PORT` to `SRC_PORT`.
 
 ### Removed
 - Removed `on_recv_interrupt`, use `process` instead.
