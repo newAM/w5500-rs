@@ -11,12 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added a `UdpHeader` type.
 - Added a `Hostname` type for use with DNS and DHCP.
 
-## Changed
+### Changed
 - Changed all methods that return a `usize` of the bytes read / written to return a `u16` instead.  This helps avoid lossy conversions from `usize` to `u16` in some applications.
 - Changed `udp_peek_from` to return `(u16, UdpHeader)` instead of `(u16, SocketAddrV4)`.
 - Changed `udp_peek_from_header` to return `UdpHeader` instead of `(u16, SocketAddrV4)`.
 
-## Removed
+### Removed
 - Removed the `nb` dependency to consolidate error types.
   - To update replace `nb::block!` with `w5500_hl::block!` for these methods:
     - `udp_peek_from_header`
