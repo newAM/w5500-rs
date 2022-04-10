@@ -259,11 +259,25 @@ impl<'a> Client<'a> {
         .saturating_add(1)
     }
 
+    /// Get the DNS server provided by DHCP.
+    ///
+    /// After the client has bound ([`is_bound`]) this will return the IP
+    /// address of the most-preferred DNS server.
+    ///
+    /// If the client is not bound, or the DHCP server did not provide this
+    /// address it will return `None`.
     #[inline]
     pub fn dns(&self) -> Option<Ipv4Addr> {
         self.dns
     }
 
+    /// Get the NTP server provided by DHCP.
+    ///
+    /// After the client has bound ([`is_bound`]) this will return the IP
+    /// address of the most-preferred NTP server.
+    ///
+    /// If the client is not bound, or the DHCP server did not provide this
+    /// address it will return `None`.
     #[inline]
     pub fn ntp(&self) -> Option<Ipv4Addr> {
         self.ntp
