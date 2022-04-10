@@ -22,13 +22,7 @@ jobs:
           toolchain: stable
           target: x86_64-unknown-linux-gnu
       - run: cargo build
-      - run: cargo build --features log
-      - run: cargo build --features defmt
-      - run: cargo build --features std
-      - run: cargo build --features embedded-hal
-      - run: cargo build --features time
-      - run: cargo build --features chrono
-      - run: cargo build --features num-rational
+      - run: cargo build --all-features
 
   build_no_std:
     name: Build no_std
@@ -89,7 +83,7 @@ jobs:
           components: clippy
       # not using clippy-check due to this issue:
       # https://github.com/actions-rs/clippy-check/issues/2
-      - run: cargo clippy --features std,log,embedded-hal -- --deny warnings
+      - run: cargo clippy --all-features -- --deny warnings
 
   format:
     name: Format
@@ -114,15 +108,15 @@ jobs:
       - name: rustdoc
         run: |
           cd ll
-          cargo +nightly rustdoc --features std,defmt,embedded-hal
+          cargo +nightly rustdoc --all-features
           cd ../hl
-          cargo +nightly rustdoc --features std,defmt,embedded-hal
+          cargo +nightly rustdoc --all-features
           cd ../dhcp
-          cargo +nightly rustdoc --features std,defmt,embedded-hal
+          cargo +nightly rustdoc --all-features
           cd ../dns
-          cargo +nightly rustdoc --features std,defmt,embedded-hal
+          cargo +nightly rustdoc --all-features
           cd ../sntp
-          cargo +nightly rustdoc --features std,defmt,embedded-hal,chrono,time,num-rational
+          cargo +nightly rustdoc --all-features
           cd ../regsim
           cargo +nightly rustdoc
 

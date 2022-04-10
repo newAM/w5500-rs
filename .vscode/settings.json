@@ -1,7 +1,5 @@
 {
-    "rust-analyzer.cargo.features": ["log", "embedded-hal", "std", "chrono", "num-rational", "time"],
-    "rust-analyzer.cargo.allFeatures": false,
-    "rust-analyzer.checkOnSave.features": ["log", "embedded-hal", "std", "chrono", "num-rational", "time"],
-    "rust-analyzer.checkOnSave.allFeatures": false,
+    "rust-analyzer.cargo.allFeatures": true,
+    "rust-analyzer.checkOnSave.allFeatures": true,
     "rust-analyzer.checkOnSave.allTargets": false,
 }
