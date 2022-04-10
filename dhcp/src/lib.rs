@@ -261,8 +261,8 @@ impl<'a> Client<'a> {
 
     /// Get the DNS server provided by DHCP.
     ///
-    /// After the client has bound ([`is_bound`]) this will return the IP
-    /// address of the most-preferred DNS server.
+    /// After the client is bound this will return the IP address of the
+    /// most-preferred DNS server.
     ///
     /// If the client is not bound, or the DHCP server did not provide this
     /// address it will return `None`.
@@ -273,8 +273,8 @@ impl<'a> Client<'a> {
 
     /// Get the NTP server provided by DHCP.
     ///
-    /// After the client has bound ([`is_bound`]) this will return the IP
-    /// address of the most-preferred NTP server.
+    /// After the client is bound this will return the IP address of the
+    /// most-preferred NTP server.
     ///
     /// If the client is not bound, or the DHCP server did not provide this
     /// address it will return `None`.
