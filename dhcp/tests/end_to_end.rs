@@ -76,7 +76,10 @@ fn end_to_end() {
     const MAC: Eui48Addr = Eui48Addr::new(0x02, 0x34, 0x56, 0x78, 0xAB, 0xDE);
     // safety: hostname is valid
     const HOSTNAME_STR: &str = "TESTING";
-    const HOSTNAME: Hostname = unsafe { Hostname::new_unchecked(HOSTNAME_STR) };
+    const HOSTNAME: Hostname = match Hostname::new(HOSTNAME_STR) {
+        Some(hn) => hn,
+        None => panic!("invalid hostname"),
+    };
     let mac_with_hardware_type: Vec<u8> = {
         let mut buf: Vec<u8> = Vec::with_capacity(16);
         buf.push(0x01);

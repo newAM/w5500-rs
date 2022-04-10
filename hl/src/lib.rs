@@ -104,7 +104,7 @@ mod udp;
 use core::cmp::min;
 use ll::{Registers, Sn, SocketCommand, SocketStatus, SOCKETS};
 
-pub use hostname::Hostname;
+pub use hostname::{Hostname, TryFromStrError};
 pub use tcp::{Tcp, TcpReader};
 pub use udp::{Udp, UdpHeader, UdpReader};
 pub use w5500_ll as ll;

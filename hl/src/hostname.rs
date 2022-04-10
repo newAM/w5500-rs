@@ -34,31 +34,63 @@ impl<'a> Hostname<'a> {
     /// ```
     ///
     /// [RFC-1035]: https://www.rfc-editor.org/rfc/rfc1035
-    pub fn new(hostname: &'a str) -> Option<Self> {
-        // Adapted from hostname-validator: https://github.com/pop-os/hostname-validator
-        // see: https://github.com/pop-os/hostname-validator/issues/2
-        fn is_valid_char(byte: u8) -> bool {
-            (b'a'..=b'z').contains(&byte)
-                || (b'A'..=b'Z').contains(&byte)
-                || (b'0'..=b'9').contains(&byte)
+    pub const fn new(hostname: &'a str) -> Option<Self> {
+        // This function is very ugly because of const limitations on stable
+        // for the refined non-const version see TryFrom<&str> below.
+
+        const fn is_valid_char(byte: u8) -> bool {
+            (byte >= b'a' && byte <= b'z')
+                || (byte >= b'A' && byte <= b'Z')
+                || (byte >= b'0' && byte <= b'9')
                 || byte == b'-'
                 || byte == b'.'
         }
 
-        if hostname.is_empty()
-            || hostname.len() > 253
-            || hostname.bytes().any(|byte| !is_valid_char(byte))
-            || hostname.split('.').any(|label| {
-                label.is_empty()
-                    || label.len() > 63
-                    || label.ends_with('-')
-                    || label.starts_with('-')
-            })
-        {
-            None
-        } else {
-            Some(Self { hostname })
+        if hostname.is_empty() || hostname.len() > 253 {
+            return None;
         }
+
+        const fn is_valid_segment(hostname: &str, start: usize, end: usize) -> bool {
+            let segment_length: usize = end - start;
+            if segment_length == 0 || segment_length > 63 {
+                return false;
+            }
+
+            let first_byte_label: u8 = hostname.as_bytes()[start];
+            if first_byte_label == b'-' {
+                return false;
+            }
+
+            let last_byte_label: u8 = hostname.as_bytes()[end - 1];
+            if last_byte_label == b'-' {
+                return false;
+            }
+
+            true
+        }
+
+        let mut idx: usize = 0;
+        let mut segment_start: usize = 0;
+        while idx < hostname.len() {
+            let byte: u8 = hostname.as_bytes()[idx];
+            if !is_valid_char(byte) {
+                return None;
+            }
+            if byte == b'.' {
+                if !is_valid_segment(hostname, segment_start, idx) {
+                    return None;
+                }
+
+                segment_start = idx + 1;
+            }
+            idx += 1;
+        }
+
+        if !is_valid_segment(hostname, segment_start, idx) {
+            return None;
+        }
+
+        Some(Self { hostname })
     }
 
     /// Returns an iterator over the labels of the hostname.
@@ -135,6 +167,40 @@ impl<'a> Hostname<'a> {
     }
 }
 
+/// The error type returned when a str to hostname conversion fails.
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "defmt", derive(defmt::Format))]
+pub struct TryFromStrError(pub(crate) ());
+
+impl<'a> TryFrom<&'a str> for Hostname<'a> {
+    type Error = TryFromStrError;
+
+    fn try_from(hostname: &'a str) -> Result<Self, Self::Error> {
+        fn is_valid_char(byte: u8) -> bool {
+            (b'a'..=b'z').contains(&byte)
+                || (b'A'..=b'Z').contains(&byte)
+                || (b'0'..=b'9').contains(&byte)
+                || byte == b'-'
+                || byte == b'.'
+        }
+
+        if hostname.is_empty()
+            || hostname.len() > 253
+            || hostname.bytes().any(|byte| !is_valid_char(byte))
+            || hostname.split('.').any(|label| {
+                label.is_empty()
+                    || label.len() > 63
+                    || label.ends_with('-')
+                    || label.starts_with('-')
+            })
+        {
+            Err(TryFromStrError(()))
+        } else {
+            Ok(Self { hostname })
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::Hostname;
@@ -148,8 +214,13 @@ mod tests {
             "example.com",
             "VaLid.HoStNaMe",
             "123.456",
+            "one-byte.a.label",
         ] {
             assert!(Hostname::new(hostname).is_some(), "{hostname} is not valid");
+            assert!(
+                Hostname::try_from(*hostname).is_ok(),
+                "{hostname} is not valid"
+            );
         }
     }
 
@@ -166,10 +237,16 @@ mod tests {
             "invalid.-starting.char",
             "invalid.ending-.char",
             "empty..label",
+            "..empty-starting-label",
+            "empty-ending-label..",
             "label-is-way-to-longgggggggggggggggggggggggggggggggggggggggggggg.com",
         ] {
             assert!(
                 Hostname::new(hostname).is_none(),
+                "{hostname} should not be valid"
+            );
+            assert!(
+                Hostname::try_from(*hostname).is_err(),
                 "{hostname} should not be valid"
             );
         }
