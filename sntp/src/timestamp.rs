@@ -1,4 +1,4 @@
-/// NTP timestamp format.
+/// SNTP timestamp format.
 ///
 /// # References
 ///

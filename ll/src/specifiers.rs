@@ -82,7 +82,7 @@ pub enum SocketStatus {
     /// When operating as a TCP server this state is set after a client
     /// connects when in the [`Listen`] state.
     ///
-    /// While in this state data can be transfered with the [`Send`] and
+    /// While in this state data can be transferred with the [`Send`] and
     /// [`Recv`] commands.
     ///
     /// [`Connect`]: SocketCommand::Connect
@@ -102,7 +102,7 @@ pub enum SocketStatus {
     ///
     /// This indicates the socket is closing.
     TimeWait = 0x1B,
-    /// The socket has received the disconnect-request (FIN pakcet) from the
+    /// The socket has received the disconnect-request (FIN packet) from the
     /// connected peer.
     ///
     /// This is half-closing status, and data can be transferred.

@@ -127,7 +127,7 @@ pub trait Tcp: Registers {
     /// This method is used to create and interact with a TCP stream between
     /// a local host and a remote socket.
     ///
-    /// After initiating a connection with [`tcp_connect`] and recieving the
+    /// After initiating a connection with [`tcp_connect`] and receiving the
     /// [`con`] interrupt data can be transmitting by using [`tcp_read`] and
     /// [`tcp_write`].
     ///
@@ -222,7 +222,7 @@ pub trait Tcp: Registers {
 
     /// Open a TCP listener on the given port.
     ///
-    /// After opening a listener with [`tcp_listen`] and recieving the
+    /// After opening a listener with [`tcp_listen`] and receiving the
     /// [`con`] interrupt data can be transmitting by using [`tcp_read`] and
     /// [`tcp_write`].
     ///

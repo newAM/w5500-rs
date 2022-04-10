@@ -14,7 +14,7 @@
 /// Can be instantiated with [`Ipv4Addr::new`].
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Debug, Hash, Default)]
 pub struct Ipv4Addr {
-    /// Octets of the Ipv4Addr address.
+    /// Octets of the [`Ipv4Addr`] address.
     pub octets: [u8; 4],
 }
 
@@ -232,7 +232,7 @@ impl Ipv4Addr {
 }
 
 impl ::core::fmt::Display for Ipv4Addr {
-    /// String formatter for Ipv4Addr addresses.
+    /// String formatter for [`Ipv4Addr`] addresses.
     fn fmt(&self, fmt: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
         write!(
             fmt,
@@ -372,7 +372,7 @@ impl Eui48Addr {
 }
 
 impl ::core::fmt::Display for Eui48Addr {
-    /// String formatter for Eui48Addr addresses.
+    /// String formatter for [`Eui48Addr`] addresses.
     fn fmt(&self, fmt: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
         write!(
             fmt,
@@ -524,7 +524,7 @@ impl SocketAddrV4 {
 }
 
 impl ::core::fmt::Display for SocketAddrV4 {
-    /// String formatter for SocketAddrV4 addresses.
+    /// String formatter for [`SocketAddrV4`] addresses.
     fn fmt(&self, fmt: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
         write!(fmt, "{}:{}", self.ip(), self.port())
     }
