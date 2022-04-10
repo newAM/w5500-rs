@@ -153,6 +153,10 @@ pub struct Client<'a> {
     ip: Ipv4Addr,
     /// Client hostname
     hostname: Hostname<'a>,
+    /// DNS server
+    dns: Option<Ipv4Addr>,
+    /// (S)NTP server
+    ntp: Option<Ipv4Addr>,
 }
 
 impl<'a> Client<'a> {
@@ -195,6 +199,8 @@ impl<'a> Client<'a> {
             mac,
             ip: Ipv4Addr::UNSPECIFIED,
             hostname,
+            dns: None,
+            ntp: None,
         }
     }
 
@@ -251,6 +257,30 @@ impl<'a> Client<'a> {
                 .saturating_sub(monotonic_secs.saturating_sub(self.lease_monotonic_secs))
         }
         .saturating_add(1)
+    }
+
+    /// Get the DNS server provided by DHCP.
+    ///
+    /// After the client is bound this will return the IP address of the
+    /// most-preferred DNS server.
+    ///
+    /// If the client is not bound, or the DHCP server did not provide this
+    /// address it will return `None`.
+    #[inline]
+    pub fn dns(&self) -> Option<Ipv4Addr> {
+        self.dns
+    }
+
+    /// Get the NTP server provided by DHCP.
+    ///
+    /// After the client is bound this will return the IP address of the
+    /// most-preferred NTP server.
+    ///
+    /// If the client is not bound, or the DHCP server did not provide this
+    /// address it will return `None`.
+    #[inline]
+    pub fn ntp(&self) -> Option<Ipv4Addr> {
+        self.ntp
     }
 
     /// Process DHCP client events.
@@ -374,6 +404,15 @@ impl<'a> Client<'a> {
                                 }
                             };
                             info!("lease_time: {}", lease_time);
+
+                            if let Some(dns) = pkt.dns()? {
+                                info!("DNS: {}", dns);
+                                self.dns.replace(dns);
+                            };
+                            if let Some(ntp) = pkt.ntp()? {
+                                info!("NTP: {}", ntp);
+                                self.ntp.replace(ntp);
+                            };
 
                             self.t1 = renewal_time;
                             self.t2 = rebinding_time;

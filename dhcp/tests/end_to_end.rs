@@ -197,7 +197,8 @@ fn end_to_end() {
             OptionCode::Router,
             OptionCode::DomainNameServer,
             OptionCode::Renewal,
-            OptionCode::Rebinding
+            OptionCode::Rebinding,
+            OptionCode::NTPServers,
         ])
     );
     assert_eq!(
@@ -209,7 +210,9 @@ fn end_to_end() {
 
     const SUBNET_MASK: [u8; 4] = [12, 34, 56, 78];
     const ROUTER: [u8; 4] = [11, 12, 13, 14];
-    const DNS: [u8; 4] = [21, 22, 23, 24];
+    const DNS_1: [u8; 4] = [21, 22, 23, 24];
+    const DNS_2: [u8; 4] = [12, 22, 32, 42];
+    const NTP: [u8; 4] = [31, 32, 33, 34];
 
     let mut offer: Message = Message::default();
     offer
@@ -236,9 +239,13 @@ fn end_to_end() {
     offer
         .opts_mut()
         .insert(DhcpOption::Router(vec![ROUTER.into()]));
+    offer.opts_mut().insert(DhcpOption::DomainNameServer(vec![
+        DNS_1.into(),
+        DNS_2.into(),
+    ]));
     offer
         .opts_mut()
-        .insert(DhcpOption::DomainNameServer(vec![DNS.into()]));
+        .insert(DhcpOption::NTPServers(vec![NTP.into()]));
     const LEASE_TIME: u32 = 444;
     offer
         .opts_mut()
@@ -257,4 +264,6 @@ fn end_to_end() {
     assert_eq!(w5500.sipr().unwrap(), Ipv4Addr::from(YIADDR));
     assert_eq!(w5500.gar().unwrap(), Ipv4Addr::from(ROUTER));
     assert_eq!(w5500.subr().unwrap(), Ipv4Addr::from(SUBNET_MASK));
+    assert_eq!(dhcp.dns().unwrap(), Ipv4Addr::from(DNS_1));
+    assert_eq!(dhcp.ntp().unwrap(), Ipv4Addr::from(NTP));
 }

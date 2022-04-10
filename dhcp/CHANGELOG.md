@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Added `Client.setup_socket` to setup socket the socket.
+- Added `Client.dns` and `Client.ntp` to get the DNS and NTP server IPs provided by the DHCP server.
 
 ### Changed
 - Changed `w5500_dhcp::Error` to `w5500_hl::Error`.
