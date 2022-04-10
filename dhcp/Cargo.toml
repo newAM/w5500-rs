@@ -3,7 +3,6 @@ name = "w5500-dhcp"
 version = "0.2.0"
 authors = ["Alex Martens <alex@thinglab.org>"]
 edition = "2021"
-rust-version = "1.56"
 repository = "https://github.com/newAM/w5500-rs"
 license = "MIT"
 description = "DHCP client for the Wiznet W5500 internet offload chip."
