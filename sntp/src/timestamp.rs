@@ -10,6 +10,7 @@ pub struct Timestamp {
 }
 
 impl Timestamp {
+    #[allow(dead_code)] // dead if chrono and time are not used
     fn secs(&self) -> i64 {
         let seconds_bits: u32 = (self.bits >> 32) as u32;
         // If bit 0 is set, the UTC time is in the range 1968-2036
@@ -22,6 +23,7 @@ impl Timestamp {
         }
     }
 
+    #[allow(dead_code)] // dead if chrono and time are not used
     fn nanos(&self) -> u32 {
         // safe to truncate, number is always less than u32::MAX
         ((self.bits & 0xFFFF_FFFF) * 1_000_000_000 / u64::from(u32::MAX)) as u32
