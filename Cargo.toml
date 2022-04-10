@@ -9,6 +9,7 @@ members = [
     "hl/testsuite",
     "ll",
     "regsim",
+    "sntp",
 ]
 default-members = [
     "dhcp",
@@ -16,4 +17,5 @@ default-members = [
     "hl",
     "ll",
     "regsim",
+    "sntp",
 ]

@@ -6,9 +6,9 @@ edition = "2021"
 rust-version = "1.56"
 repository = "https://github.com/newAM/w5500-rs"
 license = "MIT"
-description = "Simple DHCP client for the Wiznet W5500 internet offload chip."
+description = "DHCP client for the Wiznet W5500 internet offload chip."
 readme = "README.md"
-keywords = ["spi", "driver", "embedded-hal-driver", "W5500", "wiznet"]
+keywords = ["dhcp", "driver", "embedded-hal-driver", "W5500", "wiznet"]
 categories = ["embedded", "hardware-support", "no-std"]
 homepage = "https://github.com/newAM/w5500-rs"
 
