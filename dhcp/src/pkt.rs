@@ -17,6 +17,8 @@ enum Options {
     NameServer = 5,
     Dns = 6,
     Hostname = 12,
+    // https://datatracker.ietf.org/doc/html/rfc2132#section-8.3
+    Ntp = 42,
     /// Requested IP Address
     ///
     /// From [RFC 2132 Section 9.1](https://tools.ietf.org/html/rfc2132#section-9.1)
@@ -291,12 +293,13 @@ impl<'a, W: Registers> PktSer<'a, W> {
     fn set_option_parameter_request(&mut self) -> Result<(), Error<W::Error>> {
         self.writer.write_all(&[
             Options::ParameterRequest.into(),
-            5,
+            6,
             Options::SubnetMask.into(),
             Options::Router.into(),
             Options::Dns.into(),
             Options::RenewalTime.into(),
             Options::RebindingTime.into(),
+            Options::Ntp.into(),
         ])
     }
 
@@ -416,7 +419,12 @@ impl<'a, W: Registers> PktDe<'a, W> {
         loop {
             let (byte, len): (u8, u8) = {
                 let mut buf: [u8; 2] = [0; 2];
-                self.reader.read_exact(&mut buf)?;
+
+                match self.reader.read(&mut buf) {
+                    Err(e) => return Err(w5500_hl::Error::Other(e)),
+                    Ok(2) => (),
+                    Ok(_) => return Ok(None),
+                }
                 (buf[0], buf[1])
             };
             if byte == 0xFF {
@@ -470,9 +478,38 @@ impl<'a, W: Registers> PktDe<'a, W> {
         }
     }
 
+    // only returns the first ipv4 occurance in a list
+    fn find_option_ipv4_list(&mut self, option: Options) -> Result<Option<Ipv4Addr>, Error<W::Error>> {
+        let option_size: u8 = match self.seek_to_option(option)? {
+            Some(len) => len,
+            None => return Ok(None),
+        };
+        if option_size % 4 != 0 || option_size < 4 {
+            warn!(
+                "malformed option {} size is {} expected non-zero multiple of 4",
+                option as u8, option_size
+            );
+            Ok(None)
+        } else {
+            let mut buf: [u8; 4] = [0; 4];
+            self.reader.read_exact(&mut buf)?;
+            Ok(Some(buf.into()))
+        }
+    }
+
     /// Returns the subnet mask (option 1) if it exists.
     pub fn subnet_mask(&mut self) -> Result<Option<Ipv4Addr>, Error<W::Error>> {
         self.find_option_ipv4(Options::SubnetMask)
+    }
+
+    /// Returns the DNS server (option 6) if it exists.
+    pub fn dns(&mut self) -> Result<Option<Ipv4Addr>, Error<W::Error>> {
+        self.find_option_ipv4_list(Options::Dns)
+    }
+
+    /// Returns the NTP server (option 42) if it exists.
+    pub fn ntp(&mut self) -> Result<Option<Ipv4Addr>, Error<W::Error>> {
+        self.find_option_ipv4_list(Options::Ntp)
     }
 
     /// Returns the lease time (option 51) if it exists.
@@ -497,7 +534,7 @@ impl<'a, W: Registers> PktDe<'a, W> {
 
     /// Returns the DHCP server identifier (option 54) if it exists
     pub fn dhcp_server(&mut self) -> Result<Option<Ipv4Addr>, Error<W::Error>> {
-        self.find_option_ipv4(Options::ServerId)
+        self.find_option_ipv4_list(Options::ServerId)
     }
 
     /// Returns the rebinding time (option 59) if it exists.
