@@ -29,7 +29,7 @@ impl Timestamp {
         ((self.bits & 0xFFFF_FFFF) * 1_000_000_000 / u64::from(u32::MAX)) as u32
     }
 
-    /// Raw bits of the timetstamp value.
+    /// Raw bits of the timestamp value.
     #[must_use]
     pub const fn to_bits(self) -> u64 {
         self.bits

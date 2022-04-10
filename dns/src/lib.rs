@@ -1,4 +1,4 @@
-//! DNS client implementation for use with the W5500.
+//! DNS client for the [Wiznet W5500] SPI internet offload chip.
 //!
 //! # Warning
 //!
@@ -85,7 +85,7 @@ pub use w5500_hl as hl;
 pub use w5500_hl::ll;
 
 /// DNS destination port.
-pub const DNS_DST_PORT: u16 = 53;
+pub const DST_PORT: u16 = 53;
 
 const NAME_PTR_MASK: u16 = 0xC0_00;
 
@@ -399,7 +399,7 @@ impl Client {
         Self {
             sn,
             port,
-            server: SocketAddrV4::new(server, DNS_DST_PORT),
+            server: SocketAddrV4::new(server, DST_PORT),
             rng: rand::Rand::new(seed),
         }
     }
