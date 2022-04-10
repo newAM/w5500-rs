@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.1.0-alpha.8] - 2022-04-10
 ### Added
 - Added handling for `set_sn_rxbuf_size` and `set_sn_txbuf_size`.
 - Added `W5500.socket_buffer_logging` to disable socket buffer logging at runtime.
@@ -61,7 +61,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.0-alpha.1] - 2021-01-31
 - Initial release
 
-[Unreleased]: https://github.com/newAM/w5500-rs/compare/regsim%2Fv0.1.0-alpha.7...HEAD
+[Unreleased]: https://github.com/newAM/w5500-rs/compare/regsim%2Fv0.1.0-alpha.8...HEAD
+[0.1.0-alpha.8]: https://github.com/newAM/w5500-rs/compare/regsim%2Fv0.1.0-alpha.7...regsim%2Fv0.1.0-alpha.8
 [0.1.0-alpha.7]: https://github.com/newAM/w5500-rs/compare/regsim%2Fv0.1.0-alpha.6...regsim%2Fv0.1.0-alpha.7
 [0.1.0-alpha.6]: https://github.com/newAM/w5500-rs/compare/regsim%2Fv0.1.0-alpha.5...regsim%2Fv0.1.0-alpha.6
 [0.1.0-alpha.5]: https://github.com/newAM/w5500-rs/compare/regsim%2Fv0.1.0-alpha.4...regsim%2Fv0.1.0-alpha.5

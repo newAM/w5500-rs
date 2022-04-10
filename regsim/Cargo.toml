@@ -1,6 +1,6 @@
 [package]
 name = "w5500-regsim"
-version = "0.1.0-alpha.7"
+version = "0.1.0-alpha.8"
 authors = ["Alex Martens <alex@thinglab.org>"]
 edition = "2021"
 repository = "https://github.com/newAM/w5500-rs"
