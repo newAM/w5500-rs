@@ -55,13 +55,13 @@ mod tests {
     fn ratio() {
         let ratio: Ratio<u32> = FixedPoint { bits: 0x0000_0009 }.into();
         const EXPECTED: Ratio<u32> = Ratio::new_raw(0x09, u16::MAX as u32);
-        assert_eq!(ratio, EXPECTED);
+        core::assert_eq!(ratio, EXPECTED);
     }
 
     #[test]
     fn f32() {
         let val: f32 = FixedPoint { bits: 0x0000_0009 }.into();
-        assert!(
+        core::assert!(
             val > 0.000_136 && val < 0.000_138,
             "ratio should be 0.000_137 seconds, not {val}"
         );
@@ -70,7 +70,7 @@ mod tests {
     #[test]
     fn f64() {
         let val: f64 = FixedPoint { bits: 0x0000_0009 }.into();
-        assert!(
+        core::assert!(
             val > 0.000_136 && val < 0.000_138,
             "ratio should be 0.000_137 seconds, not {val}"
         );

@@ -99,7 +99,7 @@ mod tests {
         let expected_time: NaiveTime = NaiveTime::from_hms_nano(16, 19, 48, 140324298);
         let expected_datetime: NaiveDateTime = NaiveDateTime::new(expected_date, expected_time);
 
-        assert_eq!(ndt, expected_datetime);
+        core::assert_eq!(ndt, expected_datetime);
     }
 
     #[test]
@@ -110,12 +110,12 @@ mod tests {
 
         let pdt: PrimitiveDateTime = timestamp.try_into().unwrap();
 
-        assert_eq!(pdt.year(), 2022);
-        assert_eq!(pdt.month(), time::Month::April);
-        assert_eq!(pdt.day(), 10);
-        assert_eq!(pdt.hour(), 16);
-        assert_eq!(pdt.minute(), 19);
-        assert_eq!(pdt.second(), 48);
+        core::assert_eq!(pdt.year(), 2022);
+        core::assert_eq!(pdt.month(), time::Month::April);
+        core::assert_eq!(pdt.day(), 10);
+        core::assert_eq!(pdt.hour(), 16);
+        core::assert_eq!(pdt.minute(), 19);
+        core::assert_eq!(pdt.second(), 48);
     }
 
     #[test]
@@ -125,7 +125,7 @@ mod tests {
         let ndt: NaiveDateTime = timestamp.try_into().unwrap();
         let expected: NaiveDateTime = NaiveDate::from_ymd(2036, 2, 7).and_hms(6, 28, 16);
 
-        assert_eq!(ndt, expected);
+        core::assert_eq!(ndt, expected);
     }
 
     #[test]
@@ -139,6 +139,6 @@ mod tests {
 
         let pdt: PrimitiveDateTime = timestamp.try_into().unwrap();
 
-        assert_eq!(pdt, expected);
+        core::assert_eq!(pdt, expected);
     }
 }
