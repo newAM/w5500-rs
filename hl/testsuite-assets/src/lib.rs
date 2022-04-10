@@ -9,7 +9,7 @@ use w5500_hl::net::{Eui48Addr, Ipv4Addr, SocketAddrV4};
 
 /// W5500 MAC.
 ///
-/// MAC addresses starting with 0x02 are reserved for testing.
+/// MAC addresses starting with `0x02` are reserved for testing.
 pub const MAC: Eui48Addr = Eui48Addr::new(0x02, 0x03, 0x04, 0x05, 0x06, 0x07);
 /// W5500 static IPv4
 pub const W5500_IP: Ipv4Addr = Ipv4Addr::new(10, 0, 0, 50);

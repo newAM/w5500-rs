@@ -488,7 +488,7 @@ impl W5500 {
     }
 
     /// The RECV command is used to indicate that the microcontroller has read
-    /// an ammount of data from the W5500, as indicated by the `sn_rx_rd`
+    /// an amount of data from the W5500, as indicated by the `sn_rx_rd`
     /// pointer.
     fn socket_cmd_recv(&mut self, sn: Sn) -> io::Result<()> {
         let socket = self.socket_mut(sn);

@@ -89,7 +89,7 @@ pub const DST_PORT: u16 = 53;
 
 const NAME_PTR_MASK: u16 = 0xC0_00;
 
-/// Commonnly used public DNS servers.
+/// Commonly used public DNS servers.
 ///
 /// When using DHCP it is typically a good idea to use the DNS server provided
 /// by the DHCP server.

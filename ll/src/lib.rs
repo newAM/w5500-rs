@@ -995,9 +995,9 @@ pub trait Registers {
     /// Get the retry time.
     ///
     /// RTR configures the re-transmission timeout period.
-    /// The unit of timeout period is 100us and the default of RTR is `0x07D0`
+    /// The unit of timeout period is 100 us and the default of RTR is `0x07D0`
     /// or `2000`.
-    /// And so the default timeout period is 200ms (100us X 2000).
+    /// And so the default timeout period is 200 ms (100 us X 2000).
     /// During the time configured by RTR, the W5500 waits for the peer response
     /// to the packet that is transmitted by Sn_CR (CONNECT, DISCON, CLOSE,
     /// SEND, SEND_MAC, SEND_KEEP command).
@@ -1118,8 +1118,8 @@ pub trait Registers {
     ///
     /// PTIMER configures the time for sending LCP echo request.
     ///
-    /// The unit of time is 25ms, for a register value of 200 the timer is 5
-    /// seconds.
+    /// The unit of time is 25 milliseconds, for a register value of 200 the
+    /// timer is 5 seconds.
     ///
     /// # Example
     ///
@@ -2250,9 +2250,7 @@ pub trait Registers {
     /// This register configures the TTL (Time to Live field in the IP header)
     /// for socket n.
     ///
-    /// For more details see [iana.org/assignments/ip-parameters].
-    ///
-    /// [iana.org/assignments/ip-parameters]: https://www.iana.org/assignments/ip-parameters
+    /// For more details see <https://www.iana.org/assignments/ip-parameters>.
     ///
     /// # Example
     ///
@@ -2513,9 +2511,9 @@ pub trait Registers {
     /// increases [`Registers::sn_tx_rd`] the as same as
     /// [`Registers::sn_tx_wr`].
     ///
-    /// If its increment value exceeds the maximum value 0xFFFF,
-    /// (greater than 0x10000 and the carry bit occurs), then the carry bit is
-    /// ignored and will automatically update with the lower 16bits value.
+    /// If its increment value exceeds the maximum value `0xFFFF`,
+    /// (greater than `0x10000` and the carry bit occurs), then the carry bit is
+    /// ignored and will automatically update with the lower 16 bits value.
     ///
     /// # Example
     ///
@@ -2808,7 +2806,7 @@ pub trait Registers {
     /// packet for the socket.  This is valid only in TCP mode, and is ignored
     /// in all other modes.
     ///
-    /// The time unit is 5s.
+    /// The time unit is 5 seconds.
     ///
     /// The KA packet is transmittable after [`Registers::sn_sr`] is changed to
     /// [`SocketStatus::Established`] and after the data is transmitted or

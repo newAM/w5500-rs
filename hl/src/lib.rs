@@ -109,12 +109,7 @@ pub use tcp::{Tcp, TcpReader};
 pub use udp::{Udp, UdpHeader, UdpReader};
 pub use w5500_ll as ll;
 
-/// Networking data types.
-///
-/// These are exported from [`w5500_ll::net`].
-pub mod net {
-    pub use w5500_ll::net::{Eui48Addr, Ipv4Addr, SocketAddrV4};
-}
+pub use ll::net;
 
 use net::{Ipv4Addr, SocketAddrV4};
 
@@ -314,7 +309,7 @@ pub trait Read<'a, W: Registers> {
 
     /// Mark the data as read, removing the data from the queue.
     ///
-    /// For a TCP reader this removes all data up to the curernt pointer
+    /// For a TCP reader this removes all data up to the current pointer
     /// position from the queue.
     ///
     /// For a UDP reader this removes the UDP datagram from the queue.
@@ -326,6 +321,8 @@ pub trait Read<'a, W: Registers> {
 }
 
 /// Streaming writer for a TCP or UDP socket buffer.
+///
+/// This implements the [`Seek`] traits.
 ///
 /// Created with [`Common::writer`].
 ///
@@ -620,7 +617,7 @@ pub trait Common: Registers {
     /// This is useful for writing large packets that are too large to stage
     /// in the memory of your microcontroller.
     ///
-    /// The socket should be opened as a TCP / UDP socket before calling this
+    /// The socket should be opened as a TCP or UDP socket before calling this
     /// method.
     ///
     /// # Example

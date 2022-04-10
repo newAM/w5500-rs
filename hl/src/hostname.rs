@@ -22,7 +22,7 @@ impl<'a> Hostname<'a> {
     /// - It is 253 or fewer characters.
     /// - Its labels (characters separated by `.`) are not empty.
     /// - Its labels are 63 or fewer characters.
-    /// - Its lables do not start or end with '-' or '.'.
+    /// - Its labels do not start or end with '-' or '.'.
     ///
     /// # Example
     ///
@@ -167,7 +167,7 @@ impl<'a> Hostname<'a> {
     }
 }
 
-/// The error type returned when a str to hostname conversion fails.
+/// The error type returned when a str to [`Hostname`] conversion fails.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
 pub struct TryFromStrError(pub(crate) ());

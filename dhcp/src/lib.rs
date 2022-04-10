@@ -52,6 +52,8 @@ pub use w5500_hl::Hostname;
 #[cfg(target_os = "none")]
 pub const DST_PORT: u16 = 67;
 /// DHCP destination port for testing on `std` targets.
+///
+/// When compiled for targets with `cfg(target_os = "none")` this is port 67.
 #[cfg(not(target_os = "none"))]
 pub const DST_PORT: u16 = 2050;
 
@@ -59,6 +61,8 @@ pub const DST_PORT: u16 = 2050;
 #[cfg(target_os = "none")]
 pub const SRC_PORT: u16 = 68;
 /// DHCP source port for testing on `std` targets.
+///
+/// When compiled for targets with `cfg(target_os = "none")` this is port 68.
 #[cfg(not(target_os = "none"))]
 pub const SRC_PORT: u16 = 2051;
 
@@ -181,7 +185,7 @@ impl<'a> Client<'a> {
     /// const MAC_ADDRESS: Eui48Addr = Eui48Addr::new(0x02, 0x00, 0x11, 0x22, 0x33, 0x44);
     /// // unwrap is not `const` yet
     /// const HOSTNAME: Hostname = match Hostname::new("example") {
-    ///     Some(hn) => hn,
+    ///     Some(hostname) => hostname,
     ///     None => panic!("invalid hostname"),
     /// };
     /// let seed: u64 = rng.next_u64();
@@ -268,7 +272,6 @@ impl<'a> Client<'a> {
     ///
     /// After the client is bound this will return the IP address of the
     /// most-preferred DNS server.
-    ///
     /// If the client is not bound, or the DHCP server did not provide this
     /// address it will return `None`.
     #[inline]
@@ -280,7 +283,6 @@ impl<'a> Client<'a> {
     ///
     /// After the client is bound this will return the IP address of the
     /// most-preferred NTP server.
-    ///
     /// If the client is not bound, or the DHCP server did not provide this
     /// address it will return `None`.
     #[inline]

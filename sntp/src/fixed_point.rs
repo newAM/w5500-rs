@@ -1,6 +1,6 @@
 /// A fixed point value.
 ///
-/// NTP uses 32-bit numbers with a decimal between bits 15 and 16 for some
+/// SNTP uses 32-bit numbers with a decimal between bits 15 and 16 for some
 /// values.
 #[derive(Debug, Clone, Copy)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]

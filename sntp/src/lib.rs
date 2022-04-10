@@ -81,9 +81,9 @@ impl Client {
     /// };
     ///
     /// const SNTP_SRC_PORT: u16 = 123;
-    /// const NTP_SERVER: Ipv4Addr = Ipv4Addr::new(216, 239, 35, 4);
+    /// const SNTP_SERVER: Ipv4Addr = Ipv4Addr::new(216, 239, 35, 4);
     ///
-    /// let sntp_client: Client = Client::new(Sn::Sn3, SNTP_SRC_PORT, NTP_SERVER);
+    /// let sntp_client: Client = Client::new(Sn::Sn3, SNTP_SRC_PORT, SNTP_SERVER);
     /// ```
     pub fn new(sn: Sn, port: u16, server: Ipv4Addr) -> Self {
         Self {
@@ -104,15 +104,15 @@ impl Client {
     /// };
     ///
     /// const SNTP_SRC_PORT: u16 = 123;
-    /// const NTP_SERVER: Ipv4Addr = Ipv4Addr::new(216, 239, 35, 4);
-    /// const LOCAL_NTP_SERVER: Ipv4Addr = Ipv4Addr::new(10, 0, 42, 42);
+    /// const SNTP_SERVER: Ipv4Addr = Ipv4Addr::new(216, 239, 35, 4);
+    /// const LOCAL_SNTP_SERVER: Ipv4Addr = Ipv4Addr::new(10, 0, 42, 42);
     ///
-    /// let mut sntp_client: Client = Client::new(Sn::Sn3, SNTP_SRC_PORT, NTP_SERVER);
-    /// assert_eq!(sntp_client.server(), NTP_SERVER);
+    /// let mut sntp_client: Client = Client::new(Sn::Sn3, SNTP_SRC_PORT, SNTP_SERVER);
+    /// assert_eq!(sntp_client.server(), SNTP_SERVER);
     ///
     /// // change server
-    /// sntp_client.set_server(LOCAL_NTP_SERVER);
-    /// assert_eq!(sntp_client.server(), LOCAL_NTP_SERVER);
+    /// sntp_client.set_server(LOCAL_SNTP_SERVER);
+    /// assert_eq!(sntp_client.server(), LOCAL_SNTP_SERVER);
     /// ```
     #[inline]
     pub fn set_server(&mut self, server: Ipv4Addr) {
@@ -130,10 +130,10 @@ impl Client {
     /// };
     ///
     /// const SNTP_SRC_PORT: u16 = 123;
-    /// const NTP_SERVER: Ipv4Addr = Ipv4Addr::new(216, 239, 35, 4);
+    /// const SNTP_SERVER: Ipv4Addr = Ipv4Addr::new(216, 239, 35, 4);
     ///
-    /// let sntp_client: Client = Client::new(Sn::Sn3, SNTP_SRC_PORT, NTP_SERVER);
-    /// assert_eq!(sntp_client.server(), NTP_SERVER);
+    /// let sntp_client: Client = Client::new(Sn::Sn3, SNTP_SRC_PORT, SNTP_SERVER);
+    /// assert_eq!(sntp_client.server(), SNTP_SERVER);
     /// ```
     #[inline]
     pub fn server(&self) -> Ipv4Addr {
@@ -155,7 +155,7 @@ impl Client {
     ///
     /// * [`Error::Other`]
     /// * [`Error::OutOfMemory`]
-    ///   * Sending a request requires 48B of memory in the socket buffers.
+    ///   * Sending a request requires 48 bytes of memory in the socket buffers.
     ///
     /// # Example
     ///
@@ -167,9 +167,9 @@ impl Client {
     /// };
     ///
     /// const SNTP_SRC_PORT: u16 = 123;
-    /// const NTP_SERVER: Ipv4Addr = Ipv4Addr::new(216, 239, 35, 4);
+    /// const SNTP_SERVER: Ipv4Addr = Ipv4Addr::new(216, 239, 35, 4);
     ///
-    /// let sntp_client: Client = Client::new(Sn::Sn3, SNTP_SRC_PORT, NTP_SERVER);
+    /// let sntp_client: Client = Client::new(Sn::Sn3, SNTP_SRC_PORT, SNTP_SERVER);
     /// sntp_client.request(&mut w5500)?;
     /// # Ok::<(), w5500_hl::Error<std::io::Error>>(())
     /// ```
@@ -246,9 +246,9 @@ impl Client {
     /// };
     ///
     /// const SNTP_SRC_PORT: u16 = 123;
-    /// const NTP_SERVER: Ipv4Addr = Ipv4Addr::new(216, 239, 35, 4);
+    /// const SNTP_SERVER: Ipv4Addr = Ipv4Addr::new(216, 239, 35, 4);
     ///
-    /// let sntp_client: Client = Client::new(Sn::Sn3, SNTP_SRC_PORT, NTP_SERVER);
+    /// let sntp_client: Client = Client::new(Sn::Sn3, SNTP_SRC_PORT, SNTP_SERVER);
     /// sntp_client.request(&mut w5500)?;
     ///
     /// // ... wait for RECV interrupt with a timeout

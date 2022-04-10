@@ -236,12 +236,12 @@ impl ::core::fmt::Display for Mode {
 /// Interrupt and interrupt mask register (IR and IMR).
 ///
 /// When used for interrupt masking:
-/// * `false` = Interrupt is disabled.
-/// * `true` = Interrupt is enabled.
+/// * `false`: Interrupt is disabled.
+/// * `true`: Interrupt is enabled.
 ///
 /// When used for reading interrupt status:
-/// * `false` = Interrupt is not raised.
-/// * `true` = Interrupt is raised.
+/// * `false`: Interrupt is not raised.
+/// * `true`: Interrupt is raised.
 ///
 /// This is used by these methods:
 /// * [`Registers::ir`]

@@ -403,7 +403,7 @@ pub trait Udp: Registers {
         Ok((read_size, header))
     }
 
-    /// Receives the origin and size of the next datagram avaliable on the
+    /// Receives the origin and size of the next datagram available on the
     /// socket, without removing it from the queue.
     ///
     /// There is no [`std::net`](https://doc.rust-lang.org/std/net) equivalent
@@ -429,7 +429,7 @@ pub trait Udp: Registers {
     ///     ll::{Registers, Sn::Sn0},
     ///     Udp, UdpHeader, block
     /// };
-    /// // global_allocator is currently avaliable on nightly for embedded rust
+    /// // global_allocator is currently available on nightly for embedded rust
     /// extern crate alloc;
     /// use alloc::vec::{self, Vec};
     ///
