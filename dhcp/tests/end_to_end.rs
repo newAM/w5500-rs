@@ -239,9 +239,10 @@ fn end_to_end() {
     offer
         .opts_mut()
         .insert(DhcpOption::Router(vec![ROUTER.into()]));
-    offer
-        .opts_mut()
-        .insert(DhcpOption::DomainNameServer(vec![DNS_1.into(), DNS_2.into()]));
+    offer.opts_mut().insert(DhcpOption::DomainNameServer(vec![
+        DNS_1.into(),
+        DNS_2.into(),
+    ]));
     offer
         .opts_mut()
         .insert(DhcpOption::NTPServers(vec![NTP.into()]));

@@ -479,7 +479,10 @@ impl<'a, W: Registers> PktDe<'a, W> {
     }
 
     // only returns the first ipv4 occurance in a list
-    fn find_option_ipv4_list(&mut self, option: Options) -> Result<Option<Ipv4Addr>, Error<W::Error>> {
+    fn find_option_ipv4_list(
+        &mut self,
+        option: Options,
+    ) -> Result<Option<Ipv4Addr>, Error<W::Error>> {
         let option_size: u8 = match self.seek_to_option(option)? {
             Some(len) => len,
             None => return Ok(None),
