@@ -93,6 +93,30 @@ impl<'a> Hostname<'a> {
         Some(Self { hostname })
     }
 
+    /// Create a new hostname, panicking if the hostname is invalid.
+    ///
+    /// # Panics
+    ///
+    /// This is the same as [`new`](Self::new), but it will panic on invalid
+    /// hostnames.
+    ///
+    /// This should only be used in `const` contexts where the evaluation will
+    /// fail at compile time.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use w5500_hl::Hostname;
+    ///
+    /// const MY_HOSTNAME: Hostname = Hostname::new_unwrapped("valid.hostname");
+    /// ```
+    pub const fn new_unwrapped(hostname: &'a str) -> Self {
+        match Self::new(hostname) {
+            Some(hostname) => hostname,
+            None => ::core::panic!("invalid hostname"),
+        }
+    }
+
     /// Returns an iterator over the labels of the hostname.
     ///
     /// # Example
