@@ -43,11 +43,11 @@ fn main() {
         random_number,
     );
 
-    let docsrs: Hostname = Hostname::new("docs.rs").expect("hostname is invalid");
+    const DOCSRS: Hostname = Hostname::new_unwrapped("docs.rs");
 
     let start: Instant = Instant::now();
     let id: u16 = dns_client
-        .a_question(&mut w5500, &docsrs)
+        .a_question(&mut w5500, &DOCSRS)
         .expect("failed to send DNS query");
 
     let mut buf: [u8; 63] = [0; 63];
