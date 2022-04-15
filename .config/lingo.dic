@@ -37,6 +37,7 @@ getters
 GPIO
 hl
 hostname
+hostnames
 Hostnames
 IANA
 ICMP
