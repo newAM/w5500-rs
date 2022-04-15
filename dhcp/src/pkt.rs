@@ -376,13 +376,32 @@ pub fn send_dhcp_request<W: Registers>(
 }
 
 #[derive(Debug)]
+struct OptionLocation {
+    option: u8,
+    ptr: u16,
+    len: u8,
+}
+
+impl OptionLocation {
+    const DEFAULT: Self = OptionLocation {
+        option: 0,
+        ptr: 0,
+        len: 0,
+    };
+}
+
+#[derive(Debug)]
 pub struct PktDe<'a, W: Registers> {
     reader: UdpReader<'a, W>,
+    option_location_cache: [OptionLocation; 9],
 }
 
 impl<'a, W: Registers> From<UdpReader<'a, W>> for PktDe<'a, W> {
     fn from(reader: UdpReader<'a, W>) -> Self {
-        Self { reader }
+        Self {
+            reader,
+            option_location_cache: [OptionLocation::DEFAULT; 9],
+        }
     }
 }
 
@@ -412,10 +431,43 @@ impl<'a, W: Registers> PktDe<'a, W> {
         Ok(buf.into())
     }
 
+    fn option_location_cache_insert(&mut self, option: u8, len: u8) {
+        if let Some(empty_entry) = self
+            .option_location_cache
+            .iter_mut()
+            .find(|l| l.option == 0)
+        {
+            *empty_entry = OptionLocation {
+                option,
+                ptr: self.reader.stream_position(),
+                len,
+            };
+        }
+    }
+
     /// Seeks to an option and returns the length if it exists.
     fn seek_to_option(&mut self, option: Options) -> Result<Option<u8>, Error<W::Error>> {
         let option: u8 = option.into();
-        self.reader.seek(SeekFrom::Start(240))?;
+
+        // check cache
+        let mut start_of_unknown_options: u16 = 240;
+        for location in self.option_location_cache.iter() {
+            if location.option != 0 {
+                if location.option == option {
+                    self.reader.seek(SeekFrom::Start(location.ptr))?;
+                    return Ok(Some(location.len));
+                }
+
+                start_of_unknown_options = location.ptr + u16::from(location.len);
+            } else {
+                break;
+            }
+        }
+
+        // seek to start of options
+        self.reader
+            .seek(SeekFrom::Start(start_of_unknown_options))?;
+
         loop {
             let (byte, len): (u8, u8) = {
                 let mut buf: [u8; 2] = [0; 2];
@@ -436,8 +488,10 @@ impl<'a, W: Registers> PktDe<'a, W> {
                     self.reader.seek(SeekFrom::Current(-1))?;
                 }
             } else if byte == option {
+                self.option_location_cache_insert(byte, len);
                 return Ok(Some(len));
             } else {
+                self.option_location_cache_insert(byte, len);
                 self.reader.seek(SeekFrom::Current(len.into()))?;
             }
         }
