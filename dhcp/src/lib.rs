@@ -114,11 +114,7 @@ enum State {
 /// // locally administered MAC address
 /// const MAC_ADDRESS: Eui48Addr = Eui48Addr::new(0x02, 0x00, 0x11, 0x22, 0x33, 0x44);
 ///
-/// // unwrap is not `const` yet
-/// const HOSTNAME: Hostname = match Hostname::new("example") {
-///     Some(hn) => hn,
-///     None => panic!("invalid hostname"),
-/// };
+/// const HOSTNAME: Hostname = Hostname::new_unwrapped("example");
 ///
 /// this_is_where_you_setup_the_w5500_int_pin_for_a_falling_edge_trigger();
 ///
@@ -183,11 +179,7 @@ impl<'a> Client<'a> {
     /// const DHCP_SN: Sn = Sn::Sn0;
     /// // locally administered MAC address
     /// const MAC_ADDRESS: Eui48Addr = Eui48Addr::new(0x02, 0x00, 0x11, 0x22, 0x33, 0x44);
-    /// // unwrap is not `const` yet
-    /// const HOSTNAME: Hostname = match Hostname::new("example") {
-    ///     Some(hostname) => hostname,
-    ///     None => panic!("invalid hostname"),
-    /// };
+    /// const HOSTNAME: Hostname = Hostname::new_unwrapped("example");
     /// let seed: u64 = rng.next_u64();
     ///
     /// let dhcp: Client = Client::new(DHCP_SN, seed, MAC_ADDRESS, HOSTNAME);
@@ -225,11 +217,12 @@ impl<'a> Client<'a> {
     /// };
     /// # let mut rng = rand_core::OsRng;
     ///
+    /// const HOSTNAME: Hostname = Hostname::new_unwrapped("example");
     /// let dhcp: Client = Client::new(
     ///     Sn::Sn0,
     ///     rng.next_u64(),
     ///     Eui48Addr::new(0x02, 0x00, 0x11, 0x22, 0x33, 0x44),
-    ///     Hostname::new("demo").unwrap(),
+    ///     HOSTNAME,
     /// );
     /// assert_eq!(dhcp.is_bound(), false);
     /// ```
