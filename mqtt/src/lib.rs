@@ -184,7 +184,7 @@ impl<'a, W5500: Registers> PublishReader<'a, W5500> {
         self.payload_len
     }
 
-    /// Read the topic into `buf`.
+    /// Read the topic into `buf`, and return the number of bytes read.
     pub fn read_topic(&mut self, buf: &mut [u8]) -> Result<u16, Error<W5500::Error>> {
         self.reader
             .seek(SeekFrom::Start(self.topic_idx))
@@ -196,7 +196,7 @@ impl<'a, W5500: Registers> PublishReader<'a, W5500> {
         Ok(read_len)
     }
 
-    /// Read the payload into `buf`.
+    /// Read the payload into `buf`, and return the number of bytes read.
     pub fn read_payload(&mut self, buf: &mut [u8]) -> Result<u16, Error<W5500::Error>> {
         self.reader
             .seek(SeekFrom::Start(self.payload_idx))

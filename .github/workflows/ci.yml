@@ -55,7 +55,7 @@ jobs:
       - run: cargo build --target ${{ matrix.target }} -p w5500-hl   --features embedded-hal
       - run: cargo build --target ${{ matrix.target }} -p w5500-dhcp --features embedded-hal
       - run: cargo build --target ${{ matrix.target }} -p w5500-dns  --features embedded-hal
-      - run: cargo build --target ${{ matrix.target }} -p w5500-mqtt --features embedded-mqtt
+      - run: cargo build --target ${{ matrix.target }} -p w5500-mqtt --features embedded-hal
       - run: cargo build --target ${{ matrix.target }} -p w5500-sntp --features embedded-hal
       - run: cargo build --target ${{ matrix.target }} -p w5500-dhcp --features log
       - run: cargo build --target ${{ matrix.target }} -p w5500-dns  --features log
