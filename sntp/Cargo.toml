@@ -7,7 +7,7 @@ repository = "https://github.com/newAM/w5500-rs"
 license = "MIT"
 description = "SNTP client for the Wiznet W5500 internet offload chip."
 readme = "README.md"
-keywords = ["sntp", "driver", "embedded-hal-driver", "W5500", "wiznet"]
+keywords = ["sntp", "W5500", "wiznet"]
 categories = ["embedded", "hardware-support", "no-std"]
 homepage = "https://github.com/newAM/w5500-rs"
 
