@@ -19,7 +19,7 @@ use w5500_mqtt::{
         net::{Ipv4Addr, SocketAddrV4},
         Sn,
     },
-    Client, DST_PORT, SRC_PORT, ClientId, Event,
+    Client, ClientId, Event, DST_PORT, SRC_PORT,
 };
 
 let mut client: Client = Client::new(
@@ -29,7 +29,7 @@ let mut client: Client = Client::new(
 );
 
 // wait for a connection or die trying
-while client.process(&mut w5500, monotonic_secs())? != Event::None { }
+while client.process(&mut w5500, monotonic_secs())? != Event::None {}
 
 // publish "quack" with a payload "oink"
 client.publish(&mut w5500, "quack", b"oink")?;
