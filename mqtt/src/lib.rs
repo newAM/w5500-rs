@@ -437,20 +437,7 @@ impl<'a> Client<'a> {
     /// # use w5500_regsim::{W5500 as MyW5500};
     /// # fn spawn_at_this_many_seconds_in_the_future(s: u32) {}
     /// # fn monotonic_secs() -> u32 { 0 }
-    /// # let mut w5500 = w5500_regsim::W5500::default();
-    /// use w5500_mqtt::{
-    ///     ll::{
-    ///         net::{Ipv4Addr, SocketAddrV4},
-    ///         Sn,
-    ///     },
-    ///     Client, ClientId, Error, Event, DST_PORT, SRC_PORT,
-    /// };
-    ///
-    /// let mut client: Client = Client::new(
-    ///     Sn::Sn2,
-    ///     SRC_PORT,
-    ///     SocketAddrV4::new(Ipv4Addr::new(192, 168, 5, 6), DST_PORT),
-    /// );
+    /// use w5500_mqtt::{Client, Error, Event};
     ///
     /// fn my_rtos_task(client: &mut Client, w5500: &mut MyW5500) -> Result<(), Error<W5500Error>> {
     ///     loop {
