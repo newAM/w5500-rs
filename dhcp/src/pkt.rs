@@ -605,6 +605,7 @@ impl<'a, W: Registers> PktDe<'a, W> {
     }
 
     pub fn done(self) -> Result<(), W::Error> {
-        self.reader.done()
+        self.reader.done()?;
+        Ok(())
     }
 }
