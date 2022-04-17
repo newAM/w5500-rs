@@ -253,6 +253,10 @@ pub enum Event<'a, W5500: Registers> {
         /// This should be checked to ensure the SUBSCRIBE was successful.
         code: SubAckReasonCode,
     },
+    /// The connection has been accepted by the server.
+    ///
+    /// This is a good time to subscribe to topics.
+    ConnAck,
     /// No event occurred, the client ready and idle.
     None,
 }
@@ -425,6 +429,66 @@ impl<'a> Client<'a> {
     /// * `Ok(Event::None)` The client is idle; you can  call [`subscribe`] and [`publish`].
     ///
     /// This should also be called when there is a pending socket interrupt.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// # use std::io::{Error as W5500Error};
+    /// # use w5500_regsim::{W5500 as MyW5500};
+    /// # fn spawn_at_this_many_seconds_in_the_future(s: u32) {}
+    /// # fn monotonic_secs() -> u32 { 0 }
+    /// # let mut w5500 = w5500_regsim::W5500::default();
+    /// use w5500_mqtt::{
+    ///     ll::{
+    ///         net::{Ipv4Addr, SocketAddrV4},
+    ///         Sn,
+    ///     },
+    ///     Client, ClientId, Event, DST_PORT, SRC_PORT, Error
+    /// };
+    ///
+    /// let mut client: Client = Client::new(
+    ///     Sn::Sn2,
+    ///     SRC_PORT,
+    ///     SocketAddrV4::new(Ipv4Addr::new(192, 168, 5, 6), DST_PORT),
+    /// );
+    ///
+    /// fn my_rtos_task(client: &mut Client, w5500: &mut MyW5500) -> Result<(), Error<W5500Error>> {
+    ///     loop {
+    ///         match client.process(w5500, monotonic_secs()) {
+    ///             Ok(Event::ConnAck) => {
+    ///                 client.subscribe(w5500, "/demo/topic/#")?;
+    ///             }
+    ///             Ok(Event::CallAfter(secs)) => {
+    ///                 spawn_at_this_many_seconds_in_the_future(secs);
+    ///                 break;
+    ///             }
+    ///             Ok(Event::Publish(mut reader)) => {
+    ///                 let mut topic_buf: [u8; 32] = [0; 32];
+    ///                 let mut payload_buf: [u8; 32] = [0; 32];
+    ///                 let topic_len: u16 = reader.read_topic(&mut topic_buf)?;
+    ///                 let payload_len: u16 = reader.read_payload(&mut payload_buf)?;
+    ///                 reader.done()?;
+    ///
+    ///                 // do something with the topic and payload
+    ///             }
+    ///             Ok(Event::SubAck { pkt_id: _, code }) => {
+    ///                 // this does not handle failed subscriptions
+    ///                 log::info!("SubAck {:?}", code)
+    ///             }
+    ///             Ok(Event::None) => break,
+    ///             Err(e) => {
+    ///                 log::error!("oh no, an error! {e:?}");
+    ///                 // try again in a minute
+    ///                 spawn_at_this_many_seconds_in_the_future(60);
+    ///                 break;
+    ///             }
+    ///         }
+    ///     }
+    ///
+    ///     Ok(())
+    /// }
+    /// # Ok::<(), w5500_mqtt::Error<std::io::Error>>(())
+    /// ```
     ///
     /// [`subscribe`]: Self::subscribe
     /// [`publish`]: Self::publish
@@ -796,7 +860,7 @@ impl<'a> Client<'a> {
                     Err(0) => {
                         info!("Sucessfully connected");
                         self.set_state(State::Ready);
-                        Ok(Some(Event::None))
+                        Ok(Some(Event::ConnAck))
                     }
                     Ok(code) => {
                         warn!("Unable to connect: {:?}", code);

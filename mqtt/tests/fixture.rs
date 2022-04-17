@@ -164,7 +164,7 @@ impl Fixture {
             }),
         }));
         self.server.send_connack();
-        assert_eq!(self.client_process().unwrap(), Event::None);
+        assert_eq!(self.client_process().unwrap(), Event::ConnAck);
     }
 
     pub fn server_expect(&mut self, packet: Packet) {
