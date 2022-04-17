@@ -747,6 +747,8 @@ impl<'a> Client<'a> {
         w5500: &mut W5500,
         monotonic_secs: u32,
     ) -> Result<u32, W5500::Error> {
+        let simr: u8 = w5500.simr()?;
+        w5500.set_simr(self.sn.bitmask() | simr)?;
         const SN_IMR: SocketInterruptMask = SocketInterruptMask::DEFAULT.mask_sendok();
         w5500.set_sn_imr(self.sn, SN_IMR)?;
         w5500.tcp_connect(self.sn, self.port, &self.server)?;
