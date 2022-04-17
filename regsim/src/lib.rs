@@ -96,12 +96,12 @@ enum SocketType {
 
 impl PartialEq for SocketType {
     fn eq(&self, other: &Self) -> bool {
-        match (self, other) {
-            (Self::Udp(_), Self::Udp(_)) => true,
-            (Self::TcpListener(_), Self::TcpListener(_)) => true,
-            (Self::TcpStream(_), Self::TcpStream(_)) => true,
-            _ => false,
-        }
+        matches!(
+            (self, other),
+            (Self::Udp(_), Self::Udp(_))
+                | (Self::TcpListener(_), Self::TcpListener(_))
+                | (Self::TcpStream(_), Self::TcpStream(_))
+        )
     }
 }
 
