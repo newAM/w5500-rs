@@ -90,8 +90,8 @@
 //!
 //! [`Registers`]: https://docs.rs/w5500-ll/latest/w5500_ll/trait.Registers.html
 //! [`std::net`]: https://doc.rust-lang.org/std/net/index.html
-//! [`Tcp`]: https://docs.rs/w5500-hl/0.7.1/w5500_hl/trait.Tcp.html
-//! [`Udp`]: https://docs.rs/w5500-hl/0.7.1/w5500_hl/trait.Udp.html
+//! [`Tcp`]: https://docs.rs/w5500-hl/0.9.0/w5500_hl/trait.Tcp.html
+//! [`Udp`]: https://docs.rs/w5500-hl/0.9.0/w5500_hl/trait.Udp.html
 //! [w5500-ll]: https://github.com/newAM/w5500-ll-rs
 //! [Wiznet W5500]: https://www.wiznet.io/product-item/w5500/
 #![cfg_attr(docsrs, feature(doc_cfg))]
@@ -306,55 +306,30 @@ pub trait Read<'a, W5500: Registers> {
     /// * [`Error::UnexpectedEof`]
     fn read_exact(&mut self, buf: &mut [u8]) -> Result<(), Error<W5500::Error>>;
 
-    /// Mark the data as read, removing the data from the queue.
-    ///
-    /// For a TCP reader this removes all data up to the current pointer
-    /// position from the queue.
-    ///
-    /// For a UDP reader this removes the UDP datagram from the queue.
-    ///
-    /// To complete a read without marking the data as read simply use
-    /// [`mem::drop`](https://doc.rust-lang.org/core/mem/fn.drop.html) on the
-    /// reader.
-    fn done(self) -> Result<&'a mut W5500, W5500::Error>;
+    /// Make the data as unread, returning the data to the queue.
+    fn unread(&mut self);
+
+    /// Returns `true` if [`unread`] was called.
+    fn is_unread(&self) -> bool;
+
+    // TODO: re-home this UDP/TCP specific doc parts
+    // Mark the data as read, removing the data from the queue.
+    //
+    // For a TCP reader this removes all data up to the current pointer
+    // position from the queue.
+    //
+    // For a UDP reader this removes the UDP datagram from the queue.
+    //
+    // To complete a read without marking the data as read simply use
+    // [`mem::drop`](https://doc.rust-lang.org/core/mem/fn.drop.html) on the
+    // reader.
 }
 
 /// Streaming writer for a TCP or UDP socket buffer.
 ///
 /// This implements the [`Seek`] traits.
 ///
-/// Created with [`Common::writer`].
-///
-/// # Example
-///
-/// ```no_run
-/// # use embedded_hal_mock as h;
-/// # let mut w5500 = w5500_ll::blocking::vdm::W5500::new(h::spi::Mock::new(&[]), h::pin::Mock::new(&[]));
-/// use w5500_hl::{
-///     ll::{Registers, Sn::Sn0},
-///     net::{Ipv4Addr, SocketAddrV4},
-///     Udp,
-///     Common,
-///     Writer,
-/// };
-///
-/// const DEST: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::new(192, 0, 2, 1), 8081);
-///
-/// w5500.udp_bind(Sn0, 8080)?;
-///
-/// let mut udp_writer: Writer<_> = w5500.writer(Sn0)?;
-///
-/// let data_header: [u8; 10] = [0; 10];
-/// let n_written: u16 = udp_writer.write(&data_header)?;
-/// assert_eq!(usize::from(n_written), data_header.len());
-///
-/// let data: [u8; 123] = [0; 123];
-/// let n_written: u16 = udp_writer.write(&data)?;
-/// assert_eq!(usize::from(n_written), data.len());
-///
-/// udp_writer.udp_send_to(&DEST)?;
-/// # Ok::<(), w5500_hl::ll::blocking::vdm::Error<_, _>>(())
-/// ```
+/// Created with [`Udp::udp_writer`], [`Udp::udp_writer_to`] or [`Tcp::tcp_writer`].
 #[derive(Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
 pub struct Writer<'a, W: Registers> {
@@ -363,6 +338,7 @@ pub struct Writer<'a, W: Registers> {
     head_ptr: u16,
     tail_ptr: u16,
     ptr: u16,
+    abort: bool,
 }
 
 impl<'a, W: Registers> Seek<W::Error> for Writer<'a, W> {
@@ -424,30 +400,10 @@ impl<'a, W: Registers> Writer<'a, W> {
         }
     }
 
-    /// Send all data previously written with [`write`] and [`write_all`].
-    ///
-    /// For UDP sockets the destination is set by the last call to
-    /// [`Registers::set_sn_dest`], [`Udp::udp_send_to`], or
-    /// [`Writer::udp_send_to`].
-    ///
-    /// [`write`]: Writer::write
-    /// [`write_all`]: Writer::write_all
-    pub fn send(self) -> Result<(), W::Error> {
-        self.w5500.set_sn_tx_wr(self.sn, self.ptr)?;
-        self.w5500.set_sn_cr(self.sn, SocketCommand::Send)
-    }
-
-    /// Send all data previously written with [`Writer::write`] and
-    /// [`Writer::write_all`] to the given address.
-    ///
-    /// # Panics
-    ///
-    /// * (debug) The socket must be opened as a UDP socket.
-    pub fn udp_send_to(self, addr: &SocketAddrV4) -> Result<(), W::Error> {
-        debug_assert_eq!(self.w5500.sn_sr(self.sn)?, Ok(SocketStatus::Udp));
-
-        self.w5500.set_sn_dest(self.sn, addr)?;
-        self.send()
+    /// Ignore all written data, and exit without sending anything.
+    #[inline]
+    pub fn abort(&mut self) {
+        self.abort = true
     }
 }
 
@@ -606,64 +562,6 @@ pub trait Common: Registers {
     #[allow(clippy::wrong_self_convention)]
     fn is_state_udp(&mut self, sn: Sn) -> Result<bool, Self::Error> {
         Ok(self.sn_sr(sn)? == Ok(SocketStatus::Udp))
-    }
-
-    /// Create a socket writer.
-    ///
-    /// This returns a [`Writer`] structure, which contains functions to
-    /// stream data into the W5500 socket buffers incrementally.
-    ///
-    /// This is useful for writing large packets that are too large to stage
-    /// in the memory of your microcontroller.
-    ///
-    /// The socket should be opened as a TCP or UDP socket before calling this
-    /// method.
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// # use embedded_hal_mock as h;
-    /// # let mut w5500 = w5500_ll::blocking::vdm::W5500::new(h::spi::Mock::new(&[]), h::pin::Mock::new(&[]));
-    /// use w5500_hl::{
-    ///     ll::{Registers, Sn::Sn0},
-    ///     net::{Ipv4Addr, SocketAddrV4},
-    ///     Udp,
-    ///     Writer,
-    ///     Common,
-    /// };
-    ///
-    /// const DEST: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::new(192, 0, 2, 1), 8081);
-    ///
-    /// w5500.udp_bind(Sn0, 8080)?;
-    ///
-    /// let mut writer: Writer<_> = w5500.writer(Sn0)?;
-    ///
-    /// // write part of a packet
-    /// let buf: [u8; 8] = [0; 8];
-    /// writer.write_all(&buf)?;
-    ///
-    /// // write another part
-    /// let other_buf: [u8; 16]  = [0; 16];
-    /// writer.write_all(&buf)?;
-    ///
-    /// // send all previously written data to the destination
-    /// writer.udp_send_to(&DEST)?;
-    /// # Ok::<(), w5500_hl::Error<_>>(())
-    /// ```
-    fn writer(&mut self, sn: Sn) -> Result<Writer<Self>, Self::Error>
-    where
-        Self: Sized,
-    {
-        let sn_tx_fsr: u16 = self.sn_tx_fsr(sn)?;
-        let sn_tx_wr: u16 = self.sn_tx_wr(sn)?;
-
-        Ok(Writer {
-            w5500: self,
-            sn,
-            head_ptr: sn_tx_wr,
-            tail_ptr: sn_tx_wr.wrapping_add(sn_tx_fsr),
-            ptr: sn_tx_wr,
-        })
     }
 }
 
