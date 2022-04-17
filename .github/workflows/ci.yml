@@ -43,19 +43,23 @@ jobs:
       - run: cargo build --target ${{ matrix.target }} -p w5500-hl
       - run: cargo build --target ${{ matrix.target }} -p w5500-dhcp
       - run: cargo build --target ${{ matrix.target }} -p w5500-dns
+      - run: cargo build --target ${{ matrix.target }} -p w5500-mqtt
       - run: cargo build --target ${{ matrix.target }} -p w5500-sntp
       - run: cargo build --target ${{ matrix.target }} -p w5500-ll   --features defmt
       - run: cargo build --target ${{ matrix.target }} -p w5500-hl   --features defmt
       - run: cargo build --target ${{ matrix.target }} -p w5500-dhcp --features defmt
       - run: cargo build --target ${{ matrix.target }} -p w5500-dns  --features defmt
+      - run: cargo build --target ${{ matrix.target }} -p w5500-mqtt --features defmt
       - run: cargo build --target ${{ matrix.target }} -p w5500-sntp --features defmt
       - run: cargo build --target ${{ matrix.target }} -p w5500-ll   --features embedded-hal
       - run: cargo build --target ${{ matrix.target }} -p w5500-hl   --features embedded-hal
       - run: cargo build --target ${{ matrix.target }} -p w5500-dhcp --features embedded-hal
       - run: cargo build --target ${{ matrix.target }} -p w5500-dns  --features embedded-hal
+      - run: cargo build --target ${{ matrix.target }} -p w5500-mqtt --features embedded-mqtt
       - run: cargo build --target ${{ matrix.target }} -p w5500-sntp --features embedded-hal
       - run: cargo build --target ${{ matrix.target }} -p w5500-dhcp --features log
       - run: cargo build --target ${{ matrix.target }} -p w5500-dns  --features log
+      - run: cargo build --target ${{ matrix.target }} -p w5500-mqtt --features log
       - run: cargo build --target ${{ matrix.target }} -p w5500-sntp --features log
       - run: cargo build --target ${{ matrix.target }} -p w5500-sntp --features time
       - run: cargo build --target ${{ matrix.target }} -p w5500-sntp --features chrono
@@ -107,18 +111,20 @@ jobs:
           toolchain: nightly
       - name: rustdoc
         run: |
-          cd ll
-          cargo +nightly rustdoc --all-features
-          cd ../hl
-          cargo +nightly rustdoc --all-features
-          cd ../dhcp
+          cd dhcp
           cargo +nightly rustdoc --all-features
           cd ../dns
           cargo +nightly rustdoc --all-features
-          cd ../sntp
+          cd ../hl
+          cargo +nightly rustdoc --all-features
+          cd ../ll
+          cargo +nightly rustdoc --all-features
+          cd ../mqtt
           cargo +nightly rustdoc --all-features
           cd ../regsim
-          cargo +nightly rustdoc
+          cargo +nightly rustdoc --all-features
+          cd ../sntp
+          cargo +nightly rustdoc --all-features
 
   hl-testsuite:
     name: testsuite
@@ -256,6 +262,29 @@ jobs:
       - name: Publish
         run: |
           cd dns
+          cargo publish --no-verify --token ${CRATES_IO_TOKEN}
+        env:
+          CRATES_IO_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
+
+  release-mqtt:
+    name: w5500-mqtt crates.io release
+    if: startsWith(github.ref, 'refs/tags/mqtt/v')
+    needs:
+      - build
+      - build_no_std
+      - test
+      - clippy
+      - format
+      - rustdoc
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - name: Publish
+        run: |
+          cd mqtt
           cargo publish --no-verify --token ${CRATES_IO_TOKEN}
         env:
           CRATES_IO_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}

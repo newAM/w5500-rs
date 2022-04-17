@@ -1,0 +1,239 @@
+use mqttbytes::{
+    v5::{
+        ConnAck, Connect, ConnectProperties, ConnectReturnCode, Packet, Publish, RetainForwardRule,
+        SubAck, Subscribe, SubscribeFilter, SubscribeReasonCode,
+    },
+    Protocol::V5,
+    QoS,
+};
+use std::{
+    io::{Read, Write},
+    net::{TcpListener, TcpStream},
+    time::Instant,
+};
+use w5500_mqtt::{
+    ll::{
+        net::{Ipv4Addr, SocketAddrV4},
+        Registers, Sn,
+    },
+    Client, ClientId, Error, Event, SubAckReasonCode, SRC_PORT,
+};
+use w5500_regsim::W5500;
+
+pub struct Server {
+    listener: TcpListener,
+    stream: Option<TcpStream>,
+}
+
+impl Default for Server {
+    fn default() -> Self {
+        Self {
+            listener: TcpListener::bind("127.0.0.1:1883").expect("bind failed"),
+            stream: None,
+        }
+    }
+}
+
+impl Server {
+    pub fn accept(&mut self) {
+        let (stream, _addr) = self.listener.accept().expect("accept failed");
+        stream.set_nonblocking(true).unwrap();
+        self.stream.replace(stream);
+    }
+    pub fn read(&mut self) -> Result<Packet, mqttbytes::Error> {
+        let mut buf = bytes::BytesMut::with_capacity(u16::MAX as usize);
+        buf.resize(u16::MAX as usize, 0);
+        let n: usize = self
+            .stream
+            .as_ref()
+            .unwrap()
+            .read(&mut buf)
+            .expect("read failed");
+        mqttbytes::v5::read(&mut buf, n)
+    }
+
+    pub fn send_connack(&mut self) {
+        const CONN_ACK: ConnAck = ConnAck {
+            session_present: false,
+            code: ConnectReturnCode::Success,
+            properties: None,
+        };
+        let mut buf = bytes::BytesMut::new();
+        CONN_ACK.write(&mut buf).unwrap();
+        self.stream.as_ref().unwrap().write_all(&mut buf).unwrap()
+    }
+
+    pub fn send_suback(&mut self, pkid: u16) {
+        let sub_ack: SubAck = SubAck {
+            pkid,
+            return_codes: vec![SubscribeReasonCode::QoS0],
+            properties: None,
+        };
+        let mut buf = bytes::BytesMut::new();
+        sub_ack.write(&mut buf).unwrap();
+        self.stream.as_ref().unwrap().write_all(&mut buf).unwrap()
+    }
+
+    pub fn publish(&mut self, topic: &str, payload: &[u8]) {
+        let publish: Publish = Publish::new(topic, QoS::AtMostOnce, payload);
+        let mut buf = bytes::BytesMut::new();
+        publish.write(&mut buf).unwrap();
+        self.stream.as_ref().unwrap().write_all(&mut buf).unwrap()
+    }
+}
+
+pub struct Monotonic {
+    start: Instant,
+}
+
+impl Default for Monotonic {
+    fn default() -> Self {
+        Self {
+            start: Instant::now(),
+        }
+    }
+}
+
+impl Monotonic {
+    pub fn monotonic_secs(&self) -> u32 {
+        Instant::now()
+            .duration_since(self.start)
+            .as_secs()
+            .try_into()
+            .unwrap()
+    }
+}
+
+pub const MQTT_SERVER: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), 1883);
+const CLIENT_ID_STR: &str = "test";
+pub const CLIENT_ID: ClientId<'static> = ClientId::new_unwrapped(CLIENT_ID_STR);
+
+pub struct Fixture {
+    pub mono: Monotonic,
+    pub server: Server,
+    pub client: Client<'static>,
+    pub w5500: W5500,
+}
+
+impl Default for Fixture {
+    fn default() -> Self {
+        stderrlog::new()
+            .verbosity(4)
+            .timestamp(stderrlog::Timestamp::Nanosecond)
+            .init()
+            .ok();
+
+        let mut client: Client = Client::new(Sn::Sn0, SRC_PORT, MQTT_SERVER);
+        client.set_client_id(CLIENT_ID);
+
+        let mut w5500: W5500 = W5500::default();
+        w5500.set_socket_buffer_logging(false);
+
+        Self {
+            mono: Default::default(),
+            server: Default::default(),
+            client,
+            w5500,
+        }
+    }
+}
+
+impl From<Client<'static>> for Fixture {
+    fn from(client: Client<'static>) -> Self {
+        let mut ret = Self::default();
+        ret.client = client;
+        ret
+    }
+}
+
+impl Fixture {
+    pub fn connect(&mut self) {
+        assert_eq!(self.client_process().unwrap(), Event::CallAfter(10));
+        self.server.accept();
+        assert_eq!(self.client_process().unwrap(), Event::CallAfter(10));
+        self.server_expect(Packet::Connect(Connect {
+            protocol: V5,
+            keep_alive: 900,
+            client_id: CLIENT_ID_STR.to_string(),
+            clean_session: true,
+            last_will: None,
+            login: None,
+            properties: Some(ConnectProperties {
+                session_expiry_interval: None,
+                receive_maximum: None,
+                max_packet_size: Some(2048),
+                topic_alias_max: None,
+                request_response_info: None,
+                request_problem_info: None,
+                user_properties: vec![],
+                authentication_method: None,
+                authentication_data: None,
+            }),
+        }));
+        self.server.send_connack();
+        assert_eq!(self.client_process().unwrap(), Event::None);
+    }
+
+    pub fn server_expect(&mut self, packet: Packet) {
+        let actual = self.server.read().unwrap();
+        assert_eq!(actual, packet);
+    }
+
+    pub fn client_process(&mut self) -> Result<Event<W5500>, Error<<W5500 as Registers>::Error>> {
+        self.client
+            .process(&mut self.w5500, self.mono.monotonic_secs())
+    }
+
+    pub fn subscribe(&mut self, topic: &str) {
+        let pkt_id: u16 = self.client.subscribe(&mut self.w5500, topic).unwrap();
+        assert_ne!(pkt_id, 0);
+
+        let mut expected_filter = SubscribeFilter::new(topic.to_string(), QoS::AtMostOnce);
+        expected_filter.set_nolocal(true);
+        expected_filter.set_retain_forward_rule(RetainForwardRule::Never);
+
+        self.server_expect(Packet::Subscribe(Subscribe {
+            pkid: pkt_id,
+            filters: vec![expected_filter],
+            properties: None,
+        }));
+
+        self.server.send_suback(pkt_id);
+
+        assert_eq!(
+            self.client_process().unwrap(),
+            Event::SubAck {
+                pkt_id,
+                code: SubAckReasonCode::QoS0
+            }
+        );
+    }
+
+    pub fn client_expect_publish(&mut self, topic: &str, payload: &[u8]) {
+        let event = self
+            .client
+            .process(&mut self.w5500, self.mono.monotonic_secs())
+            .unwrap();
+        let mut reader = match event {
+            Event::Publish(reader) => reader,
+            e => panic!("Expected Publish event got {:?}", e),
+        };
+
+        let mut topic_buf: Vec<u8> = vec![0; topic.len()];
+        let mut payload_buf: Vec<u8> = vec![0; payload.len()];
+
+        let n: u16 = reader.read_topic(&mut topic_buf).unwrap();
+        assert_eq!(usize::from(n), topic.len());
+
+        let n: u16 = reader.read_payload(&mut payload_buf).unwrap();
+        assert_eq!(usize::from(n), payload.len());
+
+        assert_eq!(topic.as_bytes(), topic_buf);
+        assert_eq!(payload, payload_buf);
+
+        assert_eq!(usize::from(reader.topic_len()), topic.len());
+        assert_eq!(usize::from(reader.payload_len()), payload.len());
+
+        reader.done().unwrap();
+    }
+}

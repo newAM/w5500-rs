@@ -1,0 +1,35 @@
+[package]
+name = "w5500-mqtt"
+version = "0.1.0"
+authors = ["Alex Martens <alex@thinglab.org>"]
+edition = "2021"
+repository = "https://github.com/newAM/w5500-rs"
+license = "MIT"
+description = "MQTT client for the Wiznet W5500 internet offload chip."
+readme = "README.md"
+keywords = ["MQTT", "driver", "embedded-hal-driver", "W5500", "wiznet"]
+categories = ["embedded", "hardware-support", "no-std"]
+homepage = "https://github.com/newAM/w5500-rs"
+
+[features]
+embedded-hal = ["w5500-hl/embedded-hal"]
+defmt = ["w5500-hl/defmt", "dep:defmt", "heapless/defmt-impl"]
+std = ["w5500-hl/std"]
+
+[dependencies]
+w5500-hl = { path = "../hl", version = "0.8" }
+defmt = { version = "0.3", optional = true }
+log = { version = "0.4", optional = true }
+heapless = "0.7"
+
+[dev-dependencies]
+log = "0.4"
+stderrlog = "0.5"
+w5500-regsim.path = "../regsim"
+mqttbytes = "0.6"
+bytes = "1"
+
+[package.metadata.docs.rs]
+all-features = false
+features = ["log", "std", "embedded-hal"]
+rustdoc-args = ["--cfg", "docsrs"]

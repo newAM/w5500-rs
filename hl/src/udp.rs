@@ -74,7 +74,7 @@ impl UdpHeader {
 /// reader.done()?;
 /// # Ok::<(), w5500_hl::Error<_>>(())
 /// ```
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
 pub struct UdpReader<'a, W: Registers> {
     inner: TcpReader<'a, W>,
@@ -112,14 +112,14 @@ impl<'a, W: Registers> Read<'a, W> for UdpReader<'a, W> {
         self.inner.read_exact(buf)
     }
 
-    fn done(self) -> Result<(), W::Error> {
+    fn done(self) -> Result<&'a mut W, W::Error> {
         self.inner
             .w5500
             .set_sn_rx_rd(self.inner.sn, self.inner.tail_ptr)?;
         self.inner
             .w5500
             .set_sn_cr(self.inner.sn, SocketCommand::Recv)?;
-        Ok(())
+        Ok(self.inner.w5500)
     }
 }
 

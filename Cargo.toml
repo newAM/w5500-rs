@@ -8,6 +8,7 @@ members = [
     "hl/testsuite-peer",
     "hl/testsuite",
     "ll",
+    "mqtt",
     "regsim",
     "sntp",
 ]
@@ -16,6 +17,7 @@ default-members = [
     "dns",
     "hl",
     "ll",
+    "mqtt",
     "regsim",
     "sntp",
 ]
