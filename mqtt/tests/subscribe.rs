@@ -5,7 +5,7 @@ use fixture::Fixture;
 
 #[test]
 fn subscribe() {
-    let mut fixture = Fixture::default();
+    let mut fixture = Fixture::new(12347);
     fixture.connect();
     fixture.subscribe("#");
 
@@ -17,7 +17,7 @@ fn subscribe() {
 
 #[test]
 fn subscribe_deep_queue() {
-    let mut fixture = Fixture::default();
+    let mut fixture = Fixture::new(12348);
     fixture.connect();
     fixture.subscribe("topic1");
     fixture.subscribe("topic2");

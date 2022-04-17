@@ -6,7 +6,7 @@ use mqttbytes::v5::{Packet, Publish};
 
 #[test]
 fn publish() {
-    let mut fixture = Fixture::default();
+    let mut fixture = Fixture::new(12346);
     fixture.connect();
 
     const TOPIC: &str = "testing";

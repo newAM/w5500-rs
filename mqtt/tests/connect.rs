@@ -1,17 +1,24 @@
 #![allow(dead_code)]
 
 mod fixture;
-use fixture::{Fixture, MQTT_SERVER};
+use fixture::Fixture;
 use mqttbytes::{
     v5::{Connect, ConnectProperties, Packet},
     Protocol::V5,
 };
-use w5500_mqtt::{ll::Sn::Sn0, Client, Event, SRC_PORT};
+use w5500_mqtt::{
+    ll::{
+        net::{Ipv4Addr, SocketAddrV4},
+        Sn::Sn0,
+    },
+    Client, Event, SRC_PORT,
+};
 
 #[test]
 fn connect_no_client_id() {
-    let client: Client = Client::new(Sn0, SRC_PORT, MQTT_SERVER);
-    let mut fixture = Fixture::from(client);
+    const PORT: u16 = 12345;
+    let client: Client = Client::new(Sn0, SRC_PORT, SocketAddrV4::new(Ipv4Addr::LOCALHOST, PORT));
+    let mut fixture = Fixture::with_client(client, PORT);
     assert_eq!(fixture.client_process().unwrap(), Event::CallAfter(10));
     fixture.server.accept();
     assert_eq!(fixture.client_process().unwrap(), Event::CallAfter(10));

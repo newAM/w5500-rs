@@ -25,16 +25,13 @@ pub struct Server {
     stream: Option<TcpStream>,
 }
 
-impl Default for Server {
-    fn default() -> Self {
+impl Server {
+    pub fn new(server_port: u16) -> Self {
         Self {
-            listener: TcpListener::bind("127.0.0.1:1883").expect("bind failed"),
+            listener: TcpListener::bind(&format!("127.0.0.1:{server_port}")).expect("bind failed"),
             stream: None,
         }
     }
-}
-
-impl Server {
     pub fn accept(&mut self) {
         let (stream, _addr) = self.listener.accept().expect("accept failed");
         stream.set_nonblocking(true).unwrap();
@@ -104,7 +101,6 @@ impl Monotonic {
     }
 }
 
-pub const MQTT_SERVER: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), 1883);
 const CLIENT_ID_STR: &str = "test";
 pub const CLIENT_ID: ClientId<'static> = ClientId::new_unwrapped(CLIENT_ID_STR);
 
@@ -115,15 +111,16 @@ pub struct Fixture {
     pub w5500: W5500,
 }
 
-impl Default for Fixture {
-    fn default() -> Self {
+impl Fixture {
+    pub fn new(server_port: u16) -> Self {
         stderrlog::new()
             .verbosity(4)
             .timestamp(stderrlog::Timestamp::Nanosecond)
             .init()
             .ok();
 
-        let mut client: Client = Client::new(Sn::Sn0, SRC_PORT, MQTT_SERVER);
+        let server: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::LOCALHOST, server_port);
+        let mut client: Client = Client::new(Sn::Sn0, SRC_PORT, server);
         client.set_client_id(CLIENT_ID);
 
         let mut w5500: W5500 = W5500::default();
@@ -131,22 +128,18 @@ impl Default for Fixture {
 
         Self {
             mono: Default::default(),
-            server: Default::default(),
+            server: Server::new(server_port),
             client,
             w5500,
         }
     }
-}
 
-impl From<Client<'static>> for Fixture {
-    fn from(client: Client<'static>) -> Self {
-        let mut ret = Self::default();
+    pub fn with_client(client: Client<'static>, server_port: u16) -> Self {
+        let mut ret = Self::new(server_port);
         ret.client = client;
         ret
     }
-}
 
-impl Fixture {
     pub fn connect(&mut self) {
         assert_eq!(self.client_process().unwrap(), Event::CallAfter(10));
         self.server.accept();
