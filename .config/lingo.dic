@@ -39,6 +39,7 @@ hl
 hostname
 hostnames
 Hostnames
+iana
 IANA
 ICMP
 IETF
@@ -84,6 +85,7 @@ PPP
 PPPoE
 PSID
 PTIMER
+QoS
 RCR
 rdata
 RECV
@@ -134,6 +136,7 @@ SOA
 SPI
 str
 struct
+SUBACK
 subnet
 SUBR
 SynRecv
@@ -142,6 +145,7 @@ TCP
 TIMEOUT
 timestamp
 TimeWait
+TLS
 todos
 TOS
 TTL
@@ -153,9 +157,11 @@ unordered
 UNREACH
 UPORT
 UPORTR
+v5
 VDM
 VERSIONR
 W5500
+Wildcard
 Wiznet
 WOL
 XID

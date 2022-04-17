@@ -16,13 +16,13 @@ impl<'a> Hostname<'a> {
     ///
     /// A hostname is valid if the following condition are true:
     ///
-    /// - It does not start or end with `-` or `.`.
-    /// - It does not contain any characters outside of the alphanumeric range, except for `-` and `.`.
+    /// - It does not start or end with `'-'` or `'.'`.
+    /// - It does not contain any characters outside of the alphanumeric range, except for `'-'` and `'.'`.
     /// - It is not empty.
     /// - It is 253 or fewer characters.
     /// - Its labels (characters separated by `.`) are not empty.
     /// - Its labels are 63 or fewer characters.
-    /// - Its labels do not start or end with '-' or '.'.
+    /// - Its labels do not start or end with `'-'` or `'.'`.
     ///
     /// # Example
     ///
@@ -125,8 +125,8 @@ impl<'a> Hostname<'a> {
     /// use core::str::Split;
     /// use w5500_hl::Hostname;
     ///
-    /// let docs_rs: Hostname = Hostname::new("docs.rs").unwrap();
-    /// let mut lables: Split<char> = docs_rs.labels();
+    /// const DOCS_RS: Hostname = Hostname::new_unwrapped("docs.rs");
+    /// let mut lables: Split<char> = DOCS_RS.labels();
     ///
     /// assert_eq!(lables.next(), Some("docs"));
     /// assert_eq!(lables.next(), Some("rs"));
@@ -144,9 +144,9 @@ impl<'a> Hostname<'a> {
     /// ```
     /// use w5500_hl::Hostname;
     ///
-    /// let docs_rs: Hostname = Hostname::new("docs.rs").unwrap();
+    /// const DOCS_RS: Hostname = Hostname::new_unwrapped("docs.rs");
     ///
-    /// assert_eq!(docs_rs.len(), 7);
+    /// assert_eq!(DOCS_RS.len(), 7);
     /// ```
     #[inline]
     pub fn len(&self) -> u8 {
@@ -182,8 +182,8 @@ impl<'a> Hostname<'a> {
     /// ```
     /// use w5500_hl::Hostname;
     ///
-    /// let docs_rs: Hostname = Hostname::new("docs.rs").unwrap();
-    /// assert_eq!(docs_rs.as_bytes(), [100, 111, 99, 115, 46, 114, 115]);
+    /// const DOCS_RS: Hostname = Hostname::new_unwrapped("docs.rs");
+    /// assert_eq!(DOCS_RS.as_bytes(), [100, 111, 99, 115, 46, 114, 115]);
     /// ```
     #[inline]
     pub const fn as_bytes(&self) -> &[u8] {

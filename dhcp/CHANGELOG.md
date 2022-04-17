@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Added a small cache for DHCP options to reduce redundant socket IO.
 
+### Changed
+- Decreased link-up polling interval from 2 seconds to 1 second.
+
 ## [0.3.0] - 2022-04-10
 ### Added
 - Added `Client.setup_socket` to setup socket the socket.

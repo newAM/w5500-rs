@@ -87,10 +87,22 @@ const SOCKET_SPACING: u8 = 0x04;
 const NUM_SOCKETS: usize = SOCKETS.len();
 const DEFAULT_BUF_SIZE: usize = BufferSize::KB2.size_in_bytes();
 
+#[derive(Debug)]
 enum SocketType {
     Udp(UdpSocket),
     TcpListener(TcpListener),
     TcpStream(TcpStream),
+}
+
+impl PartialEq for SocketType {
+    fn eq(&self, other: &Self) -> bool {
+        matches!(
+            (self, other),
+            (Self::Udp(_), Self::Udp(_))
+                | (Self::TcpListener(_), Self::TcpListener(_))
+                | (Self::TcpStream(_), Self::TcpStream(_))
+        )
+    }
 }
 
 #[derive(PartialEq, Eq)]
@@ -133,6 +145,7 @@ fn block_type(block: u8) -> BlockType {
     }
 }
 
+#[derive(Debug, PartialEq, Eq)]
 struct CommonRegs {
     mr: u8,
     gar: Ipv4Addr,
@@ -184,6 +197,7 @@ impl CommonRegs {
     };
 }
 
+#[derive(Debug, PartialEq, Eq)]
 struct SocketRegs {
     mr: u8,
     cr: u8,
@@ -241,12 +255,24 @@ impl SocketRegs {
     }
 }
 
+#[derive(Debug)]
 struct Socket {
     regs: SocketRegs,
     tx_buf: Vec<u8>,
     rx_buf: Vec<u8>,
     inner: Option<SocketType>,
     client: Option<TcpStream>,
+}
+
+impl PartialEq for Socket {
+    fn eq(&self, other: &Self) -> bool {
+        self.regs == other.regs
+            && self.tx_buf == other.tx_buf
+            && self.rx_buf == other.rx_buf
+            && self.inner == other.inner
+            && ((self.client.is_some() && other.client.is_some())
+                || (self.client.is_none() && other.client.is_none()))
+    }
 }
 
 impl Default for Socket {
@@ -262,6 +288,7 @@ impl Default for Socket {
 }
 
 /// Simulated W5500.
+#[derive(Debug, PartialEq)]
 pub struct W5500 {
     regs: CommonRegs,
     sn: [Socket; NUM_SOCKETS],

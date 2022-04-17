@@ -136,7 +136,6 @@ where
 /// Higher level W5500 errors.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
-#[non_exhaustive]
 pub enum Error<E> {
     /// Unexpected "end of file".
     ///
@@ -290,9 +289,9 @@ pub trait Seek<E> {
 /// Socket reader trait.
 ///
 /// This is implemented by [`TcpReader`] and [`UdpReader`].
-pub trait Read<'a, W: Registers> {
+pub trait Read<'a, W5500: Registers> {
     /// Read data from the UDP socket, and return the number of bytes read.
-    fn read(&mut self, buf: &mut [u8]) -> Result<u16, W::Error>;
+    fn read(&mut self, buf: &mut [u8]) -> Result<u16, W5500::Error>;
 
     /// Read the exact number of bytes required to fill `buf`.
     ///
@@ -305,7 +304,7 @@ pub trait Read<'a, W: Registers> {
     ///
     /// * [`Error::Other`]
     /// * [`Error::UnexpectedEof`]
-    fn read_exact(&mut self, buf: &mut [u8]) -> Result<(), Error<W::Error>>;
+    fn read_exact(&mut self, buf: &mut [u8]) -> Result<(), Error<W5500::Error>>;
 
     /// Mark the data as read, removing the data from the queue.
     ///
@@ -317,7 +316,7 @@ pub trait Read<'a, W: Registers> {
     /// To complete a read without marking the data as read simply use
     /// [`mem::drop`](https://doc.rust-lang.org/core/mem/fn.drop.html) on the
     /// reader.
-    fn done(self) -> Result<(), W::Error>;
+    fn done(self) -> Result<&'a mut W5500, W5500::Error>;
 }
 
 /// Streaming writer for a TCP or UDP socket buffer.
@@ -356,7 +355,7 @@ pub trait Read<'a, W: Registers> {
 /// udp_writer.udp_send_to(&DEST)?;
 /// # Ok::<(), w5500_hl::ll::blocking::vdm::Error<_, _>>(())
 /// ```
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
 pub struct Writer<'a, W: Registers> {
     w5500: &'a mut W,

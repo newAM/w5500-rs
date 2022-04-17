@@ -75,7 +75,7 @@ const DHCP_BROADCAST: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::LOCALHOST, DST_
 const TIMEOUT_SECS: u32 = 10;
 
 /// Duration in seconds to wait for physical link-up.
-const LINK_UP_TIMEOUT_SECS: u32 = 2;
+const LINK_UP_TIMEOUT_SECS: u32 = 1;
 
 /// DHCP client states.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]

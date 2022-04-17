@@ -54,7 +54,7 @@ use w5500_ll::{
 /// reader.done()?;
 /// # Ok::<(), w5500_hl::Error<_>>(())
 /// ```
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
 pub struct TcpReader<'a, W: Registers> {
     pub(crate) w5500: &'a mut W,
@@ -113,10 +113,10 @@ impl<'a, W: Registers> Read<'a, W> for TcpReader<'a, W> {
         }
     }
 
-    fn done(self) -> Result<(), W::Error> {
+    fn done(self) -> Result<&'a mut W, W::Error> {
         self.w5500.set_sn_rx_rd(self.sn, self.ptr)?;
         self.w5500.set_sn_cr(self.sn, SocketCommand::Recv)?;
-        Ok(())
+        Ok(self.w5500)
     }
 }
 

@@ -1,13 +1,13 @@
 [package]
-name = "w5500-dns"
+name = "w5500-mqtt"
 version = "0.1.0"
 authors = ["Alex Martens <alex@thinglab.org>"]
 edition = "2021"
 repository = "https://github.com/newAM/w5500-rs"
 license = "MIT"
-description = "DNS client for the Wiznet W5500 internet offload chip."
+description = "MQTT client for the Wiznet W5500 internet offload chip."
 readme = "README.md"
-keywords = ["dns", "W5500", "wiznet"]
+keywords = ["MQTT", "W5500", "wiznet"]
 categories = ["embedded", "hardware-support", "no-std"]
 homepage = "https://github.com/newAM/w5500-rs"
 
@@ -17,15 +17,16 @@ defmt = ["w5500-hl/defmt", "dep:defmt"]
 std = ["w5500-hl/std"]
 
 [dependencies]
-w5500-hl = { path = "../hl", version = "0.8.0" }
+w5500-hl = { path = "../hl", version = "0.8" }
 defmt = { version = "0.3", optional = true }
 log = { version = "0.4", optional = true }
 
 [dev-dependencies]
 log = "0.4"
-rand_core = { version = "0.6", features = ["getrandom"] }
 stderrlog = "0.5"
 w5500-regsim.path = "../regsim"
+mqttbytes = "0.6"
+bytes = "1"
 
 [package.metadata.docs.rs]
 all-features = false
