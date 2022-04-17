@@ -118,6 +118,10 @@ impl<'a, W: Registers> Read<'a, W> for TcpReader<'a, W> {
         self.w5500.set_sn_cr(self.sn, SocketCommand::Recv)?;
         Ok(self.w5500)
     }
+
+    fn abort(self) -> &'a mut W {
+        self.w5500
+    }
 }
 
 /// A W5500 TCP trait.
