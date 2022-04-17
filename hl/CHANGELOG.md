@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Added `Hostname::new_unwrapped` to create a new hostname, panicking on invalid hostnames.
 - Added `Eq` and `ParitalEq` traits to `TcpReader`, `UdpReader`, and `Writer`.
+- Added `Read::abort` to abort a read.
 
 ### Changed
 - Change the return type of `Reader::done` from `Result<(), W5500::Error>` to `Result<&'a mut W5500, W5500::Error>`.

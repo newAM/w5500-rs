@@ -312,11 +312,11 @@ pub trait Read<'a, W5500: Registers> {
     /// position from the queue.
     ///
     /// For a UDP reader this removes the UDP datagram from the queue.
-    ///
-    /// To complete a read without marking the data as read simply use
-    /// [`mem::drop`](https://doc.rust-lang.org/core/mem/fn.drop.html) on the
-    /// reader.
     fn done(self) -> Result<&'a mut W5500, W5500::Error>;
+
+    /// Abort the read, marking all data as unread and returning it to the
+    /// socket buffers.
+    fn abort(self) -> &'a mut W5500;
 }
 
 /// Streaming writer for a TCP or UDP socket buffer.

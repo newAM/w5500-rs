@@ -121,6 +121,10 @@ impl<'a, W: Registers> Read<'a, W> for UdpReader<'a, W> {
             .set_sn_cr(self.inner.sn, SocketCommand::Recv)?;
         Ok(self.inner.w5500)
     }
+
+    fn abort(self) -> &'a mut W {
+        self.inner.abort()
+    }
 }
 
 impl<'a, W: Registers> UdpReader<'a, W> {
