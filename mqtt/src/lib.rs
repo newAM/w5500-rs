@@ -224,7 +224,7 @@ impl<'a, W5500: Registers> PublishReader<'a, W5500> {
 /// These are events that need to be handled externally by your firmware,
 /// such as a published message on a subscribed topic.
 ///
-/// This is returned by [`Client::Process`].
+/// This is returned by [`Client::process`].
 #[derive(Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
 pub enum Event<'a, W5500: Registers> {
@@ -422,9 +422,12 @@ impl<'a> Client<'a> {
     ///   Calling `process` again will re-initialize the client.
     /// * `Ok(Event::CallAfter(seconds))` Call this method again after the number
     ///   of seconds indicated.
-    /// * `Ok(Event::None)` The client is idle; you can [`subscribe`] and [`publish`].
+    /// * `Ok(Event::None)` The client is idle; you can  call [`subscribe`] and [`publish`].
     ///
     /// This should also be called when there is a pending socket interrupt.
+    ///
+    /// [`subscribe`]: Self::subscribe
+    /// [`publish`]: Self::publish
     pub fn process<'w, W5500: Registers>(
         &mut self,
         w5500: &'w mut W5500,
@@ -537,6 +540,7 @@ impl<'a> Client<'a> {
     /// ```
     ///
     /// [Topic Names and Topic Filters]: https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901241
+    /// [`is_connected`]: Self::is_connected
     pub fn publish<W5500: Registers>(
         &mut self,
         w5500: &mut W5500,
