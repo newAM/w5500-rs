@@ -16,13 +16,13 @@ impl<'a> Hostname<'a> {
     ///
     /// A hostname is valid if the following condition are true:
     ///
-    /// - It does not start or end with `-` or `.`.
-    /// - It does not contain any characters outside of the alphanumeric range, except for `-` and `.`.
+    /// - It does not start or end with `'-'` or `'.'`.
+    /// - It does not contain any characters outside of the alphanumeric range, except for `'-'` and `'.'`.
     /// - It is not empty.
     /// - It is 253 or fewer characters.
     /// - Its labels (characters separated by `.`) are not empty.
     /// - Its labels are 63 or fewer characters.
-    /// - Its labels do not start or end with '-' or '.'.
+    /// - Its labels do not start or end with `'-'` or `'.'`.
     ///
     /// # Example
     ///

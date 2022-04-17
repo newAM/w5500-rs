@@ -90,7 +90,7 @@ pub const SRC_PORT: u16 = 33650;
 
 /// Control packet types.
 ///
-/// [Table 2‑1 MQTT Control Packet types](https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901022)
+/// [MQTT Control Packet types](https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901022)
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 #[repr(u8)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
@@ -124,7 +124,7 @@ pub enum State {
     WaitConInt,
     /// CONNECT packet has been sent, waiting for a CONNACK.
     WaitConAck,
-    /// CONNACK has been recieved, ready for action.
+    /// CONNACK has been received, ready for action.
     Ready,
 }
 
@@ -211,7 +211,7 @@ impl<'a, W5500: Registers> PublishReader<'a, W5500> {
     /// Mark this message as read.
     ///
     /// If this is not called the message will be returned to the queue,
-    /// avaliable upon the next call to [`Client::process`].
+    /// available upon the next call to [`Client::process`].
     #[inline]
     pub fn done(self) -> Result<(), W5500::Error> {
         self.reader.done()?;
@@ -242,7 +242,7 @@ pub enum Event<'a, W5500: Registers> {
     /// The inner value contains a [`PublishReader`] to extract the topic and
     /// payload from the socket buffers.
     Publish(PublishReader<'a, W5500>),
-    /// Subscribe Acknowledgement.
+    /// Subscribe Acknowledgment.
     SubAck {
         /// The inner value contains the packet identifier.
         /// This can be compared with the return value of [`Client::subscribe`] to
@@ -253,7 +253,7 @@ pub enum Event<'a, W5500: Registers> {
         /// This should be checked to ensure the SUBSCRIBE was successful.
         code: SubAckReasonCode,
     },
-    /// No event occured, the client ready and idle.
+    /// No event occurred, the client ready and idle.
     None,
 }
 
@@ -264,7 +264,7 @@ pub enum Event<'a, W5500: Registers> {
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
 pub enum Error<E> {
-    /// A timeout occured while waiting for the client to transition from this
+    /// A timeout occurred while waiting for the client to transition from this
     /// state.
     StateTimeout(State),
     /// Unexpected TCP disconnection.
@@ -598,7 +598,7 @@ impl<'a> Client<'a> {
     ///
     /// The return value is a `u16` packet identifier.
     /// This can be compared to `Event::SubAck` to determine when the
-    /// subscribtion is active.
+    /// subscription is active.
     ///
     /// The packet identifier is zero (invalid) when `filter` is empty.
     ///

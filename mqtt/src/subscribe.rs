@@ -1,4 +1,4 @@
-/// Subscribe Acknowledgement Codes
+/// Subscribe Acknowledgment Codes
 ///
 /// # References
 ///
