@@ -443,7 +443,7 @@ impl<'a> Client<'a> {
     ///         net::{Ipv4Addr, SocketAddrV4},
     ///         Sn,
     ///     },
-    ///     Client, ClientId, Event, DST_PORT, SRC_PORT, Error
+    ///     Client, ClientId, Error, Event, DST_PORT, SRC_PORT,
     /// };
     ///
     /// let mut client: Client = Client::new(
