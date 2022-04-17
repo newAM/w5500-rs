@@ -11,9 +11,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Change the return type of `Reader::done` from `Result<(), W5500::Error>` to `Result<&'a mut W5500, W5500::Error>`.
+- Split `Common::writer` into `Tcp::tcp_writer`, `Udp::udp_writer`, and `Udp::udp_writer_to`.
+
+#### Reader and Writer Changes
+
+Readers and writer functions previously returned a reader or writer, and it was up to the user to call `done` or `send` when finished.  This was prone to misuse as the final `done` or `send` call was easily forgotten.  Readers and writers now accept a closure which will automatically call `done` or `send` when finished.
+
+Code that previously looked like this:
+
+```rs
+let mut reader: UdpReader<_> = w5500.udp_reader(Sn0)?;
+let mut buf: [u8; 8] = [0; 8];
+reader.read_exact(&mut buf)?;
+reader.done()?;
+```
+
+Will now look like this:
+
+```rs
+let buf: [u8; 8] = w5500.udp_reader(Sn0, |reader| {
+    let mut buf: [u8; 8] = [0; 8];
+    reader.read_exact(&mut buf)?;
+    Ok(buf)
+})?;
+```
 
 ### Removed
-- Removed `non_exhaustive` from `Error`.
+- Removed `non_exhaustive` on `Error`.
 
 ## [0.8.0] - 2022-04-10
 ### Added

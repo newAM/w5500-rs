@@ -1,4 +1,4 @@
-use crate::{port_is_unique, Error, Read, Seek, SeekFrom};
+use crate::{port_is_unique, Error, Read, Seek, SeekFrom, Writer};
 use core::cmp::min;
 use w5500_ll::{
     net::SocketAddrV4, Protocol, Registers, Sn, SocketCommand, SocketMode, SocketStatus,
@@ -39,19 +39,19 @@ use w5500_ll::{
 ///
 /// // ... wait for a RECV interrupt
 ///
-/// let mut reader: TcpReader<_> = w5500.tcp_reader(MQTT_SOCKET)?;
-/// let mut buf = [0; 2];
+/// let mut buf: [u8; 2] = w5500.tcp_reader(MQTT_SOCKET, |reader| {
+///     let mut buf: [u8; 2] = [0; 2];
 ///
-/// // read the first two bytes
-/// reader.read_exact(&mut buf)?;
-/// // ... do something with the data
+///     // read the first two bytes
+///     reader.read_exact(&mut buf)?;
+///     // ... do something with the data
 ///
-/// // read another two bytes into the same buffer
-/// reader.read_exact(&mut buf)?;
-/// // ... do something with the data
+///     // read another two bytes into the same buffer
+///     reader.read_exact(&mut buf)?;
 ///
-/// // mark the data as read
-/// reader.done()?;
+///     // return the data to the outer function
+///     Ok(buf)
+/// })?;
 /// # Ok::<(), w5500_hl::Error<_>>(())
 /// ```
 #[derive(Debug, PartialEq, Eq)]
@@ -62,6 +62,7 @@ pub struct TcpReader<'a, W: Registers> {
     pub(crate) head_ptr: u16,
     pub(crate) tail_ptr: u16,
     pub(crate) ptr: u16,
+    pub(crate) unread: bool,
 }
 
 impl<'a, W: Registers> Seek<W::Error> for TcpReader<'a, W> {
@@ -113,10 +114,14 @@ impl<'a, W: Registers> Read<'a, W> for TcpReader<'a, W> {
         }
     }
 
-    fn done(self) -> Result<&'a mut W, W::Error> {
-        self.w5500.set_sn_rx_rd(self.sn, self.ptr)?;
-        self.w5500.set_sn_cr(self.sn, SocketCommand::Recv)?;
-        Ok(self.w5500)
+    #[inline]
+    fn unread(&mut self) {
+        self.unread = true
+    }
+
+    #[inline]
+    fn is_unread(&self) -> bool {
+        self.unread
     }
 }
 
@@ -497,9 +502,10 @@ pub trait Tcp: Registers {
     /// # Example
     ///
     /// See [`TcpReader`].
-    fn tcp_reader(&mut self, sn: Sn) -> Result<TcpReader<Self>, Error<Self::Error>>
+    fn tcp_reader<F, T>(&mut self, sn: Sn, mut f: F) -> Result<T, Error<Self::Error>>
     where
         Self: Sized,
+        F: FnMut(&mut TcpReader<Self>) -> Result<T, Error<Self::Error>>,
     {
         debug_assert!(!matches!(
             self.sn_sr(sn)?,
@@ -513,13 +519,90 @@ pub trait Tcp: Registers {
 
         let sn_rx_rd: u16 = self.sn_rx_rd(sn)?;
 
-        Ok(TcpReader {
+        let mut reader = TcpReader {
             w5500: self,
             sn,
             head_ptr: sn_rx_rd,
             tail_ptr: sn_rx_rd.wrapping_add(sn_rx_rsr),
             ptr: sn_rx_rd,
-        })
+            unread: false,
+        };
+
+        let ret = f(&mut reader)?;
+
+        if !reader.is_unread() {
+            reader.w5500.set_sn_rx_rd(sn, reader.ptr)?;
+            reader.w5500.set_sn_cr(sn, SocketCommand::Recv)?;
+        }
+
+        Ok(ret)
+    }
+
+    /// Create a TCP writer.
+    ///
+    /// This returns a [`Writer`] structure, which contains functions to
+    /// stream data into the W5500 socket buffers incrementally.
+    ///
+    /// This is useful for writing large packets that are too large to stage
+    /// in the memory of your microcontroller.
+    ///
+    /// The socket should be opened as a TCP socket before calling this
+    /// method.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// # use embedded_hal_mock as h;
+    /// # let mut w5500 = w5500_ll::blocking::vdm::W5500::new(h::spi::Mock::new(&[]), h::pin::Mock::new(&[]));
+    /// use w5500_hl::{
+    ///     ll::{Registers, Sn, SocketInterrupt},
+    ///     net::{Ipv4Addr, SocketAddrV4},
+    ///     Tcp,
+    /// };
+    ///
+    /// const MQTT_SOCKET: Sn = Sn::Sn0;
+    /// const MQTT_SOURCE_PORT: u16 = 33650;
+    /// const MQTT_SERVER: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::new(192, 168, 2, 10), 1883);
+    ///
+    /// w5500.tcp_connect(MQTT_SOCKET, MQTT_SOURCE_PORT, &MQTT_SERVER)?;
+    ///
+    /// // ... wait for a CON interrupt
+    ///
+    /// const CONNECT: [u8; 14] = [
+    ///     0x10, 0x0C, 0x00, 0x04, b'M', b'Q', b'T', b'T', 0x04, 0x02, 0x0E, 0x10, 0x00, 0x00,
+    /// ];
+    /// w5500.tcp_writer(MQTT_SOCKET, |writer| writer.write_all(&CONNECT))?;
+    /// # Ok::<(), w5500_hl::Error<_>>(())
+    /// ```
+    fn tcp_writer<F, T>(&mut self, sn: Sn, mut f: F) -> Result<T, Error<Self::Error>>
+    where
+        Self: Sized,
+        F: FnMut(&mut Writer<Self>) -> Result<T, Error<Self::Error>>,
+    {
+        debug_assert!(!matches!(
+            self.sn_sr(sn)?,
+            Ok(SocketStatus::Udp) | Ok(SocketStatus::Init) | Ok(SocketStatus::Macraw)
+        ));
+
+        let sn_tx_fsr: u16 = self.sn_tx_fsr(sn)?;
+        let sn_tx_wr: u16 = self.sn_tx_wr(sn)?;
+
+        let mut writer = Writer {
+            w5500: self,
+            sn,
+            head_ptr: sn_tx_wr,
+            tail_ptr: sn_tx_wr.wrapping_add(sn_tx_fsr),
+            ptr: sn_tx_wr,
+            abort: false,
+        };
+        let ret = f(&mut writer)?;
+
+        if !writer.abort {
+            writer.w5500.set_sn_tx_wr(sn, writer.ptr)?;
+            writer.w5500.set_sn_cr(sn, SocketCommand::Send)?;
+        }
+
+        Ok(ret)
     }
 }
 
