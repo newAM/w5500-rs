@@ -31,11 +31,11 @@ let mut client: Client = Client::new(
 // wait for a connection or die trying
 while client.process(&mut w5500, monotonic_secs())? != Event::None {}
 
-// publish "quack" with a payload "oink"
-client.publish(&mut w5500, "quack", b"oink")?;
+// publish to "duck" with a payload "quack"
+client.publish(&mut w5500, "duck", b"quack")?;
 
-// subscribe to "moo"
-client.subscribe(&mut w5500, "moo")?;
+// subscribe to "cow"
+client.subscribe(&mut w5500, "cow")?;
 ```
 
 ## Relevant Specifications

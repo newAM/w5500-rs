@@ -31,11 +31,11 @@
 //! // wait for a connection or die trying
 //! while client.process(&mut w5500, monotonic_secs())? != Event::None {}
 //!
-//! // publish "quack" with a payload "oink"
-//! client.publish(&mut w5500, "quack", b"oink")?;
+//! // publish to "duck" with a payload "quack"
+//! client.publish(&mut w5500, "duck", b"quack")?;
 //!
-//! // subscribe to "moo"
-//! client.subscribe(&mut w5500, "moo")?;
+//! // subscribe to "cow"
+//! client.subscribe(&mut w5500, "cow")?;
 //! # Ok::<(), w5500_mqtt::Error<std::io::Error>>(())
 //! ```
 //!
@@ -71,7 +71,7 @@ mod properties;
 mod subscribe;
 
 pub use client_id::ClientId;
-use connack::ConnectReasonCode;
+pub use connack::ConnectReasonCode;
 use core::{cmp::min, mem::size_of};
 use fixed_header::FixedHeader;
 use hl::{
