@@ -244,7 +244,8 @@ pub enum Event<'a, W5500: Registers> {
     Publish(PublishReader<'a, W5500>),
     /// Subscribe Acknowledgment.
     SubAck {
-        /// The inner value contains the packet identifier.
+        /// Packet Identifier.
+        ///
         /// This can be compared with the return value of [`Client::subscribe`] to
         /// determine which subscribe is being acknowledged.
         pkt_id: u16,
