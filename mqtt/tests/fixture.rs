@@ -50,13 +50,17 @@ impl Server {
     }
 
     pub fn send_connack(&mut self) {
-        const CONN_ACK: ConnAck = ConnAck {
+        self.send_connack_code(ConnectReturnCode::Success)
+    }
+
+    pub fn send_connack_code(&mut self, code: ConnectReturnCode) {
+        let conn_ack: ConnAck = ConnAck {
             session_present: false,
-            code: ConnectReturnCode::Success,
+            code,
             properties: None,
         };
         let mut buf = bytes::BytesMut::new();
-        CONN_ACK.write(&mut buf).unwrap();
+        conn_ack.write(&mut buf).unwrap();
         self.stream.as_ref().unwrap().write_all(&mut buf).unwrap()
     }
 
