@@ -38,7 +38,7 @@ pub use timestamp::Timestamp;
 pub use w5500_hl as hl;
 pub use w5500_hl::ll;
 
-use hl::{Common, Error, Read, Udp, UdpReader, Writer};
+use hl::{Common, Error, Read, Udp};
 use ll::{
     net::{Ipv4Addr, SocketAddrV4},
     Registers, Sn, SocketInterrupt, SocketInterruptMask,
@@ -212,11 +212,9 @@ impl Client {
         w5500.close(self.sn)?;
         w5500.udp_bind(self.sn, self.port)?;
 
-        let mut writer: Writer<W5500> = w5500.writer(self.sn)?;
-        writer.write_all(&REQUEST_PKT)?;
-        writer.udp_send_to(&self.server)?;
-
-        Ok(())
+        w5500.udp_writer_to(self.sn, &self.server, |writer| {
+            writer.write_all(&REQUEST_PKT)
+        })
     }
 
     /// Read a reply from the server.
@@ -272,15 +270,14 @@ impl Client {
         }
 
         let mut buf: [u8; 48] = [0; 48];
-        let mut reader: UdpReader<W5500> = w5500.udp_reader(self.sn)?;
-
-        if reader.header().origin != self.server {
-            debug!("unexpected packet from {}", reader.header().origin);
-            reader.done()?;
-            return Err(Error::WouldBlock);
-        }
-        reader.read_exact(&mut buf)?;
-        reader.done()?;
+        w5500.udp_reader(self.sn, |reader| {
+            if reader.header().origin != self.server {
+                debug!("unexpected packet from {}", reader.header().origin);
+                Err(Error::WouldBlock)
+            } else {
+                reader.read_exact(&mut buf)
+            }
+        })?;
 
         match Mode::try_from(buf[0] & 0b111) {
             Ok(Mode::Server) => (),
