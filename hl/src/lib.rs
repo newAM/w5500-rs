@@ -90,26 +90,24 @@
 //!
 //! [`Registers`]: https://docs.rs/w5500-ll/latest/w5500_ll/trait.Registers.html
 //! [`std::net`]: https://doc.rust-lang.org/std/net/index.html
-//! [`Tcp`]: https://docs.rs/w5500-hl/0.7.1/w5500_hl/trait.Tcp.html
-//! [`Udp`]: https://docs.rs/w5500-hl/0.7.1/w5500_hl/trait.Udp.html
+//! [`Tcp`]: https://docs.rs/w5500-hl/0.8.0/w5500_hl/trait.Tcp.html
+//! [`Udp`]: https://docs.rs/w5500-hl/0.8.0/w5500_hl/trait.Udp.html
 //! [w5500-ll]: https://github.com/newAM/w5500-ll-rs
 //! [Wiznet W5500]: https://www.wiznet.io/product-item/w5500/
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![cfg_attr(all(not(feature = "std"), not(test)), no_std)]
 
 mod hostname;
+pub mod io;
 mod tcp;
 mod udp;
 
-use core::cmp::min;
-use ll::{Registers, Sn, SocketCommand, SocketStatus, SOCKETS};
-
 pub use hostname::{Hostname, TryFromStrError};
-pub use tcp::{Tcp, TcpReader};
-pub use udp::{Udp, UdpHeader, UdpReader};
-pub use w5500_ll as ll;
-
 pub use ll::net;
+use ll::{Registers, Sn, SocketCommand, SocketStatus, SOCKETS};
+pub use tcp::{Tcp, TcpReader, TcpWriter};
+pub use udp::{Udp, UdpHeader, UdpReader, UdpWriter};
+pub use w5500_ll as ll;
 
 use net::{Ipv4Addr, SocketAddrV4};
 
@@ -188,267 +186,6 @@ macro_rules! block {
             }
         }
     };
-}
-
-/// Enumeration of all possible methods to seek the W5500 socket buffers.
-///
-/// This is designed to be similar to [`std::io::SeekFrom`].
-///
-/// [`std::io::SeekFrom`]: https://doc.rust-lang.org/std/io/enum.SeekFrom.html
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "defmt", derive(defmt::Format))]
-pub enum SeekFrom {
-    /// Sets the offset to the provided number of bytes.
-    Start(u16),
-    /// Sets the offset to the end plus the specified number of bytes.
-    End(i16),
-    /// Sets the offset to the current position plus the specified number of bytes.
-    Current(i16),
-}
-
-// TODO: use wrapping_add_signed when stabilized
-// https://github.com/rust-lang/rust/issues/87840
-// https://github.com/rust-lang/rust/blob/21b0325c68421b00c6c91055ac330bd5ffe1ea6b/library/core/src/num/uint_macros.rs#L1205
-fn wrapping_add_signed(ptr: u16, offset: i16) -> u16 {
-    ptr.wrapping_add(offset as u16)
-}
-
-impl SeekFrom {
-    #[inline]
-    fn new_ptr<E>(self, ptr: u16, head: u16, tail: u16) -> Result<u16, Error<E>> {
-        match self {
-            SeekFrom::Start(offset) => {
-                if offset > tail.wrapping_sub(head) {
-                    Err(Error::UnexpectedEof)
-                } else {
-                    Ok(head.wrapping_add(offset))
-                }
-            }
-            SeekFrom::End(offset) => {
-                if offset > 0 || (offset.abs() as u16) > tail.wrapping_sub(head) {
-                    Err(Error::UnexpectedEof)
-                } else {
-                    Ok(wrapping_add_signed(tail, offset))
-                }
-            }
-            SeekFrom::Current(offset) => {
-                let max_pos: u16 = tail.wrapping_sub(ptr);
-                let max_neg: u16 = ptr.wrapping_sub(head);
-                if (offset > 0 && (offset.abs() as u16) > max_pos)
-                    || (offset < 0 && (offset.abs() as u16) > max_neg)
-                {
-                    Err(Error::UnexpectedEof)
-                } else {
-                    Ok(wrapping_add_signed(ptr, offset))
-                }
-            }
-        }
-    }
-}
-
-/// The `Seek` trait provides a cursor which can be moved within a stream of
-/// bytes.
-///
-/// This is used for navigating the socket buffers, and it is designed to be
-/// similar to [`std::io::Seek`].
-///
-/// [`std::io::Seek`]: https://doc.rust-lang.org/stable/std/io/trait.Seek.html
-pub trait Seek<E> {
-    /// Seek to an offset, in bytes, within the socket buffer.
-    ///
-    /// Seeking beyond the limits will result [`Error::UnexpectedEof`].
-    ///
-    /// # Limits
-    ///
-    /// * [`Writer`] is limited by socket free size.
-    /// * [`UdpReader`] is limited by the received size or the UDP datagram length,
-    ///   whichever is less.
-    /// * [`TcpReader`] is limited by the received size.
-    fn seek(&mut self, pos: SeekFrom) -> Result<(), Error<E>>;
-
-    /// Rewind to the beginning of the stream.
-    ///
-    /// This is a convenience method, equivalent to `seek(SeekFrom::Start(0))`.
-    fn rewind(&mut self);
-
-    /// Return the length of the stream, in bytes.
-    ///
-    /// * For [`Writer`] this returns the socket free size.
-    /// * For [`TcpReader`] this returns the received size.
-    /// * For [`UdpReader`] this returns the received size or the UDP datagram
-    ///   length, whichever is less.
-    fn stream_len(&self) -> u16;
-
-    /// Returns the current seek position from the start of the stream.
-    fn stream_position(&self) -> u16;
-
-    /// Remaining bytes in the socket buffer from the current seek position.
-    fn remain(&self) -> u16;
-}
-
-/// Socket reader trait.
-///
-/// This is implemented by [`TcpReader`] and [`UdpReader`].
-pub trait Read<'a, W5500: Registers> {
-    /// Read data from the UDP socket, and return the number of bytes read.
-    fn read(&mut self, buf: &mut [u8]) -> Result<u16, W5500::Error>;
-
-    /// Read the exact number of bytes required to fill `buf`.
-    ///
-    /// This function reads as many bytes as necessary to completely fill the
-    /// specified buffer `buf`.
-    ///
-    /// # Errors
-    ///
-    /// This method can only return:
-    ///
-    /// * [`Error::Other`]
-    /// * [`Error::UnexpectedEof`]
-    fn read_exact(&mut self, buf: &mut [u8]) -> Result<(), Error<W5500::Error>>;
-
-    /// Mark the data as read, removing the data from the queue.
-    ///
-    /// For a TCP reader this removes all data up to the current pointer
-    /// position from the queue.
-    ///
-    /// For a UDP reader this removes the UDP datagram from the queue.
-    fn done(self) -> Result<&'a mut W5500, W5500::Error>;
-
-    /// Abort the read, marking all data as unread and returning it to the
-    /// socket buffers.
-    fn abort(self) -> &'a mut W5500;
-}
-
-/// Streaming writer for a TCP or UDP socket buffer.
-///
-/// This implements the [`Seek`] traits.
-///
-/// Created with [`Common::writer`].
-///
-/// # Example
-///
-/// ```no_run
-/// # use embedded_hal_mock as h;
-/// # let mut w5500 = w5500_ll::blocking::vdm::W5500::new(h::spi::Mock::new(&[]), h::pin::Mock::new(&[]));
-/// use w5500_hl::{
-///     ll::{Registers, Sn::Sn0},
-///     net::{Ipv4Addr, SocketAddrV4},
-///     Udp,
-///     Common,
-///     Writer,
-/// };
-///
-/// const DEST: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::new(192, 0, 2, 1), 8081);
-///
-/// w5500.udp_bind(Sn0, 8080)?;
-///
-/// let mut udp_writer: Writer<_> = w5500.writer(Sn0)?;
-///
-/// let data_header: [u8; 10] = [0; 10];
-/// let n_written: u16 = udp_writer.write(&data_header)?;
-/// assert_eq!(usize::from(n_written), data_header.len());
-///
-/// let data: [u8; 123] = [0; 123];
-/// let n_written: u16 = udp_writer.write(&data)?;
-/// assert_eq!(usize::from(n_written), data.len());
-///
-/// udp_writer.udp_send_to(&DEST)?;
-/// # Ok::<(), w5500_hl::ll::blocking::vdm::Error<_, _>>(())
-/// ```
-#[derive(Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "defmt", derive(defmt::Format))]
-pub struct Writer<'a, W: Registers> {
-    w5500: &'a mut W,
-    sn: Sn,
-    head_ptr: u16,
-    tail_ptr: u16,
-    ptr: u16,
-}
-
-impl<'a, W: Registers> Seek<W::Error> for Writer<'a, W> {
-    fn seek(&mut self, pos: SeekFrom) -> Result<(), Error<W::Error>> {
-        self.ptr = pos.new_ptr(self.ptr, self.head_ptr, self.tail_ptr)?;
-        Ok(())
-    }
-
-    fn rewind(&mut self) {
-        self.ptr = self.head_ptr
-    }
-
-    fn stream_len(&self) -> u16 {
-        self.tail_ptr.wrapping_sub(self.head_ptr)
-    }
-
-    fn stream_position(&self) -> u16 {
-        self.ptr.wrapping_sub(self.head_ptr)
-    }
-
-    fn remain(&self) -> u16 {
-        self.tail_ptr.wrapping_sub(self.ptr)
-    }
-}
-
-impl<'a, W: Registers> Writer<'a, W> {
-    /// Write data to the socket buffer, and return the number of bytes written.
-    pub fn write(&mut self, buf: &[u8]) -> Result<u16, W::Error> {
-        let write_size: u16 = min(self.remain(), buf.len().try_into().unwrap_or(u16::MAX));
-        if write_size != 0 {
-            self.w5500
-                .set_sn_tx_buf(self.sn, self.ptr, &buf[..usize::from(write_size)])?;
-            self.ptr = self.ptr.wrapping_add(write_size);
-
-            Ok(write_size)
-        } else {
-            Ok(0)
-        }
-    }
-
-    /// Writes all the data, returning [`Error::OutOfMemory`] if the size of
-    /// `buf` exceeds the free memory available in the socket buffer.
-    ///
-    /// # Errors
-    ///
-    /// This method can only return:
-    ///
-    /// * [`Error::Other`]
-    /// * [`Error::OutOfMemory`]
-    pub fn write_all(&mut self, buf: &[u8]) -> Result<(), Error<W::Error>> {
-        let buf_len: u16 = buf.len().try_into().unwrap_or(u16::MAX);
-        let write_size: u16 = min(self.remain(), buf_len);
-        if write_size != buf_len {
-            Err(Error::OutOfMemory)
-        } else {
-            self.w5500.set_sn_tx_buf(self.sn, self.ptr, buf)?;
-            self.ptr = self.ptr.wrapping_add(write_size);
-            Ok(())
-        }
-    }
-
-    /// Send all data previously written with [`write`] and [`write_all`].
-    ///
-    /// For UDP sockets the destination is set by the last call to
-    /// [`Registers::set_sn_dest`], [`Udp::udp_send_to`], or
-    /// [`Writer::udp_send_to`].
-    ///
-    /// [`write`]: Writer::write
-    /// [`write_all`]: Writer::write_all
-    pub fn send(self) -> Result<(), W::Error> {
-        self.w5500.set_sn_tx_wr(self.sn, self.ptr)?;
-        self.w5500.set_sn_cr(self.sn, SocketCommand::Send)
-    }
-
-    /// Send all data previously written with [`Writer::write`] and
-    /// [`Writer::write_all`] to the given address.
-    ///
-    /// # Panics
-    ///
-    /// * (debug) The socket must be opened as a UDP socket.
-    pub fn udp_send_to(self, addr: &SocketAddrV4) -> Result<(), W::Error> {
-        debug_assert_eq!(self.w5500.sn_sr(self.sn)?, Ok(SocketStatus::Udp));
-
-        self.w5500.set_sn_dest(self.sn, addr)?;
-        self.send()
-    }
 }
 
 /// Methods common to all W5500 socket types.
@@ -607,64 +344,6 @@ pub trait Common: Registers {
     fn is_state_udp(&mut self, sn: Sn) -> Result<bool, Self::Error> {
         Ok(self.sn_sr(sn)? == Ok(SocketStatus::Udp))
     }
-
-    /// Create a socket writer.
-    ///
-    /// This returns a [`Writer`] structure, which contains functions to
-    /// stream data into the W5500 socket buffers incrementally.
-    ///
-    /// This is useful for writing large packets that are too large to stage
-    /// in the memory of your microcontroller.
-    ///
-    /// The socket should be opened as a TCP or UDP socket before calling this
-    /// method.
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// # use embedded_hal_mock as h;
-    /// # let mut w5500 = w5500_ll::blocking::vdm::W5500::new(h::spi::Mock::new(&[]), h::pin::Mock::new(&[]));
-    /// use w5500_hl::{
-    ///     ll::{Registers, Sn::Sn0},
-    ///     net::{Ipv4Addr, SocketAddrV4},
-    ///     Udp,
-    ///     Writer,
-    ///     Common,
-    /// };
-    ///
-    /// const DEST: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::new(192, 0, 2, 1), 8081);
-    ///
-    /// w5500.udp_bind(Sn0, 8080)?;
-    ///
-    /// let mut writer: Writer<_> = w5500.writer(Sn0)?;
-    ///
-    /// // write part of a packet
-    /// let buf: [u8; 8] = [0; 8];
-    /// writer.write_all(&buf)?;
-    ///
-    /// // write another part
-    /// let other_buf: [u8; 16]  = [0; 16];
-    /// writer.write_all(&buf)?;
-    ///
-    /// // send all previously written data to the destination
-    /// writer.udp_send_to(&DEST)?;
-    /// # Ok::<(), w5500_hl::Error<_>>(())
-    /// ```
-    fn writer(&mut self, sn: Sn) -> Result<Writer<Self>, Self::Error>
-    where
-        Self: Sized,
-    {
-        let sn_tx_fsr: u16 = self.sn_tx_fsr(sn)?;
-        let sn_tx_wr: u16 = self.sn_tx_wr(sn)?;
-
-        Ok(Writer {
-            w5500: self,
-            sn,
-            head_ptr: sn_tx_wr,
-            tail_ptr: sn_tx_wr.wrapping_add(sn_tx_fsr),
-            ptr: sn_tx_wr,
-        })
-    }
 }
 
 /// Implement the common socket trait for any structure that implements [`w5500_ll::Registers`].
@@ -721,53 +400,5 @@ mod tests {
 
         // other socket on same port
         assert!(!port_is_unique(&mut mock, Sn::Sn1, 0).unwrap());
-    }
-
-    #[test]
-    fn seek_from_current_pos() {
-        const E: Error<()> = Error::UnexpectedEof;
-        type S = SeekFrom;
-        assert_eq!(S::Current(0).new_ptr::<()>(0, 0, 0), Ok(0));
-        assert_eq!(S::Current(1).new_ptr::<()>(0, 0, 1), Ok(1));
-        assert_eq!(S::Current(1).new_ptr::<()>(1, 0, 1), Err(E));
-        assert_eq!(S::Current(1).new_ptr::<()>(1, 0, 2), Ok(2));
-        assert_eq!(S::Current(1).new_ptr::<()>(1, 1, 3), Ok(2));
-        assert_eq!(S::Current(4096).new_ptr::<()>(0, 0, 4096), Ok(4096));
-        assert_eq!(S::Current(1).new_ptr::<()>(u16::MAX, u16::MAX, 0), Ok(0));
-    }
-
-    #[test]
-    fn seek_from_current_neg() {
-        const E: Error<()> = Error::UnexpectedEof;
-        type S = SeekFrom;
-        assert_eq!(S::Current(-1).new_ptr::<()>(0, 0, 0), Err(E));
-        assert_eq!(S::Current(-1).new_ptr::<()>(1, 0, 1), Ok(0));
-        assert_eq!(S::Current(-2).new_ptr::<()>(1, 0, 1), Err(E));
-        assert_eq!(S::Current(-1).new_ptr::<()>(0, u16::MAX, 0), Ok(u16::MAX));
-        assert_eq!(S::Current(-2).new_ptr::<()>(0, u16::MAX, 0), Err(E));
-    }
-
-    #[test]
-    fn seek_from_start() {
-        const E: Error<()> = Error::UnexpectedEof;
-        type S = SeekFrom;
-        assert_eq!(S::Start(0).new_ptr::<()>(0, 0, 0), Ok(0));
-        assert_eq!(S::Start(1).new_ptr::<()>(0, 0, 1), Ok(1));
-        assert_eq!(S::Start(1).new_ptr::<()>(1, 0, 1), Ok(1));
-        assert_eq!(S::Start(2).new_ptr::<()>(1, 0, 1), Err(E));
-        assert_eq!(S::Start(2048).new_ptr::<()>(0, 2048, 8192), Ok(4096));
-        assert_eq!(S::Start(1).new_ptr::<()>(0, u16::MAX, 0), Ok(0));
-    }
-
-    #[test]
-    fn seek_from_end() {
-        const E: Error<()> = Error::UnexpectedEof;
-        type S = SeekFrom;
-        assert_eq!(S::End(0).new_ptr::<()>(0, 0, 0), Ok(0));
-        assert_eq!(S::End(-1).new_ptr::<()>(0, 0, 1), Ok(0));
-        assert_eq!(S::End(-1).new_ptr::<()>(1, 0, 1), Ok(0));
-        assert_eq!(S::End(-2).new_ptr::<()>(1, 0, 1), Err(E));
-        assert_eq!(S::End(-2048).new_ptr::<()>(0, 2048, 8192), Ok(6144));
-        assert_eq!(S::End(-1).new_ptr::<()>(0, u16::MAX, 0), Ok(u16::MAX));
     }
 }

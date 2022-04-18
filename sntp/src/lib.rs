@@ -38,7 +38,10 @@ pub use timestamp::Timestamp;
 pub use w5500_hl as hl;
 pub use w5500_hl::ll;
 
-use hl::{Common, Error, Read, Udp, UdpReader, Writer};
+use hl::{
+    io::{Read, Write},
+    Common, Error, Udp, UdpReader, UdpWriter,
+};
 use ll::{
     net::{Ipv4Addr, SocketAddrV4},
     Registers, Sn, SocketInterrupt, SocketInterruptMask,
@@ -212,7 +215,7 @@ impl Client {
         w5500.close(self.sn)?;
         w5500.udp_bind(self.sn, self.port)?;
 
-        let mut writer: Writer<W5500> = w5500.writer(self.sn)?;
+        let mut writer: UdpWriter<W5500> = w5500.udp_writer(self.sn)?;
         writer.write_all(&REQUEST_PKT)?;
         writer.udp_send_to(&self.server)?;
 
