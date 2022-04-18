@@ -2929,6 +2929,35 @@ pub trait Registers {
         self.write(ptr, sn.tx_block(), buf)
     }
 
+    /// Read the socket TX buffer.
+    ///
+    /// This method is typically unused; there are very few usecases that
+    /// require reading the TX buffer.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use core::cmp::min;
+    /// use w5500_ll::{blocking::vdm::W5500, Registers, Sn, SocketCommand};
+    /// # use embedded_hal_mock as hal;
+    /// # let spi = hal::spi::Mock::new(&[
+    /// #   hal::spi::Transaction::write(vec![0x00, 0x00, (Sn::Sn0.tx_block() as u8) << 3]),
+    /// #   hal::spi::Transaction::transfer(vec![0], vec![0]),
+    /// # ]);
+    /// # let pin = hal::pin::Mock::new(&[
+    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
+    /// #    hal::pin::Transaction::set(hal::pin::State::High),
+    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
+    /// # ]);
+    /// # let mut w5500 = W5500::new(spi, pin);
+    /// let mut buf: [u8; 1] = [0];
+    /// w5500.sn_tx_buf(Sn::Sn0, 0, &mut buf)?;
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// ```
+    fn sn_tx_buf(&mut self, sn: Sn, ptr: u16, buf: &mut [u8]) -> Result<(), Self::Error> {
+        self.read(ptr, sn.tx_block(), buf)
+    }
+
     /// Read the socket RX buffer.
     ///
     /// # Example
@@ -2986,5 +3015,34 @@ pub trait Registers {
     /// ```
     fn sn_rx_buf(&mut self, sn: Sn, ptr: u16, buf: &mut [u8]) -> Result<(), Self::Error> {
         self.read(ptr, sn.rx_block(), buf)
+    }
+
+    /// Write the socket RX buffer.
+    ///
+    /// This method is typically unused; there are very few usecases that
+    /// require writing the RX buffer.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use core::cmp::min;
+    /// use w5500_ll::{blocking::vdm::W5500, Registers, Sn, SocketCommand};
+    /// # use embedded_hal_mock as hal;
+    /// # let spi = hal::spi::Mock::new(&[
+    /// #   hal::spi::Transaction::write(vec![0x00, 0x00, (Sn::Sn0.rx_block() as u8) << 3 | 0x04]),
+    /// #   hal::spi::Transaction::write(vec![0]),
+    /// # ]);
+    /// # let pin = hal::pin::Mock::new(&[
+    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
+    /// #    hal::pin::Transaction::set(hal::pin::State::High),
+    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
+    /// # ]);
+    /// # let mut w5500 = W5500::new(spi, pin);
+    /// let mut buf: [u8; 1] = [0];
+    /// w5500.set_sn_rx_buf(Sn::Sn0, 0, &mut buf)?;
+    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// ```
+    fn set_sn_rx_buf(&mut self, sn: Sn, ptr: u16, buf: &[u8]) -> Result<(), Self::Error> {
+        self.write(ptr, sn.rx_block(), buf)
     }
 }
