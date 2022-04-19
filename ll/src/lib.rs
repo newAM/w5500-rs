@@ -2931,7 +2931,7 @@ pub trait Registers {
 
     /// Read the socket TX buffer.
     ///
-    /// This method is typically unused; there are very few usecases that
+    /// This method is typically unused; there are very few use cases that
     /// require reading the TX buffer.
     ///
     /// # Example
@@ -3019,7 +3019,7 @@ pub trait Registers {
 
     /// Write the socket RX buffer.
     ///
-    /// This method is typically unused; there are very few usecases that
+    /// This method is typically unused; there are very few use cases that
     /// require writing the RX buffer.
     ///
     /// # Example

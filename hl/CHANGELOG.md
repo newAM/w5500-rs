@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added a `Write` trait.
 
 ### Changed
-- Change the return type of `Reader::done` from `Result<(), W5500::Error>` to `Result<&'a mut W5500, W5500::Error>`.
+- Changed the return type of `Reader::done` from `Result<(), W5500::Error>` to `Result<&'a mut W5500, W5500::Error>`.
 - Split `Writer` into `TcpWriter` and `UdpWriter` that implement the `Write` trait.
 - Split `Common::writer` into `Tcp::tcp_writer`, and `Udp::udp_writer`.
 - Moved `SeekFrom`, `Seek`, `Read`, and `Write` into an `io` module.
