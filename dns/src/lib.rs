@@ -74,7 +74,10 @@ mod rand;
 pub use header::ResponseCode;
 use header::{Header, Qr};
 pub use hl::Hostname;
-use hl::{Common, Error, Read, Seek, SeekFrom, Udp, UdpReader, Writer};
+use hl::{
+    io::{Read, Seek, SeekFrom, Write},
+    Error, Udp, UdpReader, UdpWriter,
+};
 use ll::{
     net::{Ipv4Addr, SocketAddrV4},
     Sn,
@@ -305,7 +308,7 @@ impl<'a, W: Udp> Response<'a, W> {
 #[derive(Debug)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
 struct Query<'a, W5500: Udp> {
-    writer: Writer<'a, W5500>,
+    writer: UdpWriter<'a, W5500>,
     header: Header,
 }
 
@@ -455,7 +458,7 @@ impl Client {
         w5500.udp_bind(self.sn, self.port)?;
         w5500.set_sn_dest(self.sn, &self.server)?;
         const HEADER_SEEK: SeekFrom = SeekFrom::Start(Header::LEN);
-        let mut writer: Writer<W5500> = w5500.writer(self.sn)?;
+        let mut writer: UdpWriter<W5500> = w5500.udp_writer(self.sn)?;
         writer.seek(HEADER_SEEK)?;
         let id: u16 = self.rng.next_u16();
         Ok(Query {

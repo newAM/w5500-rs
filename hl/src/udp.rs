@@ -1,4 +1,7 @@
-use crate::{port_is_unique, Error, Read, Seek, SeekFrom, TcpReader};
+use crate::{
+    io::{Read, Seek, SeekFrom, Write},
+    port_is_unique, Error, TcpReader,
+};
 use core::cmp::min;
 use w5500_ll::{
     net::{Ipv4Addr, SocketAddrV4},
@@ -55,7 +58,7 @@ impl UdpHeader {
 ///     net::{Ipv4Addr, SocketAddrV4},
 ///     Udp,
 ///     UdpReader,
-///     Read,
+///     io::Read,
 /// };
 ///
 /// const DEST: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::new(192, 0, 2, 1), 8081);
@@ -121,9 +124,121 @@ impl<'a, W: Registers> Read<'a, W> for UdpReader<'a, W> {
             .set_sn_cr(self.inner.sn, SocketCommand::Recv)?;
         Ok(self.inner.w5500)
     }
+}
 
-    fn abort(self) -> &'a mut W {
-        self.inner.abort()
+/// Streaming writer for a UDP socket buffer.
+///
+/// This implements the [`Seek`] traits.
+///
+/// Created with [`Udp::udp_writer`].
+///
+/// # Example
+///
+/// ```no_run
+/// # use embedded_hal_mock as h;
+/// # let mut w5500 = w5500_ll::blocking::vdm::W5500::new(h::spi::Mock::new(&[]), h::pin::Mock::new(&[]));
+/// use w5500_hl::{
+///     ll::{Registers, Sn::Sn0},
+///     net::{Ipv4Addr, SocketAddrV4},
+///     Udp,
+///     io::Write,
+///     UdpWriter,
+/// };
+///
+/// const DEST: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::new(192, 0, 2, 1), 8081);
+///
+/// w5500.udp_bind(Sn0, 8080)?;
+///
+/// let mut udp_writer: UdpWriter<_> = w5500.udp_writer(Sn0)?;
+///
+/// let data_header: [u8; 10] = [0; 10];
+/// let n_written: u16 = udp_writer.write(&data_header)?;
+/// assert_eq!(usize::from(n_written), data_header.len());
+///
+/// let data: [u8; 123] = [0; 123];
+/// let n_written: u16 = udp_writer.write(&data)?;
+/// assert_eq!(usize::from(n_written), data.len());
+///
+/// udp_writer.udp_send_to(&DEST)?;
+/// # Ok::<(), w5500_hl::ll::blocking::vdm::Error<_, _>>(())
+/// ```
+#[derive(Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "defmt", derive(defmt::Format))]
+pub struct UdpWriter<'w, W5500: Registers> {
+    pub(crate) w5500: &'w mut W5500,
+    pub(crate) sn: Sn,
+    pub(crate) head_ptr: u16,
+    pub(crate) tail_ptr: u16,
+    pub(crate) ptr: u16,
+}
+
+impl<'w, W5500: Registers> Seek<W5500::Error> for UdpWriter<'w, W5500> {
+    fn seek(&mut self, pos: SeekFrom) -> Result<(), Error<W5500::Error>> {
+        self.ptr = pos.new_ptr(self.ptr, self.head_ptr, self.tail_ptr)?;
+        Ok(())
+    }
+
+    fn rewind(&mut self) {
+        self.ptr = self.head_ptr
+    }
+
+    fn stream_len(&self) -> u16 {
+        self.tail_ptr.wrapping_sub(self.head_ptr)
+    }
+
+    fn stream_position(&self) -> u16 {
+        self.ptr.wrapping_sub(self.head_ptr)
+    }
+
+    fn remain(&self) -> u16 {
+        self.tail_ptr.wrapping_sub(self.ptr)
+    }
+}
+
+impl<'w, W5500: Registers> Write<'w, W5500> for UdpWriter<'w, W5500> {
+    fn write(&mut self, buf: &[u8]) -> Result<u16, W5500::Error> {
+        let write_size: u16 = min(self.remain(), buf.len().try_into().unwrap_or(u16::MAX));
+        if write_size != 0 {
+            self.w5500
+                .set_sn_tx_buf(self.sn, self.ptr, &buf[..usize::from(write_size)])?;
+            self.ptr = self.ptr.wrapping_add(write_size);
+
+            Ok(write_size)
+        } else {
+            Ok(0)
+        }
+    }
+
+    fn write_all(&mut self, buf: &[u8]) -> Result<(), Error<W5500::Error>> {
+        let buf_len: u16 = buf.len().try_into().unwrap_or(u16::MAX);
+        let write_size: u16 = min(self.remain(), buf_len);
+        if write_size != buf_len {
+            Err(Error::OutOfMemory)
+        } else {
+            self.w5500.set_sn_tx_buf(self.sn, self.ptr, buf)?;
+            self.ptr = self.ptr.wrapping_add(write_size);
+            Ok(())
+        }
+    }
+
+    fn send(self) -> Result<&'w mut W5500, W5500::Error> {
+        self.w5500.set_sn_tx_wr(self.sn, self.ptr)?;
+        self.w5500.set_sn_cr(self.sn, SocketCommand::Send)?;
+        Ok(self.w5500)
+    }
+}
+
+impl<'w, W5500: Registers> UdpWriter<'w, W5500> {
+    /// Send all data previously written with [`UdpWriter::write`] and
+    /// [`UdpWriter::write_all`] to the given address.
+    ///
+    /// # Panics
+    ///
+    /// * (debug) The socket must be opened as a UDP socket.
+    pub fn udp_send_to(self, addr: &SocketAddrV4) -> Result<&'w mut W5500, W5500::Error> {
+        debug_assert_eq!(self.w5500.sn_sr(self.sn)?, Ok(SocketStatus::Udp));
+        self.w5500.set_sn_dest(self.sn, addr)?;
+        self.send()
     }
 }
 
@@ -551,7 +666,7 @@ pub trait Udp: Registers {
     /// On success, returns the number of bytes written.
     ///
     /// The destination is set by the last call to [`Registers::set_sn_dest`],
-    /// [`Udp::udp_send_to`], or [`Writer::udp_send_to`].
+    /// [`Udp::udp_send_to`], or [`UdpWriter::udp_send_to`].
     ///
     /// # Panics
     ///
@@ -580,7 +695,7 @@ pub trait Udp: Registers {
     /// # Ok::<(), w5500_hl::ll::blocking::vdm::Error<_, _>>(())
     /// ```
     ///
-    /// [`Writer::udp_send_to`]: crate::Writer::udp_send_to
+    /// [`UdpWriter::udp_send_to`]: crate::UdpWriter::udp_send_to
     fn udp_send(&mut self, sn: Sn, buf: &[u8]) -> Result<u16, Self::Error> {
         debug_assert_eq!(self.sn_sr(sn)?, Ok(SocketStatus::Udp));
 
@@ -600,7 +715,7 @@ pub trait Udp: Registers {
     /// On success, returns the number of bytes written.
     ///
     /// The destination is set by the last call to [`Registers::set_sn_dest`],
-    /// [`Udp::udp_send_to`], or [`Writer::udp_send_to`].
+    /// [`Udp::udp_send_to`], or [`UdpWriter::udp_send_to`].
     ///
     /// This will transmit only if there is enough free space in the W5500
     /// transmit buffer.
@@ -632,7 +747,7 @@ pub trait Udp: Registers {
     /// # Ok::<(), w5500_hl::ll::blocking::vdm::Error<_, _>>(())
     /// ```
     ///
-    /// [`Writer::udp_send_to`]: crate::Writer::udp_send_to
+    /// [`UdpWriter::udp_send_to`]: crate::UdpWriter::udp_send_to
     fn udp_send_if_free(&mut self, sn: Sn, buf: &[u8]) -> Result<u16, Self::Error> {
         debug_assert_eq!(self.sn_sr(sn)?, Ok(SocketStatus::Udp));
 
@@ -699,6 +814,30 @@ pub trait Udp: Registers {
                 ptr: head_ptr,
             },
             header,
+        })
+    }
+
+    /// Create a UDP writer.
+    ///
+    /// This returns a [`UdpWriter`] structure, which contains functions to
+    /// stream data to the W5500 socket buffers incrementally.
+    ///
+    /// # Example
+    ///
+    /// See [`UdpWriter`].
+    fn udp_writer(&mut self, sn: Sn) -> Result<UdpWriter<Self>, Self::Error>
+    where
+        Self: Sized,
+    {
+        let sn_tx_fsr: u16 = self.sn_tx_fsr(sn)?;
+        let sn_tx_wr: u16 = self.sn_tx_wr(sn)?;
+
+        Ok(UdpWriter {
+            w5500: self,
+            sn,
+            head_ptr: sn_tx_wr,
+            tail_ptr: sn_tx_wr.wrapping_add(sn_tx_fsr),
+            ptr: sn_tx_wr,
         })
     }
 }

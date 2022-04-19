@@ -12,7 +12,10 @@ use std::{
     time::{Duration, Instant},
 };
 
-use w5500_hl::{Common, Error, Read, Udp, UdpReader, Writer};
+use w5500_hl::{
+    io::{Read, Write},
+    Error, Udp, UdpReader, UdpWriter,
+};
 use w5500_ll::{
     net::{Ipv4Addr, SocketAddrV4},
     Registers, Sn, VERSION,
@@ -82,7 +85,7 @@ fn main() {
         .udp_bind(DNS_SN, DNS_SOURCE_PORT)
         .expect("Failed to bind the socket as UDP");
 
-    let mut writer: Writer<_> = w5500.writer(DNS_SN).expect("Failed to create writer");
+    let mut writer: UdpWriter<_> = w5500.udp_writer(DNS_SN).expect("Failed to create writer");
     writer.write_all(&QUERY).expect("Failed to write query");
     writer
         .udp_send_to(&DNS_SERVER)

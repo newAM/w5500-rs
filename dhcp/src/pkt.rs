@@ -1,7 +1,8 @@
 use w5500_hl::{
+    io::{Read, Seek, SeekFrom, Write},
     ll::{Registers, Sn},
     net::{Eui48Addr, Ipv4Addr},
-    Common, Error, Hostname, Read, Seek, SeekFrom, UdpReader, Writer,
+    Error, Hostname, Udp, UdpReader, UdpWriter,
 };
 
 /// DHCP options.
@@ -124,11 +125,11 @@ const HW_ADDR_LEN: u8 = 6;
 
 #[derive(Debug)]
 struct PktSer<'a, W: Registers> {
-    writer: Writer<'a, W>,
+    writer: UdpWriter<'a, W>,
 }
 
-impl<'a, W: Registers> From<Writer<'a, W>> for PktSer<'a, W> {
-    fn from(writer: Writer<'a, W>) -> Self {
+impl<'a, W: Registers> From<UdpWriter<'a, W>> for PktSer<'a, W> {
+    fn from(writer: UdpWriter<'a, W>) -> Self {
         Self { writer }
     }
 }
@@ -318,7 +319,7 @@ impl<'a, W: Registers> PktSer<'a, W> {
         mac: &Eui48Addr,
         hostname: Hostname,
         xid: u32,
-    ) -> Result<Writer<'a, W>, Error<W::Error>> {
+    ) -> Result<UdpWriter<'a, W>, Error<W::Error>> {
         self.prepare_message(mac, xid)?;
         self.set_option_msg_type(MsgType::Discover)?;
         self.set_option_client_id(mac)?;
@@ -334,7 +335,7 @@ impl<'a, W: Registers> PktSer<'a, W> {
         ip: &Ipv4Addr,
         hostname: Hostname,
         xid: u32,
-    ) -> Result<Writer<'a, W>, Error<W::Error>> {
+    ) -> Result<UdpWriter<'a, W>, Error<W::Error>> {
         self.prepare_message(mac, xid)?;
         self.set_option_msg_type(MsgType::Request)?;
         self.set_option_client_id(mac)?;
@@ -353,7 +354,7 @@ pub fn send_dhcp_discover<W: Registers>(
     hostname: Hostname,
     xid: u32,
 ) -> Result<(), Error<W::Error>> {
-    let writer: Writer<W> = w5500.writer(sn)?;
+    let writer: UdpWriter<W> = w5500.udp_writer(sn)?;
     PktSer::from(writer)
         .dhcp_discover(mac, hostname, xid)?
         .udp_send_to(&crate::DHCP_BROADCAST)?;
@@ -368,7 +369,7 @@ pub fn send_dhcp_request<W: Registers>(
     hostname: Hostname,
     xid: u32,
 ) -> Result<(), Error<W::Error>> {
-    let writer: Writer<W> = w5500.writer(sn)?;
+    let writer: UdpWriter<W> = w5500.udp_writer(sn)?;
     PktSer::from(writer)
         .dhcp_request(mac, ip, hostname, xid)?
         .send()?;

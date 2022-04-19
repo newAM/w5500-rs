@@ -75,8 +75,9 @@ pub use connack::ConnectReasonCode;
 use core::{cmp::min, mem::size_of};
 use fixed_header::FixedHeader;
 use hl::{
+    io::{Read, Seek, SeekFrom, Write},
     ll::{net::SocketAddrV4, Registers, Sn, SocketInterrupt, SocketInterruptMask},
-    Common, Error as HlError, Read, Seek, SeekFrom, Tcp, TcpReader, Writer,
+    Error as HlError, Tcp, TcpReader, TcpWriter,
 };
 use properties::Properties;
 pub use subscribe::SubAckReasonCode;
@@ -148,7 +149,7 @@ pub struct Client<'a> {
 }
 
 fn write_variable_byte_integer<W5500: Registers>(
-    writer: &mut Writer<W5500>,
+    writer: &mut TcpWriter<W5500>,
     integer: u32,
 ) -> Result<(), Error<W5500::Error>> {
     let (buf, len): ([u8; 4], usize) = crate::data::encode_variable_byte_integer(integer);
@@ -609,7 +610,7 @@ impl<'a> Client<'a> {
         let remaining_len: u32 =
             TOPIC_LEN_LEN + u32::from(topic_len) + PROPERTY_LEN + u32::from(payload_len);
 
-        let mut writer: Writer<W5500> = w5500.writer(self.sn)?;
+        let mut writer: TcpWriter<W5500> = w5500.tcp_writer(self.sn)?;
         writer
             .write_all(&[
                 // control packet type
@@ -702,7 +703,7 @@ impl<'a> Client<'a> {
             let remaining_len: u32 =
                 PACKET_ID_LEN + u32::from(PROPERTY_LEN_LEN) + u32::from(filter_len);
 
-            let mut writer: Writer<W5500> = w5500.writer(self.sn)?;
+            let mut writer: TcpWriter<W5500> = w5500.tcp_writer(self.sn)?;
             writer
                 .write_all(&[(CtrlPkt::SUBSCRIBE as u8) << 4 | 0b0010])
                 .map_err(map_write_all_err)?;
@@ -771,7 +772,7 @@ impl<'a> Client<'a> {
             .unwrap_or_default()
             .size_in_bytes() as u16;
 
-        let mut writer: Writer<W5500> = w5500.writer(self.sn)?;
+        let mut writer: TcpWriter<W5500> = w5500.tcp_writer(self.sn)?;
         #[rustfmt::skip]
         writer.write_all(&[
             // control packet type
