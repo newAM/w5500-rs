@@ -2950,8 +2950,8 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// # ]);
     /// # let mut w5500 = W5500::new(spi, pin);
-    /// let buf: [u8; 1] = [0];
-    /// w5500.sn_tx_buf(Sn::Sn0, 0, &buf)?;
+    /// let mut buf: [u8; 1] = [0];
+    /// w5500.sn_tx_buf(Sn::Sn0, 0, &mut buf)?;
     /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn sn_tx_buf(&mut self, sn: Sn, ptr: u16, buf: &mut [u8]) -> Result<(), Self::Error> {
@@ -3038,8 +3038,8 @@ pub trait Registers {
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// # ]);
     /// # let mut w5500 = W5500::new(spi, pin);
-    /// let mut buf: [u8; 1] = [0];
-    /// w5500.set_sn_rx_buf(Sn::Sn0, 0, &mut buf)?;
+    /// let buf: [u8; 1] = [0];
+    /// w5500.set_sn_rx_buf(Sn::Sn0, 0, &buf)?;
     /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
     /// ```
     fn set_sn_rx_buf(&mut self, sn: Sn, ptr: u16, buf: &[u8]) -> Result<(), Self::Error> {
