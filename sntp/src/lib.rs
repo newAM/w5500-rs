@@ -88,7 +88,7 @@ impl Client {
     ///
     /// let sntp_client: Client = Client::new(Sn::Sn3, SNTP_SRC_PORT, SNTP_SERVER);
     /// ```
-    pub fn new(sn: Sn, port: u16, server: Ipv4Addr) -> Self {
+    pub const fn new(sn: Sn, port: u16, server: Ipv4Addr) -> Self {
         Self {
             sn,
             port,
