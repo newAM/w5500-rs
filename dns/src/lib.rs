@@ -508,7 +508,7 @@ impl Client {
     ///
     /// [`a_question`]: Self::a_question
     pub fn response<'a, W5500: Udp>(
-        &mut self,
+        &self,
         w5500: &'a mut W5500,
         buf: &'a mut [u8],
         id: u16,
