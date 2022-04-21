@@ -1,0 +1,9 @@
+[package]
+name = "w5500-fuzz"
+version = "0.1.0"
+authors = ["Alex Martens <alex@thinglab.org>"]
+publish = false
+edition = "2021"
+
+[dependencies]
+w5500-ll = { path = "../ll", features = [ "std" ] }

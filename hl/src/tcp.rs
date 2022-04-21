@@ -624,7 +624,7 @@ pub trait Tcp: Registers {
         })
     }
 
-    /// Create a UDP writer.
+    /// Create a TCP writer.
     ///
     /// This returns a [`TcpWriter`] structure, which contains functions to
     /// stream data to the W5500 socket buffers incrementally.

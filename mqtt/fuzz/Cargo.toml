@@ -1,0 +1,24 @@
+[package]
+name = "w5500-mqtt-fuzz"
+version = "0.0.0"
+authors = ["Automatically generated"]
+publish = false
+edition = "2021"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+w5500-mqtt.path = ".."
+w5500-fuzz.path = "../../fuzz"
+
+# Prevent this from interfering with workspaces
+[workspace]
+members = ["."]
+
+[[bin]]
+name = "process"
+path = "fuzz_targets/process.rs"
+test = false
+doc = false

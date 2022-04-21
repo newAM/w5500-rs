@@ -428,7 +428,7 @@ impl<'a> Client<'a> {
     ///   Calling `process` again will re-initialize the client.
     /// * `Ok(Event::CallAfter(seconds))` Call this method again after the number
     ///   of seconds indicated.
-    /// * `Ok(Event::None)` The client is idle; you can  call [`subscribe`] and [`publish`].
+    /// * `Ok(Event::None)` The client is idle; you can call [`subscribe`] and [`publish`].
     ///
     /// This should also be called when there is a pending socket interrupt.
     ///
@@ -843,7 +843,7 @@ impl<'a> Client<'a> {
                 let mut buf: [u8; 2] = [0; 2];
                 reader.read_exact(&mut buf).map_err(map_read_exact_err)?;
                 reader
-                    .seek(SeekFrom::Start(2 + header.remaining_len))
+                    .seek(SeekFrom::Start(header.remaining_len.saturating_add(2)))
                     .map_err(map_read_exact_err)?;
                 reader.done()?;
 

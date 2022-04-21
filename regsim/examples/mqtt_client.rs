@@ -26,7 +26,7 @@ const MQTT_CONNECT: [u8; 14] = [
     0x10, 0x0C, 0x00, 0x04, b'M', b'Q', b'T', b'T', 0x04, 0x02, 0x0E, 0x10, 0x00, 0x00,
 ];
 
-// we are going to cheat and use a real DNS library for this lookup
+// we are going to cheat and use a real DNS crate for this lookup
 // see the DNS example for how you would acomplish somthing similar with the
 // W5500
 fn mqtt_server_addr() -> SocketAddrV4 {

@@ -7,7 +7,7 @@ pub(crate) struct FixedHeader {
     // truncated from u32 to u16
     // server should never send packets over u16 because we set the maximum size
     // after connection
-    // additionally the socket buffers can only only u16::MAX
+    // additionally the socket buffers only have 32k physical memory
     pub remaining_len: u16,
     // length of the header in bytes
     pub len: u8,
