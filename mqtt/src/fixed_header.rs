@@ -1,4 +1,7 @@
-use crate::{data::decode_variable_byte_integer, CtrlPkt};
+use crate::{
+    data::{decode_variable_byte_integer, DeserError},
+    CtrlPkt,
+};
 
 #[allow(dead_code)]
 pub(crate) struct FixedHeader {
@@ -14,8 +17,8 @@ pub(crate) struct FixedHeader {
 }
 
 impl FixedHeader {
-    pub fn deser(buf: &[u8]) -> Option<Self> {
-        let byte0: u8 = *buf.get(0)?;
+    pub fn deser(buf: &[u8]) -> Result<Self, DeserError> {
+        let byte0: u8 = *buf.get(0).ok_or(DeserError::Fragment)?;
         let ctrl_pkt: CtrlPkt = match byte0 >> 4 {
             x if x == (CtrlPkt::RESERVED as u8) => CtrlPkt::RESERVED,
             x if x == (CtrlPkt::CONNECT as u8) => CtrlPkt::CONNECT,
@@ -38,10 +41,10 @@ impl FixedHeader {
 
         let (remaining_len, integer_len): (u32, u8) = decode_variable_byte_integer(&buf[1..])?;
 
-        Some(FixedHeader {
+        Ok(FixedHeader {
             ctrl_pkt,
             flags: byte0 & 0xF,
-            remaining_len: remaining_len.try_into().ok()?,
+            remaining_len: remaining_len.try_into().map_err(|_| DeserError::Decode)?,
             len: integer_len + 1,
         })
     }

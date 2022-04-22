@@ -813,8 +813,9 @@ impl<'a> Client<'a> {
         let n: u16 = reader.read(&mut buf)?;
 
         let header: FixedHeader = match FixedHeader::deser(&buf[..n.into()]) {
-            Some(header) => header,
-            None => {
+            Ok(header) => header,
+            Err(data::DeserError::Fragment) => return Ok(None),
+            Err(data::DeserError::Decode) => {
                 error!("unable to deserialize fixed header");
                 self.set_state(State::Init);
                 return Err(Error::Decode);
@@ -825,6 +826,11 @@ impl<'a> Client<'a> {
         reader
             .seek(SeekFrom::Start(header.len.into()))
             .map_err(map_read_exact_err)?;
+
+        // fragmented, can try again later
+        if header.remaining_len > reader.remain() {
+            return Ok(None);
+        }
 
         debug!("recv {:?} len {}", header.ctrl_pkt, header.remaining_len);
 
