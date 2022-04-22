@@ -2,10 +2,16 @@
 //!
 //! <https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901006>
 
+#[derive(Debug, PartialEq, Eq)]
+pub(crate) enum DeserError {
+    Fragment,
+    Decode,
+}
+
 /// Decode a variable byte integer.
 ///
 /// Returns `None` when there is a decoding error.
-pub fn decode_variable_byte_integer(buf: &[u8]) -> Option<(u32, u8)> {
+pub(crate) fn decode_variable_byte_integer(buf: &[u8]) -> Result<(u32, u8), DeserError> {
     let mut multiplier: u32 = 1;
     let mut value: u32 = 0;
 
@@ -13,11 +19,11 @@ pub fn decode_variable_byte_integer(buf: &[u8]) -> Option<(u32, u8)> {
     let mut n_bytes: u8 = 0;
 
     loop {
-        let encoded_byte: u8 = *buf_iter.next()?;
+        let encoded_byte: u8 = *buf_iter.next().ok_or(DeserError::Fragment)?;
         n_bytes += 1;
         value += u32::from(encoded_byte & 0x7F) * multiplier;
         if multiplier > 128 * 128 * 128 {
-            return None;
+            return Err(DeserError::Decode);
         }
         multiplier *= 128;
 
@@ -26,7 +32,7 @@ pub fn decode_variable_byte_integer(buf: &[u8]) -> Option<(u32, u8)> {
         }
     }
 
-    Some((value, n_bytes))
+    Ok((value, n_bytes))
 }
 
 pub fn encode_variable_byte_integer(mut integer: u32) -> ([u8; 4], usize) {
@@ -52,42 +58,45 @@ pub fn encode_variable_byte_integer(mut integer: u32) -> ([u8; 4], usize) {
 
 #[cfg(test)]
 mod test {
-    use super::{decode_variable_byte_integer, encode_variable_byte_integer};
+    use super::{decode_variable_byte_integer, encode_variable_byte_integer, DeserError};
 
     #[test]
     fn decode_variable_byte_positive_path() {
-        assert_eq!(decode_variable_byte_integer(&[0x00]), Some((0, 1)));
-        assert_eq!(decode_variable_byte_integer(&[0x00, 0x00]), Some((0, 1)));
-        assert_eq!(decode_variable_byte_integer(&[0x7F]), Some((127, 1)));
-        assert_eq!(decode_variable_byte_integer(&[0x7F, 0x00]), Some((127, 1)));
-        assert_eq!(decode_variable_byte_integer(&[0x80, 0x01]), Some((128, 2)));
-        assert_eq!(
-            decode_variable_byte_integer(&[0xFF, 0x7F]),
-            Some((16_383, 2))
-        );
+        assert_eq!(decode_variable_byte_integer(&[0x00]), Ok((0, 1)));
+        assert_eq!(decode_variable_byte_integer(&[0x00, 0x00]), Ok((0, 1)));
+        assert_eq!(decode_variable_byte_integer(&[0x7F]), Ok((127, 1)));
+        assert_eq!(decode_variable_byte_integer(&[0x7F, 0x00]), Ok((127, 1)));
+        assert_eq!(decode_variable_byte_integer(&[0x80, 0x01]), Ok((128, 2)));
+        assert_eq!(decode_variable_byte_integer(&[0xFF, 0x7F]), Ok((16_383, 2)));
         assert_eq!(
             decode_variable_byte_integer(&[0x80, 0x80, 0x01]),
-            Some((16_384, 3))
+            Ok((16_384, 3))
         );
         assert_eq!(
             decode_variable_byte_integer(&[0xFF, 0xFF, 0x7F]),
-            Some((2_097_151, 3))
+            Ok((2_097_151, 3))
         );
         assert_eq!(
             decode_variable_byte_integer(&[0x80, 0x80, 0x80, 0x01]),
-            Some((2_097_152, 4))
+            Ok((2_097_152, 4))
         );
         assert_eq!(
             decode_variable_byte_integer(&[0xFF, 0xFF, 0xFF, 0x7F]),
-            Some((268_435_455, 4))
+            Ok((268_435_455, 4))
         );
     }
 
     #[test]
     fn decode_variable_byte_negative_path() {
-        assert_eq!(decode_variable_byte_integer(&[]), None);
-        assert_eq!(decode_variable_byte_integer(&[0x80]), None);
-        assert_eq!(decode_variable_byte_integer(&[0x80, 0x80]), None);
+        assert_eq!(decode_variable_byte_integer(&[]), Err(DeserError::Fragment));
+        assert_eq!(
+            decode_variable_byte_integer(&[0x80]),
+            Err(DeserError::Fragment)
+        );
+        assert_eq!(
+            decode_variable_byte_integer(&[0x80, 0x80]),
+            Err(DeserError::Fragment)
+        );
     }
 
     #[test]

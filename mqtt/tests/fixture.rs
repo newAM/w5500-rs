@@ -53,6 +53,10 @@ impl Server {
         self.send_connack_code(ConnectReturnCode::Success)
     }
 
+    pub fn write_all(&mut self, buf: &[u8]) {
+        self.stream.as_ref().unwrap().write_all(buf).unwrap()
+    }
+
     pub fn send_connack_code(&mut self, code: ConnectReturnCode) {
         let conn_ack: ConnAck = ConnAck {
             session_present: false,
@@ -61,7 +65,7 @@ impl Server {
         };
         let mut buf = bytes::BytesMut::new();
         conn_ack.write(&mut buf).unwrap();
-        self.stream.as_ref().unwrap().write_all(&mut buf).unwrap()
+        self.write_all(&buf)
     }
 
     pub fn send_suback(&mut self, pkid: u16) {
@@ -72,14 +76,14 @@ impl Server {
         };
         let mut buf = bytes::BytesMut::new();
         sub_ack.write(&mut buf).unwrap();
-        self.stream.as_ref().unwrap().write_all(&mut buf).unwrap()
+        self.write_all(&buf)
     }
 
     pub fn publish(&mut self, topic: &str, payload: &[u8]) {
         let publish: Publish = Publish::new(topic, QoS::AtMostOnce, payload);
         let mut buf = bytes::BytesMut::new();
         publish.write(&mut buf).unwrap();
-        self.stream.as_ref().unwrap().write_all(&mut buf).unwrap()
+        self.write_all(&buf)
     }
 }
 
