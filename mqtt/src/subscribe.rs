@@ -26,7 +26,7 @@ pub enum SubAckReasonCode {
     /// Implementation specific error
     ///
     /// The SUBSCRIBE is valid but the Server does not accept it.
-    ImplementationError = 0x83,
+    ImplementationSpecificError = 0x83,
     /// Not authorized
     ///
     /// The Client is not authorized to make this subscription.
@@ -38,7 +38,7 @@ pub enum SubAckReasonCode {
     /// Packet Identifier in use
     ///
     /// The specified Packet Identifier is already in use.
-    PackedIdentifierInUse = 0x91,
+    PacketIdentifierInUse = 0x91,
     /// Quota exceeded
     ///
     /// An implementation or administrative imposed limit has been exceeded.
@@ -66,10 +66,12 @@ impl TryFrom<u8> for SubAckReasonCode {
             x if (x == Self::QoS1 as u8) => Ok(Self::QoS1),
             x if (x == Self::QoS2 as u8) => Ok(Self::QoS2),
             x if (x == Self::UnspecifiedError as u8) => Ok(Self::UnspecifiedError),
-            x if (x == Self::ImplementationError as u8) => Ok(Self::ImplementationError),
+            x if (x == Self::ImplementationSpecificError as u8) => {
+                Ok(Self::ImplementationSpecificError)
+            }
             x if (x == Self::NotAuthorized as u8) => Ok(Self::NotAuthorized),
             x if (x == Self::TopicFilterInvalid as u8) => Ok(Self::TopicFilterInvalid),
-            x if (x == Self::PackedIdentifierInUse as u8) => Ok(Self::PackedIdentifierInUse),
+            x if (x == Self::PacketIdentifierInUse as u8) => Ok(Self::PacketIdentifierInUse),
             x if (x == Self::QuotaExceeded as u8) => Ok(Self::QuotaExceeded),
             x if (x == Self::SharedSubscriptionsNotSupported as u8) => {
                 Ok(Self::SharedSubscriptionsNotSupported)
@@ -80,6 +82,51 @@ impl TryFrom<u8> for SubAckReasonCode {
             x if (x == Self::WildcardSubscriptionsNotSupported as u8) => {
                 Ok(Self::WildcardSubscriptionsNotSupported)
             }
+            x => Err(x),
+        }
+    }
+}
+
+/// Unsubscribe Acknowledgment Codes
+///
+/// # References
+///
+/// * [UNSUBACK Payload](https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901194)
+#[derive(Debug, PartialEq, Eq, Copy, Clone)]
+#[cfg_attr(feature = "defmt", derive(defmt::Format))]
+#[repr(u8)]
+pub enum UnsubAckReasonCode {
+    /// The subscription is deleted.
+    Success = 0x00,
+    /// No matching Topic Filter is being used by the Client.
+    NoSubscriptionExisted = 0x11,
+    /// The unsubscribe could not be completed and the Server either does not
+    /// wish to reveal the reason or none of the other Reason Codes apply.
+    UnspecifiedError = 0x80,
+    /// The UNSUBSCRIBE is valid but the Server does not accept it.
+    ImplementationSpecificError = 0x83,
+    /// The Client is not authorized to unsubscribe.
+    NotAuthorized = 0x87,
+    /// The Topic Filter is correctly formed but is not allowed for this Client.
+    TopicFilterInvalid = 0x8F,
+    /// The specified Packet Identifier is already in use.
+    PacketIdentifierInUse = 0x91,
+}
+
+impl TryFrom<u8> for UnsubAckReasonCode {
+    type Error = u8;
+
+    fn try_from(value: u8) -> Result<Self, Self::Error> {
+        match value {
+            x if (x == Self::Success as u8) => Ok(Self::Success),
+            x if (x == Self::NoSubscriptionExisted as u8) => Ok(Self::NoSubscriptionExisted),
+            x if (x == Self::UnspecifiedError as u8) => Ok(Self::UnspecifiedError),
+            x if (x == Self::ImplementationSpecificError as u8) => {
+                Ok(Self::ImplementationSpecificError)
+            }
+            x if (x == Self::NotAuthorized as u8) => Ok(Self::NotAuthorized),
+            x if (x == Self::TopicFilterInvalid as u8) => Ok(Self::TopicFilterInvalid),
+            x if (x == Self::PacketIdentifierInUse as u8) => Ok(Self::PacketIdentifierInUse),
             x => Err(x),
         }
     }
