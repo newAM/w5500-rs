@@ -1,12 +1,11 @@
-//! MQTT v5 client implementation for use with the W5500.
+//! MQTT v5 client for the [Wiznet W5500] SPI internet offload chip.
 //!
 //! # Limitations
 //!
 //! This is very basic at the moment, and will be expanded in the future.
 //!
-//! * Does not support password protected MQTT servers.
 //! * Does not support TLS.
-//! * Does not support unsubscribing.
+//! * Does not support password protected MQTT servers.
 //! * Only supports QoS 0: At most once delivery.
 //!
 //! # Example
@@ -53,7 +52,6 @@
 //! * `log`: Enable logging with `log`.
 //!
 //! [w5500-hl]: https://crates.io/crates/w5500-hl
-//! [`std::net`]: https://doc.rust-lang.org/std/net/index.html
 //! [Wiznet W5500]: https://www.wiznet.io/product-item/w5500/
 #![cfg_attr(docsrs, feature(doc_cfg), feature(doc_auto_cfg))]
 #![cfg_attr(all(not(feature = "std"), not(test)), no_std)]
@@ -80,7 +78,7 @@ use hl::{
     Error as HlError, Tcp, TcpReader, TcpWriter,
 };
 use properties::Properties;
-pub use subscribe::SubAckReasonCode;
+pub use subscribe::{SubAckReasonCode, UnsubAckReasonCode};
 pub use w5500_hl as hl;
 pub use w5500_hl::ll;
 
@@ -131,22 +129,6 @@ pub enum State {
 
 /// Duration in seconds to wait for the MQTT server to send a response.
 const TIMEOUT_SECS: u32 = 10;
-
-/// W5500 MQTT client.
-#[derive(Debug)]
-#[cfg_attr(feature = "defmt", derive(defmt::Format))]
-pub struct Client<'a> {
-    sn: Sn,
-    port: u16,
-    server: SocketAddrV4,
-    client_id: Option<ClientId<'a>>,
-    /// MQTT client state
-    state: State,
-    /// Timeout for MQTT server responses
-    timeout: Option<u32>,
-    /// Packet ID for subscribing
-    pkt_id: u16,
-}
 
 fn write_variable_byte_integer<W5500: Registers>(
     writer: &mut TcpWriter<W5500>,
@@ -255,6 +237,18 @@ pub enum Event<'a, W5500: Registers> {
         /// This should be checked to ensure the SUBSCRIBE was successful.
         code: SubAckReasonCode,
     },
+    /// Unsubscribe Acknowledgment.
+    UnsubAck {
+        /// Packet Identifier.
+        ///
+        /// This can be compared with the return value of [`Client::unsubscribe`]
+        /// to determine which unsubscribe is being acknowledged.
+        pkt_id: u16,
+        /// UNSUBACK reason code.
+        ///
+        /// This should be checked to ensure the UNSUBSCRIBE was successful.
+        code: UnsubAckReasonCode,
+    },
     /// The connection has been accepted by the server.
     ///
     /// This is a good time to subscribe to topics.
@@ -322,6 +316,36 @@ fn map_write_all_err<E>(e: w5500_hl::Error<E>) -> Error<E> {
 
 /// length of the property length field
 const PROPERTY_LEN_LEN: u16 = 1;
+// length of the filter length field
+const FILTER_LEN_LEN: u16 = 2;
+
+// length of packet identifier field
+const PACKET_ID_LEN: u32 = 2;
+
+/// W5500 MQTT client.
+///
+/// # Topic Arguments
+///
+/// In the interest of minimal code size topic arguments are not validated,
+/// you must adhere to the topic rules yourself, see
+/// [Topic Names and Topic Filters].
+/// The MQTT server will disconnect if an invalid topic is used.
+///
+/// [Topic Names and Topic Filters]: https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901241
+#[derive(Debug)]
+#[cfg_attr(feature = "defmt", derive(defmt::Format))]
+pub struct Client<'a> {
+    sn: Sn,
+    port: u16,
+    server: SocketAddrV4,
+    client_id: Option<ClientId<'a>>,
+    /// MQTT client state
+    state: State,
+    /// Timeout for MQTT server responses
+    timeout: Option<u32>,
+    /// Packet ID for subscribing
+    pkt_id: u16,
+}
 
 impl<'a> Client<'a> {
     /// Create a new MQTT client.
@@ -464,6 +488,9 @@ impl<'a> Client<'a> {
     ///                 // this does not handle failed subscriptions
     ///                 log::info!("SubAck {:?}", code)
     ///             }
+    ///             Ok(Event::UnsubAck { pkt_id: _, code }) => {
+    ///                 log::info!("UnsubAck {:?}", code)
+    ///             }
     ///             Ok(Event::None) => break,
     ///             Err(e) => {
     ///                 log::error!("oh no, an error! {e:?}");
@@ -561,11 +588,6 @@ impl<'a> Client<'a> {
     /// If you are not connected and write data this function will return
     /// `Ok(())`, and the connection process will restart.
     ///
-    /// In the interest of minimal code size the topic is not validated,
-    /// you must adhere to the topic rules yourself, see
-    /// [Topic Names and Topic Filters].
-    /// The MQTT server will disconnect if an invalid topic is used.
-    ///
     /// # Examples
     ///
     /// ```no_run
@@ -592,7 +614,6 @@ impl<'a> Client<'a> {
     /// # Ok::<(), w5500_mqtt::Error<std::io::Error>>(())
     /// ```
     ///
-    /// [Topic Names and Topic Filters]: https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901241
     /// [`is_connected`]: Self::is_connected
     pub fn publish<W5500: Registers>(
         &mut self,
@@ -642,11 +663,6 @@ impl<'a> Client<'a> {
     /// If you are not connected and write data this function will return
     /// `Ok(())`, and the connection process will restart.
     ///
-    /// In the interest of minimal code size the topic is not validated,
-    /// you must adhere to the topic rules yourself, see
-    /// [Topic Names and Topic Filters].
-    /// The MQTT server will disconnect if an invalid topic is used.
-    ///
     /// # Return Value
     ///
     /// The return value is a `u16` packet identifier.
@@ -681,7 +697,6 @@ impl<'a> Client<'a> {
     /// # Ok::<(), w5500_mqtt::Error<std::io::Error>>(())
     /// ```
     ///
-    /// [Topic Names and Topic Filters]: https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901241
     /// [`is_connected`]: Self::is_connected
     pub fn subscribe<W5500: Registers>(
         &mut self,
@@ -691,14 +706,9 @@ impl<'a> Client<'a> {
         if filter.is_empty() {
             Ok(0)
         } else {
-            // length of the filter length field
-            const FILTER_LEN_LEN: u16 = 2;
             const SUBSCRIPTION_OPTIONS_LEN: u16 = 1;
 
             let filter_len: u16 = (filter.len() as u16) + FILTER_LEN_LEN + SUBSCRIPTION_OPTIONS_LEN;
-
-            // length of packet identifier field
-            const PACKET_ID_LEN: u32 = 2;
 
             let remaining_len: u32 =
                 PACKET_ID_LEN + u32::from(PROPERTY_LEN_LEN) + u32::from(filter_len);
@@ -737,6 +747,69 @@ impl<'a> Client<'a> {
             // 1 => no local option: do not send messages published by this client
             // 00 => QoS 0: at most once delivery
             writer.write_all(&[0b00100100]).map_err(map_write_all_err)?;
+
+            writer.send()?;
+
+            Ok(pkt_id)
+        }
+    }
+
+    /// Unsubscribe from a topic.
+    ///
+    /// You can only unsubscribe when the client [`is_connected`].
+    /// If you are not connected and write data this function will return
+    /// `Ok(())`, and the connection process will restart.
+    ///
+    /// # Return Value
+    ///
+    /// The return value is a `u16` packet identifier.
+    /// This can be compared to `Event::UnsubAck` to determine when the
+    /// subscription has been deleted.
+    ///
+    /// The packet identifier is zero (invalid) when `filter` is empty.
+    ///
+    /// [Topic Names and Topic Filters]: https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901241
+    /// [`is_connected`]: Self::is_connected
+    pub fn unsubscribe<W5500: Registers>(
+        &mut self,
+        w5500: &mut W5500,
+        filter: &str,
+    ) -> Result<u16, Error<W5500::Error>> {
+        if filter.is_empty() {
+            Ok(0)
+        } else {
+            let filter_len: u16 = (filter.len() as u16) + FILTER_LEN_LEN;
+
+            let remaining_len: u32 =
+                PACKET_ID_LEN + u32::from(PROPERTY_LEN_LEN) + u32::from(filter_len);
+
+            let mut writer: TcpWriter<W5500> = w5500.tcp_writer(self.sn)?;
+            writer
+                .write_all(&[(CtrlPkt::UNSUBSCRIBE as u8) << 4 | 0b0010])
+                .map_err(map_write_all_err)?;
+            write_variable_byte_integer(&mut writer, remaining_len)?;
+            let pkt_id: u16 = self.next_pkt_id();
+            writer
+                .write_all(&[
+                    // packet identifier
+                    (pkt_id >> 8) as u8,
+                    pkt_id as u8,
+                    // property length
+                    0,
+                ])
+                .map_err(map_write_all_err)?;
+
+            writer
+                .write_all(
+                    u16::try_from(filter.len())
+                        .unwrap_or(u16::MAX)
+                        .to_be_bytes()
+                        .as_ref(),
+                )
+                .map_err(map_write_all_err)?;
+            writer
+                .write_all(filter.as_bytes())
+                .map_err(map_write_all_err)?;
 
             writer.send()?;
 
@@ -904,6 +977,40 @@ impl<'a> Client<'a> {
 
                 reader.done()?;
                 Ok(Some(Event::SubAck { pkt_id, code }))
+            }
+            CtrlPkt::UNSUBACK => {
+                let mut buf: [u8; 3] = [0; 3];
+                let n: u16 = reader.read(&mut buf)?;
+                if n != 3 {
+                    return Err(Error::Decode);
+                }
+
+                let (pkt_id, property_len): (&[u8], &[u8]) = buf.split_at(2);
+                let pkt_id: u16 = u16::from_be_bytes(pkt_id.try_into().unwrap());
+                let property_len: u8 = property_len[0];
+
+                if property_len != 0 {
+                    warn!("ignoring UNSUBACK properties");
+                    reader
+                        .seek(SeekFrom::Current(property_len.into()))
+                        .map_err(map_read_exact_err)?;
+                }
+
+                let mut payload: [u8; 1] = [0];
+                reader
+                    .read_exact(&mut payload)
+                    .map_err(map_read_exact_err)?;
+                let code: UnsubAckReasonCode = match UnsubAckReasonCode::try_from(payload[0]) {
+                    Ok(code) => code,
+                    Err(e) => {
+                        error!("invalid UNSUBACK reason code value: {}", e);
+                        self.set_state(State::Init);
+                        return Err(Error::Protocol);
+                    }
+                };
+
+                reader.done()?;
+                Ok(Some(Event::UnsubAck { pkt_id, code }))
             }
             CtrlPkt::PUBLISH => {
                 const TOPIC_LEN_LEN: u16 = 2;

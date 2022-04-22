@@ -1,14 +1,13 @@
 # w5500-mqtt
 
-MQTT v5 client implementation for use with the W5500.
+MQTT v5 client for the [Wiznet W5500] SPI internet offload chip.
 
 ## Limitations
 
 This is very basic at the moment, and will be expanded in the future.
 
-* Does not support password protected MQTT servers.
 * Does not support TLS.
-* Does not support unsubscribing.
+* Does not support password protected MQTT servers.
 * Only supports QoS 0: At most once delivery.
 
 ## Example
@@ -52,5 +51,4 @@ All features are disabled by default.
 * `log`: Enable logging with `log`.
 
 [w5500-hl]: https://crates.io/crates/w5500-hl
-[`std::net`]: https://doc.rust-lang.org/std/net/index.html
 [Wiznet W5500]: https://www.wiznet.io/product-item/w5500/

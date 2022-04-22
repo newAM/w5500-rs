@@ -2,8 +2,11 @@
 
 mod fixture;
 use fixture::Fixture;
-use mqttbytes::{v5::Publish, QoS};
-use w5500_mqtt::Event;
+use mqttbytes::{
+    v5::{Packet, Publish, UnsubAck, UnsubAckReason, Unsubscribe},
+    QoS,
+};
+use w5500_mqtt::{Event, UnsubAckReasonCode};
 
 #[test]
 fn subscribe() {
@@ -59,4 +62,38 @@ fn subscribe_fragment() {
         fixture.server.write_all(&b);
         fixture.client_expect_publish(TOPIC, b"fragment");
     }
+}
+
+#[test]
+fn unsubscribe() {
+    let mut fixture = Fixture::new(12350);
+    fixture.connect();
+
+    fixture.client.unsubscribe(&mut fixture.w5500, "#").unwrap();
+    fixture.server_expect(Packet::Unsubscribe(Unsubscribe {
+        pkid: 2,
+        filters: vec!["#".to_string()],
+        properties: None,
+    }));
+
+    let unsuback: UnsubAck = UnsubAck {
+        pkid: 2,
+        reasons: vec![UnsubAckReason::Success],
+        properties: None,
+    };
+    let mut buf = bytes::BytesMut::new();
+    unsuback.write(&mut buf).unwrap();
+    fixture.server.write_all(&mut buf);
+
+    let result = fixture.client_process();
+    assert!(
+        matches!(
+            result,
+            Ok(Event::UnsubAck {
+                pkt_id: 2,
+                code: UnsubAckReasonCode::Success
+            })
+        ),
+        "Unexpected result: {result:?}"
+    );
 }

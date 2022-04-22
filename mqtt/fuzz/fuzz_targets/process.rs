@@ -22,7 +22,7 @@ fuzz_target!(|fuzz: &[u8]| {
                 let _ = reader.read_topic(&mut buf);
                 let _ = reader.read_payload(&mut buf);
             }
-            Ok(Event::SubAck { .. } | Event::ConnAck) => (),
+            Ok(Event::SubAck { .. } | Event::UnsubAck { .. } | Event::ConnAck) => (),
             Ok(Event::CallAfter(secs)) => mono += secs.saturating_sub(1),
             Err(_) => break,
         }
