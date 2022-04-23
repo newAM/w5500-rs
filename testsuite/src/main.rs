@@ -9,12 +9,15 @@ use std::{
 };
 use w5500_dhcp::{Client as DhcpClient, Hostname};
 use w5500_dns::Client as DnsClient;
+use w5500_hl::Tcp;
 use w5500_ll::{
     blocking::vdm::W5500,
     net::{Eui48Addr, Ipv4Addr, SocketAddrV4},
     reset, Registers, Sn, VERSION,
 };
-use w5500_mqtt::{Client as MqttClient, ClientId, Event, SRC_PORT as MQTT_SRC_PORT};
+use w5500_mqtt::{
+    Client as MqttClient, ClientId, Error as MqttError, Event, SRC_PORT as MQTT_SRC_PORT,
+};
 
 // change this for your network
 const MQTT_SERVER: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::new(10, 0, 0, 4), 1883);
@@ -70,12 +73,14 @@ struct TestArgs<'a> {
     w5500: &'a mut W5500<Spi<'a, Ft232h>, OutputPin<'a, Ft232h>>,
     mono: &'a Monotonic,
     dns: Option<Ipv4Addr>,
+    mqtt_client: MqttClient<'static>,
 }
 
 #[allow(clippy::type_complexity)]
-const TESTS: [(fn(&mut TestArgs), &str); 3] = [
+const TESTS: [(fn(&mut TestArgs), &str); 4] = [
     (dhcp_bind, "dhcp_bind"),
     (mqtt_connect, "mqtt_connect"),
+    (mqtt_disconnect, "mqtt_disconnect"),
     (dns_query, "dns_query"),
 ];
 
@@ -109,11 +114,10 @@ fn dhcp_bind(ta: &mut TestArgs) {
 
 fn mqtt_connect(ta: &mut TestArgs) {
     log::info!("Connecting to MQTT server at {MQTT_SERVER}");
-    let mut mqtt_client: MqttClient = MqttClient::new(MQTT_SN, MQTT_SRC_PORT, MQTT_SERVER);
-    mqtt_client.set_client_id(CLIENT_ID);
+    ta.mqtt_client.set_client_id(CLIENT_ID);
     let start: Instant = Instant::now();
     while !matches!(
-        mqtt_client
+        ta.mqtt_client
             .process(ta.w5500, ta.mono.monotonic_secs())
             .unwrap(),
         Event::None
@@ -121,6 +125,29 @@ fn mqtt_connect(ta: &mut TestArgs) {
         let elapsed = Instant::now().duration_since(start);
         if elapsed > Duration::from_secs(3) {
             panic!("DHCP failed to bind in {elapsed:?}");
+        }
+    }
+}
+
+fn mqtt_disconnect(ta: &mut TestArgs) {
+    log::info!("forcing MQTT server to disconnect");
+    const GARBAGE: [u8; 6] = [0xFF; 6];
+    let n: u16 = ta.w5500.tcp_write(MQTT_SN, &GARBAGE).unwrap();
+    assert_eq!(usize::from(n), GARBAGE.len());
+
+    let start: Instant = Instant::now();
+    loop {
+        let event = ta.mqtt_client.process(ta.w5500, ta.mono.monotonic_secs());
+
+        match event {
+            Err(MqttError::Disconnect) => break,
+            Ok(Event::None) => (),
+            _ => panic!("unexpected event {event:?}"),
+        }
+
+        let elapsed = Instant::now().duration_since(start);
+        if elapsed > Duration::from_secs(3) {
+            panic!("MQTT failed to disconnect in {elapsed:?}");
         }
     }
 }
@@ -177,6 +204,7 @@ fn main() {
         w5500: &mut w5500,
         mono: &mono,
         dns: None,
+        mqtt_client: MqttClient::new(MQTT_SN, MQTT_SRC_PORT, MQTT_SERVER),
     };
 
     for (idx, (f, name)) in TESTS.iter().enumerate() {
