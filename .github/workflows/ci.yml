@@ -126,29 +126,6 @@ jobs:
           cd ../sntp
           cargo +nightly rustdoc --all-features
 
-  hl-testsuite:
-    name: testsuite
-    runs-on: ubuntu-latest
-    env: {"RUSTFLAGS": "-D warnings"}
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          target: thumbv6m-none-eabi
-      - run: cargo test -p testsuite --target thumbv6m-none-eabi --no-run
-
-  hl-testsuite-peer:
-    name: testsuite-peer
-    runs-on: ubuntu-latest
-    env: {"RUSTFLAGS": "-D warnings"}
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-      - run: cargo build -p testsuite-peer
-
   release-ll:
     name: w5500-ll crates.io release
     if: startsWith(github.ref, 'refs/tags/ll/v')
@@ -182,8 +159,6 @@ jobs:
       - clippy
       - format
       - rustdoc
-      - hl-testsuite
-      - hl-testsuite-peer
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3

@@ -3,8 +3,14 @@ use dhcproto::v4::{
     OptionCode,
 };
 use std::{net::UdpSocket, time::Instant};
-use w5500_dhcp::{ll::Sn, Client, Hostname};
-use w5500_hl::net::{Eui48Addr, Ipv4Addr};
+use w5500_dhcp::{
+    ll::{
+        net::{Eui48Addr, Ipv4Addr},
+        Sn,
+    },
+    Client, Hostname,
+};
+use w5500_hl::net::SocketAddrV4;
 use w5500_regsim::{Registers, W5500};
 
 struct Server {
@@ -89,6 +95,8 @@ fn end_to_end() {
         .set_sipr(&Ipv4Addr::LOCALHOST)
         .expect("Failed to set source IP");
     let mut dhcp: Client = Client::new(DHCP_SN, SEED, MAC, HOSTNAME);
+    dhcp.set_broadcast_addr(SocketAddrV4::new(Ipv4Addr::LOCALHOST, 2050));
+    dhcp.set_src_port(2051);
     dhcp.setup_socket(&mut w5500).unwrap();
 
     const DHCP_SN: Sn = Sn::Sn0;
