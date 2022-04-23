@@ -29,6 +29,7 @@ mod pkt;
 mod rand;
 
 use hl::{
+    io::Seek,
     ll::{
         net::{Eui48Addr, Ipv4Addr},
         LinkStatus, PhyCfg, Registers, Sn, SocketInterrupt, SocketInterruptMask,
@@ -57,15 +58,20 @@ const LINK_UP_TIMEOUT_SECS: u32 = 1;
 /// DHCP client states.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
-#[allow(dead_code)]
-enum State {
+#[non_exhaustive] // may support rebooting and ini-reboot in the future
+#[doc(hidden)]
+pub enum State {
+    /// Initialization state, client sends DHCPDISCOVER.
     Init,
+    /// Client waits for DHCPOFFER.
     Selecting,
+    /// Client sends for DHCPREQUEST.
     Requesting,
-    InitReboot,
-    Rebooting,
+    /// Client has a valid lease.
     Bound,
+    /// T1 expires, client sends DHCPREQUEST to renew.
     Renewing,
+    /// T2 expires, client sends DHCPREQUEST to rebind.
     Rebinding,
 }
 
@@ -188,7 +194,7 @@ impl<'a> Client<'a> {
         }
     }
 
-    /// Returns `true` if the DHCP client is bound.
+    /// Returns `true` if the DHCP client has a valid lease.
     ///
     /// # Example
     ///
@@ -207,11 +213,14 @@ impl<'a> Client<'a> {
     ///     Eui48Addr::new(0x02, 0x00, 0x11, 0x22, 0x33, 0x44),
     ///     HOSTNAME,
     /// );
-    /// assert_eq!(dhcp.is_bound(), false);
+    /// assert_eq!(dhcp.has_lease(), false);
     /// ```
     #[inline]
-    pub fn is_bound(&self) -> bool {
-        self.state == State::Bound
+    pub fn has_lease(&self) -> bool {
+        matches!(
+            self.state,
+            State::Bound | State::Rebinding | State::Renewing
+        )
     }
 
     /// Setup the DHCP socket interrupts.
@@ -343,6 +352,17 @@ impl<'a> Client<'a> {
                 reader.header().origin
             );
 
+            let stream_len: u16 = reader.stream_len();
+            let header_len: u16 = reader.header().len;
+            if header_len > stream_len {
+                // this is often recoverable
+                warn!(
+                    "packet may be truncated header={} > stream={}",
+                    header_len, stream_len
+                );
+                return Ok(None);
+            }
+
             let mut pkt: PktDe<W5500> = PktDe::from(reader);
             if pkt.is_bootreply()? {
                 debug!("packet is not a bootreply");
@@ -358,6 +378,7 @@ impl<'a> Client<'a> {
         }
 
         while let Some(mut pkt) = recv(w5500, self.sn, self.xid)? {
+            debug!("{:?}", self.state);
             match self.state {
                 State::Selecting => {
                     self.ip = pkt.yiaddr()?;
@@ -406,43 +427,45 @@ impl<'a> Client<'a> {
 
                             pkt.done()?;
 
-                            // renewal does not start a new lease
-                            if self.state != State::Renewing {
-                                let subnet_mask: Ipv4Addr = match subnet_mask {
-                                    Some(subnet_mask) => subnet_mask,
-                                    None => {
-                                        error!("subnet_mask option missing");
-                                        return Ok(self.next_call(monotonic_secs));
-                                    }
-                                };
-                                info!("subnet_mask: {}", subnet_mask);
-                                let gateway = match gateway {
-                                    Some(gateway) => gateway,
-                                    None => {
-                                        error!("gateway option missing");
-                                        return Ok(self.next_call(monotonic_secs));
-                                    }
-                                };
-                                info!("gateway: {}", gateway);
-                                info!("dhcp.ip: {}", self.ip);
+                            match subnet_mask {
+                                Some(subnet_mask) => {
+                                    info!("subnet_mask: {}", subnet_mask);
+                                    w5500.set_subr(&subnet_mask)?;
+                                }
+                                None if self.state == State::Renewing => (),
+                                None => {
+                                    error!("subnet_mask option missing");
+                                    return Ok(self.next_call(monotonic_secs));
+                                }
+                            };
 
-                                if let Some(dns) = dns {
-                                    info!("DNS: {}", dns);
-                                    self.dns.replace(dns);
-                                };
-                                if let Some(ntp) = ntp {
-                                    info!("NTP: {}", ntp);
-                                    self.ntp.replace(ntp);
-                                };
-
-                                w5500.set_subr(&subnet_mask)?;
-                                w5500.set_gar(&gateway)?;
-                            }
+                            match gateway {
+                                Some(gateway) => {
+                                    info!("gateway: {}", gateway);
+                                    w5500.set_gar(&gateway)?;
+                                }
+                                None if self.state == State::Renewing => (),
+                                None => {
+                                    error!("gateway option missing");
+                                    return Ok(self.next_call(monotonic_secs));
+                                }
+                            };
 
                             // rebinding and renewal do not need to set a new IP
                             if self.state == State::Requesting {
+                                info!("dhcp.ip: {}", self.ip);
                                 w5500.set_sipr(&self.ip)?;
                             }
+
+                            if let Some(dns) = dns {
+                                info!("DNS: {}", dns);
+                                self.dns.replace(dns);
+                            };
+
+                            if let Some(ntp) = ntp {
+                                info!("NTP: {}", ntp);
+                                self.ntp.replace(ntp);
+                            };
 
                             self.set_state(State::Bound);
                         }
@@ -477,33 +500,29 @@ impl<'a> Client<'a> {
                 self.discover(w5500, monotonic_secs)?;
             }
         } else {
-            let elapsed: u32 = monotonic_secs.wrapping_sub(self.lease_monotonic_secs);
-            info!("elapsed={}", elapsed);
-            info!("self.t2={}", self.t2);
             match self.state {
                 State::Init => self.discover(w5500, monotonic_secs)?,
                 // states handled by IRQs and timeouts
                 State::Selecting | State::Requesting => (),
-                // states we do not care about (yet)
-                State::InitReboot | State::Rebooting => (),
-                State::Bound if elapsed > self.t1 => {
-                    info!("t1 expired");
-                    self.request(w5500)?;
-                    // no need for timeout, t2 expiration will handle failures
-                    self.set_state(State::Renewing);
+                State::Bound | State::Renewing | State::Rebinding => {
+                    let elapsed: u32 = monotonic_secs.wrapping_sub(self.lease_monotonic_secs);
+                    if elapsed > self.lease {
+                        info!("lease expired");
+                        self.discover(w5500, monotonic_secs)?;
+                    } else if elapsed > self.t2
+                        && matches!(self.state, State::Bound | State::Renewing)
+                    {
+                        info!("t2 expired");
+                        self.request(w5500)?;
+                        // no need for timeout, lease expiration will handle failures
+                        self.set_state(State::Rebinding);
+                    } else if elapsed > self.t1 && matches!(self.state, State::Bound) {
+                        info!("t1 expired");
+                        self.request(w5500)?;
+                        // no need for timeout, t2 expiration will handle failures
+                        self.set_state(State::Renewing);
+                    }
                 }
-                State::Renewing if elapsed > self.t2 => {
-                    info!("t2 expired");
-                    self.request(w5500)?;
-                    // no need for timeout, lease expiration will handle failures
-                    self.set_state(State::Rebinding);
-                }
-                State::Rebinding if elapsed > self.lease => {
-                    info!("lease expired");
-                    self.discover(w5500, monotonic_secs)?;
-                }
-                // timers have not expired
-                State::Bound | State::Renewing | State::Rebinding => (),
             }
         }
 
@@ -547,6 +566,7 @@ impl<'a> Client<'a> {
     /// This is an interface for testing, typically the default is what you
     /// want to use.
     #[inline]
+    #[doc(hidden)]
     pub fn set_src_port(&mut self, port: u16) {
         self.src_port = port
     }
@@ -557,7 +577,60 @@ impl<'a> Client<'a> {
     /// This is an interface for testing, typically the default is what you
     /// want to use.
     #[inline]
+    #[doc(hidden)]
     pub fn set_broadcast_addr(&mut self, addr: SocketAddrV4) {
         self.broadcast_addr = addr;
+    }
+
+    /// DHCP client state.
+    #[inline]
+    #[doc(hidden)]
+    pub fn state(&self) -> State {
+        self.state
+    }
+
+    /// T1 time.
+    ///
+    /// This should be used only as a debug interface, and not to set timers.
+    /// DHCP timers are tracked internally by [`process`](Self::process).
+    ///
+    /// Returns `None` if the DHCP client does not have a valid lease.
+    #[inline]
+    #[doc(hidden)]
+    pub fn t1(&self) -> Option<u32> {
+        match self.state {
+            State::Init | State::Selecting | State::Requesting => None,
+            State::Bound | State::Renewing | State::Rebinding => Some(self.t1),
+        }
+    }
+
+    /// T2 time.
+    ///
+    /// This should be used only as a debug interface, and not to set timers.
+    /// DHCP timers are tracked internally by [`process`](Self::process).
+    ///
+    /// Returns `None` if the DHCP client does not have a valid lease.
+    #[inline]
+    #[doc(hidden)]
+    pub fn t2(&self) -> Option<u32> {
+        match self.state {
+            State::Init | State::Selecting | State::Requesting => None,
+            State::Bound | State::Renewing | State::Rebinding => Some(self.t2),
+        }
+    }
+
+    /// Lease time.
+    ///
+    /// This should be used only as a debug interface, and not to set timers.
+    /// DHCP timers are tracked internally by [`process`](Self::process).
+    ///
+    /// Returns `None` if the DHCP client does not have a valid lease.
+    #[inline]
+    #[doc(hidden)]
+    pub fn lease_time(&self) -> Option<u32> {
+        match self.state {
+            State::Init | State::Selecting | State::Requesting => None,
+            State::Bound | State::Renewing | State::Rebinding => Some(self.lease),
+        }
     }
 }
