@@ -23,6 +23,7 @@ jobs:
           target: x86_64-unknown-linux-gnu
       - run: cargo build
       - run: cargo build --all-features
+      - run: cargo build -p testsuite
 
   build_no_std:
     name: Build no_std

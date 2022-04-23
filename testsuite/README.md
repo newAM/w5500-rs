@@ -25,6 +25,8 @@ Make the following connections.
 
 Connect the FT232H to USB, and the W5500 to Ethernet.
 
+![testsuite-hardware](./testsuite-hardware.jpg)
+
 ## Running
 
 ```console
