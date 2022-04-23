@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Added a small cache for DHCP options to reduce redundant socket IO.
+- Added `set_src_port` to set the source port for testing.
+- Added `set_broadcast_addr` to set the broadcast address for testing.
 
 ### Changed
 - Decreased link-up polling interval from 2 seconds to 1 second.
