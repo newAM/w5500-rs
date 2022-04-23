@@ -95,15 +95,21 @@ struct TestArgs<'a> {
     mqtt_client: MqttClient<'static>,
 }
 
+macro_rules! test {
+    ($func:ident) => {
+        ($func, stringify!($func))
+    };
+}
+
 #[allow(clippy::type_complexity)]
 const TESTS: [(fn(&mut TestArgs), &str); 7] = [
-    (dhcp_bind, "dhcp_bind"),
-    (dhcp_renew, "dhcp_renew"),
-    (dhcp_rebind, "dhcp_rebind"),
-    (dhcp_lease_expire, "dhcp_lease_expire"),
-    (mqtt_connect, "mqtt_connect"),
-    (mqtt_disconnect, "mqtt_disconnect"),
-    (dns_query, "dns_query"),
+    test!(dhcp_bind),
+    test!(dhcp_renew),
+    test!(dhcp_rebind),
+    test!(dhcp_lease_expire),
+    test!(mqtt_connect),
+    test!(mqtt_disconnect),
+    test!(dns_query),
 ];
 
 fn dhcp_bind(ta: &mut TestArgs) {
