@@ -7,14 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Added a small cache for DHCP options to reduce redundant socket IO.
-- Added `Client.set_src_port` to set the source port for testing.
-- Added `Client.set_broadcast_addr` to set the broadcast address for testing.
-- Added `Client.state` to get the DHCP client state.
 - Added support for renewing and rebinding an existing lease.
 
 ### Changed
 - Decreased link-up polling interval from 2 seconds to 1 second.
-- Renamed `Client.is_bound` to `Client.has_lease`.
+
+### Removed
+- Removed `Client.is_bound`, use `Client.has_lease` instead.
 
 ## [0.3.0] - 2022-04-10
 ### Added
