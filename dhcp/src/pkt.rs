@@ -1,7 +1,7 @@
 use w5500_hl::{
     io::{Read, Seek, SeekFrom, Write},
     ll::{Registers, Sn},
-    net::{Eui48Addr, Ipv4Addr},
+    net::{Eui48Addr, Ipv4Addr, SocketAddrV4},
     Error, Hostname, Udp, UdpReader, UdpWriter,
 };
 
@@ -353,11 +353,12 @@ pub fn send_dhcp_discover<W: Registers>(
     mac: &Eui48Addr,
     hostname: Hostname,
     xid: u32,
+    broadcast_addr: &SocketAddrV4,
 ) -> Result<(), Error<W::Error>> {
     let writer: UdpWriter<W> = w5500.udp_writer(sn)?;
     PktSer::from(writer)
         .dhcp_discover(mac, hostname, xid)?
-        .udp_send_to(&crate::DHCP_BROADCAST)?;
+        .udp_send_to(broadcast_addr)?;
     Ok(())
 }
 

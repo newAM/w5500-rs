@@ -37,9 +37,10 @@ mod rand;
 
 use hl::{
     ll::{
-        net::{Eui48Addr, Ipv4Addr, SocketAddrV4},
+        net::{Eui48Addr, Ipv4Addr},
         LinkStatus, PhyCfg, Registers, Sn, SocketInterrupt, SocketInterruptMask,
     },
+    net::SocketAddrV4,
     Common, Error, Udp, UdpReader,
 };
 pub use w5500_hl as hl;
@@ -49,27 +50,10 @@ use pkt::{send_dhcp_discover, send_dhcp_request, MsgType, PktDe};
 pub use w5500_hl::Hostname;
 
 /// DHCP destination port.
-#[cfg(target_os = "none")]
 pub const DST_PORT: u16 = 67;
-/// DHCP destination port for testing on `std` targets.
-///
-/// When compiled for targets with `cfg(target_os = "none")` this is port 67.
-#[cfg(not(target_os = "none"))]
-pub const DST_PORT: u16 = 2050;
 
 /// DHCP source port.
-#[cfg(target_os = "none")]
 pub const SRC_PORT: u16 = 68;
-/// DHCP source port for testing on `std` targets.
-///
-/// When compiled for targets with `cfg(target_os = "none")` this is port 68.
-#[cfg(not(target_os = "none"))]
-pub const SRC_PORT: u16 = 2051;
-
-#[cfg(target_os = "none")]
-const DHCP_BROADCAST: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::BROADCAST, DST_PORT);
-#[cfg(not(target_os = "none"))]
-const DHCP_BROADCAST: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::LOCALHOST, DST_PORT);
 
 /// Duration in seconds to wait for the DHCP server to send a response.
 const TIMEOUT_SECS: u32 = 10;
@@ -159,6 +143,10 @@ pub struct Client<'a> {
     dns: Option<Ipv4Addr>,
     /// (S)NTP server
     ntp: Option<Ipv4Addr>,
+    /// Broadcast address
+    broadcast_addr: SocketAddrV4,
+    /// Source Port
+    src_port: u16,
 }
 
 impl<'a> Client<'a> {
@@ -202,6 +190,8 @@ impl<'a> Client<'a> {
             hostname,
             dns: None,
             ntp: None,
+            broadcast_addr: SocketAddrV4::new(Ipv4Addr::BROADCAST, DST_PORT),
+            src_port: SRC_PORT,
         }
     }
 
@@ -244,7 +234,7 @@ impl<'a> Client<'a> {
         w5500.set_sn_imr(self.sn, MASK)?;
         w5500.close(self.sn)?;
         w5500.set_sipr(&self.ip)?;
-        w5500.udp_bind(self.sn, SRC_PORT)
+        w5500.udp_bind(self.sn, self.src_port)
     }
 
     fn timeout_elapsed_secs(&self, monotonic_secs: u32) -> Option<u32> {
@@ -496,9 +486,16 @@ impl<'a> Client<'a> {
         debug!("sending DHCPDISCOVER xid={:08X}", self.xid);
 
         w5500.set_sipr(&self.ip)?;
-        w5500.udp_bind(self.sn, SRC_PORT)?;
+        w5500.udp_bind(self.sn, self.src_port)?;
 
-        send_dhcp_discover(w5500, self.sn, &self.mac, self.hostname, self.xid)?;
+        send_dhcp_discover(
+            w5500,
+            self.sn,
+            &self.mac,
+            self.hostname,
+            self.xid,
+            &self.broadcast_addr,
+        )?;
         self.state = State::Selecting;
         self.timeout = Some(monotonic_secs);
         Ok(())
@@ -517,5 +514,25 @@ impl<'a> Client<'a> {
         self.state = State::Requesting;
         self.timeout = Some(monotonic_secs);
         Ok(())
+    }
+
+    /// Set the DHCP source port.
+    ///
+    /// Defaults to [`SRC_PORT`].
+    /// This is an interface for testing, typically the default is what you
+    /// want to use.
+    #[inline]
+    pub fn set_src_port(&mut self, port: u16) {
+        self.src_port = port
+    }
+
+    /// Set the client broadcast address.
+    ///
+    /// Defaults to [`Ipv4Addr::BROADCAST`]:[`DST_PORT`].
+    /// This is an interface for testing, typically the default is what you
+    /// want to use.
+    #[inline]
+    pub fn set_broadcast_addr(&mut self, addr: SocketAddrV4) {
+        self.broadcast_addr = addr;
     }
 }

@@ -5,13 +5,11 @@ members = [
     "dns",
     "fuzz",
     "hl",
-    "hl/testsuite-assets",
-    "hl/testsuite-peer",
-    "hl/testsuite",
     "ll",
     "mqtt",
     "regsim",
     "sntp",
+    "testsuite",
 ]
 default-members = [
     "dhcp",
