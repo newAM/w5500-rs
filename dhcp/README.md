@@ -5,14 +5,7 @@ DHCP client for the [Wiznet W5500] SPI internet offload chip.
 ## Warning
 
 Please review the code before use in a production environment.
-
-The code has only been tested with a single DHCP server, and has not gone
-through any fuzzing.
-
-### Limitations
-
-* No support for rebinding
-* No support for renewing
+This code has been tested, but only with a single DHCP server.
 
 ## Feature Flags
 

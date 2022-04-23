@@ -42,9 +42,11 @@ impl Server {
 
 impl Default for Server {
     fn default() -> Self {
-        Self {
-            socket: UdpSocket::bind("127.0.0.1:2050").expect("Unable to bind UDP socket"),
-        }
+        let socket = UdpSocket::bind("127.0.0.1:2050").expect("Unable to bind UDP socket");
+        socket
+            .set_nonblocking(true)
+            .expect("failed to set socket to non-blocking");
+        Self { socket }
     }
 }
 
@@ -70,6 +72,70 @@ impl Monotonic {
     }
 }
 
+const HOSTNAME_STR: &str = "TESTING";
+const HOSTNAME: Hostname = Hostname::new_unwrapped(HOSTNAME_STR);
+const MAC: Eui48Addr = Eui48Addr::new(0x02, 0x34, 0x56, 0x78, 0xAB, 0xDE);
+const YIADDR: [u8; 4] = [1, 2, 3, 4];
+const SUBNET_MASK: [u8; 4] = [12, 34, 56, 78];
+const ROUTER: [u8; 4] = [11, 12, 13, 14];
+const DNS_1: [u8; 4] = [21, 22, 23, 24];
+const DNS_2: [u8; 4] = [12, 22, 32, 42];
+const NTP: [u8; 4] = [31, 32, 33, 34];
+
+fn check_recv_request(msg: &Message, xid: u32, mac_with_hardware_type: Vec<u8>) {
+    assert_eq!(msg.opcode(), Opcode::BootRequest);
+    assert_eq!(msg.htype(), HType::Eth);
+    assert_eq!(msg.hlen(), 6);
+    assert_eq!(msg.hops(), 0);
+    assert_eq!(msg.xid(), xid);
+    assert_eq!(msg.secs(), 0);
+    assert_eq!(msg.flags().broadcast(), true);
+    assert_eq!(msg.ciaddr(), std::net::Ipv4Addr::UNSPECIFIED);
+    assert_eq!(msg.yiaddr(), std::net::Ipv4Addr::UNSPECIFIED);
+    assert_eq!(msg.siaddr(), std::net::Ipv4Addr::UNSPECIFIED);
+    assert_eq!(msg.giaddr(), std::net::Ipv4Addr::UNSPECIFIED);
+    assert_eq!(msg.chaddr()[..6], MAC.octets);
+    assert!(msg.sname().is_none());
+    assert!(msg.fname().is_none());
+    assert_eq!(
+        msg.opts()
+            .get(OptionCode::MessageType)
+            .expect("MessageType is missing"),
+        &DhcpOption::MessageType(MessageType::Request)
+    );
+    assert_eq!(
+        msg.opts()
+            .get(OptionCode::ClientIdentifier)
+            .expect("ClientIdentifier is missing"),
+        &DhcpOption::ClientIdentifier(mac_with_hardware_type)
+    );
+    assert_eq!(
+        msg.opts()
+            .get(OptionCode::Hostname)
+            .expect("Hostname is missing"),
+        &DhcpOption::Hostname(HOSTNAME_STR.to_string())
+    );
+    assert_eq!(
+        msg.opts()
+            .get(OptionCode::ParameterRequestList)
+            .expect("ParameterRequestList is missing"),
+        &DhcpOption::ParameterRequestList(vec![
+            OptionCode::SubnetMask,
+            OptionCode::Router,
+            OptionCode::DomainNameServer,
+            OptionCode::Renewal,
+            OptionCode::Rebinding,
+            OptionCode::NTPServers,
+        ])
+    );
+    assert_eq!(
+        msg.opts()
+            .get(OptionCode::RequestedIpAddress)
+            .expect("RequestedIpAddress is missing"),
+        &DhcpOption::RequestedIpAddress(std::net::Ipv4Addr::from(YIADDR))
+    );
+}
+
 #[test]
 fn end_to_end() {
     stderrlog::new()
@@ -78,11 +144,9 @@ fn end_to_end() {
         .init()
         .unwrap();
 
-    const SEED: u64 = 0x1234; // normally random, but we want a deterministic XID
-    const MAC: Eui48Addr = Eui48Addr::new(0x02, 0x34, 0x56, 0x78, 0xAB, 0xDE);
-    // safety: hostname is valid
-    const HOSTNAME_STR: &str = "TESTING";
-    const HOSTNAME: Hostname = Hostname::new_unwrapped(HOSTNAME_STR);
+    // normally random, but we want a deterministic XID for testing
+    const SEED: u64 = 0x1234;
+
     let mac_with_hardware_type: Vec<u8> = {
         let mut buf: Vec<u8> = Vec::with_capacity(16);
         buf.push(0x01);
@@ -143,8 +207,6 @@ fn end_to_end() {
         &DhcpOption::Hostname(HOSTNAME_STR.to_string())
     );
 
-    const YIADDR: [u8; 4] = [1, 2, 3, 4];
-
     let mut offer: Message = Message::default();
     offer
         .set_opcode(Opcode::BootReply)
@@ -163,64 +225,7 @@ fn end_to_end() {
     assert_eq!(next_call, 11);
 
     let msg: Message = server.recv();
-
-    assert_eq!(msg.opcode(), Opcode::BootRequest);
-    assert_eq!(msg.htype(), HType::Eth);
-    assert_eq!(msg.hlen(), 6);
-    assert_eq!(msg.hops(), 0);
-    assert_eq!(msg.xid(), 0x6b97902c);
-    assert_eq!(msg.secs(), 0);
-    assert_eq!(msg.flags().broadcast(), true);
-    assert_eq!(msg.ciaddr(), std::net::Ipv4Addr::UNSPECIFIED);
-    assert_eq!(msg.yiaddr(), std::net::Ipv4Addr::UNSPECIFIED);
-    assert_eq!(msg.siaddr(), std::net::Ipv4Addr::UNSPECIFIED);
-    assert_eq!(msg.giaddr(), std::net::Ipv4Addr::UNSPECIFIED);
-    assert_eq!(msg.chaddr()[..6], MAC.octets);
-    assert!(msg.sname().is_none());
-    assert!(msg.fname().is_none());
-    assert_eq!(
-        msg.opts()
-            .get(OptionCode::MessageType)
-            .expect("MessageType is missing"),
-        &DhcpOption::MessageType(MessageType::Request)
-    );
-    assert_eq!(
-        msg.opts()
-            .get(OptionCode::ClientIdentifier)
-            .expect("ClientIdentifier is missing"),
-        &DhcpOption::ClientIdentifier(mac_with_hardware_type)
-    );
-    assert_eq!(
-        msg.opts()
-            .get(OptionCode::Hostname)
-            .expect("Hostname is missing"),
-        &DhcpOption::Hostname(HOSTNAME_STR.to_string())
-    );
-    assert_eq!(
-        msg.opts()
-            .get(OptionCode::ParameterRequestList)
-            .expect("ParameterRequestList is missing"),
-        &DhcpOption::ParameterRequestList(vec![
-            OptionCode::SubnetMask,
-            OptionCode::Router,
-            OptionCode::DomainNameServer,
-            OptionCode::Renewal,
-            OptionCode::Rebinding,
-            OptionCode::NTPServers,
-        ])
-    );
-    assert_eq!(
-        msg.opts()
-            .get(OptionCode::RequestedIpAddress)
-            .expect("RequestedIpAddress is missing"),
-        &DhcpOption::RequestedIpAddress(std::net::Ipv4Addr::from(YIADDR))
-    );
-
-    const SUBNET_MASK: [u8; 4] = [12, 34, 56, 78];
-    const ROUTER: [u8; 4] = [11, 12, 13, 14];
-    const DNS_1: [u8; 4] = [21, 22, 23, 24];
-    const DNS_2: [u8; 4] = [12, 22, 32, 42];
-    const NTP: [u8; 4] = [31, 32, 33, 34];
+    check_recv_request(&msg, 0x6b97902c, mac_with_hardware_type.clone());
 
     let mut offer: Message = Message::default();
     offer
@@ -254,24 +259,57 @@ fn end_to_end() {
     offer
         .opts_mut()
         .insert(DhcpOption::NTPServers(vec![NTP.into()]));
-    const LEASE_TIME: u32 = 444;
+    const LEASE_TIME: u32 = 666;
+    const T2: u32 = 555;
+    const T1: u32 = 444;
     offer
         .opts_mut()
         .insert(DhcpOption::AddressLeaseTime(LEASE_TIME));
-    offer.opts_mut().insert(DhcpOption::Renewal(555));
-    offer.opts_mut().insert(DhcpOption::Rebinding(666));
+    offer.opts_mut().insert(DhcpOption::Renewal(T1));
+    offer.opts_mut().insert(DhcpOption::Rebinding(T2));
 
     server.send(offer);
 
     let next_call: u32 = dhcp.process(&mut w5500, mono.monotonic_secs()).unwrap();
-    assert_eq!(
-        next_call,
-        LEASE_TIME.saturating_sub(LEASE_TIME / 8).saturating_add(1)
-    );
+    const T1_NEXT_CALL: u32 = T1.saturating_sub(T1 / 8).saturating_add(1);
+    assert_eq!(next_call, T1_NEXT_CALL);
 
     assert_eq!(w5500.sipr().unwrap(), Ipv4Addr::from(YIADDR));
     assert_eq!(w5500.gar().unwrap(), Ipv4Addr::from(ROUTER));
     assert_eq!(w5500.subr().unwrap(), Ipv4Addr::from(SUBNET_MASK));
     assert_eq!(dhcp.dns().unwrap(), Ipv4Addr::from(DNS_1));
     assert_eq!(dhcp.ntp().unwrap(), Ipv4Addr::from(NTP));
+
+    // force T1 expiry
+    let next_call: u32 = dhcp
+        .process(
+            &mut w5500,
+            mono.monotonic_secs().saturating_add(T1_NEXT_CALL),
+        )
+        .unwrap();
+    let msg: Message = server.recv();
+    check_recv_request(&msg, 0x6d279eac, mac_with_hardware_type.clone());
+    const T2_NEXT_CALL: u32 = T2
+        .saturating_sub(T2 / 8)
+        .saturating_add(1)
+        .saturating_sub(T1_NEXT_CALL);
+    assert_eq!(next_call, T2_NEXT_CALL);
+
+    // force t2 expiry
+    let next_call: u32 = dhcp
+        .process(
+            &mut w5500,
+            mono.monotonic_secs()
+                .saturating_add(T1_NEXT_CALL)
+                .saturating_add(T2_NEXT_CALL),
+        )
+        .unwrap();
+    let msg: Message = server.recv();
+    check_recv_request(&msg, 0x8809cefa, mac_with_hardware_type.clone());
+    const LEASE_NEXT_CALL: u32 = LEASE_TIME
+        .saturating_sub(LEASE_TIME / 8)
+        .saturating_add(1)
+        .saturating_sub(T1_NEXT_CALL)
+        .saturating_sub(T2_NEXT_CALL);
+    assert_eq!(next_call, LEASE_NEXT_CALL);
 }
