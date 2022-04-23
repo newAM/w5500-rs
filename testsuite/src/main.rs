@@ -7,7 +7,7 @@ use std::{
     thread::sleep,
     time::{Duration, Instant},
 };
-use w5500_dhcp::{Client as DhcpClient, Hostname};
+use w5500_dhcp::{Client as DhcpClient, Hostname, State as DhcpState};
 use w5500_dns::Client as DnsClient;
 use w5500_hl::Tcp;
 use w5500_ll::{
@@ -69,37 +69,15 @@ impl Monotonic {
     }
 }
 
-struct TestArgs<'a> {
-    w5500: &'a mut W5500<Spi<'a, Ft232h>, OutputPin<'a, Ft232h>>,
-    mono: &'a Monotonic,
-    dns: Option<Ipv4Addr>,
-    mqtt_client: MqttClient<'static>,
-}
-
-#[allow(clippy::type_complexity)]
-const TESTS: [(fn(&mut TestArgs), &str); 4] = [
-    (dhcp_bind, "dhcp_bind"),
-    (mqtt_connect, "mqtt_connect"),
-    (mqtt_disconnect, "mqtt_disconnect"),
-    (dns_query, "dns_query"),
-];
-
-fn dhcp_bind(ta: &mut TestArgs) {
-    let dhcp_seed: u64 = (&mut OsRng).next_u64();
-    let mut dhcp_client: DhcpClient = DhcpClient::new(DHCP_SN, dhcp_seed, MAC_ADDRESS, HOSTNAME);
-    dhcp_client.setup_socket(ta.w5500).unwrap();
+fn dhcp_poll_bound(ta: &mut TestArgs) {
     let start: Instant = Instant::now();
     loop {
-        dhcp_client
+        ta.dhcp_client
             .process(ta.w5500, ta.mono.monotonic_secs())
             .unwrap();
-        if dhcp_client.is_bound() {
-            log::info!("DHCP is bound");
+        if ta.dhcp_client.has_lease() {
+            log::info!("DHCP has lease");
             break;
-        }
-        let sn_ir = ta.w5500.sn_ir(DHCP_SN).unwrap();
-        if sn_ir.any_raised() {
-            log::info!("sn_ir={sn_ir:?}");
         }
         let elapsed = Instant::now().duration_since(start);
         if elapsed > Duration::from_secs(6) {
@@ -108,8 +86,68 @@ fn dhcp_bind(ta: &mut TestArgs) {
         // not required, makes looking at my logic analyzer easier
         sleep(Duration::from_millis(30));
     }
+}
 
-    ta.dns = dhcp_client.dns();
+struct TestArgs<'a> {
+    w5500: &'a mut W5500<Spi<'a, Ft232h>, OutputPin<'a, Ft232h>>,
+    mono: &'a Monotonic,
+    dhcp_client: DhcpClient<'static>,
+    mqtt_client: MqttClient<'static>,
+}
+
+macro_rules! test {
+    ($func:ident) => {
+        ($func, stringify!($func))
+    };
+}
+
+#[allow(clippy::type_complexity)]
+const TESTS: [(fn(&mut TestArgs), &str); 7] = [
+    test!(dhcp_bind),
+    test!(dhcp_renew),
+    test!(dhcp_rebind),
+    test!(dhcp_lease_expire),
+    test!(mqtt_connect),
+    test!(mqtt_disconnect),
+    test!(dns_query),
+];
+
+fn dhcp_bind(ta: &mut TestArgs) {
+    ta.dhcp_client.setup_socket(ta.w5500).unwrap();
+    dhcp_poll_bound(ta);
+}
+
+fn dhcp_renew(ta: &mut TestArgs) {
+    ta.dhcp_client
+        .process(
+            ta.w5500,
+            ta.mono.monotonic_secs() + ta.dhcp_client.t1().unwrap() + 1,
+        )
+        .unwrap();
+    assert_eq!(ta.dhcp_client.state(), DhcpState::Renewing);
+    dhcp_poll_bound(ta);
+}
+
+fn dhcp_rebind(ta: &mut TestArgs) {
+    ta.dhcp_client
+        .process(
+            ta.w5500,
+            ta.mono.monotonic_secs() + ta.dhcp_client.t2().unwrap() + 1,
+        )
+        .unwrap();
+    assert_eq!(ta.dhcp_client.state(), DhcpState::Rebinding);
+    dhcp_poll_bound(ta);
+}
+
+fn dhcp_lease_expire(ta: &mut TestArgs) {
+    ta.dhcp_client
+        .process(
+            ta.w5500,
+            ta.mono.monotonic_secs() + ta.dhcp_client.lease_time().unwrap() + 1,
+        )
+        .unwrap();
+    assert_eq!(ta.dhcp_client.state(), DhcpState::Selecting);
+    dhcp_poll_bound(ta);
 }
 
 fn mqtt_connect(ta: &mut TestArgs) {
@@ -154,7 +192,14 @@ fn mqtt_disconnect(ta: &mut TestArgs) {
 
 fn dns_query(ta: &mut TestArgs) {
     let dns_seed: u64 = (&mut OsRng).next_u64();
-    let mut dns_client: DnsClient = DnsClient::new(DNS_SN, 16385, ta.dns.unwrap(), dns_seed);
+    let mut dns_client: DnsClient = DnsClient::new(
+        DNS_SN,
+        16385,
+        ta.dhcp_client
+            .dns()
+            .expect("DHCP server did not provide a DNS server"),
+        dns_seed,
+    );
 
     const DOCSRS: Hostname = Hostname::new_unwrapped("docs.rs");
     let id: u16 = dns_client.a_question(ta.w5500, &DOCSRS).unwrap();
@@ -199,11 +244,13 @@ fn main() {
     // reduce log spam from polling for link up
     sleep(Duration::from_secs(2));
 
+    let dhcp_seed: u64 = (&mut OsRng).next_u64();
+
     let mono: Monotonic = Monotonic::default();
     let mut args: TestArgs = TestArgs {
         w5500: &mut w5500,
         mono: &mono,
-        dns: None,
+        dhcp_client: DhcpClient::new(DHCP_SN, dhcp_seed, MAC_ADDRESS, HOSTNAME),
         mqtt_client: MqttClient::new(MQTT_SN, MQTT_SRC_PORT, MQTT_SERVER),
     };
 
