@@ -5,7 +5,7 @@
 //! This code is very minimal to make this example readable.
 //! Do as I say, not as I do: Hard coded DNS is bad.
 //!
-//! **Note:** This will communicate external network services.
+//! **Note:** This will communicate with external network services.
 
 use std::{
     thread::sleep,
