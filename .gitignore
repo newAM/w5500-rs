@@ -1,7 +1,18 @@
 target
 Cargo.lock
 
+# wireshark
 *.pcapng
+sslkeylog
+tlsdebug
+
+# openssl
+*.crt
+*.csr
+*.der
+*.key
+*.pem
+*.srl
 
 # cargo-fuzz
 artifacts

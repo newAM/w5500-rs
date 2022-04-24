@@ -2,7 +2,7 @@
 //!
 //! This does not require any embedded hardware to use.
 //!
-//! **Note:** This will communicate external network services.
+//! **Note:** This will communicate with external network services.
 
 use rand_core::{OsRng, RngCore};
 use std::time::{Duration, Instant};
