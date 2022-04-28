@@ -5,8 +5,8 @@ use crate::{
     AlertDescription, GCM_TAG_LEN,
 };
 use core::cmp::min;
-use w5500_hl::ll::{Registers, Sn, SocketCommand};
 use subtle::ConstantTimeEq;
+use w5500_hl::ll::{Registers, Sn, SocketCommand};
 
 pub fn decrypt_record_inplace<const N: usize, W5500: Registers>(
     w5500: &mut W5500,
