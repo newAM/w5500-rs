@@ -18,7 +18,7 @@ Additionally this is not secure from side channel attacks.
   to the physical SPI bus or the SPI device registers can easily intercept
   data.
 * To facilitate the ill-advised encryption in-place in the socket buffers
-  there is a custom AES implementation that has zero thought put towards
+  there is a hacky AES implementation that has little thought put towards
   constant-time evaluation.
 
 ## Limitations
