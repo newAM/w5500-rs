@@ -157,7 +157,6 @@ pub trait Write<E> {
     /// [`Udp::udp_send_to`]: crate::Udp::udp_send_to
     fn send(self) -> Result<(), E>;
 }
-}
 
 #[cfg(test)]
 mod tests {
