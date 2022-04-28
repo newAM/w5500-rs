@@ -79,13 +79,13 @@ impl UdpHeader {
 /// ```
 #[derive(Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
-pub struct UdpReader<'a, W: Registers> {
-    inner: TcpReader<'a, W>,
+pub struct UdpReader<'w, W: Registers> {
+    inner: TcpReader<'w, W>,
     header: UdpHeader,
 }
 
-impl<'a, W: Registers> Seek<W::Error> for UdpReader<'a, W> {
-    fn seek(&mut self, pos: SeekFrom) -> Result<(), Error<W::Error>> {
+impl<'w, W5500: Registers> Seek<W5500::Error> for UdpReader<'w, W5500> {
+    fn seek(&mut self, pos: SeekFrom) -> Result<(), Error<W5500::Error>> {
         self.inner.seek(pos)
     }
 
@@ -106,23 +106,23 @@ impl<'a, W: Registers> Seek<W::Error> for UdpReader<'a, W> {
     }
 }
 
-impl<'a, W: Registers> Read<'a, W> for UdpReader<'a, W> {
-    fn read(&mut self, buf: &mut [u8]) -> Result<u16, W::Error> {
+impl<'w, W5500: Registers> Read<W5500::Error> for UdpReader<'w, W5500> {
+    fn read(&mut self, buf: &mut [u8]) -> Result<u16, W5500::Error> {
         self.inner.read(buf)
     }
 
-    fn read_exact(&mut self, buf: &mut [u8]) -> Result<(), Error<W::Error>> {
+    fn read_exact(&mut self, buf: &mut [u8]) -> Result<(), Error<W5500::Error>> {
         self.inner.read_exact(buf)
     }
 
-    fn done(self) -> Result<&'a mut W, W::Error> {
+    fn done(self) -> Result<(), W5500::Error> {
         self.inner
             .w5500
             .set_sn_rx_rd(self.inner.sn, self.inner.tail_ptr)?;
         self.inner
             .w5500
             .set_sn_cr(self.inner.sn, SocketCommand::Recv)?;
-        Ok(self.inner.w5500)
+        Ok(())
     }
 }
 
@@ -195,7 +195,7 @@ impl<'w, W5500: Registers> Seek<W5500::Error> for UdpWriter<'w, W5500> {
     }
 }
 
-impl<'w, W5500: Registers> Write<'w, W5500> for UdpWriter<'w, W5500> {
+impl<'w, W5500: Registers> Write<W5500::Error> for UdpWriter<'w, W5500> {
     fn write(&mut self, buf: &[u8]) -> Result<u16, W5500::Error> {
         let write_size: u16 = min(self.remain(), buf.len().try_into().unwrap_or(u16::MAX));
         if write_size != 0 {
@@ -221,10 +221,10 @@ impl<'w, W5500: Registers> Write<'w, W5500> for UdpWriter<'w, W5500> {
         }
     }
 
-    fn send(self) -> Result<&'w mut W5500, W5500::Error> {
+    fn send(self) -> Result<(), W5500::Error> {
         self.w5500.set_sn_tx_wr(self.sn, self.ptr)?;
         self.w5500.set_sn_cr(self.sn, SocketCommand::Send)?;
-        Ok(self.w5500)
+        Ok(())
     }
 }
 
@@ -235,7 +235,7 @@ impl<'w, W5500: Registers> UdpWriter<'w, W5500> {
     /// # Panics
     ///
     /// * (debug) The socket must be opened as a UDP socket.
-    pub fn udp_send_to(self, addr: &SocketAddrV4) -> Result<&'w mut W5500, W5500::Error> {
+    pub fn udp_send_to(self, addr: &SocketAddrV4) -> Result<(), W5500::Error> {
         debug_assert_eq!(self.w5500.sn_sr(self.sn)?, Ok(SocketStatus::Udp));
         self.w5500.set_sn_dest(self.sn, addr)?;
         self.send()

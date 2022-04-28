@@ -90,8 +90,8 @@
 //!
 //! [`Registers`]: https://docs.rs/w5500-ll/latest/w5500_ll/trait.Registers.html
 //! [`std::net`]: https://doc.rust-lang.org/std/net/index.html
-//! [`Tcp`]: https://docs.rs/w5500-hl/0.8.0/w5500_hl/trait.Tcp.html
-//! [`Udp`]: https://docs.rs/w5500-hl/0.8.0/w5500_hl/trait.Udp.html
+//! [`Tcp`]: https://docs.rs/w5500-hl/latest/w5500_hl/trait.Tcp.html
+//! [`Udp`]: https://docs.rs/w5500-hl/latest/w5500_hl/trait.Udp.html
 //! [w5500-ll]: https://github.com/newAM/w5500-ll-rs
 //! [Wiznet W5500]: https://www.wiznet.io/product-item/w5500/
 #![cfg_attr(docsrs, feature(doc_cfg))]

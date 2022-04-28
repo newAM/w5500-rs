@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Added `#[derive(Debug, PartialEq)]` for `W5500`.
 
+### Fixed
+- Fixed `Sn_RX_RSR` changing value between reading byte 0 and byte 1.
+
 ## [0.1.0-alpha.8] - 2022-04-10
 ### Added
 - Added handling for `set_sn_rxbuf_size` and `set_sn_txbuf_size`.

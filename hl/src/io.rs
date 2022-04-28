@@ -1,7 +1,7 @@
 //! Socket buffer IO traits.
 
 use crate::Error;
-use w5500_ll::Registers;
+use w5500_ll::{Registers, Sn};
 
 /// Enumeration of all possible methods to seek the W5500 socket buffers.
 ///
@@ -27,8 +27,9 @@ fn wrapping_add_signed(ptr: u16, offset: i16) -> u16 {
 }
 
 impl SeekFrom {
-    #[inline]
-    pub(crate) fn new_ptr<E>(self, ptr: u16, head: u16, tail: u16) -> Result<u16, Error<E>> {
+    /// Calculate the next value of `ptr` for the given seek method.
+    #[doc(hidden)]
+    pub fn new_ptr<E>(self, ptr: u16, head: u16, tail: u16) -> Result<u16, Error<E>> {
         match self {
             SeekFrom::Start(offset) => {
                 if offset > tail.wrapping_sub(head) {
@@ -102,9 +103,9 @@ pub trait Seek<E> {
 }
 
 /// Socket reader trait.
-pub trait Read<'w, W5500: Registers> {
+pub trait Read<E> {
     /// Read data from the UDP socket, and return the number of bytes read.
-    fn read(&mut self, buf: &mut [u8]) -> Result<u16, W5500::Error>;
+    fn read(&mut self, buf: &mut [u8]) -> Result<u16, E>;
 
     /// Read the exact number of bytes required to fill `buf`.
     ///
@@ -117,7 +118,7 @@ pub trait Read<'w, W5500: Registers> {
     ///
     /// * [`Error::Other`]
     /// * [`Error::UnexpectedEof`]
-    fn read_exact(&mut self, buf: &mut [u8]) -> Result<(), Error<W5500::Error>>;
+    fn read_exact(&mut self, buf: &mut [u8]) -> Result<(), Error<E>>;
 
     /// Mark the data as read, removing the data from the queue.
     ///
@@ -125,13 +126,13 @@ pub trait Read<'w, W5500: Registers> {
     /// position from the queue.
     ///
     /// For a UDP reader this removes the UDP datagram from the queue.
-    fn done(self) -> Result<&'w mut W5500, W5500::Error>;
+    fn done(self) -> Result<(), E>;
 }
 
 /// Socket writer trait.
-pub trait Write<'w, W5500: Registers> {
+pub trait Write<E> {
     /// Write data to the socket buffer, and return the number of bytes written.
-    fn write(&mut self, buf: &[u8]) -> Result<u16, W5500::Error>;
+    fn write(&mut self, buf: &[u8]) -> Result<u16, E>;
 
     /// Writes all the data, returning [`Error::OutOfMemory`] if the size of
     /// `buf` exceeds the free memory available in the socket buffer.
@@ -142,7 +143,7 @@ pub trait Write<'w, W5500: Registers> {
     ///
     /// * [`Error::Other`]
     /// * [`Error::OutOfMemory`]
-    fn write_all(&mut self, buf: &[u8]) -> Result<(), Error<W5500::Error>>;
+    fn write_all(&mut self, buf: &[u8]) -> Result<(), Error<E>>;
 
     /// Send all data previously written with [`write`] and [`write_all`].
     ///
@@ -154,7 +155,8 @@ pub trait Write<'w, W5500: Registers> {
     /// [`write_all`]: Self::write_all
     /// [`UdpWriter::udp_send_to`]: crate::UdpWriter::udp_send_to
     /// [`Udp::udp_send_to`]: crate::Udp::udp_send_to
-    fn send(self) -> Result<&'w mut W5500, W5500::Error>;
+    fn send(self) -> Result<(), E>;
+}
 }
 
 #[cfg(test)]

@@ -807,7 +807,6 @@ impl W5500 {
     }
 
     fn socket_reg_rd(&mut self, addr: u16, sn: Sn) -> io::Result<u8> {
-        self.check_socket(sn)?;
         let decoded = SnReg::try_from(addr);
         let socket: &Socket = self.socket(sn);
 
@@ -860,6 +859,10 @@ impl W5500 {
             Err(_) => (String::from("INVALID"), log::Level::Error),
         };
         log::log!(level, "[R] [{sn:?}] {addr:04X} -> {ret:02X} {name}");
+
+        if !matches!(decoded, Ok(SnReg::RX_RSR0)) {
+            self.check_socket(sn)?;
+        }
 
         Ok(ret)
     }

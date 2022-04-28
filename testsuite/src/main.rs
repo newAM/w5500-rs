@@ -4,6 +4,7 @@ use ftdi_embedded_hal::{
 use libftd2xx::Ft232h;
 use rand_core::{OsRng, RngCore};
 use std::{
+    process::Command,
     thread::sleep,
     time::{Duration, Instant},
 };
@@ -16,17 +17,22 @@ use w5500_ll::{
     reset, Registers, Sn, VERSION,
 };
 use w5500_mqtt::{
-    Client as MqttClient, ClientId, Error as MqttError, Event, SRC_PORT as MQTT_SRC_PORT,
+    Client as MqttClient, ClientId, Error as MqttError, Event as MqttEvent,
+    SRC_PORT as MQTT_SRC_PORT,
 };
+use w5500_tls::{Client as TlsClient, Event as TlsEvent};
 
 // change this for your network
 const MQTT_SERVER: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::new(10, 0, 0, 4), 1883);
+const THISHOST: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::new(10, 0, 0, 3), 12345);
+const HOSTNAME_THISHOST: Hostname = Hostname::new_unwrapped("openssl");
 
 // locally administered MAC address
 const MAC_ADDRESS: Eui48Addr = Eui48Addr::new(0x82, 0x33, 0x56, 0x78, 0x9A, 0xBC);
 const DHCP_SN: Sn = Sn::Sn0;
 const MQTT_SN: Sn = Sn::Sn1;
 const DNS_SN: Sn = Sn::Sn2;
+const TLS_SN: Sn = Sn::Sn3;
 const HOSTNAME: Hostname = Hostname::new_unwrapped("w5500-testsuite");
 const CLIENT_ID: ClientId = ClientId::new_unwrapped("w5500testsuite");
 
@@ -102,7 +108,7 @@ macro_rules! test {
 }
 
 #[allow(clippy::type_complexity)]
-const TESTS: [(fn(&mut TestArgs), &str); 7] = [
+const TESTS: &[(fn(&mut TestArgs), &str)] = &[
     test!(dhcp_bind),
     test!(dhcp_renew),
     test!(dhcp_rebind),
@@ -110,6 +116,7 @@ const TESTS: [(fn(&mut TestArgs), &str); 7] = [
     test!(mqtt_connect),
     test!(mqtt_disconnect),
     test!(dns_query),
+    test!(tls_handshake),
 ];
 
 fn dhcp_bind(ta: &mut TestArgs) {
@@ -158,7 +165,7 @@ fn mqtt_connect(ta: &mut TestArgs) {
         ta.mqtt_client
             .process(ta.w5500, ta.mono.monotonic_secs())
             .unwrap(),
-        Event::None
+        MqttEvent::None
     ) {
         let elapsed = Instant::now().duration_since(start);
         if elapsed > Duration::from_secs(3) {
@@ -179,7 +186,7 @@ fn mqtt_disconnect(ta: &mut TestArgs) {
 
         match event {
             Err(MqttError::Disconnect) => break,
-            Ok(Event::None) => (),
+            Ok(MqttEvent::None) => (),
             _ => panic!("unexpected event {event:?}"),
         }
 
@@ -222,11 +229,83 @@ fn dns_query(ta: &mut TestArgs) {
     }
 }
 
+fn tls_handshake(ta: &mut TestArgs) {
+    const PSK_IDENTITY: &str = "test";
+    const PSK: [u8; 32] = [
+        0x2f, 0x42, 0xac, 0xe2, 0xb6, 0xbe, 0x16, 0x81, 0xb3, 0xd2, 0xfc, 0xdd, 0x4b, 0xb5, 0x7b,
+        0x4f, 0xfe, 0x34, 0x84, 0xee, 0x77, 0xfd, 0xaa, 0x8e, 0x21, 0x6e, 0x32, 0x72, 0xcd, 0x78,
+        0x25, 0x9d,
+    ];
+
+    let mut buf: [u8; 2048] = [0; 2048];
+    let mut tls_client: TlsClient<2048> = TlsClient::new(
+        TLS_SN,
+        12345,
+        HOSTNAME_THISHOST,
+        THISHOST,
+        PSK_IDENTITY.as_bytes(),
+        &PSK,
+        &mut buf,
+    );
+
+    let psk_id_hex: String =
+        PSK.iter()
+            .fold(String::with_capacity(PSK.len() * 2), |mut hex, byte| {
+                hex.push_str(format!("{byte:02X}").as_str());
+                hex
+            });
+
+    let mut child = Command::new("timeout")
+        .arg("15")
+        .arg("openssl")
+        .arg("s_server")
+        .arg("-accept")
+        .arg(THISHOST.to_string())
+        .arg("-psk_identity")
+        .arg(PSK_IDENTITY)
+        .arg("-psk_hint")
+        .arg(PSK_IDENTITY)
+        .arg("-psk")
+        .arg(psk_id_hex)
+        .arg("-tls1_3")
+        .arg("-ciphersuites")
+        .arg("TLS_AES_128_GCM_SHA256")
+        .arg("-no_ticket")
+        .arg("-nocert")
+        .spawn()
+        .unwrap();
+
+    // wait for openSSL to startup
+    // ideally this should wait for "ACCEPT" on stdout
+    sleep(Duration::from_millis(20));
+
+    let start: Instant = Instant::now();
+    loop {
+        let event = tls_client.process(ta.w5500, &mut OsRng, ta.mono.monotonic_secs());
+
+        match event {
+            Ok(TlsEvent::CallAfter(_)) => (),
+            Ok(TlsEvent::HandshakeFinished) => break,
+            _ => {
+                child.kill().unwrap();
+                panic!("unexpected event {event:?}")
+            }
+        }
+
+        let elapsed = Instant::now().duration_since(start);
+        if elapsed > Duration::from_secs(3) {
+            child.kill().unwrap();
+            panic!("TLS client failed to connect in {elapsed:?}");
+        }
+    }
+
+    child.kill().unwrap();
+}
+
 fn main() {
-    // setup logging
     stderrlog::new()
         .verbosity(3)
-        .timestamp(stderrlog::Timestamp::Nanosecond)
+        .timestamp(stderrlog::Timestamp::Microsecond)
         .init()
         .unwrap();
 
