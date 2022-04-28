@@ -75,9 +75,9 @@ pub fn decrypt_record_inplace<const N: usize, W5500: Registers>(
         .map_err(|_| AlertDescription::InternalError)?;
 
     if bool::from(client_tag.ct_eq(&server_tag)) {
-        Err(AlertDescription::BadRecordMac)
-    } else {
         Ok(content_type)
+    } else {
+        Err(AlertDescription::BadRecordMac)
     }
 }
 
