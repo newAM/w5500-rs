@@ -6,6 +6,7 @@ use crate::{
 };
 use core::cmp::min;
 use w5500_hl::ll::{Registers, Sn, SocketCommand};
+use subtle::ConstantTimeEq;
 
 pub fn decrypt_record_inplace<const N: usize, W5500: Registers>(
     w5500: &mut W5500,
@@ -73,7 +74,7 @@ pub fn decrypt_record_inplace<const N: usize, W5500: Registers>(
         .set_sn_cr(sn, SocketCommand::Recv)
         .map_err(|_| AlertDescription::InternalError)?;
 
-    if client_tag != server_tag {
+    if bool::from(client_tag.ct_eq(&server_tag)) {
         Err(AlertDescription::BadRecordMac)
     } else {
         Ok(content_type)
