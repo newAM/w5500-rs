@@ -50,6 +50,7 @@
 //! * `std`: Passthrough to [w5500-hl].
 //! * `defmt`: Enable logging with `defmt`. Also a passthrough to [w5500-hl].
 //! * `log`: Enable logging with `log`.
+//! * `w5500-tls`: Enable the the `tls` module with `w5500-tls`.
 //!
 //! [w5500-hl]: https://crates.io/crates/w5500-hl
 //! [Wiznet W5500]: https://www.wiznet.io/product-item/w5500/
@@ -62,25 +63,28 @@
 pub(crate) mod fmt;
 
 mod client_id;
-mod connack;
+mod connect;
 mod data;
 mod fixed_header;
 mod properties;
+mod publish;
 mod subscribe;
 
 pub use client_id::ClientId;
-pub use connack::ConnectReasonCode;
-use core::{cmp::min, mem::size_of};
+pub use connect::ConnectReasonCode;
+use core::cmp::min;
 use fixed_header::FixedHeader;
 use hl::{
     io::{Read, Seek, SeekFrom, Write},
     ll::{net::SocketAddrV4, Registers, Sn, SocketInterrupt, SocketInterruptMask},
     Error as HlError, Tcp, TcpReader, TcpWriter,
 };
-use properties::Properties;
-pub use subscribe::{SubAckReasonCode, UnsubAckReasonCode};
+use subscribe::{send_subscribe, send_unsubscribe};
+pub use subscribe::{SubAck, SubAckReasonCode, UnSubAck, UnSubAckReasonCode};
 pub use w5500_hl as hl;
 pub use w5500_hl::ll;
+
+use crate::{connect::send_connect, publish::send_publish};
 
 /// Default MQTT destination port.
 pub const DST_PORT: u16 = 1883;
@@ -130,12 +134,12 @@ pub enum State {
 /// Duration in seconds to wait for the MQTT server to send a response.
 const TIMEOUT_SECS: u32 = 10;
 
-fn write_variable_byte_integer<W5500: Registers>(
-    writer: &mut TcpWriter<W5500>,
+fn write_variable_byte_integer<E, Writer: Write<E>>(
+    writer: &mut Writer,
     integer: u32,
-) -> Result<(), Error<W5500::Error>> {
+) -> Result<(), HlError<E>> {
     let (buf, len): ([u8; 4], usize) = crate::data::encode_variable_byte_integer(integer);
-    writer.write_all(&buf[..len]).map_err(map_write_all_err)
+    writer.write_all(&buf[..len])
 }
 
 /// Reader for a published message on a subscribed topic.
@@ -226,29 +230,9 @@ pub enum Event<'a, W5500: Registers> {
     /// payload from the socket buffers.
     Publish(PublishReader<'a, W5500>),
     /// Subscribe Acknowledgment.
-    SubAck {
-        /// Packet Identifier.
-        ///
-        /// This can be compared with the return value of [`Client::subscribe`] to
-        /// determine which subscribe is being acknowledged.
-        pkt_id: u16,
-        /// SUBACK reason code.
-        ///
-        /// This should be checked to ensure the SUBSCRIBE was successful.
-        code: SubAckReasonCode,
-    },
+    SubAck(SubAck),
     /// Unsubscribe Acknowledgment.
-    UnsubAck {
-        /// Packet Identifier.
-        ///
-        /// This can be compared with the return value of [`Client::unsubscribe`]
-        /// to determine which unsubscribe is being acknowledged.
-        pkt_id: u16,
-        /// UNSUBACK reason code.
-        ///
-        /// This should be checked to ensure the UNSUBSCRIBE was successful.
-        code: UnsubAckReasonCode,
-    },
+    UnSubAck(UnSubAck),
     /// The connection has been accepted by the server.
     ///
     /// This is a good time to subscribe to topics.
@@ -484,12 +468,12 @@ impl<'a> Client<'a> {
     ///
     ///                 // do something with the topic and payload
     ///             }
-    ///             Ok(Event::SubAck { pkt_id: _, code }) => {
+    ///             Ok(Event::SubAck(ack)) => {
     ///                 // this does not handle failed subscriptions
-    ///                 log::info!("SubAck {:?}", code)
+    ///                 log::info!("SubAck {:?}", ack)
     ///             }
-    ///             Ok(Event::UnsubAck { pkt_id: _, code }) => {
-    ///                 log::info!("UnsubAck {:?}", code)
+    ///             Ok(Event::UnSubAck(ack)) => {
+    ///                 log::info!("UnsubAck {:?}", ack)
     ///             }
     ///             Ok(Event::None) => break,
     ///             Err(e) => {
@@ -621,40 +605,8 @@ impl<'a> Client<'a> {
         topic: &str,
         payload: &[u8],
     ) -> Result<(), Error<W5500::Error>> {
-        let topic_len: u16 = topic.len().try_into().unwrap_or(u16::MAX);
-        let payload_len: u16 = payload.len().try_into().unwrap_or(u16::MAX);
-
-        // length of the topic length field
-        const TOPIC_LEN_LEN: u32 = size_of::<u16>() as u32;
-        // length of the property length field
-        const PROPERTY_LEN: u32 = size_of::<u8>() as u32;
-        let remaining_len: u32 =
-            TOPIC_LEN_LEN + u32::from(topic_len) + PROPERTY_LEN + u32::from(payload_len);
-
-        let mut writer: TcpWriter<W5500> = w5500.tcp_writer(self.sn)?;
-        writer
-            .write_all(&[
-                // control packet type
-                // flags are all 0
-                // dup=0, non-duplicate
-                // qos=0, at most once delivery
-                // retain=0, do not retain this message
-                (CtrlPkt::PUBLISH as u8) << 4,
-            ])
-            .map_err(map_write_all_err)?;
-        write_variable_byte_integer(&mut writer, remaining_len)?;
-        writer
-            .write_all(&topic_len.to_be_bytes())
-            .map_err(map_write_all_err)?;
-        writer
-            .write_all(&topic.as_bytes()[..topic_len.into()])
-            .map_err(map_write_all_err)?;
-        writer.write_all(&[0]).map_err(map_write_all_err)?; // property length
-        writer
-            .write_all(&payload[..payload_len.into()])
-            .map_err(map_write_all_err)?;
-        writer.send()?;
-        Ok(())
+        let writer: TcpWriter<W5500> = w5500.tcp_writer(self.sn)?;
+        send_publish(writer, topic, payload).map_err(map_write_all_err)
     }
 
     /// Subscribe to a topic.
@@ -703,55 +655,8 @@ impl<'a> Client<'a> {
         w5500: &mut W5500,
         filter: &str,
     ) -> Result<u16, Error<W5500::Error>> {
-        if filter.is_empty() {
-            Ok(0)
-        } else {
-            const SUBSCRIPTION_OPTIONS_LEN: u16 = 1;
-
-            let filter_len: u16 = (filter.len() as u16) + FILTER_LEN_LEN + SUBSCRIPTION_OPTIONS_LEN;
-
-            let remaining_len: u32 =
-                PACKET_ID_LEN + u32::from(PROPERTY_LEN_LEN) + u32::from(filter_len);
-
-            let mut writer: TcpWriter<W5500> = w5500.tcp_writer(self.sn)?;
-            writer
-                .write_all(&[(CtrlPkt::SUBSCRIBE as u8) << 4 | 0b0010])
-                .map_err(map_write_all_err)?;
-            write_variable_byte_integer(&mut writer, remaining_len)?;
-            let pkt_id: u16 = self.next_pkt_id();
-            writer
-                .write_all(&[
-                    // packet identifier
-                    (pkt_id >> 8) as u8,
-                    pkt_id as u8,
-                    // property length
-                    0,
-                ])
-                .map_err(map_write_all_err)?;
-
-            writer
-                .write_all(
-                    u16::try_from(filter.len())
-                        .unwrap_or(u16::MAX)
-                        .to_be_bytes()
-                        .as_ref(),
-                )
-                .map_err(map_write_all_err)?;
-            writer
-                .write_all(filter.as_bytes())
-                .map_err(map_write_all_err)?;
-            // subscription options flags
-            // 00 => reserved
-            // 10 => retain handling: do not set messages at subscribtion time
-            // 0 => retain as published: all messages have the retain flag cleared
-            // 1 => no local option: do not send messages published by this client
-            // 00 => QoS 0: at most once delivery
-            writer.write_all(&[0b00100100]).map_err(map_write_all_err)?;
-
-            writer.send()?;
-
-            Ok(pkt_id)
-        }
+        let writer: TcpWriter<W5500> = w5500.tcp_writer(self.sn)?;
+        send_subscribe(writer, filter, self.next_pkt_id()).map_err(map_write_all_err)
     }
 
     /// Unsubscribe from a topic.
@@ -775,46 +680,8 @@ impl<'a> Client<'a> {
         w5500: &mut W5500,
         filter: &str,
     ) -> Result<u16, Error<W5500::Error>> {
-        if filter.is_empty() {
-            Ok(0)
-        } else {
-            let filter_len: u16 = (filter.len() as u16) + FILTER_LEN_LEN;
-
-            let remaining_len: u32 =
-                PACKET_ID_LEN + u32::from(PROPERTY_LEN_LEN) + u32::from(filter_len);
-
-            let mut writer: TcpWriter<W5500> = w5500.tcp_writer(self.sn)?;
-            writer
-                .write_all(&[(CtrlPkt::UNSUBSCRIBE as u8) << 4 | 0b0010])
-                .map_err(map_write_all_err)?;
-            write_variable_byte_integer(&mut writer, remaining_len)?;
-            let pkt_id: u16 = self.next_pkt_id();
-            writer
-                .write_all(&[
-                    // packet identifier
-                    (pkt_id >> 8) as u8,
-                    pkt_id as u8,
-                    // property length
-                    0,
-                ])
-                .map_err(map_write_all_err)?;
-
-            writer
-                .write_all(
-                    u16::try_from(filter.len())
-                        .unwrap_or(u16::MAX)
-                        .to_be_bytes()
-                        .as_ref(),
-                )
-                .map_err(map_write_all_err)?;
-            writer
-                .write_all(filter.as_bytes())
-                .map_err(map_write_all_err)?;
-
-            writer.send()?;
-
-            Ok(pkt_id)
-        }
+        let writer: TcpWriter<W5500> = w5500.tcp_writer(self.sn)?;
+        send_unsubscribe(writer, filter, self.next_pkt_id()).map_err(map_write_all_err)
     }
 
     fn tcp_connect<W5500: Registers>(
@@ -835,46 +702,14 @@ impl<'a> Client<'a> {
         w5500: &mut W5500,
         monotonic_secs: u32,
     ) -> Result<u32, Error<W5500::Error>> {
-        const KEEP_ALIVE: u16 = 15 * 60;
-
-        let client_id_len: u8 = self.client_id.map(|id| id.len()).unwrap_or(0);
-
         // set recieve maximum property to RX socket buffer size
         let rx_max: u16 = w5500
             .sn_rxbuf_size(self.sn)?
             .unwrap_or_default()
             .size_in_bytes() as u16;
 
-        let mut writer: TcpWriter<W5500> = w5500.tcp_writer(self.sn)?;
-        #[rustfmt::skip]
-        writer.write_all(&[
-            // control packet type
-            (CtrlPkt::CONNECT as u8) << 4,
-            // remaining length
-            18 + client_id_len,
-            // protocol name length
-            0, 4,
-            // protocol name
-            b'M', b'Q', b'T', b'T',
-            // protocol version
-            5,
-            // flags, clean start is set
-            0b00000010,
-            // keepalive
-            (KEEP_ALIVE >> 8) as u8, KEEP_ALIVE as u8,
-            // properties length
-            5,
-            // recieve maximum property
-            (Properties::MaxPktSize as u8), 0, 0, (rx_max >> 8) as u8, rx_max as u8,
-            // client ID length
-            0, client_id_len,
-        ]).map_err(map_write_all_err)?;
-        if let Some(client_id) = self.client_id {
-            writer
-                .write_all(client_id.as_bytes())
-                .map_err(map_write_all_err)?;
-        }
-        writer.send()?;
+        let writer: TcpWriter<W5500> = w5500.tcp_writer(self.sn)?;
+        send_connect(writer, &self.client_id, rx_max).map_err(map_write_all_err)?;
         Ok(self.set_state_with_timeout(State::WaitConAck, monotonic_secs))
     }
 
@@ -976,7 +811,7 @@ impl<'a> Client<'a> {
                 };
 
                 reader.done()?;
-                Ok(Some(Event::SubAck { pkt_id, code }))
+                Ok(Some(Event::SubAck(SubAck { pkt_id, code })))
             }
             CtrlPkt::UNSUBACK => {
                 let mut buf: [u8; 3] = [0; 3];
@@ -1000,7 +835,7 @@ impl<'a> Client<'a> {
                 reader
                     .read_exact(&mut payload)
                     .map_err(map_read_exact_err)?;
-                let code: UnsubAckReasonCode = match UnsubAckReasonCode::try_from(payload[0]) {
+                let code: UnSubAckReasonCode = match UnSubAckReasonCode::try_from(payload[0]) {
                     Ok(code) => code,
                     Err(e) => {
                         error!("invalid UNSUBACK reason code value: {}", e);
@@ -1010,7 +845,7 @@ impl<'a> Client<'a> {
                 };
 
                 reader.done()?;
-                Ok(Some(Event::UnsubAck { pkt_id, code }))
+                Ok(Some(Event::UnSubAck(UnSubAck { pkt_id, code })))
             }
             CtrlPkt::PUBLISH => {
                 const TOPIC_LEN_LEN: u16 = 2;

@@ -1,3 +1,7 @@
+use w5500_hl::{io::Write, Error as HlError};
+
+use crate::{properties::Properties, ClientId, CtrlPkt};
+
 /// [Connect Reason Codes](https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901079)
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
@@ -80,4 +84,43 @@ impl TryFrom<u8> for ConnectReasonCode {
             x => Err(x),
         }
     }
+}
+
+pub fn send_connect<E, Writer: Write<E>>(
+    mut writer: Writer,
+    client_id: &Option<ClientId>,
+    rx_max: u16,
+) -> Result<(), HlError<E>> {
+    const KEEP_ALIVE: u16 = 15 * 60;
+
+    let client_id_len: u8 = client_id.map(|id| id.len()).unwrap_or(0);
+
+    #[rustfmt::skip]
+    writer.write_all(&[
+        // control packet type
+        (CtrlPkt::CONNECT as u8) << 4,
+        // remaining length
+        18 + client_id_len,
+        // protocol name length
+        0, 4,
+        // protocol name
+        b'M', b'Q', b'T', b'T',
+        // protocol version
+        5,
+        // flags, clean start is set
+        0b00000010,
+        // keepalive
+        (KEEP_ALIVE >> 8) as u8, KEEP_ALIVE as u8,
+        // properties length
+        5,
+        // recieve maximum property
+        (Properties::MaxPktSize as u8), 0, 0, (rx_max >> 8) as u8, rx_max as u8,
+        // client ID length
+        0, client_id_len,
+    ])?;
+    if let Some(client_id) = client_id {
+        writer.write_all(client_id.as_bytes())?;
+    }
+    writer.send()?;
+    Ok(())
 }

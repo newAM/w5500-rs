@@ -6,7 +6,7 @@ use mqttbytes::{
     v5::{Packet, Publish, UnsubAck, UnsubAckReason, Unsubscribe},
     QoS,
 };
-use w5500_mqtt::{Event, UnsubAckReasonCode};
+use w5500_mqtt::{Event, UnSubAck, UnSubAckReasonCode};
 
 #[test]
 fn subscribe() {
@@ -89,10 +89,10 @@ fn unsubscribe() {
     assert!(
         matches!(
             result,
-            Ok(Event::UnsubAck {
+            Ok(Event::UnSubAck(UnSubAck {
                 pkt_id: 2,
-                code: UnsubAckReasonCode::Success
-            })
+                code: UnSubAckReasonCode::Success
+            }))
         ),
         "Unexpected result: {result:?}"
     );
