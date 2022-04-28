@@ -6,7 +6,8 @@ Embedded rust support for the [Wiznet W5500] SPI internet offload chip.
 
 * [`w5500-ll`] contains low-level drivers, register setters & getters.
 * [`w5500-hl`] contains higher-level drivers.
-* The other crates contain protocol implementations.
+* [`w5500-regsim`] contains a simulation of the [`w5500-ll`] `Registers` trait.
+* Other crates contain protocol implementations.
 
 ## Crates
 
