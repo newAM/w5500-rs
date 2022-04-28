@@ -46,22 +46,25 @@ jobs:
       - run: cargo build --target ${{ matrix.target }} -p w5500-dns
       - run: cargo build --target ${{ matrix.target }} -p w5500-mqtt
       - run: cargo build --target ${{ matrix.target }} -p w5500-sntp
+      - run: cargo build --target ${{ matrix.target }} -p w5500-tls
       - run: cargo build --target ${{ matrix.target }} -p w5500-ll   --features defmt
       - run: cargo build --target ${{ matrix.target }} -p w5500-hl   --features defmt
       - run: cargo build --target ${{ matrix.target }} -p w5500-dhcp --features defmt
       - run: cargo build --target ${{ matrix.target }} -p w5500-dns  --features defmt
       - run: cargo build --target ${{ matrix.target }} -p w5500-mqtt --features defmt
-      - run: cargo build --target ${{ matrix.target }} -p w5500-sntp --features defmt
+      - run: cargo build --target ${{ matrix.target }} -p w5500-tls  --features defmt
       - run: cargo build --target ${{ matrix.target }} -p w5500-ll   --features embedded-hal
       - run: cargo build --target ${{ matrix.target }} -p w5500-hl   --features embedded-hal
       - run: cargo build --target ${{ matrix.target }} -p w5500-dhcp --features embedded-hal
       - run: cargo build --target ${{ matrix.target }} -p w5500-dns  --features embedded-hal
       - run: cargo build --target ${{ matrix.target }} -p w5500-mqtt --features embedded-hal
       - run: cargo build --target ${{ matrix.target }} -p w5500-sntp --features embedded-hal
+      - run: cargo build --target ${{ matrix.target }} -p w5500-tls  --features embedded-hal
       - run: cargo build --target ${{ matrix.target }} -p w5500-dhcp --features log
       - run: cargo build --target ${{ matrix.target }} -p w5500-dns  --features log
       - run: cargo build --target ${{ matrix.target }} -p w5500-mqtt --features log
       - run: cargo build --target ${{ matrix.target }} -p w5500-sntp --features log
+      - run: cargo build --target ${{ matrix.target }} -p w5500-tls  --features log
       - run: cargo build --target ${{ matrix.target }} -p w5500-sntp --features time
       - run: cargo build --target ${{ matrix.target }} -p w5500-sntp --features chrono
       - run: cargo build --target ${{ matrix.target }} -p w5500-sntp --features num-rational
@@ -284,6 +287,29 @@ jobs:
       - name: Publish
         run: |
           cd sntp
+          cargo publish --no-verify --token ${CRATES_IO_TOKEN}
+        env:
+          CRATES_IO_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
+
+  release-tls:
+    name: w5500-tls crates.io release
+    if: startsWith(github.ref, 'refs/tags/tls/v')
+    needs:
+      - build
+      - build_no_std
+      - test
+      - clippy
+      - format
+      - rustdoc
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - name: Publish
+        run: |
+          cd tls
           cargo publish --no-verify --token ${CRATES_IO_TOKEN}
         env:
           CRATES_IO_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
