@@ -56,6 +56,7 @@ impl<'a> Registers for W5500<'a> {
             SocketCommand::Connect => self.socket_status = SocketStatus::Established,
             SocketCommand::Close => self.socket_status = SocketStatus::Closed,
             SocketCommand::Recv | SocketCommand::Send => (),
+            SocketCommand::Disconnect => self.socket_status = SocketStatus::Closed,
             _ => panic!("Unexpected socket command {cmd:?}"),
         }
 

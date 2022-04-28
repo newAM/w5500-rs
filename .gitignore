@@ -20,3 +20,4 @@ corpus
 coverage
 *.profraw
 *.html
+*.log

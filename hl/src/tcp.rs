@@ -59,16 +59,16 @@ use w5500_ll::{
 /// ```
 #[derive(Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
-pub struct TcpReader<'a, W: Registers> {
-    pub(crate) w5500: &'a mut W,
+pub struct TcpReader<'w, W5500: Registers> {
+    pub(crate) w5500: &'w mut W5500,
     pub(crate) sn: Sn,
     pub(crate) head_ptr: u16,
     pub(crate) tail_ptr: u16,
     pub(crate) ptr: u16,
 }
 
-impl<'a, W: Registers> Seek<W::Error> for TcpReader<'a, W> {
-    fn seek(&mut self, pos: SeekFrom) -> Result<(), Error<W::Error>> {
+impl<'w, W5500: Registers> Seek<W5500::Error> for TcpReader<'w, W5500> {
+    fn seek(&mut self, pos: SeekFrom) -> Result<(), Error<W5500::Error>> {
         self.ptr = pos.new_ptr(self.ptr, self.head_ptr, self.tail_ptr)?;
         Ok(())
     }
@@ -90,8 +90,8 @@ impl<'a, W: Registers> Seek<W::Error> for TcpReader<'a, W> {
     }
 }
 
-impl<'a, W: Registers> Read<'a, W> for TcpReader<'a, W> {
-    fn read(&mut self, buf: &mut [u8]) -> Result<u16, W::Error> {
+impl<'a, W5500: Registers> Read<W5500::Error> for TcpReader<'a, W5500> {
+    fn read(&mut self, buf: &mut [u8]) -> Result<u16, W5500::Error> {
         let read_size: u16 = min(self.remain(), buf.len().try_into().unwrap_or(u16::MAX));
         if read_size != 0 {
             self.w5500
@@ -104,7 +104,7 @@ impl<'a, W: Registers> Read<'a, W> for TcpReader<'a, W> {
         }
     }
 
-    fn read_exact(&mut self, buf: &mut [u8]) -> Result<(), Error<W::Error>> {
+    fn read_exact(&mut self, buf: &mut [u8]) -> Result<(), Error<W5500::Error>> {
         let buf_len: u16 = buf.len().try_into().unwrap_or(u16::MAX);
         let read_size: u16 = min(self.remain(), buf_len);
         if read_size != buf_len {
@@ -116,10 +116,10 @@ impl<'a, W: Registers> Read<'a, W> for TcpReader<'a, W> {
         }
     }
 
-    fn done(self) -> Result<&'a mut W, W::Error> {
+    fn done(self) -> Result<(), W5500::Error> {
         self.w5500.set_sn_rx_rd(self.sn, self.ptr)?;
         self.w5500.set_sn_cr(self.sn, SocketCommand::Recv)?;
-        Ok(self.w5500)
+        Ok(())
     }
 }
 
@@ -189,7 +189,7 @@ impl<'w, W5500: Registers> Seek<W5500::Error> for TcpWriter<'w, W5500> {
     }
 }
 
-impl<'w, W5500: Registers> Write<'w, W5500> for TcpWriter<'w, W5500> {
+impl<'w, W5500: Registers> Write<W5500::Error> for TcpWriter<'w, W5500> {
     fn write(&mut self, buf: &[u8]) -> Result<u16, W5500::Error> {
         let write_size: u16 = min(self.remain(), buf.len().try_into().unwrap_or(u16::MAX));
         if write_size != 0 {
@@ -215,10 +215,10 @@ impl<'w, W5500: Registers> Write<'w, W5500> for TcpWriter<'w, W5500> {
         }
     }
 
-    fn send(self) -> Result<&'w mut W5500, W5500::Error> {
+    fn send(self) -> Result<(), W5500::Error> {
         self.w5500.set_sn_tx_wr(self.sn, self.ptr)?;
         self.w5500.set_sn_cr(self.sn, SocketCommand::Send)?;
-        Ok(self.w5500)
+        Ok(())
     }
 }
 
