@@ -150,10 +150,11 @@ pub trait Write<E> {
     /// [`Registers::set_sn_dest`], [`Udp::udp_send_to`], or
     /// [`UdpWriter::udp_send_to`].
     ///
-    /// [`write`]: Self::write
-    /// [`write_all`]: Self::write_all
-    /// [`UdpWriter::udp_send_to`]: crate::UdpWriter::udp_send_to
+    /// [`Registers::set_sn_dest`]: w5500_ll::Registers::set_sn_dest
     /// [`Udp::udp_send_to`]: crate::Udp::udp_send_to
+    /// [`UdpWriter::udp_send_to`]: crate::UdpWriter::udp_send_to
+    /// [`write_all`]: Self::write_all
+    /// [`write`]: Self::write
     fn send(self) -> Result<(), E>;
 }
 
