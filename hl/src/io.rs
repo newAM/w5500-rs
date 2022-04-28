@@ -1,7 +1,6 @@
 //! Socket buffer IO traits.
 
 use crate::Error;
-use w5500_ll::{Registers, Sn};
 
 /// Enumeration of all possible methods to seek the W5500 socket buffers.
 ///
