@@ -145,6 +145,8 @@ pub struct SubAck {
     ///
     /// This can be compared with the return value of [`Client::subscribe`] to
     /// determine which subscribe is being acknowledged.
+    ///
+    /// [`Client::subscribe`]: crate::Client::subscribe
     pub pkt_id: u16,
     /// SUBACK reason code.
     ///
@@ -160,6 +162,8 @@ pub struct UnSubAck {
     ///
     /// This can be compared with the return value of [`Client::unsubscribe`]
     /// to determine which unsubscribe is being acknowledged.
+    ///
+    /// [`Client::unsubscribe`]: crate::Client::unsubscribe
     pub pkt_id: u16,
     /// UNSUBACK reason code.
     ///
