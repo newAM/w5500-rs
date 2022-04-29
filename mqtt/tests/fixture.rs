@@ -1,7 +1,7 @@
 use mqttbytes::{
     v5::{
         ConnAck, Connect, ConnectProperties, ConnectReturnCode, Packet, Publish, RetainForwardRule,
-        SubAck, Subscribe, SubscribeFilter, SubscribeReasonCode,
+        SubAck as MbSubAck, Subscribe, SubscribeFilter, SubscribeReasonCode,
     },
     Protocol::V5,
     QoS,
@@ -16,7 +16,7 @@ use w5500_mqtt::{
         net::{Ipv4Addr, SocketAddrV4},
         Registers, Sn,
     },
-    Client, ClientId, Error, Event, SubAckReasonCode, SRC_PORT,
+    Client, ClientId, Error, Event, SubAck, SubAckReasonCode, SRC_PORT,
 };
 use w5500_regsim::W5500;
 
@@ -69,7 +69,7 @@ impl Server {
     }
 
     pub fn send_suback(&mut self, pkid: u16) {
-        let sub_ack: SubAck = SubAck {
+        let sub_ack: MbSubAck = MbSubAck {
             pkid,
             return_codes: vec![SubscribeReasonCode::QoS0],
             properties: None,
@@ -203,10 +203,10 @@ impl Fixture {
 
         assert_eq!(
             self.client_process().unwrap(),
-            Event::SubAck {
+            Event::SubAck(SubAck {
                 pkt_id,
                 code: SubAckReasonCode::QoS0
-            }
+            })
         );
     }
 

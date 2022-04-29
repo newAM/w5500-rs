@@ -1,3 +1,8 @@
+use crate::{
+    write_variable_byte_integer, CtrlPkt, FILTER_LEN_LEN, PACKET_ID_LEN, PROPERTY_LEN_LEN,
+};
+use w5500_hl::{io::Write, Error as HlError};
+
 /// Subscribe Acknowledgment Codes
 ///
 /// # References
@@ -95,7 +100,7 @@ impl TryFrom<u8> for SubAckReasonCode {
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
 #[repr(u8)]
-pub enum UnsubAckReasonCode {
+pub enum UnSubAckReasonCode {
     /// The subscription is deleted.
     Success = 0x00,
     /// No matching Topic Filter is being used by the Client.
@@ -113,7 +118,7 @@ pub enum UnsubAckReasonCode {
     PacketIdentifierInUse = 0x91,
 }
 
-impl TryFrom<u8> for UnsubAckReasonCode {
+impl TryFrom<u8> for UnSubAckReasonCode {
     type Error = u8;
 
     fn try_from(value: u8) -> Result<Self, Self::Error> {
@@ -129,5 +134,122 @@ impl TryFrom<u8> for UnsubAckReasonCode {
             x if (x == Self::PacketIdentifierInUse as u8) => Ok(Self::PacketIdentifierInUse),
             x => Err(x),
         }
+    }
+}
+
+/// `SUBSCRIBE` acknowledgement
+#[derive(Debug, PartialEq, Eq, Copy, Clone)]
+#[cfg_attr(feature = "defmt", derive(defmt::Format))]
+pub struct SubAck {
+    /// Packet Identifier.
+    ///
+    /// This can be compared with the return value of [`Client::subscribe`] to
+    /// determine which subscribe is being acknowledged.
+    ///
+    /// [`Client::subscribe`]: crate::Client::subscribe
+    pub pkt_id: u16,
+    /// SUBACK reason code.
+    ///
+    /// This should be checked to ensure the SUBSCRIBE was successful.
+    pub code: SubAckReasonCode,
+}
+
+/// `UNSUBSCRIBE` acknowledgement
+#[derive(Debug, PartialEq, Eq, Copy, Clone)]
+#[cfg_attr(feature = "defmt", derive(defmt::Format))]
+pub struct UnSubAck {
+    /// Packet Identifier.
+    ///
+    /// This can be compared with the return value of [`Client::unsubscribe`]
+    /// to determine which unsubscribe is being acknowledged.
+    ///
+    /// [`Client::unsubscribe`]: crate::Client::unsubscribe
+    pub pkt_id: u16,
+    /// UNSUBACK reason code.
+    ///
+    /// This should be checked to ensure the UNSUBSCRIBE was successful.
+    pub code: UnSubAckReasonCode,
+}
+
+pub fn send_subscribe<E, Writer: Write<E>>(
+    mut writer: Writer,
+    filter: &str,
+    pkt_id: u16,
+) -> Result<u16, HlError<E>> {
+    if filter.is_empty() {
+        Ok(0)
+    } else {
+        const SUBSCRIPTION_OPTIONS_LEN: u16 = 1;
+
+        let filter_len: u16 = (filter.len() as u16) + FILTER_LEN_LEN + SUBSCRIPTION_OPTIONS_LEN;
+
+        let remaining_len: u32 =
+            PACKET_ID_LEN + u32::from(PROPERTY_LEN_LEN) + u32::from(filter_len);
+
+        writer.write_all(&[(CtrlPkt::SUBSCRIBE as u8) << 4 | 0b0010])?;
+        write_variable_byte_integer(&mut writer, remaining_len)?;
+        writer.write_all(&[
+            // packet identifier
+            (pkt_id >> 8) as u8,
+            pkt_id as u8,
+            // property length
+            0,
+        ])?;
+
+        writer.write_all(
+            u16::try_from(filter.len())
+                .unwrap_or(u16::MAX)
+                .to_be_bytes()
+                .as_ref(),
+        )?;
+        writer.write_all(filter.as_bytes())?;
+        // subscription options flags
+        // 00 => reserved
+        // 10 => retain handling: do not set messages at subscribtion time
+        // 0 => retain as published: all messages have the retain flag cleared
+        // 1 => no local option: do not send messages published by this client
+        // 00 => QoS 0: at most once delivery
+        writer.write_all(&[0b00100100])?;
+
+        writer.send()?;
+
+        Ok(pkt_id)
+    }
+}
+
+pub fn send_unsubscribe<E, Writer: Write<E>>(
+    mut writer: Writer,
+    filter: &str,
+    pkt_id: u16,
+) -> Result<u16, HlError<E>> {
+    if filter.is_empty() {
+        Ok(0)
+    } else {
+        let filter_len: u16 = (filter.len() as u16) + FILTER_LEN_LEN;
+
+        let remaining_len: u32 =
+            PACKET_ID_LEN + u32::from(PROPERTY_LEN_LEN) + u32::from(filter_len);
+
+        writer.write_all(&[(CtrlPkt::UNSUBSCRIBE as u8) << 4 | 0b0010])?;
+        write_variable_byte_integer(&mut writer, remaining_len)?;
+        writer.write_all(&[
+            // packet identifier
+            (pkt_id >> 8) as u8,
+            pkt_id as u8,
+            // property length
+            0,
+        ])?;
+
+        writer.write_all(
+            u16::try_from(filter.len())
+                .unwrap_or(u16::MAX)
+                .to_be_bytes()
+                .as_ref(),
+        )?;
+        writer.write_all(filter.as_bytes())?;
+
+        writer.send()?;
+
+        Ok(pkt_id)
     }
 }
