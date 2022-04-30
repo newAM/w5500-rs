@@ -40,7 +40,7 @@
 //!     println!("IP: {:?}", answer.rdata);
 //! }
 //! response.done()?;
-//! # Ok::<(), w5500_hl::Error<std::io::Error>>(())
+//! # Ok::<(), w5500_hl::Error<std::io::ErrorKind>>(())
 //! ```
 //!
 //! # Relevant Specifications

@@ -1,0 +1,3 @@
+[alias]
+test-all = "test --features std,log,embedded-hal,time,chrono,num-rational,w5500-tls"
+test-mqtt = "test -p w5500-mqtt --features log,std,w5500-tls"

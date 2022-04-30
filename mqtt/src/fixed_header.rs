@@ -3,9 +3,10 @@ use crate::{
     CtrlPkt,
 };
 
-#[allow(dead_code)]
+#[derive(Debug)]
 pub(crate) struct FixedHeader {
     pub ctrl_pkt: CtrlPkt,
+    #[allow(dead_code)]
     pub flags: u8,
     // truncated from u32 to u16
     // server should never send packets over u16 because we set the maximum size

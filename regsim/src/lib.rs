@@ -1024,7 +1024,7 @@ impl Default for W5500 {
 }
 
 impl Registers for W5500 {
-    type Error = std::io::Error;
+    type Error = std::io::ErrorKind;
 
     fn read(&mut self, addr: u16, block: u8, data: &mut [u8]) -> Result<(), Self::Error> {
         let mut addr: u16 = addr;
@@ -1039,14 +1039,15 @@ impl Registers for W5500 {
             }
             BlockType::Socket(sn) => {
                 for byte in data.iter_mut() {
-                    *byte = self.socket_reg_rd(addr, sn)?;
+                    *byte = self.socket_reg_rd(addr, sn).map_err(|e| e.kind())?;
                     addr = addr.wrapping_add(1);
                 }
                 Ok(())
             }
             BlockType::Rx(sn) => {
                 data.iter_mut().for_each(|byte| {
-                    *byte = self.sn[usize::from(sn)].rx_buf[usize::from(addr)];
+                    let buf_size: usize = self.sn[usize::from(sn)].rx_buf.len();
+                    *byte = self.sn[usize::from(sn)].rx_buf[usize::from(addr) % buf_size];
                     if self.socket_buffer_logging {
                         log::trace!("[R] [RXB] {addr:04X} -> {:02X}", *byte);
                     }
@@ -1056,7 +1057,8 @@ impl Registers for W5500 {
             }
             BlockType::Tx(sn) => {
                 data.iter_mut().for_each(|byte| {
-                    *byte = self.sn[usize::from(sn)].tx_buf[usize::from(addr)];
+                    let buf_size: usize = self.sn[usize::from(sn)].tx_buf.len();
+                    *byte = self.sn[usize::from(sn)].tx_buf[usize::from(addr) % buf_size];
                     if self.socket_buffer_logging {
                         log::trace!("[R] [TXB] {addr:04X} -> {:02X}", *byte);
                     }
@@ -1074,14 +1076,14 @@ impl Registers for W5500 {
         match block_type(block) {
             BlockType::Common => {
                 for byte in data {
-                    self.common_reg_wr(addr, *byte)?;
+                    self.common_reg_wr(addr, *byte).map_err(|e| e.kind())?;
                     addr = addr.wrapping_add(1);
                 }
                 Ok(())
             }
             BlockType::Socket(sn) => {
                 for byte in data {
-                    self.socket_reg_wr(addr, *byte, sn)?;
+                    self.socket_reg_wr(addr, *byte, sn).map_err(|e| e.kind())?;
                     addr = addr.wrapping_add(1);
                 }
                 Ok(())
@@ -1091,7 +1093,8 @@ impl Registers for W5500 {
                     if self.socket_buffer_logging {
                         log::trace!("[W] [RXB] {addr:04X} <- {:02X}", *byte);
                     }
-                    self.sn[usize::from(sn)].rx_buf[usize::from(addr)] = *byte;
+                    let buf_size: usize = self.sn[usize::from(sn)].rx_buf.len();
+                    self.sn[usize::from(sn)].rx_buf[usize::from(addr) % buf_size] = *byte;
                     addr = addr.wrapping_add(1);
                 });
                 Ok(())
@@ -1101,7 +1104,8 @@ impl Registers for W5500 {
                     if self.socket_buffer_logging {
                         log::trace!("[W] [TXB] {addr:04X} <- {:02X}", *byte);
                     }
-                    self.sn[usize::from(sn)].tx_buf[usize::from(addr)] = *byte;
+                    let buf_size: usize = self.sn[usize::from(sn)].tx_buf.len();
+                    self.sn[usize::from(sn)].tx_buf[usize::from(addr) % buf_size] = *byte;
                     addr = addr.wrapping_add(1);
                 });
                 Ok(())

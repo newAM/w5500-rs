@@ -174,7 +174,7 @@ impl Client {
     ///
     /// let sntp_client: Client = Client::new(Sn::Sn3, SNTP_SRC_PORT, SNTP_SERVER);
     /// sntp_client.request(&mut w5500)?;
-    /// # Ok::<(), w5500_hl::Error<std::io::Error>>(())
+    /// # Ok::<(), w5500_hl::Error<std::io::ErrorKind>>(())
     /// ```
     ///
     /// [`on_recv_interrupt`]: Self::on_recv_interrupt
@@ -261,7 +261,7 @@ impl Client {
     ///     Err(e) => todo!("handle error: {:?}", e),
     ///     Ok(reply) => reply,
     /// };
-    /// # Ok::<(), w5500_hl::Error<std::io::Error>>(())
+    /// # Ok::<(), w5500_hl::Error<std::io::ErrorKind>>(())
     /// ```
     ///
     /// [`request`]: Self::request
