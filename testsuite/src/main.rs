@@ -227,6 +227,7 @@ fn dns_query(ta: &mut TestArgs) {
         println!("ttl={:?}", answer.ttl);
         println!("rdata={:?}", answer.rdata);
     }
+    response.done().unwrap();
 }
 
 fn tls_handshake(ta: &mut TestArgs) {

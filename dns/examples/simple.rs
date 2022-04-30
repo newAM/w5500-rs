@@ -68,7 +68,8 @@ fn main() {
         }
     };
 
-    while let Some(ans) = response.next_answer().expect("W5500 error") {
+    while let Some(ans) = response.next_answer().unwrap() {
         println!("{ans:?}");
     }
+    response.done().unwrap();
 }

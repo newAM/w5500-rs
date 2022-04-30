@@ -39,6 +39,7 @@
 //!     println!("TTL: {}", answer.ttl);
 //!     println!("IP: {:?}", answer.rdata);
 //! }
+//! response.done()?;
 //! # Ok::<(), w5500_hl::Error<std::io::Error>>(())
 //! ```
 //!
@@ -89,8 +90,6 @@ pub use w5500_hl::ll;
 
 /// DNS destination port.
 pub const DST_PORT: u16 = 53;
-
-const NAME_PTR_MASK: u16 = 0xC0_00;
 
 /// Commonly used public DNS servers.
 ///
@@ -164,6 +163,66 @@ pub struct Answer<'a> {
     pub rdata: Option<Ipv4Addr>,
 }
 
+// https://www.rfc-editor.org/rfc/rfc1035#section-4.1.4
+fn read_labels<'l, E, Reader: Read<E> + Seek<E>>(
+    reader: &mut Reader,
+    labels: &'l mut [u8],
+) -> Result<Option<&'l str>, Error<E>> {
+    const NAME_PTR_MASK: u16 = 0xC0_00;
+
+    let mut labels_idx: usize = 0;
+    let mut seek_to: u16 = 0;
+
+    loop {
+        let mut buf: [u8; 2] = [0; 2];
+        let n: u16 = reader.read(&mut buf)?;
+        if n == 0 {
+            return Err(Error::UnexpectedEof);
+        }
+
+        let sequence: u16 = u16::from_be_bytes(buf);
+
+        // if pointer
+        if n == 2 && sequence & NAME_PTR_MASK != 0 {
+            let ptr: u16 = sequence & !NAME_PTR_MASK;
+            seek_to = reader.stream_position();
+            reader.seek(SeekFrom::Start(ptr))?;
+        } else {
+            // seek back to the start of the label
+            reader.seek(SeekFrom::Current(-1))?;
+
+            let len: u8 = buf[0] & 0x3F;
+            if len == 0 {
+                break;
+            }
+
+            if labels_idx != 0 {
+                if let Some(b) = labels.get_mut(labels_idx) {
+                    *b = b'.';
+                }
+                labels_idx += 1;
+            }
+
+            if let Some(label_buf) = labels.get_mut(labels_idx..(labels_idx + usize::from(len))) {
+                reader.read_exact(label_buf)?;
+            } else {
+                reader.seek(SeekFrom::Current(len.into()))?;
+            }
+            labels_idx += usize::from(len);
+        }
+    }
+
+    if seek_to != 0 {
+        reader.seek(SeekFrom::Start(seek_to))?;
+    }
+
+    if let Some(name_buf) = labels.get(..labels_idx) {
+        Ok(core::str::from_utf8(name_buf).ok())
+    } else {
+        Ok(None)
+    }
+}
+
 /// DNS response from the server.
 ///
 /// This is created with [`Client::response`].
@@ -176,7 +235,7 @@ pub struct Response<'a, W5500: Udp> {
     answer_idx: u16,
 }
 
-impl<'a, W: Udp> Response<'a, W> {
+impl<'a, W5500: Udp> Response<'a, W5500> {
     /// Response code from the server.
     ///
     /// This will return `Err(u8)` if the server uses a reserved value.
@@ -190,38 +249,6 @@ impl<'a, W: Udp> Response<'a, W> {
         self.header.ancount()
     }
 
-    fn read_label_to_buf(&mut self) -> Result<usize, Error<W::Error>> {
-        let mut label_idx: usize = 0;
-        loop {
-            let label_len: u8 = {
-                let mut label_len: [u8; 1] = [0];
-                self.reader.read_exact(&mut label_len)?;
-                label_len[0]
-            };
-
-            if label_len == 0 {
-                break;
-            } else {
-                if label_idx != 0 {
-                    if let Some(b) = self.buf.get_mut(label_idx) {
-                        *b = b'.';
-                    }
-                    label_idx += 1;
-                }
-                let expected_len: usize = usize::from(label_len);
-                if let Some(label_buf) = self.buf.get_mut(label_idx..(label_idx + expected_len)) {
-                    self.reader.read_exact(label_buf)?;
-                    label_idx += expected_len;
-                } else {
-                    self.reader.seek(SeekFrom::Current(label_len.into()))?;
-                    label_idx += expected_len;
-                }
-            }
-        }
-
-        Ok(label_idx)
-    }
-
     /// Get the next answer from the DNS response.
     ///
     /// # Errors
@@ -233,33 +260,13 @@ impl<'a, W: Udp> Response<'a, W> {
     ///
     /// If any error occurs the entire response should be discarded,
     /// and you should not continue to call `next_answer`.
-    pub fn next_answer(&mut self) -> Result<Option<Answer>, Error<W::Error>> {
+    pub fn next_answer(&mut self) -> Result<Option<Answer>, Error<W5500::Error>> {
         if self.answer_idx >= self.answer_count() {
             Ok(None)
         } else {
             self.answer_idx = self.answer_idx.saturating_add(1);
 
-            let mut ptr_buf: [u8; 2] = [0; 2];
-            self.reader.read_exact(&mut ptr_buf)?;
-
-            let ptr: u16 = u16::from_be_bytes(ptr_buf);
-            // name is not a pointer
-            let buf_idx: usize = if ptr & NAME_PTR_MASK == 0 {
-                self.reader.seek(SeekFrom::Current(-2))?;
-                self.read_label_to_buf()?
-            } else {
-                let prev_idx: u16 = self.reader.stream_position();
-                self.reader.seek(SeekFrom::Start(ptr & !NAME_PTR_MASK))?;
-                let ret: Result<usize, Error<W::Error>> = self.read_label_to_buf();
-                self.reader.seek(SeekFrom::Start(prev_idx))?;
-                ret?
-            };
-
-            let name: Option<&str> = if let Some(name_buf) = self.buf.get(..buf_idx) {
-                core::str::from_utf8(name_buf).ok()
-            } else {
-                None
-            };
+            let name: Option<&str> = read_labels(&mut self.reader, self.buf)?;
 
             let qtype: u16 = {
                 let mut buf: [u8; 2] = [0; 2];
@@ -300,6 +307,14 @@ impl<'a, W: Udp> Response<'a, W> {
             }))
         }
     }
+
+    /// Mark this response as done, removing it from the queue.
+    ///
+    /// If this is not called the same response will appear on the next
+    /// call to [`Client::response`].
+    pub fn done(self) -> Result<(), W5500::Error> {
+        self.reader.done()
+    }
 }
 
 /// DNS query sent by the client.
@@ -326,8 +341,8 @@ impl<'a, W5500: Udp> Query<'a, W5500> {
         }
 
         for label in qname.labels() {
-            // truncation from usize to u8 will not loose prevision
-            // hostname is validated to have labels with 63 or fewer bytes
+            // truncation from usize to u8 will not loose precision
+            // Hostname is validated to have labels with 63 or fewer bytes
             let label_len: u8 = label.len() as u8;
 
             self.writer.write_all(&[label_len])?;
@@ -398,6 +413,7 @@ impl Client {
     ///
     /// let dns_client: Client = Client::new(Sn::Sn3, DNS_SRC_PORT, servers::CLOUDFLARE, random_number);
     /// ```
+    #[must_use]
     pub const fn new(sn: Sn, port: u16, server: Ipv4Addr, seed: u64) -> Self {
         Self {
             sn,
@@ -443,6 +459,7 @@ impl Client {
     /// assert_eq!(dns_client.server(), servers::CLOUDFLARE);
     /// ```
     #[inline]
+    #[must_use]
     pub fn server(&self) -> Ipv4Addr {
         *self.server.ip()
     }
@@ -536,29 +553,10 @@ impl Client {
 
         // ignore all the questions
         for _ in 0..header.qdcount() {
-            // seek to the label and class fields
-            let mut ptr_buf: [u8; 2] = [0; 2];
-            reader.read_exact(&mut ptr_buf)?;
-            reader.seek(SeekFrom::Current(-2))?;
-            let ptr: u16 = u16::from_be_bytes(ptr_buf);
-            // name is not a pointer, seek over it.
-            if ptr & NAME_PTR_MASK == 0 {
-                loop {
-                    let label_len: u8 = {
-                        let mut label_len: [u8; 1] = [0];
-                        reader.read_exact(&mut label_len)?;
-                        label_len[0]
-                    };
+            // seek over labels
+            read_labels(&mut reader, &mut [])?;
 
-                    if label_len == 0 {
-                        break;
-                    } else {
-                        reader.seek(SeekFrom::Current(label_len.into()))?;
-                    }
-                }
-            }
-
-            // skip over label and class
+            // seek over type and class
             reader.seek(SeekFrom::Current(4))?;
         }
 
