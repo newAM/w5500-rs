@@ -611,7 +611,9 @@ impl<'b, const N: usize> Buffer<'b, N> {
 
             self.tail = (self.tail + src.len()) % N;
 
-            debug_assert_ne!(self.head, self.tail);
+            if !src.is_empty() {
+                debug_assert_ne!(self.head, self.tail);
+            }
 
             Ok(())
         }
