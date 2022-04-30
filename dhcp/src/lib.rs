@@ -50,7 +50,7 @@ pub const DST_PORT: u16 = 67;
 pub const SRC_PORT: u16 = 68;
 
 /// Duration in seconds to wait for the DHCP server to send a response.
-const TIMEOUT_SECS: u32 = 1;
+const TIMEOUT_SECS: u32 = 10;
 
 /// Duration in seconds to wait for physical link-up.
 const LINK_UP_TIMEOUT_SECS: u32 = 1;
