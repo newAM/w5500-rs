@@ -15,11 +15,11 @@ tlsdebug
 *.srl
 
 # afl and cargo-fuzz
+*.html
+*.log
+*.profraw
 artifacts
 corpus
 coverage
-*.profraw
-*.html
-*.log
-out
 in
+out
