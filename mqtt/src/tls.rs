@@ -71,6 +71,17 @@ use w5500_tls::{
 /// Default MQTT TLS destination port.
 pub const DST_PORT: u16 = 8883;
 
+fn map_tls_writer_err<E>(e: w5500_tls::Error) -> Error<E> {
+    match e {
+        TlsError::UnexpectedDisconnect | TlsError::TcpTimeout | TlsError::StateTimeout(_) => {
+            unreachable!()
+        }
+        TlsError::Server(alert) => Error::ServerAlert(alert),
+        TlsError::Client(alert) => Error::ClientAlert(alert),
+        TlsError::NotConnected => Error::NotConnected,
+    }
+}
+
 /// W5500 MQTT client over TLS.
 ///
 /// The functions are identical to [`crate::Client`], except for the constructor,
@@ -162,8 +173,8 @@ impl<'id, 'hn, 'psk, 'b, const N: usize> Client<'id, 'hn, 'psk, 'b, N> {
     ) -> Result<Event<Infallible, TlsReader<'b, 'ptr>>, Error<W5500::Error>> {
         loop {
             match self.tls.process(w5500, rng, monotonic_secs) {
-                Err(TlsError::Server(alert)) => todo!("Server alert {:?}", alert),
-                Err(TlsError::Client(alert)) => todo!("Client alert {:?}", alert),
+                Err(TlsError::Server(alert)) => return Err(Error::ServerAlert(alert)),
+                Err(TlsError::Client(alert)) => return Err(Error::ClientAlert(alert)),
                 Err(TlsError::UnexpectedDisconnect) => return Err(Error::Disconnect),
                 Err(TlsError::TcpTimeout) => return Err(Error::TcpTimeout),
                 Err(TlsError::StateTimeout(tls_state)) => {
@@ -224,7 +235,7 @@ impl<'id, 'hn, 'psk, 'b, const N: usize> Client<'id, 'hn, 'psk, 'b, N> {
         topic: &str,
         payload: &[u8],
     ) -> Result<(), Error<W5500::Error>> {
-        let writer: TlsWriter<W5500> = self.tls.writer(w5500).expect("TODO");
+        let writer: TlsWriter<W5500> = self.tls.writer(w5500).map_err(map_tls_writer_err)?;
         send_publish(writer, topic, payload).map_err(Error::map_w5500)
     }
 
@@ -235,7 +246,7 @@ impl<'id, 'hn, 'psk, 'b, const N: usize> Client<'id, 'hn, 'psk, 'b, N> {
         filter: &str,
     ) -> Result<u16, Error<W5500::Error>> {
         let pkt_id: u16 = self.next_pkt_id();
-        let writer: TlsWriter<W5500> = self.tls.writer(w5500).expect("TODO");
+        let writer: TlsWriter<W5500> = self.tls.writer(w5500).map_err(map_tls_writer_err)?;
         send_subscribe(writer, filter, pkt_id).map_err(Error::map_w5500)
     }
 
@@ -246,7 +257,7 @@ impl<'id, 'hn, 'psk, 'b, const N: usize> Client<'id, 'hn, 'psk, 'b, N> {
         filter: &str,
     ) -> Result<u16, Error<W5500::Error>> {
         let pkt_id: u16 = self.next_pkt_id();
-        let writer: TlsWriter<W5500> = self.tls.writer(w5500).expect("TODO");
+        let writer: TlsWriter<W5500> = self.tls.writer(w5500).map_err(map_tls_writer_err)?;
         send_unsubscribe(writer, filter, pkt_id).map_err(Error::map_w5500)
     }
 
@@ -263,7 +274,7 @@ impl<'id, 'hn, 'psk, 'b, const N: usize> Client<'id, 'hn, 'psk, 'b, N> {
         const TLS_OVERHEAD: u16 = TLS_RECORD_HEADER_LEN + TLS_TAG_LEN + TLS_CONTENT_TYPE_LEN;
 
         let rx_max: u16 = (N as u16) - TLS_OVERHEAD;
-        let writer: TlsWriter<W5500> = self.tls.writer(w5500).expect("TODO");
+        let writer: TlsWriter<W5500> = self.tls.writer(w5500).map_err(map_tls_writer_err)?;
         send_connect(writer, &self.client_id, rx_max).map_err(Error::map_w5500)?;
         Ok(self
             .state_timeout

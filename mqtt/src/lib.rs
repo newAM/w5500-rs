@@ -245,9 +245,14 @@ pub enum Error<E> {
     ConnAck(ConnectReasonCode),
     /// Ran out of memory writing to the socket buffers.
     OutOfMemory,
-    /// TLS errors.
+    /// Tried to publish, subscribe, or unsubscribe when not connected.
+    NotConnected,
+    /// Alert from the TLS server.
     #[cfg(feature = "w5500-tls")]
-    Tls(w5500_tls::Error),
+    ServerAlert(w5500_tls::Alert),
+    /// Alert from the TLS client.
+    #[cfg(feature = "w5500-tls")]
+    ClientAlert(w5500_tls::Alert),
     /// Errors from the [`Registers`] trait implementation.
     Other(E),
 }
@@ -265,15 +270,16 @@ impl<E> Error<E> {
     #[cfg(feature = "w5500-tls")]
     fn map_w5500_infallible(e: Error<core::convert::Infallible>) -> Error<E> {
         match e {
-            Error::StateTimeout(x) => Error::StateTimeout(x),
+            Error::StateTimeout(to) => Error::StateTimeout(to),
             Error::Disconnect => Error::Disconnect,
             Error::TcpTimeout => Error::TcpTimeout,
             Error::Decode => Error::Decode,
             Error::Protocol => Error::Protocol,
-            Error::ConnAck(x) => Error::ConnAck(x),
+            Error::ConnAck(reason) => Error::ConnAck(reason),
             Error::OutOfMemory => Error::OutOfMemory,
-            #[cfg(feature = "w5500-tls")]
-            Error::Tls(x) => Error::Tls(x),
+            Error::ServerAlert(alert) => Error::ServerAlert(alert),
+            Error::ClientAlert(alert) => Error::ClientAlert(alert),
+            Error::NotConnected => Error::NotConnected,
             Error::Other(_) => unreachable!(),
         }
     }
@@ -532,11 +538,15 @@ impl<'a> Client<'a> {
         matches!(self.state_timeout.state, State::Ready)
     }
 
+    fn connected<E>(&self) -> Result<(), Error<E>> {
+        if self.is_connected() {
+            Ok(())
+        } else {
+            Err(Error::NotConnected)
+        }
+    }
+
     /// Publish data to the MQTT broker.
-    ///
-    /// You can only subscribe when the client [`is_connected`].
-    /// If you are not connected and write data this function will return
-    /// `Ok(())`, and the connection process will restart.
     ///
     /// # Examples
     ///
@@ -571,15 +581,12 @@ impl<'a> Client<'a> {
         topic: &str,
         payload: &[u8],
     ) -> Result<(), Error<W5500::Error>> {
+        self.connected()?;
         let writer: TcpWriter<W5500> = w5500.tcp_writer(self.sn)?;
         send_publish(writer, topic, payload).map_err(Error::map_w5500)
     }
 
     /// Subscribe to a topic.
-    ///
-    /// You can only subscribe when the client [`is_connected`].
-    /// If you are not connected and write data this function will return
-    /// `Ok(())`, and the connection process will restart.
     ///
     /// # Return Value
     ///
@@ -621,15 +628,12 @@ impl<'a> Client<'a> {
         w5500: &mut W5500,
         filter: &str,
     ) -> Result<u16, Error<W5500::Error>> {
+        self.connected()?;
         let writer: TcpWriter<W5500> = w5500.tcp_writer(self.sn)?;
         send_subscribe(writer, filter, self.next_pkt_id()).map_err(Error::map_w5500)
     }
 
     /// Unsubscribe from a topic.
-    ///
-    /// You can only unsubscribe when the client [`is_connected`].
-    /// If you are not connected and write data this function will return
-    /// `Ok(())`, and the connection process will restart.
     ///
     /// # Return Value
     ///
@@ -646,6 +650,7 @@ impl<'a> Client<'a> {
         w5500: &mut W5500,
         filter: &str,
     ) -> Result<u16, Error<W5500::Error>> {
+        self.connected()?;
         let writer: TcpWriter<W5500> = w5500.tcp_writer(self.sn)?;
         send_unsubscribe(writer, filter, self.next_pkt_id()).map_err(Error::map_w5500)
     }
