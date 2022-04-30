@@ -705,7 +705,7 @@ impl<'hn, 'psk, 'b, const N: usize> Client<'hn, 'psk, 'b, N> {
         // our RX buffer size
         if header.length() > Self::RECORD_SIZE_LIMIT {
             Err(AlertDescription::RecordOverflow)
-        } else if header.length() + (RecordHeader::LEN as u16) > reader.stream_len() {
+        } else if header.length().saturating_add(RecordHeader::LEN as u16) > reader.stream_len() {
             Ok(None)
         } else {
             reader.done().map_err(|_| AlertDescription::InternalError)?;
