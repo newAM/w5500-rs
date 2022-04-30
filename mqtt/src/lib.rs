@@ -74,6 +74,9 @@ mod subscribe;
 #[cfg(feature = "w5500-tls")]
 pub mod tls;
 
+#[cfg(feature = "w5500-tls")]
+pub use w5500_tls;
+
 pub use client_id::ClientId;
 use connect::send_connect;
 pub use connect::ConnectReasonCode;
