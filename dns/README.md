@@ -39,6 +39,7 @@ while let Some(answer) = response.next_answer()? {
     println!("TTL: {}", answer.ttl);
     println!("IP: {:?}", answer.rdata);
 }
+response.done()?;
 ```
 
 ## Relevant Specifications

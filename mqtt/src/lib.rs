@@ -50,7 +50,6 @@
 //! * `std`: Passthrough to [w5500-hl].
 //! * `defmt`: Enable logging with `defmt`. Also a passthrough to [w5500-hl].
 //! * `log`: Enable logging with `log`.
-//! * `w5500-tls`: Enable the the `tls` module with `w5500-tls`.
 //!
 //! [w5500-hl]: https://crates.io/crates/w5500-hl
 //! [Wiznet W5500]: https://www.wiznet.io/product-item/w5500/
