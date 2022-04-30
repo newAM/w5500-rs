@@ -33,7 +33,12 @@ pub fn decrypt_record_inplace<const N: usize, W5500: Registers>(
         .sn_rx_rd(sn)
         .map_err(|_| AlertDescription::InternalError)?;
 
-    let mut remain: u16 = header.length() - (GCM_TAG_LEN as u16);
+    let mut remain: u16 = header.length().saturating_sub(GCM_TAG_LEN as u16);
+
+    if remain == 0 {
+        error!("record is too short to contain ContentType");
+        return Err(AlertDescription::DecodeError);
+    }
 
     let content_type: Result<ContentType, u8> = loop {
         let mut block: [u8; 16] = [0; 16];
