@@ -14,10 +14,12 @@ tlsdebug
 *.pem
 *.srl
 
-# cargo-fuzz
+# afl and cargo-fuzz
 artifacts
 corpus
 coverage
 *.profraw
 *.html
 *.log
+out
+in

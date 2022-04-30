@@ -69,6 +69,7 @@
 //! [`w5500_ll::Registers`]: https://docs.rs/w5500-ll/latest/w5500_ll/trait.Registers.html
 
 use std::{
+    fs::File,
     io::{self, Read, Write},
     net::{SocketAddrV4, TcpListener, TcpStream, UdpSocket},
 };
@@ -288,11 +289,22 @@ impl Default for Socket {
 }
 
 /// Simulated W5500.
-#[derive(Debug, PartialEq)]
+#[derive(Debug)]
 pub struct W5500 {
     regs: CommonRegs,
     sn: [Socket; NUM_SOCKETS],
     socket_buffer_logging: bool,
+    corpus: Option<File>,
+}
+
+impl PartialEq for W5500 {
+    fn eq(&self, other: &Self) -> bool {
+        self.regs == other.regs
+            && self.sn == other.sn
+            && self.socket_buffer_logging == other.socket_buffer_logging
+            && ((self.corpus.is_some() && other.corpus.is_some())
+                || (self.corpus.is_none() && other.corpus.is_none()))
+    }
 }
 
 impl W5500 {
@@ -315,6 +327,32 @@ impl W5500 {
     /// ```
     pub fn set_socket_buffer_logging(&mut self, enable: bool) {
         self.socket_buffer_logging = enable
+    }
+
+    /// Record the byte value of each read in a file.
+    ///
+    /// This is useful for generating a corpus for AFL or cargo-fuzz.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use std::fs::File;
+    ///
+    /// let file: File = File::create("/tmp/w5500-corpus")?;
+    /// let mut w5500 = w5500_regsim::W5500::default();
+    ///
+    /// w5500.set_corpus_file(file);
+    /// # Ok::<(), std::io::Error>(())
+    /// ```
+    pub fn set_corpus_file(&mut self, file: File) {
+        self.corpus.replace(file);
+    }
+
+    fn log_byte(&mut self, byte: u8) {
+        if let Some(mut file) = self.corpus.as_ref() {
+            file.write_all(&[byte])
+                .expect("failed to write to read log");
+        }
     }
 
     fn reset(&mut self) {
@@ -1019,6 +1057,7 @@ impl Default for W5500 {
             regs: CommonRegs::RESET,
             sn: Default::default(),
             socket_buffer_logging: true,
+            corpus: None,
         }
     }
 }
@@ -1033,6 +1072,7 @@ impl Registers for W5500 {
             BlockType::Common => {
                 data.iter_mut().for_each(|byte| {
                     *byte = self.common_reg_rd(addr);
+                    self.log_byte(*byte);
                     addr = addr.wrapping_add(1);
                 });
                 Ok(())
@@ -1040,6 +1080,7 @@ impl Registers for W5500 {
             BlockType::Socket(sn) => {
                 for byte in data.iter_mut() {
                     *byte = self.socket_reg_rd(addr, sn).map_err(|e| e.kind())?;
+                    self.log_byte(*byte);
                     addr = addr.wrapping_add(1);
                 }
                 Ok(())
@@ -1048,6 +1089,7 @@ impl Registers for W5500 {
                 data.iter_mut().for_each(|byte| {
                     let buf_size: usize = self.sn[usize::from(sn)].rx_buf.len();
                     *byte = self.sn[usize::from(sn)].rx_buf[usize::from(addr) % buf_size];
+                    self.log_byte(*byte);
                     if self.socket_buffer_logging {
                         log::trace!("[R] [RXB] {addr:04X} -> {:02X}", *byte);
                     }
@@ -1059,6 +1101,7 @@ impl Registers for W5500 {
                 data.iter_mut().for_each(|byte| {
                     let buf_size: usize = self.sn[usize::from(sn)].tx_buf.len();
                     *byte = self.sn[usize::from(sn)].tx_buf[usize::from(addr) % buf_size];
+                    self.log_byte(*byte);
                     if self.socket_buffer_logging {
                         log::trace!("[R] [TXB] {addr:04X} -> {:02X}", *byte);
                     }
