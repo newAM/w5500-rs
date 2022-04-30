@@ -82,7 +82,8 @@ use hl::{
     ll::{net::SocketAddrV4, Registers, Sn, SocketInterrupt, SocketInterruptMask},
     Error as HlError, Tcp, TcpReader, TcpWriter,
 };
-use publish::{send_publish, PublishReader};
+use publish::send_publish;
+pub use publish::PublishReader;
 use recv::recv;
 use subscribe::{send_subscribe, send_unsubscribe};
 pub use subscribe::{SubAck, SubAckReasonCode, UnSubAck, UnSubAckReasonCode};

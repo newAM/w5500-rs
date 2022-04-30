@@ -43,6 +43,8 @@ pub fn send_publish<E, Writer: Write<E>>(
 /// for an intermediate copy.
 ///
 /// Created by [`Client::process`] when there is a pending message.
+///
+/// [`Client::process`]: crate::Client::process
 #[derive(Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
 pub struct PublishReader<E, Reader: Read<E> + Seek<E>> {
@@ -95,6 +97,8 @@ impl<E, Reader: Read<E> + Seek<E>> PublishReader<E, Reader> {
     ///
     /// If this is not called the message will be returned to the queue,
     /// available upon the next call to [`Client::process`].
+    ///
+    /// [`Client::process`]: crate::Client::process
     #[inline]
     pub fn done(mut self) -> Result<(), Error<E>> {
         self.reader
