@@ -137,7 +137,7 @@ impl TryFrom<u8> for UnSubAckReasonCode {
     }
 }
 
-/// `SUBSCRIBE` acknowledgement
+/// `SUBSCRIBE` acknowledgment
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
 pub struct SubAck {
@@ -154,7 +154,7 @@ pub struct SubAck {
     pub code: SubAckReasonCode,
 }
 
-/// `UNSUBSCRIBE` acknowledgement
+/// `UNSUBSCRIBE` acknowledgment
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
 pub struct UnSubAck {

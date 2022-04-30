@@ -68,6 +68,7 @@ jobs:
       - run: cargo build --target ${{ matrix.target }} -p w5500-sntp --features time
       - run: cargo build --target ${{ matrix.target }} -p w5500-sntp --features chrono
       - run: cargo build --target ${{ matrix.target }} -p w5500-sntp --features num-rational
+      - run: cargo build --target ${{ matrix.target }} -p w5500-mqtt --features w5500-tls
 
   test:
     name: Test

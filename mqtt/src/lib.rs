@@ -35,7 +35,7 @@
 //!
 //! // subscribe to "cow"
 //! client.subscribe(&mut w5500, "cow")?;
-//! # Ok::<(), w5500_mqtt::Error<std::io::Error>>(())
+//! # Ok::<(), w5500_mqtt::Error<std::io::ErrorKind>>(())
 //! ```
 //!
 //! # Relevant Specifications
@@ -50,6 +50,7 @@
 //! * `std`: Passthrough to [w5500-hl].
 //! * `defmt`: Enable logging with `defmt`. Also a passthrough to [w5500-hl].
 //! * `log`: Enable logging with `log`.
+//! * `w5500-tls`: Enable MQTT over TLS with pre-shared keys.
 //!
 //! [w5500-hl]: https://crates.io/crates/w5500-hl
 //! [Wiznet W5500]: https://www.wiznet.io/product-item/w5500/
@@ -67,23 +68,26 @@ mod data;
 mod fixed_header;
 mod properties;
 mod publish;
+mod recv;
 mod subscribe;
 
+#[cfg(feature = "w5500-tls")]
+pub mod tls;
+
 pub use client_id::ClientId;
+use connect::send_connect;
 pub use connect::ConnectReasonCode;
-use core::cmp::min;
-use fixed_header::FixedHeader;
 use hl::{
-    io::{Read, Seek, SeekFrom, Write},
+    io::{Read, Seek, Write},
     ll::{net::SocketAddrV4, Registers, Sn, SocketInterrupt, SocketInterruptMask},
     Error as HlError, Tcp, TcpReader, TcpWriter,
 };
+use publish::{send_publish, PublishReader};
+use recv::recv;
 use subscribe::{send_subscribe, send_unsubscribe};
 pub use subscribe::{SubAck, SubAckReasonCode, UnSubAck, UnSubAckReasonCode};
 pub use w5500_hl as hl;
 pub use w5500_hl::ll;
-
-use crate::{connect::send_connect, publish::send_publish};
 
 /// Default MQTT destination port.
 pub const DST_PORT: u16 = 1883;
@@ -123,11 +127,45 @@ pub enum State {
     /// W5500 socket is in an unknown state.
     Init,
     /// Socket has been initialized, waiting for an established TCP connection.
+    ///
+    /// When using TLS this is instead waiting for the TLS handshake to complete.
     WaitConInt,
     /// CONNECT packet has been sent, waiting for a CONNACK.
     WaitConAck,
     /// CONNACK has been received, ready for action.
     Ready,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+#[cfg_attr(feature = "defmt", derive(defmt::Format))]
+struct StateTimeout {
+    /// MQTT client state
+    state: State,
+    /// Timeout for MQTT server responses
+    timeout: Option<u32>,
+}
+
+impl StateTimeout {
+    fn timeout_elapsed_secs(&self, monotonic_secs: u32) -> Option<u32> {
+        self.timeout.map(|to| monotonic_secs - to)
+    }
+
+    fn set_state_with_timeout(&mut self, state: State, monotonic_secs: u32) -> u32 {
+        debug!(
+            "{:?} -> {:?} with timeout {}",
+            self.state, state, monotonic_secs
+        );
+        self.state = state;
+        self.timeout = Some(monotonic_secs);
+
+        TIMEOUT_SECS
+    }
+
+    fn set_state(&mut self, state: State) {
+        debug!("{:?} -> {:?} without timeout", self.state, state);
+        self.state = state;
+        self.timeout = None;
+    }
 }
 
 /// Duration in seconds to wait for the MQTT server to send a response.
@@ -141,70 +179,6 @@ fn write_variable_byte_integer<E, Writer: Write<E>>(
     writer.write_all(&buf[..len])
 }
 
-/// Reader for a published message on a subscribed topic.
-///
-/// This reads publish data directly from the socket buffer, avoiding the need
-/// for an intermediate copy.
-///
-/// Created by [`Client::process`] when there is a pending message.
-#[derive(Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "defmt", derive(defmt::Format))]
-pub struct PublishReader<'a, W5500: Registers> {
-    reader: TcpReader<'a, W5500>,
-    topic_len: u16,
-    topic_idx: u16,
-    payload_len: u16,
-    payload_idx: u16,
-}
-
-impl<'a, W5500: Registers> PublishReader<'a, W5500> {
-    /// Length of the topic in bytes.
-    #[inline]
-    pub fn topic_len(&self) -> u16 {
-        self.topic_len
-    }
-
-    /// Length of the payload in bytes.
-    #[inline]
-    pub fn payload_len(&self) -> u16 {
-        self.payload_len
-    }
-
-    /// Read the topic into `buf`, and return the number of bytes read.
-    pub fn read_topic(&mut self, buf: &mut [u8]) -> Result<u16, Error<W5500::Error>> {
-        self.reader
-            .seek(SeekFrom::Start(self.topic_idx))
-            .map_err(map_read_exact_err)?;
-        let read_len: u16 = min(buf.len().try_into().unwrap_or(u16::MAX), self.topic_len);
-        self.reader
-            .read_exact(&mut buf[..read_len.into()])
-            .map_err(map_read_exact_err)?;
-        Ok(read_len)
-    }
-
-    /// Read the payload into `buf`, and return the number of bytes read.
-    pub fn read_payload(&mut self, buf: &mut [u8]) -> Result<u16, Error<W5500::Error>> {
-        self.reader
-            .seek(SeekFrom::Start(self.payload_idx))
-            .map_err(map_read_exact_err)?;
-        let read_len: u16 = min(buf.len().try_into().unwrap_or(u16::MAX), self.payload_len);
-        self.reader
-            .read_exact(&mut buf[..read_len.into()])
-            .map_err(map_read_exact_err)?;
-        Ok(read_len)
-    }
-
-    /// Mark this message as read.
-    ///
-    /// If this is not called the message will be returned to the queue,
-    /// available upon the next call to [`Client::process`].
-    #[inline]
-    pub fn done(self) -> Result<(), W5500::Error> {
-        self.reader.done()?;
-        Ok(())
-    }
-}
-
 /// MQTT events.
 ///
 /// These are events that need to be handled externally by your firmware,
@@ -213,7 +187,7 @@ impl<'a, W5500: Registers> PublishReader<'a, W5500> {
 /// This is returned by [`Client::process`].
 #[derive(Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
-pub enum Event<'a, W5500: Registers> {
+pub enum Event<E, Reader: Read<E> + Seek<E>> {
     /// A hint to call [`Client::process`] after this many seconds have elapsed.
     ///
     /// This is just a hint and does not have to be used.
@@ -227,7 +201,7 @@ pub enum Event<'a, W5500: Registers> {
     ///
     /// The inner value contains a [`PublishReader`] to extract the topic and
     /// payload from the socket buffers.
-    Publish(PublishReader<'a, W5500>),
+    Publish(PublishReader<E, Reader>),
     /// Subscribe Acknowledgment.
     SubAck(SubAck),
     /// Unsubscribe Acknowledgment.
@@ -270,8 +244,38 @@ pub enum Error<E> {
     ConnAck(ConnectReasonCode),
     /// Ran out of memory writing to the socket buffers.
     OutOfMemory,
+    /// TLS errors.
+    #[cfg(feature = "w5500-tls")]
+    Tls(w5500_tls::Error),
     /// Errors from the [`Registers`] trait implementation.
     Other(E),
+}
+
+impl<E> Error<E> {
+    fn map_w5500(e: w5500_hl::Error<E>) -> Error<E> {
+        match e {
+            HlError::OutOfMemory => Error::OutOfMemory,
+            HlError::UnexpectedEof => Error::Decode,
+            HlError::Other(e) => Error::Other(e),
+            _ => unreachable!(),
+        }
+    }
+
+    #[cfg(feature = "w5500-tls")]
+    fn map_w5500_infallible(e: Error<core::convert::Infallible>) -> Error<E> {
+        match e {
+            Error::StateTimeout(x) => Error::StateTimeout(x),
+            Error::Disconnect => Error::Disconnect,
+            Error::TcpTimeout => Error::TcpTimeout,
+            Error::Decode => Error::Decode,
+            Error::Protocol => Error::Protocol,
+            Error::ConnAck(x) => Error::ConnAck(x),
+            Error::OutOfMemory => Error::OutOfMemory,
+            #[cfg(feature = "w5500-tls")]
+            Error::Tls(x) => Error::Tls(x),
+            Error::Other(_) => unreachable!(),
+        }
+    }
 }
 
 impl<E> From<E> for Error<E> {
@@ -280,25 +284,9 @@ impl<E> From<E> for Error<E> {
     }
 }
 
-// also maps seek errors when reading
-fn map_read_exact_err<E>(e: w5500_hl::Error<E>) -> Error<E> {
-    match e {
-        HlError::UnexpectedEof => Error::Decode,
-        HlError::Other(e) => Error::Other(e),
-        _ => unreachable!(),
-    }
-}
-
-fn map_write_all_err<E>(e: w5500_hl::Error<E>) -> Error<E> {
-    match e {
-        HlError::OutOfMemory => Error::OutOfMemory,
-        HlError::Other(e) => Error::Other(e),
-        _ => unreachable!(),
-    }
-}
-
 /// length of the property length field
 const PROPERTY_LEN_LEN: u16 = 1;
+
 // length of the filter length field
 const FILTER_LEN_LEN: u16 = 2;
 
@@ -319,13 +307,11 @@ const PACKET_ID_LEN: u32 = 2;
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
 pub struct Client<'a> {
     sn: Sn,
-    port: u16,
+    src_port: u16,
     server: SocketAddrV4,
     client_id: Option<ClientId<'a>>,
-    /// MQTT client state
-    state: State,
-    /// Timeout for MQTT server responses
-    timeout: Option<u32>,
+    /// State and Timeout tracker
+    state_timeout: StateTimeout,
     /// Packet ID for subscribing
     pkt_id: u16,
 }
@@ -336,9 +322,8 @@ impl<'a> Client<'a> {
     /// # Arguments
     ///
     /// * `sn` - The socket number to use for MQTT.
-    /// * `port` - The MQTT source port, this is typically [`SRC_PORT`].
+    /// * `src_port` - The MQTT source port, this is typically [`SRC_PORT`].
     /// * `server` - The IP address and port for the MQTT server.
-    /// * `subscribe_filters` - A list of topic filters to subscribe to.
     ///
     /// # Example
     ///
@@ -357,14 +342,16 @@ impl<'a> Client<'a> {
     ///     SocketAddrV4::new(Ipv4Addr::new(192, 168, 5, 6), DST_PORT),
     /// );
     /// ```
-    pub fn new(sn: Sn, port: u16, server: SocketAddrV4) -> Self {
+    pub fn new(sn: Sn, src_port: u16, server: SocketAddrV4) -> Self {
         Self {
             sn,
-            port,
+            src_port,
             server,
-            state: State::Init,
+            state_timeout: StateTimeout {
+                state: State::Init,
+                timeout: None,
+            },
             client_id: None,
-            timeout: None,
             pkt_id: 1,
         }
     }
@@ -406,27 +393,6 @@ impl<'a> Client<'a> {
         self.pkt_id
     }
 
-    fn timeout_elapsed_secs(&self, monotonic_secs: u32) -> Option<u32> {
-        self.timeout.map(|to| monotonic_secs - to)
-    }
-
-    fn set_state_with_timeout(&mut self, state: State, monotonic_secs: u32) -> u32 {
-        debug!(
-            "{:?} -> {:?} with timeout {}",
-            self.state, state, monotonic_secs
-        );
-        self.state = state;
-        self.timeout = Some(monotonic_secs);
-
-        TIMEOUT_SECS
-    }
-
-    fn set_state(&mut self, state: State) {
-        debug!("{:?} -> {:?} without timeout", self.state, state);
-        self.state = state;
-        self.timeout = None;
-    }
-
     /// Process the MQTT client.
     ///
     /// This should be called repeatedly until it returns:
@@ -442,7 +408,7 @@ impl<'a> Client<'a> {
     /// # Example
     ///
     /// ```no_run
-    /// # use std::io::{Error as W5500Error};
+    /// # use std::io::{ErrorKind as W5500Error};
     /// # use w5500_regsim::{W5500 as MyW5500};
     /// # fn spawn_at_this_many_seconds_in_the_future(s: u32) {}
     /// # fn monotonic_secs() -> u32 { 0 }
@@ -486,17 +452,18 @@ impl<'a> Client<'a> {
     ///
     ///     Ok(())
     /// }
-    /// # Ok::<(), w5500_mqtt::Error<std::io::Error>>(())
+    /// # Ok::<(), w5500_mqtt::Error<std::io::ErrorKind>>(())
     /// ```
     ///
     /// [`subscribe`]: Self::subscribe
     /// [`publish`]: Self::publish
+    #[allow(clippy::type_complexity)]
     pub fn process<'w, W5500: Registers>(
         &mut self,
         w5500: &'w mut W5500,
         monotonic_secs: u32,
-    ) -> Result<Event<'w, W5500>, Error<W5500::Error>> {
-        if self.state == State::Init {
+    ) -> Result<Event<W5500::Error, TcpReader<'w, W5500>>, Error<W5500::Error>> {
+        if self.state_timeout.state == State::Init {
             let call_after: u32 = self.tcp_connect(w5500, monotonic_secs)?;
             return Ok(Event::CallAfter(call_after));
         }
@@ -509,18 +476,17 @@ impl<'a> Client<'a> {
             if sn_ir.discon_raised() {
                 // TODO: try to get discon reason from server
                 info!("DISCON interrupt");
-                self.set_state(State::Init);
+                self.state_timeout.set_state(State::Init);
                 return Err(Error::Disconnect);
             }
             if sn_ir.con_raised() {
                 info!("CONN interrupt");
-                self.set_state(State::Init);
                 let call_after: u32 = self.send_connect(w5500, monotonic_secs)?;
                 return Ok(Event::CallAfter(call_after));
             }
             if sn_ir.timeout_raised() {
                 info!("TIMEOUT interrupt");
-                self.set_state(State::Init);
+                self.state_timeout.set_state(State::Init);
                 return Err(Error::TcpTimeout);
             }
             if sn_ir.sendok_raised() {
@@ -532,7 +498,7 @@ impl<'a> Client<'a> {
         }
 
         match w5500.tcp_reader(self.sn) {
-            Ok(reader) => match self.recv(reader)? {
+            Ok(reader) => match recv(reader, &mut self.state_timeout)? {
                 Some(event) => return Ok(event),
                 None => (),
             },
@@ -541,14 +507,14 @@ impl<'a> Client<'a> {
             Err(_) => unreachable!(),
         }
 
-        if let Some(elapsed_secs) = self.timeout_elapsed_secs(monotonic_secs) {
+        if let Some(elapsed_secs) = self.state_timeout.timeout_elapsed_secs(monotonic_secs) {
             if elapsed_secs > TIMEOUT_SECS {
                 info!(
                     "timeout waiting for state to transition from {:?}",
-                    self.state
+                    self.state_timeout.state
                 );
-                let ret = Err(Error::StateTimeout(self.state));
-                self.set_state(State::Init);
+                let ret = Err(Error::StateTimeout(self.state_timeout.state));
+                self.state_timeout.set_state(State::Init);
                 ret
             } else {
                 let call_after: u32 = TIMEOUT_SECS.saturating_sub(elapsed_secs);
@@ -562,7 +528,7 @@ impl<'a> Client<'a> {
     /// Returns `true` if the MQTT client is connected.
     #[inline]
     pub fn is_connected(&self) -> bool {
-        matches!(self.state, State::Ready)
+        matches!(self.state_timeout.state, State::Ready)
     }
 
     /// Publish data to the MQTT broker.
@@ -594,7 +560,7 @@ impl<'a> Client<'a> {
     /// while client.process(&mut w5500, monotonic_secs())? != Event::None {}
     ///
     /// client.publish(&mut w5500, "topic", b"data")?;
-    /// # Ok::<(), w5500_mqtt::Error<std::io::Error>>(())
+    /// # Ok::<(), w5500_mqtt::Error<std::io::ErrorKind>>(())
     /// ```
     ///
     /// [`is_connected`]: Self::is_connected
@@ -605,7 +571,7 @@ impl<'a> Client<'a> {
         payload: &[u8],
     ) -> Result<(), Error<W5500::Error>> {
         let writer: TcpWriter<W5500> = w5500.tcp_writer(self.sn)?;
-        send_publish(writer, topic, payload).map_err(map_write_all_err)
+        send_publish(writer, topic, payload).map_err(Error::map_w5500)
     }
 
     /// Subscribe to a topic.
@@ -645,7 +611,7 @@ impl<'a> Client<'a> {
     /// while client.process(&mut w5500, monotonic_secs())? != Event::None {}
     ///
     /// client.subscribe(&mut w5500, "topic")?;
-    /// # Ok::<(), w5500_mqtt::Error<std::io::Error>>(())
+    /// # Ok::<(), w5500_mqtt::Error<std::io::ErrorKind>>(())
     /// ```
     ///
     /// [`is_connected`]: Self::is_connected
@@ -655,7 +621,7 @@ impl<'a> Client<'a> {
         filter: &str,
     ) -> Result<u16, Error<W5500::Error>> {
         let writer: TcpWriter<W5500> = w5500.tcp_writer(self.sn)?;
-        send_subscribe(writer, filter, self.next_pkt_id()).map_err(map_write_all_err)
+        send_subscribe(writer, filter, self.next_pkt_id()).map_err(Error::map_w5500)
     }
 
     /// Unsubscribe from a topic.
@@ -680,7 +646,7 @@ impl<'a> Client<'a> {
         filter: &str,
     ) -> Result<u16, Error<W5500::Error>> {
         let writer: TcpWriter<W5500> = w5500.tcp_writer(self.sn)?;
-        send_unsubscribe(writer, filter, self.next_pkt_id()).map_err(map_write_all_err)
+        send_unsubscribe(writer, filter, self.next_pkt_id()).map_err(Error::map_w5500)
     }
 
     fn tcp_connect<W5500: Registers>(
@@ -692,8 +658,10 @@ impl<'a> Client<'a> {
         w5500.set_simr(self.sn.bitmask() | simr)?;
         const SN_IMR: SocketInterruptMask = SocketInterruptMask::DEFAULT.mask_sendok();
         w5500.set_sn_imr(self.sn, SN_IMR)?;
-        w5500.tcp_connect(self.sn, self.port, &self.server)?;
-        Ok(self.set_state_with_timeout(State::WaitConInt, monotonic_secs))
+        w5500.tcp_connect(self.sn, self.src_port, &self.server)?;
+        Ok(self
+            .state_timeout
+            .set_state_with_timeout(State::WaitConInt, monotonic_secs))
     }
 
     fn send_connect<W5500: Registers>(
@@ -708,194 +676,9 @@ impl<'a> Client<'a> {
             .size_in_bytes() as u16;
 
         let writer: TcpWriter<W5500> = w5500.tcp_writer(self.sn)?;
-        send_connect(writer, &self.client_id, rx_max).map_err(map_write_all_err)?;
-        Ok(self.set_state_with_timeout(State::WaitConAck, monotonic_secs))
-    }
-
-    fn recv<'w, W5500: Registers>(
-        &mut self,
-        mut reader: TcpReader<'w, W5500>,
-    ) -> Result<Option<Event<'w, W5500>>, Error<W5500::Error>> {
-        let mut buf: [u8; 5] = [0; 5];
-        let n: u16 = reader.read(&mut buf)?;
-
-        let header: FixedHeader = match FixedHeader::deser(&buf[..n.into()]) {
-            Ok(header) => header,
-            Err(data::DeserError::Fragment) => return Ok(None),
-            Err(data::DeserError::Decode) => {
-                error!("unable to deserialize fixed header");
-                self.set_state(State::Init);
-                return Err(Error::Decode);
-            }
-        };
-
-        // seek to end of fixed header
-        reader
-            .seek(SeekFrom::Start(header.len.into()))
-            .map_err(map_read_exact_err)?;
-
-        // fragmented, can try again later
-        if header.remaining_len > reader.remain() {
-            return Ok(None);
-        }
-
-        debug!("recv {:?} len {}", header.ctrl_pkt, header.remaining_len);
-
-        match header.ctrl_pkt {
-            CtrlPkt::RESERVED => {
-                error!("Malformed packet: control packet type is reserved");
-                self.set_state(State::Init);
-                Err(Error::Decode)
-            }
-            CtrlPkt::CONNACK => {
-                if self.state != State::WaitConAck {
-                    error!("unexpected CONNACK in state {:?}", self.state);
-                    self.set_state(State::Init);
-                    return Err(Error::Protocol);
-                }
-                let mut buf: [u8; 2] = [0; 2];
-                reader.read_exact(&mut buf).map_err(map_read_exact_err)?;
-                reader
-                    .seek(SeekFrom::Start(header.remaining_len.saturating_add(2)))
-                    .map_err(map_read_exact_err)?;
-                reader.done()?;
-
-                match ConnectReasonCode::try_from(buf[1]) {
-                    Err(0) => {
-                        info!("Sucessfully connected");
-                        self.set_state(State::Ready);
-                        Ok(Some(Event::ConnAck))
-                    }
-                    Ok(code) => {
-                        warn!("Unable to connect: {:?}", code);
-                        self.set_state(State::Init);
-                        Err(Error::ConnAck(code))
-                    }
-                    Err(e) => {
-                        error!("invalid connnect reason code {:?}", e);
-                        self.set_state(State::Init);
-                        Err(Error::Protocol)
-                    }
-                }
-            }
-            CtrlPkt::SUBACK => {
-                let mut buf: [u8; 3] = [0; 3];
-                let n: u16 = reader.read(&mut buf)?;
-                if n != 3 {
-                    return Err(Error::Decode);
-                }
-
-                let (pkt_id, property_len): (&[u8], &[u8]) = buf.split_at(2);
-                let pkt_id: u16 = u16::from_be_bytes(pkt_id.try_into().unwrap());
-                let property_len: u8 = property_len[0];
-
-                if property_len != 0 {
-                    warn!("ignoring SUBACK properties");
-                    reader
-                        .seek(SeekFrom::Current(property_len.into()))
-                        .map_err(map_read_exact_err)?;
-                }
-
-                let mut payload: [u8; 1] = [0];
-                reader
-                    .read_exact(&mut payload)
-                    .map_err(map_read_exact_err)?;
-                let code: SubAckReasonCode = match SubAckReasonCode::try_from(payload[0]) {
-                    Ok(code) => code,
-                    Err(e) => {
-                        error!("invalid SUBACK reason code value: {}", e);
-                        self.set_state(State::Init);
-                        return Err(Error::Protocol);
-                    }
-                };
-
-                reader.done()?;
-                Ok(Some(Event::SubAck(SubAck { pkt_id, code })))
-            }
-            CtrlPkt::UNSUBACK => {
-                let mut buf: [u8; 3] = [0; 3];
-                let n: u16 = reader.read(&mut buf)?;
-                if n != 3 {
-                    return Err(Error::Decode);
-                }
-
-                let (pkt_id, property_len): (&[u8], &[u8]) = buf.split_at(2);
-                let pkt_id: u16 = u16::from_be_bytes(pkt_id.try_into().unwrap());
-                let property_len: u8 = property_len[0];
-
-                if property_len != 0 {
-                    warn!("ignoring UNSUBACK properties");
-                    reader
-                        .seek(SeekFrom::Current(property_len.into()))
-                        .map_err(map_read_exact_err)?;
-                }
-
-                let mut payload: [u8; 1] = [0];
-                reader
-                    .read_exact(&mut payload)
-                    .map_err(map_read_exact_err)?;
-                let code: UnSubAckReasonCode = match UnSubAckReasonCode::try_from(payload[0]) {
-                    Ok(code) => code,
-                    Err(e) => {
-                        error!("invalid UNSUBACK reason code value: {}", e);
-                        self.set_state(State::Init);
-                        return Err(Error::Protocol);
-                    }
-                };
-
-                reader.done()?;
-                Ok(Some(Event::UnSubAck(UnSubAck { pkt_id, code })))
-            }
-            CtrlPkt::PUBLISH => {
-                const TOPIC_LEN_LEN: u16 = 2;
-                let mut topic_len: [u8; 2] = [0; 2];
-                reader
-                    .read_exact(&mut topic_len)
-                    .map_err(map_read_exact_err)?;
-                let topic_len: u16 = u16::from_be_bytes(topic_len);
-                let topic_idx: u16 = reader.stream_position();
-                reader
-                    .seek(SeekFrom::Current(topic_len.try_into().unwrap_or(i16::MAX)))
-                    .map_err(map_read_exact_err)?;
-
-                let mut property_len: [u8; 1] = [0];
-                reader
-                    .read_exact(&mut property_len)
-                    .map_err(map_read_exact_err)?;
-                let property_len: u8 = property_len[0];
-                if property_len != 0 {
-                    warn!("ignoring PUBLISH properties");
-                    reader
-                        .seek(SeekFrom::Current(property_len.into()))
-                        .map_err(map_read_exact_err)?;
-                }
-
-                let payload_len: u16 = header
-                    .remaining_len
-                    .saturating_sub(topic_len)
-                    .saturating_sub(TOPIC_LEN_LEN)
-                    .saturating_sub(PROPERTY_LEN_LEN)
-                    .saturating_sub(u16::from(property_len));
-                let payload_idx: u16 = reader.stream_position();
-
-                Ok(Some(Event::Publish(PublishReader {
-                    reader,
-                    topic_len,
-                    topic_idx,
-                    payload_len,
-                    payload_idx,
-                })))
-            }
-            x => {
-                warn!("Unhandled control packet: {:?}", x);
-                reader
-                    .seek(SeekFrom::Current(
-                        header.remaining_len.try_into().unwrap_or(i16::MAX),
-                    ))
-                    .map_err(map_read_exact_err)?;
-                reader.done()?;
-                Ok(None)
-            }
-        }
+        send_connect(writer, &self.client_id, rx_max).map_err(Error::map_w5500)?;
+        Ok(self
+            .state_timeout
+            .set_state_with_timeout(State::WaitConAck, monotonic_secs))
     }
 }

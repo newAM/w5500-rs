@@ -11,6 +11,7 @@ use std::{
     net::{TcpListener, TcpStream},
     time::Instant,
 };
+use w5500_hl::TcpReader;
 use w5500_mqtt::{
     ll::{
         net::{Ipv4Addr, SocketAddrV4},
@@ -180,7 +181,12 @@ impl Fixture {
         assert_eq!(actual, packet);
     }
 
-    pub fn client_process(&mut self) -> Result<Event<W5500>, Error<<W5500 as Registers>::Error>> {
+    pub fn client_process(
+        &mut self,
+    ) -> Result<
+        Event<<W5500 as Registers>::Error, TcpReader<W5500>>,
+        Error<<W5500 as Registers>::Error>,
+    > {
         self.client
             .process(&mut self.w5500, self.mono.monotonic_secs())
     }

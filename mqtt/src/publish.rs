@@ -1,6 +1,9 @@
-use crate::{write_variable_byte_integer, CtrlPkt};
-use core::mem::size_of;
-use w5500_hl::{io::Write, Error as HlError};
+use crate::{write_variable_byte_integer, CtrlPkt, Error};
+use core::{cmp::min, marker::PhantomData, mem::size_of};
+use w5500_hl::{
+    io::{Read, Seek, SeekFrom, Write},
+    Error as HlError,
+};
 
 pub fn send_publish<E, Writer: Write<E>>(
     mut writer: Writer,
@@ -32,4 +35,72 @@ pub fn send_publish<E, Writer: Write<E>>(
     writer.write_all(&payload[..payload_len.into()])?;
     writer.send()?;
     Ok(())
+}
+
+/// Reader for a published message on a subscribed topic.
+///
+/// This reads publish data directly from the socket buffer, avoiding the need
+/// for an intermediate copy.
+///
+/// Created by [`Client::process`] when there is a pending message.
+#[derive(Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "defmt", derive(defmt::Format))]
+pub struct PublishReader<E, Reader: Read<E> + Seek<E>> {
+    pub(crate) reader: Reader,
+    pub(crate) topic_len: u16,
+    pub(crate) topic_idx: u16,
+    pub(crate) payload_len: u16,
+    pub(crate) payload_idx: u16,
+    pub(crate) _reader_error: PhantomData<E>,
+}
+
+impl<E, Reader: Read<E> + Seek<E>> PublishReader<E, Reader> {
+    /// Length of the topic in bytes.
+    #[inline]
+    pub fn topic_len(&self) -> u16 {
+        self.topic_len
+    }
+
+    /// Length of the payload in bytes.
+    #[inline]
+    pub fn payload_len(&self) -> u16 {
+        self.payload_len
+    }
+
+    /// Read the topic into `buf`, and return the number of bytes read.
+    pub fn read_topic(&mut self, buf: &mut [u8]) -> Result<u16, Error<E>> {
+        self.reader
+            .seek(SeekFrom::Start(self.topic_idx))
+            .map_err(Error::map_w5500)?;
+        let read_len: u16 = min(buf.len().try_into().unwrap_or(u16::MAX), self.topic_len);
+        self.reader
+            .read_exact(&mut buf[..read_len.into()])
+            .map_err(Error::map_w5500)?;
+        Ok(read_len)
+    }
+
+    /// Read the payload into `buf`, and return the number of bytes read.
+    pub fn read_payload(&mut self, buf: &mut [u8]) -> Result<u16, Error<E>> {
+        self.reader
+            .seek(SeekFrom::Start(self.payload_idx))
+            .map_err(Error::map_w5500)?;
+        let read_len: u16 = min(buf.len().try_into().unwrap_or(u16::MAX), self.payload_len);
+        self.reader
+            .read_exact(&mut buf[..read_len.into()])
+            .map_err(Error::map_w5500)?;
+        Ok(read_len)
+    }
+
+    /// Mark this message as read.
+    ///
+    /// If this is not called the message will be returned to the queue,
+    /// available upon the next call to [`Client::process`].
+    #[inline]
+    pub fn done(mut self) -> Result<(), Error<E>> {
+        self.reader
+            .seek(SeekFrom::Start(self.payload_idx + self.payload_len))
+            .map_err(Error::map_w5500)?;
+        self.reader.done()?;
+        Ok(())
+    }
 }

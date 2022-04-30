@@ -14,19 +14,22 @@ homepage = "https://github.com/newAM/w5500-rs"
 [features]
 embedded-hal = ["w5500-hl/embedded-hal"]
 defmt = ["w5500-hl/defmt", "dep:defmt"]
-std = ["w5500-hl/std"]
+std = ["w5500-hl/std", "w5500-tls?/std"]
+log = ["dep:log", "w5500-tls?/log"]
 
 [dependencies]
 defmt = { version = "0.3", optional = true }
 log = { version = "0.4", optional = true }
 w5500-hl = { path = "../hl", version = "0.8" }
+w5500-tls = { path = "../tls", version = "0.1", optional = true }
 
 [dev-dependencies]
+bytes = "1"
 log = "0.4"
+mqttbytes = "0.6"
+rand_core = { version = "0.6", features = ["getrandom"] }
 stderrlog = "0.5"
 w5500-regsim.path = "../regsim"
-mqttbytes = "0.6"
-bytes = "1"
 
 [package.metadata.docs.rs]
 all-features = false

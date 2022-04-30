@@ -8,8 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Added `#[derive(Debug, PartialEq)]` for `W5500`.
 
+### Changed
+- Change the `Register::Error` type from `std::io::Error` to `std::io::ErrorKind`.
+
 ### Fixed
 - Fixed `Sn_RX_RSR` changing value between reading byte 0 and byte 1.
+- Fixed a panic condition that occured when socket buffer pointers wrapped.
 
 ## [0.1.0-alpha.8] - 2022-04-10
 ### Added
