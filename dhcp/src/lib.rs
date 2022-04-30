@@ -49,9 +49,6 @@ pub const DST_PORT: u16 = 67;
 /// DHCP source port.
 pub const SRC_PORT: u16 = 68;
 
-/// Duration in seconds to wait for the DHCP server to send a response.
-const TIMEOUT_SECS: u32 = 10;
-
 /// Duration in seconds to wait for physical link-up.
 const LINK_UP_TIMEOUT_SECS: u32 = 1;
 
@@ -118,8 +115,10 @@ pub struct Client<'a> {
     sn: Sn,
     /// DHCP client state
     state: State,
-    /// Timeout for DHCP server responses
-    timeout: Option<u32>,
+    /// Instant of the last state transition
+    state_timeout: Option<u32>,
+    /// Timeout duration in seconds
+    timeout: u32,
     /// Renewal duration.
     t1: u32,
     /// Rebinding duration.
@@ -177,7 +176,8 @@ impl<'a> Client<'a> {
         Self {
             sn,
             state: State::Init,
-            timeout: None,
+            state_timeout: None,
+            timeout: 5,
             t1: 0,
             t2: 0,
             lease: 0,
@@ -192,6 +192,36 @@ impl<'a> Client<'a> {
             broadcast_addr: SocketAddrV4::new(Ipv4Addr::BROADCAST, DST_PORT),
             src_port: SRC_PORT,
         }
+    }
+
+    /// Set the DHCP state timeout duration in seconds.
+    ///
+    /// This is the duration to wait for the DHCP server to send a reply before
+    /// resetting and starting over.
+    ///
+    /// # Example
+    ///
+    /// Set a 10 second timeout.
+    ///
+    /// ```
+    /// use rand_core::RngCore;
+    /// use w5500_dhcp::{
+    ///     ll::{net::Eui48Addr, Sn},
+    ///     Client, Hostname,
+    /// };
+    /// # let mut rng = rand_core::OsRng;
+    ///
+    /// const HOSTNAME: Hostname = Hostname::new_unwrapped("example");
+    /// let mut dhcp: Client = Client::new(
+    ///     Sn::Sn0,
+    ///     rng.next_u64(),
+    ///     Eui48Addr::new(0x02, 0x00, 0x11, 0x22, 0x33, 0x44),
+    ///     HOSTNAME,
+    /// );
+    /// dhcp.set_timeout_secs(10);
+    /// ```
+    pub fn set_timeout_secs(&mut self, secs: u32) {
+        self.timeout = secs;
     }
 
     /// Returns `true` if the DHCP client has a valid lease.
@@ -240,12 +270,12 @@ impl<'a> Client<'a> {
     }
 
     fn timeout_elapsed_secs(&self, monotonic_secs: u32) -> Option<u32> {
-        self.timeout.map(|to| monotonic_secs - to)
+        self.state_timeout.map(|to| monotonic_secs - to)
     }
 
     fn next_call(&self, monotonic_secs: u32) -> u32 {
         if let Some(timeout_elapsed_secs) = self.timeout_elapsed_secs(monotonic_secs) {
-            TIMEOUT_SECS.saturating_sub(timeout_elapsed_secs)
+            self.timeout.saturating_sub(timeout_elapsed_secs)
         } else {
             let elapsed: u32 = monotonic_secs.saturating_sub(self.lease_monotonic_secs);
             match self.state {
@@ -255,7 +285,6 @@ impl<'a> Client<'a> {
                 _ => self.lease.saturating_sub(elapsed),
             }
         }
-        .saturating_add(1)
     }
 
     fn set_state_with_timeout(&mut self, state: State, monotonic_secs: u32) {
@@ -264,13 +293,13 @@ impl<'a> Client<'a> {
             self.state, state, monotonic_secs
         );
         self.state = state;
-        self.timeout = Some(monotonic_secs);
+        self.state_timeout = Some(monotonic_secs);
     }
 
     fn set_state(&mut self, state: State) {
         debug!("{:?} -> {:?} without timeout", self.state, state);
         self.state = state;
-        self.timeout = None;
+        self.state_timeout = None;
     }
 
     /// Get the DNS server provided by DHCP.
@@ -492,7 +521,7 @@ impl<'a> Client<'a> {
         }
 
         if let Some(elapsed_secs) = self.timeout_elapsed_secs(monotonic_secs) {
-            if elapsed_secs > TIMEOUT_SECS {
+            if elapsed_secs > self.timeout {
                 info!(
                     "timeout waiting for state to transition from {:?}",
                     self.state
