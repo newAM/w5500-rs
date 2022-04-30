@@ -1,4 +1,49 @@
-// Loosely based on tiny-AES-c: https://github.com/kokke/tiny-AES-c
+//! This is loosely based on [`tiny-aes-c`].
+//!
+//! I was going to replace this with `RustCrypto/aes`, but the final binary size
+//! increased significantly as a result.
+//!
+//! Comparing `.text` sizes in a `thumbv7em-none-eabi` end application:
+//!
+//! | impl                                   |            `-O3` |            `-Os` |
+//! |----------------------------------------|------------------|------------------|
+//! | Baseline                               | 187,280          | 147,252          |
+//! | `RustCrypto/aes` with `aes_compact`    | 190,748 (+3,468) | 150,152 (+2,900) |
+//! | `RustCrypto/aes` without `aes_compact` | 192,256 (+4,976) | 151,028 (+3,776) |
+//!
+//! ```toml
+//! [profile.release]
+//! codegen-units = 1
+//! debug = 2
+//! debug-assertions = false
+//! incremental = false
+//! lto = false # does nothing with codegen-units = 1
+//! opt-level = # 3 or "s"
+//! overflow-checks = false
+//! ```
+//!
+//! `-O3` `nm` with `RustCrypto/aes` + `aes_compact`:
+//!
+//! ```text
+//! 04e t aes::soft::fixslice::memshift32
+//! 064 T <aes::soft::Aes128Enc as cipher::block::BlockEncrypt>::encrypt_with_backend
+//! 096 t aes::soft::fixslice::mix_columns_0
+//! 09a t aes::soft::fixslice::xor_columns
+//! 0f8 t aes::soft::fixslice::inv_bitslice
+//! 11e T aes::soft::fixslice::aes128_encrypt
+//! 154 t aes::soft::fixslice::mix_columns_1
+//! 168 T aes::soft::fixslice::aes128_key_schedule
+//! 24a t aes::soft::fixslice::bitslice
+//! 326 t aes::soft::fixslice::sub_bytes
+//! ```
+//!
+//! `-O3` `nm` with this module:
+//!
+//! ```text
+//! 40e t w5500_tls::crypto::aes::cipher::Aes128::encrypt_block_inplace
+//! ```
+//!
+//! [`tiny-aes-c`]: https://github.com/kokke/tiny-AES-c
 
 const SBOX: [u8; 256] = [
     //0     1    2      3     4    5     6     7      8    9     A      B    C     D     E     F
@@ -91,12 +136,7 @@ fn key_expansion(key: &[u8; 16]) -> [u8; 176] {
     let mut round_key: [u8; 176] = [0; 176];
 
     // The first round key is the key itself.
-    for i in 0..NK {
-        round_key[(i * 4) + 0] = key[(i * 4) + 0];
-        round_key[(i * 4) + 1] = key[(i * 4) + 1];
-        round_key[(i * 4) + 2] = key[(i * 4) + 2];
-        round_key[(i * 4) + 3] = key[(i * 4) + 3];
-    }
+    round_key[..16].copy_from_slice(key);
 
     let mut tempa: [u8; 4] = [0; 4];
 
