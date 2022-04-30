@@ -273,10 +273,13 @@ impl<'a> Client<'a> {
         self.timeout = None;
     }
 
-    /// Get the IP address provided by DHCP.
-    #[inline]
-    pub fn ip(&self) -> Ipv4Addr {
-        self.ip
+    /// Get the leased IP address.
+    pub fn leased_ip(&self) -> Option<Ipv4Addr> {
+        if self.has_lease() {
+            Some(self.ip)
+        } else {
+            None
+        }
     }
 
     /// Get the DNS server provided by DHCP.
