@@ -6,7 +6,6 @@ MQTT v5 client for the [Wiznet W5500] SPI internet offload chip.
 
 This is very basic at the moment, and will be expanded in the future.
 
-* Does not support TLS.
 * Does not support password protected MQTT servers.
 * Only supports QoS 0: At most once delivery.
 
