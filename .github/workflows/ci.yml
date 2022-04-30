@@ -79,7 +79,7 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
-      - run: cargo test --features std,log,embedded-hal,time,chrono,num-rational,w5500-tls
+      - run: cargo test-all
 
   clippy:
     name: Clippy

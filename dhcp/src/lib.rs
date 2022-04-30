@@ -109,7 +109,7 @@ pub enum State {
 ///
 /// let call_after_secs: u32 = dhcp.process(&mut w5500, monotonic_seconds())?;
 /// // call process again after call_after_secs, or on the next interrupt
-/// # Ok::<(), w5500_hl::Error<std::io::Error>>(())
+/// # Ok::<(), w5500_hl::Error<std::io::ErrorKind>>(())
 /// ```
 #[derive(Debug)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
