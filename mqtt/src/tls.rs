@@ -4,7 +4,7 @@
 //!
 //! # Server Setup
 //!
-//! The [mosquitto] broker does not support TLS v1.3 with pre-shared keys [1].
+//! The [mosquitto] broker does not support TLS v1.3 with pre-shared keys [[1]].
 //! You can use a proxy on-top of [mosquitto] to provide a TLS v1.3 socket that
 //! accepts pre-shared keys.
 //!
@@ -18,7 +18,8 @@
 //! PSKsecrets = /run/secrets/mosquitto-psk-file
 //! ```
 //!
-//! Where `PSKsecrets` contains lines in the format of `idenitiy:hexpsk`:
+//! Where `/run/secrets/mosquitto-psk-file` contains lines in the format of
+//! `idenitiy:hexpsk`:
 //!
 //! ```text
 //! test:2f42ace2b6be1681b3d2fcdd4bb57b4ffe3484ee77fdaa8e216e3272cd78259d
@@ -26,7 +27,7 @@
 //!
 //! You can generate a random 256-bit hex string with `openssl`:
 //!
-//! ```bash
+//! ```console
 //! $ openssl rand -hex 32
 //! 2f42ace2b6be1681b3d2fcdd4bb57b4ffe3484ee77fdaa8e216e3272cd78259d
 //! ```
@@ -50,6 +51,7 @@
 //! [1]: https://github.com/eclipse/mosquitto/blob/4be56239e99ab4ef47c5ad6089f4a4e7f8ef97f8/ChangeLog.txt#L67
 //! [mosquitto]: https://github.com/eclipse/mosquitto
 //! [stunnel]: https://www.stunnel.org/
+//! [`w5500-tls`]: https://github.com/newAM/w5500-rs/blob/main/tls/README.md
 
 use crate::{
     connect::send_connect,
@@ -84,8 +86,8 @@ fn map_tls_writer_err<E>(e: w5500_tls::Error) -> Error<E> {
 
 /// W5500 MQTT client over TLS.
 ///
-/// The functions are identical to [`crate::Client`], except for the constructor,
-/// see [`crate::Client`] for additional documentation and examples.
+/// The methods are nearly identical to [`crate::Client`], see [`crate::Client`]
+/// for additional documentation and examples.
 pub struct Client<'id, 'hn, 'psk, 'b, const N: usize> {
     tls: TlsClient<'hn, 'psk, 'b, N>,
     client_id: Option<ClientId<'id>>,

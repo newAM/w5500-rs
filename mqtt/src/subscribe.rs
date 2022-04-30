@@ -3,7 +3,7 @@ use crate::{
 };
 use w5500_hl::{io::Write, Error as HlError};
 
-/// Subscribe Acknowledgment Codes
+/// Subscribe scknowledgment codes.
 ///
 /// # References
 ///
@@ -92,7 +92,7 @@ impl TryFrom<u8> for SubAckReasonCode {
     }
 }
 
-/// Unsubscribe Acknowledgment Codes
+/// Unsubscribe acknowledgment codes.
 ///
 /// # References
 ///
@@ -137,7 +137,7 @@ impl TryFrom<u8> for UnSubAckReasonCode {
     }
 }
 
-/// `SUBSCRIBE` acknowledgment
+/// `SUBSCRIBE` acknowledgment.
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
 pub struct SubAck {
@@ -154,7 +154,7 @@ pub struct SubAck {
     pub code: SubAckReasonCode,
 }
 
-/// `UNSUBSCRIBE` acknowledgment
+/// `UNSUBSCRIBE` acknowledgment.
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
 pub struct UnSubAck {
