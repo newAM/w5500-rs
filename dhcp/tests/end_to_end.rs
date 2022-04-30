@@ -2,7 +2,7 @@ use dhcproto::v4::{
     Decodable, Decoder, DhcpOption, Encodable, Encoder, Flags, HType, Message, MessageType, Opcode,
     OptionCode,
 };
-use std::{net::UdpSocket, time::Instant};
+use std::net::UdpSocket;
 use w5500_dhcp::{
     ll::{
         net::{Eui48Addr, Ipv4Addr},
