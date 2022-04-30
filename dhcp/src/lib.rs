@@ -50,7 +50,7 @@ pub const DST_PORT: u16 = 67;
 pub const SRC_PORT: u16 = 68;
 
 /// Duration in seconds to wait for the DHCP server to send a response.
-const TIMEOUT_SECS: u32 = 10;
+const TIMEOUT_SECS: u32 = 1;
 
 /// Duration in seconds to wait for physical link-up.
 const LINK_UP_TIMEOUT_SECS: u32 = 1;
@@ -271,6 +271,12 @@ impl<'a> Client<'a> {
         debug!("{:?} -> {:?} without timeout", self.state, state);
         self.state = state;
         self.timeout = None;
+    }
+
+    /// Get the IP address provided by DHCP.
+    #[inline]
+    pub fn ip(&self) -> Ipv4Addr {
+        self.ip
     }
 
     /// Get the DNS server provided by DHCP.

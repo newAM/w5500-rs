@@ -80,8 +80,8 @@ use hl::{
     Error, Udp, UdpReader, UdpWriter,
 };
 use ll::{
-    net::{Ipv4Addr, SocketAddrV4},
-    Sn,
+    net::{Eui48Addr, Ipv4Addr, SocketAddrV4},
+    Protocol, Sn, SocketCommand, SocketMode, SocketStatus,
 };
 pub use qclass::Qclass;
 pub use qtype::Qtype;
@@ -90,6 +90,10 @@ pub use w5500_hl::ll;
 
 /// DNS destination port.
 pub const DST_PORT: u16 = 53;
+
+const MDNS_PORT: u16 = 5353;
+const MDNS_ADDRESS: Ipv4Addr = Ipv4Addr::new(224, 0, 0, 251);
+const MDNS_SERVER: SocketAddrV4 = SocketAddrV4::new(MDNS_ADDRESS, MDNS_PORT);
 
 /// Commonly used public DNS servers.
 ///
@@ -423,6 +427,33 @@ impl Client {
         }
     }
 
+    /// Create a new MDNS client.
+    ///
+    /// # Arguments
+    ///
+    /// * `sn` - The socket number to use for DNS queries.
+    /// * `port` - DNS source port.
+    ///   Use any free port greater than 1024 not in use by other W5500 sockets.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use w5500_dns::{ll::Sn, servers, Client};
+    ///
+    /// const DNS_SRC_PORT: u16 = 45917;
+    ///
+    /// let dns_client: Client = Client::new_mdns(Sn::Sn3);
+    /// ```
+    #[must_use]
+    pub const fn new_mdns(sn: Sn, port: u16) -> Self {
+        Self {
+            sn,
+            port,
+            server: MDNS_SERVER,
+            rng: rand::Rand::new(0),
+        }
+    }
+
     /// Set the DNS server.
     ///
     /// # Example
@@ -466,18 +497,44 @@ impl Client {
 
     /// A simple DNS query.
     ///
-    /// This will only send a DNS query, it will not wait for a reply from the
-    /// DNS server.
+    /// This will only send a DNS or MDNS query, it will not wait for a reply.
     fn query<'a, W5500: Udp>(
         &mut self,
         w5500: &'a mut W5500,
     ) -> Result<Query<'a, W5500>, Error<W5500::Error>> {
-        w5500.udp_bind(self.sn, self.port)?;
+        let is_mdns = self.server == MDNS_SERVER;
+        if is_mdns {
+            let dhar = Eui48Addr::new(0x01, 0x00, 0x5E, 0x00, 0x00, 0xFB);
+            w5500.set_sn_dhar(self.sn, &dhar)?;
+            w5500.set_sn_ttl(self.sn, 255)?;
+            w5500.set_sn_cr(self.sn, SocketCommand::Close)?;
+            while w5500.sn_sr(self.sn)? != Ok(SocketStatus::Closed) {}
+            w5500.set_sn_port(self.sn, self.port)?;
+            const MODE: SocketMode = SocketMode::DEFAULT
+                .set_protocol(Protocol::Udp)
+                .enable_multi();
+            w5500.set_sn_mr(self.sn, MODE)?;
+            w5500.set_sn_cr(self.sn, SocketCommand::Open)?;
+            // This will not hang, the socket status will always change to Udp
+            // after a open command with SN_MR set to UDP.
+            // (unless you do somthing silly like holding the W5500 in reset)
+            loop {
+                if w5500.sn_sr(self.sn)? == Ok(SocketStatus::Udp) {
+                    break;
+                }
+            }
+        } else {
+            w5500.udp_bind(self.sn, self.port)?;
+        }
         w5500.set_sn_dest(self.sn, &self.server)?;
         const HEADER_SEEK: SeekFrom = SeekFrom::Start(Header::LEN);
         let mut writer: UdpWriter<W5500> = w5500.udp_writer(self.sn)?;
         writer.seek(HEADER_SEEK)?;
-        let id: u16 = self.rng.next_u16();
+        let id: u16 = if is_mdns {
+            0
+        } else {
+            self.rng.next_u16()
+        };
         Ok(Query {
             writer,
             header: Header::new_query(id),
