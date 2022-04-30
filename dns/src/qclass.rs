@@ -35,8 +35,8 @@ impl TryFrom<u16> for Qclass {
 
     fn try_from(value: u16) -> Result<Self, Self::Error> {
         // mdns responses will sometimes have the high bit set
-        let value = value & 0b0111_1111;
-        match value {
+        // https://datatracker.ietf.org/doc/html/rfc6762#section-18.12
+        match value & 0b0111_1111 {
             x if x == (Self::IN as u16) => Ok(Self::IN),
             x if x == (Self::CS as u16) => Ok(Self::CS),
             x if x == (Self::CH as u16) => Ok(Self::CH),
