@@ -302,6 +302,15 @@ impl<'a> Client<'a> {
         self.state_timeout = None;
     }
 
+    /// Get the leased IP address.
+    pub fn leased_ip(&self) -> Option<Ipv4Addr> {
+        if self.has_lease() {
+            Some(self.ip)
+        } else {
+            None
+        }
+    }
+
     /// Get the DNS server provided by DHCP.
     ///
     /// After the client is bound this will return the IP address of the

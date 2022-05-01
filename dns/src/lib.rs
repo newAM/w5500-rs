@@ -68,6 +68,7 @@
 pub(crate) mod fmt;
 
 mod header;
+pub mod mdns;
 mod qclass;
 mod qtype;
 mod rand;
@@ -466,8 +467,7 @@ impl Client {
 
     /// A simple DNS query.
     ///
-    /// This will only send a DNS query, it will not wait for a reply from the
-    /// DNS server.
+    /// This will only send a DNS or MDNS query, it will not wait for a reply.
     fn query<'a, W5500: Udp>(
         &mut self,
         w5500: &'a mut W5500,

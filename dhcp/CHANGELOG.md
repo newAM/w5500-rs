@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added a small cache for DHCP options to reduce redundant socket IO.
 - Added support for renewing and rebinding an existing lease.
 - Added `Client.set_timeout` to set the timeout duration.
+- Added  `Client.leased_ip` to access the IP address provided by the DHCP server.
 
 ### Changed
 - Decreased link-up polling interval from 2 seconds to 1 second.
