@@ -339,11 +339,7 @@ pub trait Udp: Registers {
         // This will not hang, the socket status will always change to closed
         // after a close command.
         // (unless you do somthing silly like holding the W5500 in reset)
-        loop {
-            if self.sn_sr(sn)? == Ok(SocketStatus::Closed) {
-                break;
-            }
-        }
+        while self.sn_sr(sn)? != Ok(SocketStatus::Closed) {}
         self.set_sn_port(sn, port)?;
         const MODE: SocketMode = SocketMode::DEFAULT.set_protocol(Protocol::Udp);
         self.set_sn_mr(sn, MODE)?;
@@ -351,11 +347,7 @@ pub trait Udp: Registers {
         // This will not hang, the socket status will always change to Udp
         // after a open command with SN_MR set to UDP.
         // (unless you do somthing silly like holding the W5500 in reset)
-        loop {
-            if self.sn_sr(sn)? == Ok(SocketStatus::Udp) {
-                break;
-            }
-        }
+        while self.sn_sr(sn)? != Ok(SocketStatus::Udp) {}
         Ok(())
     }
 
