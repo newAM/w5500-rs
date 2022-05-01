@@ -19,6 +19,9 @@ const DNS_SRC_PORT: u16 = 45917;
 
 const DEFAULT_MAC: Eui48Addr = Eui48Addr::new(0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED);
 
+// change this to the name of a host on your network
+const QUERY_HOSTNAME: Hostname = Hostname::new_unwrapped("imac.local");
+
 fn main() {
     // this enables the logging built into the register simulator
     stderrlog::new()
@@ -36,11 +39,9 @@ fn main() {
 
     let mut mdns_client: MdnsClient = MdnsClient::new(DNS_SOCKET, Some(DNS_SRC_PORT));
 
-    const DOCSRS: Hostname = Hostname::new_unwrapped("imac.local");
-
     let start: Instant = Instant::now();
     mdns_client
-        .a_question(&mut w5500, &DOCSRS)
+        .a_question(&mut w5500, &QUERY_HOSTNAME)
         .expect("failed to send MDNS query");
 
     loop {
