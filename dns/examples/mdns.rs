@@ -8,7 +8,8 @@ use std::time::{Duration, Instant};
 use w5500_dns::{
     hl::{net::Eui48Addr, Error},
     ll::{Registers, Sn, VERSION},
-    Client, Hostname,
+    mdns::Client as MdnsClient,
+    Hostname,
 };
 use w5500_regsim::W5500;
 
@@ -33,26 +34,25 @@ fn main() {
     debug_assert_eq!(w5500.shar().unwrap(), DEFAULT_MAC);
     log::info!("DEFAULT_MAC = {:x?}", DEFAULT_MAC);
 
-    let mut dns_client: Client = Client::new_mdns(DNS_SOCKET, DNS_SRC_PORT);
+    let mut mdns_client: MdnsClient = MdnsClient::new(DNS_SOCKET, Some(DNS_SRC_PORT));
 
     const DOCSRS: Hostname = Hostname::new_unwrapped("imac.local");
 
     let start: Instant = Instant::now();
-    let id: u16 = dns_client
+    mdns_client
         .a_question(&mut w5500, &DOCSRS)
-        .expect("failed to send DNS query");
+        .expect("failed to send MDNS query");
 
     loop {
         let mut buf: [u8; 63] = [0; 63];
         let mut response = loop {
-            match dns_client.response(&mut w5500, &mut buf, id) {
+            match mdns_client.response(&mut w5500, &mut buf) {
                 Ok(x) => {
                     let elapsed: Duration = Instant::now().duration_since(start);
                     log::info!("DNS server responded in {elapsed:?}");
                     break x;
                 }
-                Err(Error::WouldBlock) => {
-                }
+                Err(Error::WouldBlock) => {}
                 Err(x) => panic!("W5500 error: {x:?}"),
             }
         };
