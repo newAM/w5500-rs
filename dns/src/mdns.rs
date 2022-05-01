@@ -1,8 +1,10 @@
 //! MDNS client for the [Wiznet W5500] SPI internet offload chip.
 
 use crate::header::{Header, Qr};
+#[cfg(not(feature = "std"))]
+use crate::ll::net::Eui48Addr;
 use crate::ll::{
-    net::{Eui48Addr, Ipv4Addr, SocketAddrV4},
+    net::{Ipv4Addr, SocketAddrV4},
     Protocol, Sn, SocketCommand, SocketMode, SocketStatus,
 };
 use crate::{read_labels, Query, Response};
