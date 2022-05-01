@@ -2,7 +2,7 @@
 //!
 //! This does not require any embedded hardware to use.
 //!
-//! **Note:** This will communicate external network services.
+//! **Note:** This will communicate with internal network services.
 
 use std::time::{Duration, Instant};
 use w5500_dns::{
