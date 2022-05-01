@@ -2,7 +2,10 @@ use crate::{
     crypto::encrypt_record_inplace, handshake::HandshakeHeader, key_schedule::KeySchedule,
     AlertDescription, ContentType,
 };
-use core::{cmp, cmp::min, convert::Infallible};
+use core::{
+    cmp::{self, min},
+    convert::Infallible,
+};
 use sha2::{Digest, Sha256};
 use w5500_hl::{
     io::{Read, Seek, SeekFrom, Write},
