@@ -76,11 +76,7 @@ impl Client {
         // This will not hang, the socket status will always change to Udp
         // after a open command with SN_MR set to UDP.
         // (unless you do somthing silly like holding the W5500 in reset)
-        loop {
-            if w5500.sn_sr(self.sn)? == Ok(SocketStatus::Udp) {
-                break;
-            }
-        }
+        while w5500.sn_sr(self.sn)? != Ok(SocketStatus::Udp) {}
         w5500.set_sn_dest(self.sn, &self.server)?;
         const HEADER_SEEK: SeekFrom = SeekFrom::Start(Header::LEN);
         let mut writer: UdpWriter<W5500> = w5500.udp_writer(self.sn)?;
