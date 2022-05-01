@@ -135,7 +135,6 @@ impl Client {
     /// * [`Error::Other`]
     /// * [`Error::UnexpectedEof`]
     /// * [`Error::WouldBlock`]
-    ///
     pub fn response<'a, W5500: Udp>(
         &self,
         w5500: &'a mut W5500,
