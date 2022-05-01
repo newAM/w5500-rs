@@ -84,6 +84,7 @@ Macraw
 MACRAW
 Mbps
 microcontroller
+mosquitto
 MQTT
 MTU
 multicast
@@ -112,6 +113,7 @@ PTIMER
 QoS
 RCR
 rdata
+README
 RECV
 RNG
 roundtrip
@@ -164,6 +166,7 @@ SOA
 SPI
 str
 struct
+stunnel
 SUBACK
 subnet
 SUBR

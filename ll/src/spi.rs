@@ -36,7 +36,7 @@ pub const HEADER_LEN: usize = 3;
 /// );
 /// assert_eq!(hdr, [0x00, 0x39, 0x00]);
 /// ```
-#[inline(always)]
+#[inline]
 pub const fn vdm_header(addr: u16, block: u8, mode: AccessMode) -> [u8; HEADER_LEN] {
     [
         (addr >> 8) as u8,

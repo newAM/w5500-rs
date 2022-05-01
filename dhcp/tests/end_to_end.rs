@@ -2,7 +2,7 @@ use dhcproto::v4::{
     Decodable, Decoder, DhcpOption, Encodable, Encoder, Flags, HType, Message, MessageType, Opcode,
     OptionCode,
 };
-use std::{net::UdpSocket, time::Instant};
+use std::net::UdpSocket;
 use w5500_dhcp::{
     ll::{
         net::{Eui48Addr, Ipv4Addr},
@@ -50,25 +50,15 @@ impl Default for Server {
     }
 }
 
-struct Monotonic {
-    start: Instant,
+#[derive(Default)]
+struct MockMonotonic {
+    counter: u32,
 }
 
-impl Default for Monotonic {
-    fn default() -> Self {
-        Self {
-            start: Instant::now(),
-        }
-    }
-}
-
-impl Monotonic {
-    pub fn monotonic_secs(&self) -> u32 {
-        Instant::now()
-            .duration_since(self.start)
-            .as_secs()
-            .try_into()
-            .unwrap()
+impl MockMonotonic {
+    pub fn monotonic_secs(&mut self) -> u32 {
+        self.counter += 1;
+        self.counter
     }
 }
 
@@ -161,13 +151,14 @@ fn end_to_end() {
     let mut dhcp: Client = Client::new(DHCP_SN, SEED, MAC, HOSTNAME);
     dhcp.set_broadcast_addr(SocketAddrV4::new(Ipv4Addr::LOCALHOST, 2050));
     dhcp.set_src_port(2051);
+    dhcp.set_timeout_secs(11);
     dhcp.setup_socket(&mut w5500).unwrap();
 
     const DHCP_SN: Sn = Sn::Sn0;
 
     let mut server: Server = Server::default();
 
-    let mono: Monotonic = Monotonic::default();
+    let mut mono: MockMonotonic = MockMonotonic::default();
     let next_call: u32 = dhcp.process(&mut w5500, mono.monotonic_secs()).unwrap();
     assert_eq!(next_call, 11);
 
@@ -271,7 +262,7 @@ fn end_to_end() {
     server.send(offer);
 
     let next_call: u32 = dhcp.process(&mut w5500, mono.monotonic_secs()).unwrap();
-    const T1_NEXT_CALL: u32 = T1.saturating_sub(T1 / 8).saturating_add(1);
+    const T1_NEXT_CALL: u32 = T1.saturating_sub(T1 / 8);
     assert_eq!(next_call, T1_NEXT_CALL);
 
     assert_eq!(w5500.sipr().unwrap(), Ipv4Addr::from(YIADDR));
@@ -291,8 +282,8 @@ fn end_to_end() {
     check_recv_request(&msg, 0x6d279eac, mac_with_hardware_type.clone());
     const T2_NEXT_CALL: u32 = T2
         .saturating_sub(T2 / 8)
-        .saturating_add(1)
-        .saturating_sub(T1_NEXT_CALL);
+        .saturating_sub(T1_NEXT_CALL)
+        .saturating_sub(1);
     assert_eq!(next_call, T2_NEXT_CALL);
 
     // force t2 expiry
@@ -308,8 +299,8 @@ fn end_to_end() {
     check_recv_request(&msg, 0x8809cefa, mac_with_hardware_type.clone());
     const LEASE_NEXT_CALL: u32 = LEASE_TIME
         .saturating_sub(LEASE_TIME / 8)
-        .saturating_add(1)
         .saturating_sub(T1_NEXT_CALL)
-        .saturating_sub(T2_NEXT_CALL);
+        .saturating_sub(T2_NEXT_CALL)
+        .saturating_sub(2);
     assert_eq!(next_call, LEASE_NEXT_CALL);
 }

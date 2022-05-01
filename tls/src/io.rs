@@ -69,7 +69,7 @@ impl<'a> CircleReader<'a> {
         let copy_a: usize = min(a.len(), buf.len());
         buf[..copy_a].copy_from_slice(&a[..copy_a]);
 
-        let copy_b: usize = min(b.len(), buf.len() - a.len());
+        let copy_b: usize = min(b.len(), buf.len().saturating_sub(a.len()));
         buf[copy_a..(copy_a + copy_b)].copy_from_slice(&b[..copy_b]);
 
         let read_len: u16 = (copy_a + copy_b) as u16;
@@ -561,7 +561,7 @@ impl<'b, const N: usize> Buffer<'b, N> {
 
     pub fn increment_application_data_tail(&mut self, n: usize) {
         debug_assert!(n < self.capacity(), "{} < {}", n, self.capacity());
-        self.ad_tail = (self.ad_tail + n) % self.capacity();
+        self.ad_tail = (self.ad_tail + n) % N;
     }
 
     fn is_empty(&self) -> bool {
@@ -577,7 +577,7 @@ impl<'b, const N: usize> Buffer<'b, N> {
             None
         } else {
             let (a, b): (&[u8], &[u8]) = as_slices!(self.buf, self.tail, self.hs_head, N);
-            self.hs_head = (self.hs_head + n) % self.capacity();
+            self.hs_head = (self.hs_head + n) % N;
             if self.hs_head == self.tail {
                 self.hs_head = self.ad_tail;
                 self.tail = self.ad_tail;
@@ -611,7 +611,9 @@ impl<'b, const N: usize> Buffer<'b, N> {
 
             self.tail = (self.tail + src.len()) % N;
 
-            debug_assert_ne!(self.head, self.tail);
+            if !src.is_empty() {
+                debug_assert_ne!(self.head, self.tail);
+            }
 
             Ok(())
         }

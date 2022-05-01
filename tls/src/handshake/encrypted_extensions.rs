@@ -44,8 +44,8 @@ pub(crate) fn recv_encrypted_extensions(reader: &mut CircleReader) -> Result<(),
                     core::str::from_utf8(&buf[..read_len.into()])
                 );
 
-                // RFCs are weird and there are valid hostnames longer than 253
-                // bytes
+                // RFCs are weird and there are valid hostnames longer than DNS
+                // names
                 let remain: u16 = extension_len - read_len;
                 if remain > 0 {
                     reader.skip_n(remain)?;

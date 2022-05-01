@@ -5,7 +5,7 @@
 //!
 //! Comparing `.text` sizes in a `thumbv7em-none-eabi` end application:
 //!
-//! | impl                                   |            `-O3` |            `-Os` |
+//! | implementation                         | `-O3`            | `-Os`            |
 //! |----------------------------------------|------------------|------------------|
 //! | Baseline                               | 187,280          | 147,252          |
 //! | `RustCrypto/aes` with `aes_compact`    | 190,748 (+3,468) | 150,152 (+2,900) |

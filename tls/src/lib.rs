@@ -64,13 +64,7 @@ mod key_schedule;
 mod record;
 
 pub use alert::{Alert, AlertDescription, AlertLevel};
-
-use io::Buffer;
-pub use w5500_hl as hl;
-pub use w5500_hl::ll;
-
-use core::cmp::min;
-use core::convert::Infallible;
+use core::{cmp::min, convert::Infallible};
 use extension::ExtensionType;
 use handshake::{
     client_hello::{self, NamedGroup},
@@ -82,14 +76,18 @@ use hl::{
     net::SocketAddrV4,
     Common, Error as HlError, Hostname, Tcp, TcpReader, TcpWriter,
 };
+use io::Buffer;
 pub use io::{TlsReader, TlsWriter};
 use key_schedule::KeySchedule;
+pub use rand_core;
 use rand_core::{CryptoRng, RngCore};
 use record::{ContentType, RecordHeader};
 use sha2::{
     digest::{generic_array::GenericArray, typenum::U32},
     Sha256,
 };
+pub use w5500_hl as hl;
+pub use w5500_hl::ll;
 
 const GCM_TAG_LEN: usize = 16;
 
@@ -122,7 +120,7 @@ impl TlsVersion {
 ///
 /// After the connection has disconnected the next call to [`Client::process`]
 /// will create a new connection.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
 pub enum Error {
     /// Alert sent from the server.
@@ -707,7 +705,7 @@ impl<'hn, 'psk, 'b, const N: usize> Client<'hn, 'psk, 'b, N> {
         // our RX buffer size
         if header.length() > Self::RECORD_SIZE_LIMIT {
             Err(AlertDescription::RecordOverflow)
-        } else if header.length() + (RecordHeader::LEN as u16) > reader.stream_len() {
+        } else if header.length().saturating_add(RecordHeader::LEN as u16) > reader.stream_len() {
             Ok(None)
         } else {
             reader.done().map_err(|_| AlertDescription::InternalError)?;
@@ -800,8 +798,12 @@ impl<'hn, 'psk, 'b, const N: usize> Client<'hn, 'psk, 'b, N> {
         debug!("RecordHeader.content_type={:?}", actual_content_type);
 
         if matches!(actual_content_type, ContentType::ApplicationData) {
-            self.rx
-                .increment_application_data_tail(header.length().into());
+            self.rx.increment_application_data_tail(
+                header
+                    .length()
+                    .saturating_sub((GCM_TAG_LEN + 1) as u16)
+                    .into(),
+            );
         }
 
         if rx_buffer_contains_handshake_fragment

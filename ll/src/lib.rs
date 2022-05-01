@@ -149,7 +149,7 @@ impl Sn {
     /// assert_eq!(Sn::Sn6.block(), 0b11001);
     /// assert_eq!(Sn::Sn7.block(), 0b11101);
     /// ```
-    #[inline(always)]
+    #[inline]
     pub const fn block(self) -> u8 {
         SOCKET_SPACING * (self as u8) + SOCKET_BLOCK_OFFSET
     }
@@ -170,7 +170,7 @@ impl Sn {
     /// assert_eq!(Sn::Sn6.tx_block(), 0b11010);
     /// assert_eq!(Sn::Sn7.tx_block(), 0b11110);
     /// ```
-    #[inline(always)]
+    #[inline]
     pub const fn tx_block(self) -> u8 {
         SOCKET_SPACING * (self as u8) + SOCKET_TX_OFFSET
     }
@@ -191,7 +191,7 @@ impl Sn {
     /// assert_eq!(Sn::Sn6.rx_block(), 0b11011);
     /// assert_eq!(Sn::Sn7.rx_block(), 0b11111);
     /// ```
-    #[inline(always)]
+    #[inline]
     pub const fn rx_block(self) -> u8 {
         SOCKET_SPACING * (self as u8) + SOCKET_RX_OFFSET
     }

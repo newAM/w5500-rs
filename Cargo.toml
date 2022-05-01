@@ -9,8 +9,9 @@ members = [
     "mqtt",
     "regsim",
     "sntp",
-    "tls",
     "testsuite",
+    "tls",
+    "tls/afl",
 ]
 default-members = [
     "dhcp",

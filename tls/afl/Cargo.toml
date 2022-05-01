@@ -1,0 +1,26 @@
+[package]
+name = "w5500-tls-afl"
+version = "0.0.0"
+authors = ["Alex Martens <alex@thinglab.org>"]
+publish = false
+edition = "2021"
+
+[dependencies]
+afl = "0.12"
+rand_core = "0.6"
+stderrlog = "0.5"
+w5500-fuzz.path = "../../fuzz"
+w5500-regsim.path = "../../regsim"
+w5500-tls = { path = "..", features = ["log"] }
+
+[[bin]]
+name = "gencorpus"
+path = "src/gencorpus.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "replay"
+path = "src/replay.rs"
+test = false
+doc = false
