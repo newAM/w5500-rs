@@ -2,7 +2,10 @@ use crate::{
     crypto::encrypt_record_inplace, handshake::HandshakeHeader, key_schedule::KeySchedule,
     AlertDescription, ContentType,
 };
-use core::{cmp::min, convert::Infallible};
+use core::{
+    cmp::{self, min},
+    convert::Infallible,
+};
 use sha2::{Digest, Sha256};
 use w5500_hl::{
     io::{Read, Seek, SeekFrom, Write},
@@ -560,7 +563,7 @@ impl<'b, const N: usize> Buffer<'b, N> {
     }
 
     pub fn increment_application_data_tail(&mut self, n: usize) {
-        debug_assert!(n < self.capacity(), "{} < {}", n, self.capacity());
+        debug_assert!(n <= self.capacity(), "{} <= {}", n, self.capacity());
         self.ad_tail = (self.ad_tail + n) % N;
     }
 
@@ -597,17 +600,24 @@ impl<'b, const N: usize> Buffer<'b, N> {
             debug!("src.len > remain; {} > {}", src.len(), self.remain());
             Err(AlertDescription::InternalError)
         } else {
-            if self.tail > self.head {
-                let copy_len: usize = min(src.len(), self.buf.len() - self.tail);
-                let (a, b): (&[u8], &[u8]) = src.split_at(copy_len);
-                self.buf[self.tail..(self.tail + copy_len)].copy_from_slice(a);
-
-                if !b.is_empty() {
-                    self.buf[..b.len()].copy_from_slice(b);
+            let (a, b): (&mut [u8], &mut [u8]) = match self.tail.cmp(&self.head) {
+                cmp::Ordering::Equal => {
+                    let (b, a): (&mut [u8], &mut [u8]) = self.buf.split_at_mut(self.tail);
+                    (a, b)
                 }
-            } else {
-                self.buf[self.tail..(self.tail + src.len())].copy_from_slice(src);
-            }
+                cmp::Ordering::Greater => {
+                    let (remain, a): (&mut [u8], &mut [u8]) = self.buf.split_at_mut(self.tail);
+                    let (b, _): (&mut [u8], &mut [u8]) = remain.split_at_mut(self.head);
+                    (a, b)
+                }
+                cmp::Ordering::Less => (&mut self.buf[self.tail..self.head], &mut []),
+            };
+
+            let a_len: usize = min(src.len(), a.len());
+            let (src_a, src_b): (&[u8], &[u8]) = src.split_at(a_len);
+
+            a[..src_a.len()].copy_from_slice(src_a);
+            b[..src_b.len()].copy_from_slice(src_b);
 
             self.tail = (self.tail + src.len()) % N;
 
@@ -725,7 +735,7 @@ impl<'b, const N: usize> Buffer<'b, N> {
 
 #[cfg(test)]
 mod tests {
-    use super::Buffer;
+    use super::{Buffer, Read};
 
     #[test]
     fn basic() {
@@ -757,5 +767,24 @@ mod tests {
         buffer.extend_from_slice(&c).unwrap();
         assert_eq!(buffer.len(), 5);
         assert_eq!(buffer.remain(), 0);
+    }
+
+    #[test]
+    fn extend_from_slice_wrap() {
+        let mut buf: [u8; 6] = [0; 6];
+        let mut buffer = Buffer::from(&mut buf);
+
+        const APP_DATA: [u8; 5] = [0x01, 0x23, 0x45, 0x67, 0x89];
+
+        buffer.extend_from_slice(&APP_DATA).unwrap();
+        buffer.increment_application_data_tail(APP_DATA.len());
+
+        // only reader increments the head pointer
+        let mut reader = buffer.app_data_reader().unwrap();
+        let mut buf: [u8; APP_DATA.len()] = [0; APP_DATA.len()];
+        reader.read_exact(&mut buf).unwrap();
+        reader.done().unwrap();
+
+        buffer.extend_from_slice(&[0x67, 0x89, 0xAB]).unwrap();
     }
 }
