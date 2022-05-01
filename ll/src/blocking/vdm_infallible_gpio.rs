@@ -81,7 +81,7 @@ where
         (self.spi, self.cs)
     }
 
-    #[inline(always)]
+    #[inline]
     fn with_chip_enable<T, F>(&mut self, mut f: F) -> Result<T, SpiError>
     where
         F: FnMut(&mut SPI) -> Result<T, SpiError>,
@@ -103,7 +103,7 @@ where
     type Error = SpiError;
 
     /// Read from the W5500.
-    #[inline(always)]
+    #[inline]
     fn read(&mut self, address: u16, block: u8, data: &mut [u8]) -> Result<(), Self::Error> {
         let header = vdm_header(address, block, AccessMode::Read);
         self.with_chip_enable(|spi| {
@@ -114,7 +114,7 @@ where
     }
 
     /// Write to the W5500.
-    #[inline(always)]
+    #[inline]
     fn write(&mut self, address: u16, block: u8, data: &[u8]) -> Result<(), Self::Error> {
         let header = vdm_header(address, block, AccessMode::Write);
         self.with_chip_enable(|spi| {
