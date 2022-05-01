@@ -32,7 +32,7 @@ fn main() {
 
     w5500.set_shar(&DEFAULT_MAC).unwrap();
     debug_assert_eq!(w5500.shar().unwrap(), DEFAULT_MAC);
-    log::info!("DEFAULT_MAC = {:x?}", DEFAULT_MAC);
+    log::info!("DEFAULT_MAC = {DEFAULT_MAC}");
 
     let mut mdns_client: MdnsClient = MdnsClient::new(DNS_SOCKET, Some(DNS_SRC_PORT));
 
