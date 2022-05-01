@@ -63,14 +63,8 @@ impl Client {
         &mut self,
         w5500: &'a mut W5500,
     ) -> Result<Query<'a, W5500>, Error<W5500::Error>> {
-        // The register simulation doesn't implement either of
-        // these features, but they are necessary for proper
-        // MDNS operation.
-        #[cfg(not(feature = "std"))]
-        {
-            w5500.set_sn_dhar(self.sn, &MDNS_HARDWARE_DST)?;
-            w5500.set_sn_ttl(self.sn, 255)?;
-        }
+        w5500.set_sn_dhar(self.sn, &MDNS_HARDWARE_DST)?;
+        w5500.set_sn_ttl(self.sn, 255)?;
         w5500.set_sn_cr(self.sn, SocketCommand::Close)?;
         while w5500.sn_sr(self.sn)? != Ok(SocketStatus::Closed) {}
         w5500.set_sn_port(self.sn, self.port)?;
