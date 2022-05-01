@@ -56,7 +56,6 @@
 //!     * Macraw
 //! * SN_MSSR (Socket n Maximum Segment Size Register)
 //! * SN_TOS (Socket n IP TOS Register)
-//! * SN_TTL (Socket n IP TTL)
 //! * SN_IMR (Socket n Interrupt Mask Register)
 //! * SN_FRAG (Socket n Fragment Offset in IP Header Register)
 //! * SN_KPALVTR (Socket n Keep Alive Timer Register)
@@ -387,6 +386,7 @@ impl W5500 {
                     Ok(udp_socket) => {
                         log::info!("[{sn:?}] bound to {local}");
                         udp_socket.set_nonblocking(true)?;
+                        udp_socket.set_ttl(socket.regs.ttl.into())?;
                         socket.inner = Some(SocketType::Udp(udp_socket));
                         self.sim_set_sn_sr(sn, SocketStatus::Udp);
                     }
@@ -419,6 +419,7 @@ impl W5500 {
             Ok(stream) => {
                 log::info!("[{sn:?}] established TCP connection with {addr}");
                 stream.set_nonblocking(true)?;
+                stream.set_ttl(socket.regs.ttl.into())?;
                 socket.inner = Some(SocketType::TcpStream(stream));
                 self.raise_sn_ir(sn, SocketInterrupt::CON_MASK);
                 self.sim_set_sn_sr(sn, SocketStatus::Established);
@@ -443,6 +444,7 @@ impl W5500 {
             Ok(listener) => {
                 log::info!("[{sn:?}] Bound listener on {addr}");
                 listener.set_nonblocking(true)?;
+                listener.set_ttl(socket.regs.ttl.into())?;
                 socket.inner = Some(SocketType::TcpListener(listener));
                 self.sim_set_sn_sr(sn, SocketStatus::Listen);
             }
@@ -984,7 +986,7 @@ impl W5500 {
             Ok(SnReg::MSSR0) => todo!(),
             Ok(SnReg::MSSR1) => todo!(),
             Ok(SnReg::TOS) => todo!(),
-            Ok(SnReg::TTL) => todo!(),
+            Ok(SnReg::TTL) => socket.regs.ttl = byte,
             Ok(SnReg::RXBUF_SIZE) => {
                 socket.regs.rxbuf_size = match BufferSize::try_from(byte) {
                     Ok(bs) => {

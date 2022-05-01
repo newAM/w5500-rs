@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Added `#[derive(Debug, PartialEq)]` for `W5500`.
 - Added `W5500.set_corpus_file` to record register reads to a file for fuzzing.
+- Added support for `sn_ttl`.
 
 ### Changed
 - Change the `Register::Error` type from `std::io::Error` to `std::io::ErrorKind`.

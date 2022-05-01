@@ -301,11 +301,8 @@ pub trait Tcp: Registers {
         // This will not hang, the socket status will always change to closed
         // after a close command.
         // (unless you do somthing silly like holding the W5500 in reset)
-        loop {
-            if self.sn_sr(sn)? == Ok(SocketStatus::Closed) {
-                break;
-            }
-        }
+        while self.sn_sr(sn)? != Ok(SocketStatus::Closed) {}
+
         const MODE: SocketMode = SocketMode::DEFAULT.set_protocol(Protocol::Tcp);
         self.set_sn_mr(sn, MODE)?;
         self.set_sn_port(sn, port)?;
@@ -314,11 +311,8 @@ pub trait Tcp: Registers {
         // This will not hang, the socket status will always change to Init
         // after a open command with SN_MR set to TCP.
         // (unless you do somthing silly like holding the W5500 in reset)
-        loop {
-            if self.sn_sr(sn)? == Ok(SocketStatus::Init) {
-                break;
-            }
-        }
+        while self.sn_sr(sn)? != Ok(SocketStatus::Init) {}
+
         self.set_sn_cr(sn, SocketCommand::Connect)
     }
 
@@ -395,11 +389,7 @@ pub trait Tcp: Registers {
         // This will not hang, the socket status will always change to closed
         // after a close command.
         // (unless you do somthing silly like holding the W5500 in reset)
-        loop {
-            if self.sn_sr(sn)? == Ok(SocketStatus::Closed) {
-                break;
-            }
-        }
+        while self.sn_sr(sn)? != Ok(SocketStatus::Closed) {}
         const MODE: SocketMode = SocketMode::DEFAULT.set_protocol(Protocol::Tcp);
         self.set_sn_mr(sn, MODE)?;
         self.set_sn_port(sn, port)?;
@@ -407,11 +397,7 @@ pub trait Tcp: Registers {
         // This will not hang, the socket status will always change to Init
         // after a open command with SN_MR set to TCP.
         // (unless you do somthing silly like holding the W5500 in reset)
-        loop {
-            if self.sn_sr(sn)? == Ok(SocketStatus::Init) {
-                break;
-            }
-        }
+        while self.sn_sr(sn)? != Ok(SocketStatus::Init) {}
         self.set_sn_cr(sn, SocketCommand::Listen)
     }
 
