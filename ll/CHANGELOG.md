@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Added
+- Added a new W5500 type for VDM transfers with an infallible GPIO and an infallible SPI bus.
+
 ## [0.10.3] - 2022-04-27
 ### Added
 - Added `sn_tx_buf` and `set_sn_rx_buf` methods to the `Registers` trait.
