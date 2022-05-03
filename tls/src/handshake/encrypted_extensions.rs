@@ -14,7 +14,13 @@ use core::cmp::min;
 /// ```
 pub(crate) fn recv_encrypted_extensions(reader: &mut CircleReader) -> Result<(), AlertDescription> {
     let extensions_len: u16 = reader.next_u16()?;
-    let extensions_end: u16 = reader.stream_position() + extensions_len;
+    let extensions_end: u16 = match reader.stream_position().checked_add(extensions_len) {
+        Some(end) => end,
+        None => {
+            error!("EncryptedExtensions extentions len exceeds record len");
+            return Err(AlertDescription::DecodeError);
+        }
+    };
 
     while extensions_end > reader.stream_position() {
         let extension_type: ExtensionType = match ExtensionType::try_from(reader.next_u16()?) {
