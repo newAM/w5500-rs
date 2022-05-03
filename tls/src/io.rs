@@ -102,11 +102,12 @@ impl<'a> CircleReader<'a> {
     }
 
     pub fn skip_n(&mut self, n: u16) -> Result<(), AlertDescription> {
-        if self.ptr + n > self.len() {
-            Err(AlertDescription::DecodeError)
-        } else {
-            self.ptr += n;
-            Ok(())
+        match self.ptr.checked_add(n) {
+            Some(next_ptr) if next_ptr <= self.len() => {
+                self.ptr = next_ptr;
+                Ok(())
+            }
+            _ => Err(AlertDescription::DecodeError),
         }
     }
 }
@@ -556,6 +557,8 @@ impl<'b, const N: usize> Buffer<'b, N> {
     pub fn reset(&mut self) {
         self.head = 0;
         self.tail = 0;
+        self.ad_tail = 0;
+        self.hs_head = 0;
     }
 
     pub fn contains_handshake_fragment(&self) -> bool {
@@ -634,10 +637,7 @@ impl<'b, const N: usize> Buffer<'b, N> {
         if self.is_empty() {
             None
         } else {
-            self.tail = match self.tail.checked_sub(1) {
-                Some(tail) => tail,
-                None => N - 1,
-            };
+            self.tail = self.tail.checked_sub(1).unwrap_or(N - 1);
             Some(self.buf[self.tail])
         }
     }
@@ -652,7 +652,7 @@ impl<'b, const N: usize> Buffer<'b, N> {
             for byte in ret.iter_mut() {
                 *byte = self.buf[tmp_head];
                 tmp_head += 1;
-                if tmp_head == self.buf.len() {
+                if tmp_head == N {
                     tmp_head = 0;
                 }
             }
@@ -664,7 +664,7 @@ impl<'b, const N: usize> Buffer<'b, N> {
         &mut self,
         hash: &mut Sha256,
     ) -> Result<Option<(HandshakeHeader, CircleReader)>, AlertDescription> {
-        let hs_hdr: [u8; 4] = match self.read_head() {
+        let hs_hdr: [u8; HandshakeHeader::LEN] = match self.read_head() {
             Some(hs_hdr) => hs_hdr,
             // fragment is not long enough to contain handshake type + length
             None => return Ok(None),
@@ -675,10 +675,6 @@ impl<'b, const N: usize> Buffer<'b, N> {
         debug!("Handshake.msg_type={:?}", hs_hdr.msg_type());
         debug!("Handshake.length={:?}", hs_hdr.length());
 
-        // Technically this is a redundant check because this will also be
-        // handled at the record layer.
-        // RX buffer capacity not large enough to contain the handshake is
-        // handled at the record level
         if hs_hdr.length_with_header() > self.capacity() as u32 {
             error!(
                 "RX buffer is not long enough for handshake {}",
@@ -689,11 +685,12 @@ impl<'b, const N: usize> Buffer<'b, N> {
 
         // fragment is not long enough to contain entire handshake
         if hs_hdr.length_with_header() > u32::try_from(self.hs_len()).unwrap_or(u32::MAX) {
+            debug!("handshake is fragmented");
             return Ok(None);
         }
 
         // "pop" handshake header from the buffer head
-        self.hs_head = (self.hs_head + 4) % self.buf.len();
+        self.hs_head = (self.hs_head + HandshakeHeader::LEN) % N;
 
         let (a, b): (&[u8], &[u8]) = self
             .pop_handshake_slices_of_n(hs_hdr.length() as usize)

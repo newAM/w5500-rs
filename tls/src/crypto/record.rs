@@ -127,7 +127,7 @@ pub fn encrypt_record_inplace<W5500: Registers>(
         // write ciphertext
         w5500.set_sn_tx_buf(sn, head, &block)?;
 
-        head += 16;
+        head = head.wrapping_add(16);
     }
 
     let mut remain: u16 = data_len % 16;
@@ -146,7 +146,7 @@ pub fn encrypt_record_inplace<W5500: Registers>(
     // write ciphertext
     w5500.set_sn_tx_buf(sn, head, &block[..remain.into()])?;
 
-    head += remain;
+    head = head.wrapping_add(remain);
 
     // write tag
     let tag: [u8; GCM_TAG_LEN] = cipher.finish();

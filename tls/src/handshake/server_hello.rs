@@ -58,7 +58,13 @@ pub(crate) fn recv_server_hello(
     }
 
     let extensions_len: u16 = reader.next_u16()?;
-    let extensions_end: u16 = reader.stream_position().saturating_add(extensions_len);
+    let extensions_end: u16 = match reader.stream_position().checked_add(extensions_len) {
+        Some(end) => end,
+        None => {
+            error!("ServerHello extentions len exceeds record len");
+            return Err(AlertDescription::DecodeError);
+        }
+    };
 
     // required extension checklist
     let mut done_supported_versions: bool = false;
