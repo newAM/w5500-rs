@@ -35,6 +35,6 @@ All features are disabled by default.
 
 [`std::net`]: https://doc.rust-lang.org/std/net/index.html
 [Wiznet W5500]: https://www.wiznet.io/product-item/w5500/
-[`blocking`]: https://docs.rs/w5500-ll/0.10.1/w5500_ll/blocking/index.html
-[`Registers`]: https://docs.rs/w5500-ll/0.10.1/w5500_ll/trait.Registers.html
-[`w5500_ll::net`]: https://docs.rs/w5500-ll/0.10.1/w5500_ll/net/index.html
+[`blocking`]: https://docs.rs/w5500-ll/latest/w5500_ll/blocking/index.html
+[`Registers`]: https://docs.rs/w5500-ll/latest/w5500_ll/trait.Registers.html
+[`w5500_ll::net`]: https://docs.rs/w5500-ll/latest/w5500_ll/net/index.html
