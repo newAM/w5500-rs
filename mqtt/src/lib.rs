@@ -27,7 +27,7 @@
 //! );
 //!
 //! // wait for a connection or die trying
-//! while client.process(&mut w5500, monotonic_secs())? != Event::None {}
+//! while !matches!(client.process(&mut w5500, monotonic_secs())?, Event::None) {}
 //!
 //! // publish to "duck" with a payload "quack"
 //! client.publish(&mut w5500, "duck", b"quack")?;
@@ -570,7 +570,7 @@ impl<'a> Client<'a> {
     /// );
     ///
     /// // wait for a connection or die trying
-    /// while client.process(&mut w5500, monotonic_secs())? != Event::None {}
+    /// while !matches!(client.process(&mut w5500, monotonic_secs())?, Event::None) {}
     ///
     /// client.publish(&mut w5500, "topic", b"data")?;
     /// # Ok::<(), w5500_mqtt::Error<std::io::ErrorKind>>(())
@@ -618,7 +618,7 @@ impl<'a> Client<'a> {
     /// );
     ///
     /// // wait for a connection or die trying
-    /// while client.process(&mut w5500, monotonic_secs())? != Event::None {}
+    /// while !matches!(client.process(&mut w5500, monotonic_secs())?, Event::None) {}
     ///
     /// client.subscribe(&mut w5500, "topic")?;
     /// # Ok::<(), w5500_mqtt::Error<std::io::ErrorKind>>(())
