@@ -27,7 +27,7 @@ let mut client: Client = Client::new(
 );
 
 // wait for a connection or die trying
-while client.process(&mut w5500, monotonic_secs())? != Event::None {}
+while !matches!(client.process(&mut w5500, monotonic_secs())?, Event::None) {}
 
 // publish to "duck" with a payload "quack"
 client.publish(&mut w5500, "duck", b"quack")?;
