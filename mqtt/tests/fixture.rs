@@ -150,9 +150,15 @@ impl Fixture {
     }
 
     pub fn connect(&mut self) {
-        assert_eq!(self.client_process().unwrap(), Event::CallAfter(10));
+        assert!(matches!(
+            self.client_process().unwrap(),
+            Event::CallAfter(10)
+        ));
         self.server.accept();
-        assert_eq!(self.client_process().unwrap(), Event::CallAfter(10));
+        assert!(matches!(
+            self.client_process().unwrap(),
+            Event::CallAfter(10)
+        ));
         self.server_expect(Packet::Connect(Connect {
             protocol: V5,
             keep_alive: 900,
@@ -173,7 +179,7 @@ impl Fixture {
             }),
         }));
         self.server.send_connack();
-        assert_eq!(self.client_process().unwrap(), Event::ConnAck);
+        assert!(matches!(self.client_process().unwrap(), Event::ConnAck));
     }
 
     pub fn server_expect(&mut self, packet: Packet) {
@@ -207,13 +213,18 @@ impl Fixture {
 
         self.server.send_suback(pkt_id);
 
-        assert_eq!(
-            self.client_process().unwrap(),
-            Event::SubAck(SubAck {
-                pkt_id,
-                code: SubAckReasonCode::QoS0
-            })
-        );
+        match self.client_process().unwrap() {
+            Event::SubAck(ack)
+                if ack
+                    == SubAck {
+                        pkt_id,
+                        code: SubAckReasonCode::QoS0,
+                    } =>
+            {
+                ()
+            }
+            x => panic!("Expected SubAck, got {x:?}"),
+        }
     }
 
     pub fn client_expect_publish(&mut self, topic: &str, payload: &[u8]) {

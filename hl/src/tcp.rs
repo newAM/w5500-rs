@@ -57,7 +57,7 @@ use w5500_ll::{
 /// reader.done()?;
 /// # Ok::<(), w5500_hl::Error<_>>(())
 /// ```
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
 pub struct TcpReader<'w, W5500: Registers> {
     pub(crate) w5500: &'w mut W5500,

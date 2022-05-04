@@ -77,7 +77,7 @@ impl UdpHeader {
 /// reader.done()?;
 /// # Ok::<(), w5500_hl::Error<_>>(())
 /// ```
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
 pub struct UdpReader<'w, W: Registers> {
     inner: TcpReader<'w, W>,

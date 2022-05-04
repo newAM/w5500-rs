@@ -19,9 +19,15 @@ fn connect_no_client_id() {
     const PORT: u16 = 12345;
     let client: Client = Client::new(Sn0, SRC_PORT, SocketAddrV4::new(Ipv4Addr::LOCALHOST, PORT));
     let mut fixture = Fixture::with_client(client, PORT);
-    assert_eq!(fixture.client_process().unwrap(), Event::CallAfter(10));
+    assert!(matches!(
+        fixture.client_process().unwrap(),
+        Event::CallAfter(10)
+    ));
     fixture.server.accept();
-    assert_eq!(fixture.client_process().unwrap(), Event::CallAfter(10));
+    assert!(matches!(
+        fixture.client_process().unwrap(),
+        Event::CallAfter(10)
+    ));
     fixture.server_expect(Packet::Connect(Connect {
         protocol: V5,
         keep_alive: 900,
@@ -48,9 +54,15 @@ fn connect_fail() {
     const PORT: u16 = 12344;
     let client: Client = Client::new(Sn0, SRC_PORT, SocketAddrV4::new(Ipv4Addr::LOCALHOST, PORT));
     let mut fixture = Fixture::with_client(client, PORT);
-    assert_eq!(fixture.client_process().unwrap(), Event::CallAfter(10));
+    assert!(matches!(
+        fixture.client_process().unwrap(),
+        Event::CallAfter(10)
+    ));
     fixture.server.accept();
-    assert_eq!(fixture.client_process().unwrap(), Event::CallAfter(10));
+    assert!(matches!(
+        fixture.client_process().unwrap(),
+        Event::CallAfter(10)
+    ));
     fixture.server_expect(Packet::Connect(Connect {
         protocol: V5,
         keep_alive: 900,
