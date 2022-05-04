@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.9.0] - 2022-05-03
 ### Added
 - Added `Hostname::new_unwrapped` to create a new hostname, panicking on invalid hostnames.
 - Added a `Write` trait.
@@ -101,7 +101,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.0-alpha.1] - 2021-01-31
 - Initial release
 
-[Unreleased]: https://github.com/newAM/w5500-rs/compare/hl%2Fv0.8.0...HEAD
+[Unreleased]: https://github.com/newAM/w5500-rs/compare/hl%2Fv0.9.0...HEAD
+[0.9.0]: https://github.com/newAM/w5500-rs/compare/hl%2Fv0.8.0...hl%2Fv0.9.0
 [0.8.0]: https://github.com/newAM/w5500-rs/compare/hl%2Fv0.7.1...hl%2Fv0.8.0
 [0.7.1]: https://github.com/newAM/w5500-rs/compare/hl%2Fv0.7.0...hl%2Fv0.7.1
 [0.7.0]: https://github.com/newAM/w5500-rs/compare/hl%2Fv0.6.0...hl%2Fv0.7.0
