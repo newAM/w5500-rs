@@ -7,5 +7,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.0] - 2022-05-04
 - Initial release
 
-[Unreleased]: https://github.com/newAM/w5500-rs/compare/dns%2Fv0.1.0-alpha.1...HEAD
-[0.1.0]: https://github.com/newAM/w5500-rs/releases/tag/dns%2Fv0.1.0-alpha.1
+[Unreleased]: https://github.com/newAM/w5500-rs/compare/dns%2Fv0.1.0...HEAD
+[0.1.0]: https://github.com/newAM/w5500-rs/releases/tag/dns%2Fv0.1.0
