@@ -142,8 +142,8 @@ impl<'a> CircleReader<'a> {
 ///
 /// static mut RX: [u8; 2048] = [0; 2048];
 ///
-/// const DST: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::new(1, 1, 1, 1), 443);
-/// const HOSTNAME: Hostname = Hostname::new_unwrapped("one.one.one.one");
+/// const DST: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::new(192, 168, 0, 4), 8883);
+/// const HOSTNAME: Hostname = Hostname::new_unwrapped("server.local");
 /// const SRC_PORT: u16 = 1234;
 /// const TLS_SN: Sn = Sn::Sn4;
 ///
@@ -278,8 +278,8 @@ impl<'w, 'ks, W5500: Registers> Write<W5500::Error> for TlsWriter<'w, 'ks, W5500
 ///
 /// static mut RX: [u8; 2048] = [0; 2048];
 ///
-/// const DST: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::new(1, 1, 1, 1), 443);
-/// const HOSTNAME: Hostname = Hostname::new_unwrapped("one.one.one.one");
+/// const DST: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::new(192, 168, 0, 4), 8883);
+/// const HOSTNAME: Hostname = Hostname::new_unwrapped("server.local");
 /// const SRC_PORT: u16 = 1234;
 /// const TLS_SN: Sn = Sn::Sn4;
 ///
