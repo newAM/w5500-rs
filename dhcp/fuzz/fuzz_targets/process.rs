@@ -17,6 +17,6 @@ fuzz_target!(|fuzz: &[u8]| {
 
     let mut mono: u32 = 0;
     while let Ok(next_call) = client.process(&mut w5500, mono.into()) {
-        mono += next_call.saturating_sub(1);
+        mono = mono.saturating_add(next_call.saturating_sub(1));
     }
 });
