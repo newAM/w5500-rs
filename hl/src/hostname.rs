@@ -43,6 +43,7 @@ impl<'a> Hostname<'a> {
                 || (byte >= b'A' && byte <= b'Z')
                 || (byte >= b'0' && byte <= b'9')
                 || byte == b'-'
+                || byte == b'_'
                 || byte == b'.'
         }
 

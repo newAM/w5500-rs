@@ -40,6 +40,10 @@ pub enum Qtype {
     MX = 15,
     /// text strings
     TXT = 16,
+    /// an IPV6 host address
+    AAAA = 28,
+    /// server selection
+    SVR = 33,
     /// A request for a transfer of an entire zone
     AXFR = 252,
     /// A request for mailbox-related records (MB, MG or MR)
@@ -82,6 +86,8 @@ impl TryFrom<u16> for Qtype {
             x if x == (Self::MINFO as u16) => Ok(Self::MINFO),
             x if x == (Self::MX as u16) => Ok(Self::MX),
             x if x == (Self::TXT as u16) => Ok(Self::TXT),
+            x if x == (Self::AAAA as u16) => Ok(Self::AAAA),
+            x if x == (Self::SVR as u16) => Ok(Self::SVR),
             x if x == (Self::AXFR as u16) => Ok(Self::AXFR),
             x if x == (Self::MAILB as u16) => Ok(Self::MAILB),
             x if x == (Self::MAILA as u16) => Ok(Self::MAILA),

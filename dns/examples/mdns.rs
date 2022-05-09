@@ -20,7 +20,7 @@ const DNS_SRC_PORT: u16 = 45917;
 const DEFAULT_MAC: Eui48Addr = Eui48Addr::new(0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED);
 
 // change this to the name of a host on your network
-const QUERY_HOSTNAME: Hostname = Hostname::new_unwrapped("imac.local");
+const QUERY_HOSTNAME: Hostname = Hostname::new_unwrapped("_http._tcp.local");
 
 fn main() {
     // this enables the logging built into the register simulator
@@ -41,11 +41,11 @@ fn main() {
 
     let start: Instant = Instant::now();
     mdns_client
-        .a_question(&mut w5500, &QUERY_HOSTNAME)
+        .ptr_question(&mut w5500, &QUERY_HOSTNAME)
         .expect("failed to send MDNS query");
 
     loop {
-        let mut buf: [u8; 63] = [0; 63];
+        let mut buf: [u8; 1024] = [0; 1024];
         let mut response = loop {
             match mdns_client.response(&mut w5500, &mut buf) {
                 Ok(x) => {
@@ -58,7 +58,7 @@ fn main() {
             }
         };
 
-        while let Some(ans) = response.next_answer().expect("W5500 error") {
+        while let Ok(Some(ans)) = response.next_answer() {
             println!("{ans:?}");
         }
         response.done().expect("done");

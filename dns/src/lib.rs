@@ -186,7 +186,9 @@ fn read_labels<'l, E, Reader: Read<E> + Seek<E>>(
         // if pointer
         if n == 2 && sequence & NAME_PTR_MASK != 0 {
             let ptr: u16 = sequence & !NAME_PTR_MASK;
-            seek_to = reader.stream_position();
+            if seek_to == 0 {
+                seek_to = reader.stream_position();
+            }
             reader.seek(SeekFrom::Start(ptr))?;
         } else {
             // seek back to the start of the label
@@ -294,6 +296,9 @@ impl<'a, W5500: Udp> Response<'a, W5500> {
                 let mut buf: [u8; 4] = [0; 4];
                 self.reader.read_exact(&mut buf)?;
                 Some(Ipv4Addr::from(buf))
+            } else if rdlength != 0 {
+                self.reader.seek(SeekFrom::Current(rdlength as i16))?;
+                None
             } else {
                 None
             };
@@ -334,7 +339,7 @@ impl<'a, W5500: Udp> Query<'a, W5500> {
     /// # References
     ///
     /// * [RFC 1035 Section 4.1.2](https://www.rfc-editor.org/rfc/rfc1035#section-4.1.2)
-    pub fn question(mut self, qname: &Hostname) -> Result<Self, Error<W5500::Error>> {
+    pub fn question(mut self, qtype: Qtype, qname: &Hostname) -> Result<Self, Error<W5500::Error>> {
         const REMAIN_LEN: u16 = 5;
 
         if self.writer.remain() < u16::from(qname.len()) + REMAIN_LEN {
@@ -352,8 +357,8 @@ impl<'a, W5500: Udp> Query<'a, W5500> {
 
         let question_remainder: [u8; REMAIN_LEN as usize] = [
             0, // null terminator for above labels
-            Qtype::A.high_byte(),
-            Qtype::A.low_byte(),
+            qtype.high_byte(),
+            qtype.low_byte(),
             Qclass::IN.high_byte(),
             Qclass::IN.low_byte(),
         ];
@@ -503,7 +508,7 @@ impl Client {
         w5500: &'a mut W5500,
         hostname: &Hostname,
     ) -> Result<u16, Error<W5500::Error>> {
-        self.query(w5500)?.question(hostname)?.send()
+        self.query(w5500)?.question(Qtype::A, hostname)?.send()
     }
 
     /// Retrieve a DNS response after sending an [`a_question`]
