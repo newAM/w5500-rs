@@ -297,7 +297,8 @@ impl<'a, W5500: Udp> Response<'a, W5500> {
                 self.reader.read_exact(&mut buf)?;
                 Some(Ipv4Addr::from(buf))
             } else if rdlength != 0 {
-                self.reader.seek(SeekFrom::Current(rdlength as i16))?;
+                let seek_ptr: i16 = i16::try_from(rdlength).map_err(|_| Error::UnexpectedEof)?;
+                self.reader.seek(SeekFrom::Current(seek_ptr))?;
                 None
             } else {
                 None
