@@ -186,7 +186,9 @@ fn read_labels<'l, E, Reader: Read<E> + Seek<E>>(
         // if pointer
         if n == 2 && sequence & NAME_PTR_MASK != 0 {
             let ptr: u16 = sequence & !NAME_PTR_MASK;
-            seek_to = reader.stream_position();
+            if seek_to == 0 {
+                seek_to = reader.stream_position();
+            }
             reader.seek(SeekFrom::Start(ptr))?;
         } else {
             // seek back to the start of the label
