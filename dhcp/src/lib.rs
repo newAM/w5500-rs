@@ -447,7 +447,7 @@ impl<'a> Client<'a> {
                             info!("renewal_time: {}", renewal_time);
                             let rebinding_time: u32 = match pkt.rebinding_time()? {
                                 Some(x) => x,
-                                None => lease_time * 7 / 8,
+                                None => lease_time.saturating_mul(7) / 8,
                             };
                             info!("rebinding_time: {}", rebinding_time);
 
