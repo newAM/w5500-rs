@@ -432,22 +432,6 @@ impl<'a> Client<'a> {
                             let dns: Option<Ipv4Addr> = pkt.dns()?;
                             let ntp: Option<Ipv4Addr> = pkt.ntp()?;
 
-                            let renewal_time: u32 = match pkt.renewal_time()? {
-                                Some(x) => x,
-                                None => {
-                                    error!("renewal_time option missing");
-                                    return Ok(self.next_call(monotonic_secs));
-                                }
-                            };
-                            info!("renewal_time: {}", renewal_time);
-                            let rebinding_time: u32 = match pkt.rebinding_time()? {
-                                Some(x) => x,
-                                None => {
-                                    error!("rebinding_time option missing");
-                                    return Ok(self.next_call(monotonic_secs));
-                                }
-                            };
-                            info!("rebinding_time: {}", rebinding_time);
                             let lease_time: u32 = match pkt.lease_time()? {
                                 Some(x) => x,
                                 None => {
@@ -456,6 +440,16 @@ impl<'a> Client<'a> {
                                 }
                             };
                             info!("lease_time: {}", lease_time);
+                            let renewal_time: u32 = match pkt.renewal_time()? {
+                                Some(x) => x,
+                                None => lease_time / 2,
+                            };
+                            info!("renewal_time: {}", renewal_time);
+                            let rebinding_time: u32 = match pkt.rebinding_time()? {
+                                Some(x) => x,
+                                None => lease_time * 7 / 8,
+                            };
+                            info!("rebinding_time: {}", rebinding_time);
 
                             // de-rate times by 12%
                             self.t1 = renewal_time.saturating_sub(renewal_time / 8);
