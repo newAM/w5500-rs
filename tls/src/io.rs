@@ -410,7 +410,7 @@ impl<'buf, 'ptr> Read<Infallible> for TlsReader<'buf, 'ptr> {
 /// Application data gets handled by the user, and everything else is handled
 /// internally.
 ///
-/// To maintain a continuous buffer of application data the buffer pointers
+/// To maintain a continuous buffer of application data the buffer pointers are
 /// rewound to the head of the application data after non-application
 /// data records have been reassembled and processed.
 ///
@@ -427,7 +427,7 @@ impl<'buf, 'ptr> Read<Infallible> for TlsReader<'buf, 'ptr> {
 ///   This in turn implies `change_cipher_spec` records cannot be fragmented,
 ///   because they only contain a single byte.
 ///
-/// There are several error conditions that can need to be handled to avoid
+/// There are several error conditions that need to be handled to avoid
 /// corrupting the buffer state:
 ///
 /// * Receive fragmented alert record.
