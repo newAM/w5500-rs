@@ -20,7 +20,7 @@ const DNS_SRC_PORT: u16 = 45917;
 const DEFAULT_MAC: Eui48Addr = Eui48Addr::new(0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED);
 
 // change this to the name of a host on your network
-const QUERY_HOSTNAME: Hostname = Hostname::new_unwrapped("_http._tcp.local");
+const QUERY_HOSTNAME: Hostname = unsafe { Hostname::new_unchecked("_http._tcp.local") };
 
 fn main() {
     // this enables the logging built into the register simulator

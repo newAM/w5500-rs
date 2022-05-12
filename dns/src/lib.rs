@@ -249,7 +249,7 @@ impl<'a, W5500: Udp> Response<'a, W5500> {
     /// Number of answers in the response.
     #[must_use]
     pub fn answer_count(&self) -> u16 {
-        self.header.ancount()
+        self.header.ancount() + self.header.arcount()
     }
 
     /// Get the next answer from the DNS response.
