@@ -34,10 +34,10 @@ let query_id: u16 = dns_client.a_question(&mut w5500, &hostname)?;
 let mut response: Response<_> =
     block!(dns_client.response(&mut w5500, &mut hostname_buffer, query_id))?;
 
-while let Some(answer) = response.next_answer()? {
-    println!("name: {:?}", answer.name);
-    println!("TTL: {}", answer.ttl);
-    println!("IP: {:?}", answer.rdata);
+while let Some(rr) = response.next_rr()? {
+    println!("name: {:?}", rr.name);
+    println!("TTL: {}", rr.ttl);
+    println!("IP: {:?}", rr.rdata);
 }
 response.done()?;
 ```

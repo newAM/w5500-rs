@@ -58,8 +58,8 @@ fn main() {
             }
         };
 
-        while let Ok(Some(ans)) = response.next_answer() {
-            println!("{ans:?}");
+        while let Ok(Some(rr)) = response.next_rr() {
+            println!("{rr:?}");
         }
         response.done().expect("done");
     }

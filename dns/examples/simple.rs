@@ -68,8 +68,8 @@ fn main() {
         }
     };
 
-    while let Some(ans) = response.next_answer().unwrap() {
-        println!("{ans:?}");
+    while let Some(rr) = response.next_rr().unwrap() {
+        println!("{rr:?}");
     }
     response.done().unwrap();
 }

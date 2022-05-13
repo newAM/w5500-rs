@@ -177,7 +177,7 @@ impl Client {
             reader,
             header,
             buf,
-            answer_idx: 0,
+            rr_idx: 0,
         })
     }
 }

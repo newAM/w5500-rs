@@ -158,7 +158,11 @@ impl Header {
     }
 
     #[must_use]
-    #[allow(dead_code)]
+    pub(crate) fn nscount(&self) -> u16 {
+        u16::from_be_bytes(self.buf[8..10].try_into().unwrap())
+    }
+
+    #[must_use]
     pub(crate) fn arcount(&self) -> u16 {
         u16::from_be_bytes(self.buf[10..12].try_into().unwrap())
     }

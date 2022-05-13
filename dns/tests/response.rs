@@ -7,7 +7,7 @@ use w5500_dns::{
         },
         UdpHeader,
     },
-    Answer, Client, Qclass, Qtype, DST_PORT,
+    Client, Qclass, Qtype, ResourceRecord, DST_PORT,
 };
 
 const SRC_PORT: u16 = 12345;
@@ -94,8 +94,8 @@ fn label_compression_start() {
     let mut response = CLIENT.response(&mut w5500, &mut buf, 0x475F).unwrap();
 
     assert_eq!(
-        response.next_answer().unwrap(),
-        Some(Answer {
+        response.next_rr().unwrap(),
+        Some(ResourceRecord {
             name: Some("docs.rs"),
             qtype: Ok(Qtype::A),
             class: Ok(Qclass::IN),
@@ -104,8 +104,8 @@ fn label_compression_start() {
         })
     );
     assert_eq!(
-        response.next_answer().unwrap(),
-        Some(Answer {
+        response.next_rr().unwrap(),
+        Some(ResourceRecord {
             name: Some("docs.rs"),
             qtype: Ok(Qtype::A),
             class: Ok(Qclass::IN),
@@ -114,8 +114,8 @@ fn label_compression_start() {
         })
     );
     assert_eq!(
-        response.next_answer().unwrap(),
-        Some(Answer {
+        response.next_rr().unwrap(),
+        Some(ResourceRecord {
             name: Some("docs.rs"),
             qtype: Ok(Qtype::A),
             class: Ok(Qclass::IN),
@@ -124,8 +124,8 @@ fn label_compression_start() {
         })
     );
     assert_eq!(
-        response.next_answer().unwrap(),
-        Some(Answer {
+        response.next_rr().unwrap(),
+        Some(ResourceRecord {
             name: Some("docs.rs"),
             qtype: Ok(Qtype::A),
             class: Ok(Qclass::IN),
@@ -133,7 +133,7 @@ fn label_compression_start() {
             rdata: Some(Ipv4Addr::new(18, 65, 229, 105)),
         })
     );
-    assert_eq!(response.next_answer().unwrap(), None);
+    assert_eq!(response.next_rr().unwrap(), None);
 }
 
 /// Label compression in the middle of the label
@@ -150,8 +150,8 @@ fn label_compression_mid() {
     let mut response = CLIENT.response(&mut w5500, &mut buf, 0xB420).unwrap();
 
     assert_eq!(
-        response.next_answer().unwrap(),
-        Some(Answer {
+        response.next_rr().unwrap(),
+        Some(ResourceRecord {
             name: Some("iMac.local"),
             qtype: Ok(Qtype::A),
             class: Ok(Qclass::IN),
@@ -159,7 +159,7 @@ fn label_compression_mid() {
             rdata: Some(Ipv4Addr::new(192, 168, 0, 2)),
         })
     );
-    assert_eq!(response.next_answer().unwrap(), None);
+    assert_eq!(response.next_rr().unwrap(), None);
 }
 
 /// Label compression in the middle of the label
@@ -197,8 +197,8 @@ fn ptr_response() {
     let mut buf: [u8; 1024] = [0; 1024];
     let mut response = CLIENT.response(&mut w5500, &mut buf, 0).expect("response");
     assert_eq!(
-        response.next_answer().expect("_http"),
-        Some(Answer {
+        response.next_rr().expect("_http"),
+        Some(ResourceRecord {
             name: Some("_http._tcp.local"),
             qtype: Ok(Qtype::PTR),
             class: Ok(Qclass::IN),
@@ -207,8 +207,8 @@ fn ptr_response() {
         })
     );
     assert_eq!(
-        response.next_answer().expect("Closet"),
-        Some(Answer {
+        response.next_rr().expect("Closet"),
+        Some(ResourceRecord {
             name: Some("Closet._http._tcp.local"),
             qtype: Ok(Qtype::TXT),
             class: Ok(Qclass::IN),
@@ -217,8 +217,8 @@ fn ptr_response() {
         })
     );
     assert_eq!(
-        response.next_answer().expect("Closet"),
-        Some(Answer {
+        response.next_rr().expect("Closet"),
+        Some(ResourceRecord {
             name: Some("Closet._http._tcp.local"),
             qtype: Ok(Qtype::SVR),
             class: Ok(Qclass::IN),
@@ -227,8 +227,8 @@ fn ptr_response() {
         })
     );
     assert_eq!(
-        response.next_answer().expect("Closet"),
-        Some(Answer {
+        response.next_rr().expect("Closet"),
+        Some(ResourceRecord {
             name: Some("Closet.local"),
             qtype: Ok(Qtype::AAAA),
             class: Ok(Qclass::IN),
@@ -237,8 +237,8 @@ fn ptr_response() {
         })
     );
     assert_eq!(
-        response.next_answer().expect("Closet"),
-        Some(Answer {
+        response.next_rr().expect("Closet"),
+        Some(ResourceRecord {
             name: Some("Closet.local"),
             qtype: Ok(Qtype::A),
             class: Ok(Qclass::IN),
@@ -246,5 +246,5 @@ fn ptr_response() {
             rdata: Some(Ipv4Addr::new(192, 168, 1, 138)),
         })
     );
-    assert_eq!(response.next_answer().unwrap(), None);
+    assert_eq!(response.next_rr().unwrap(), None);
 }

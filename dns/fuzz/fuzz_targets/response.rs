@@ -14,6 +14,6 @@ fuzz_target!(|fuzz: &[u8]| {
 
     let mut buf: [u8; 256] = [0; 256];
     if let Ok(mut response) = client.response(&mut w5500, &mut buf, 0) {
-        while let Ok(Some(_answer)) = response.next_answer() {}
+        while let Ok(Some(_rr)) = response.next_rr() {}
     }
 });

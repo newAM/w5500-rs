@@ -34,10 +34,10 @@
 //! let mut response: Response<_> =
 //!     block!(dns_client.response(&mut w5500, &mut hostname_buffer, query_id))?;
 //!
-//! while let Some(answer) = response.next_answer()? {
-//!     println!("name: {:?}", answer.name);
-//!     println!("TTL: {}", answer.ttl);
-//!     println!("IP: {:?}", answer.rdata);
+//! while let Some(rr) = response.next_rr()? {
+//!     println!("name: {:?}", r.name);
+//!     println!("TTL: {}", rr.ttl);
+//!     println!("IP: {:?}", rr.rdata);
 //! }
 //! response.done()?;
 //! # Ok::<(), w5500_hl::Error<std::io::ErrorKind>>(())
@@ -113,9 +113,9 @@ pub mod servers {
     pub const GOOGLE_2: Ipv4Addr = Ipv4Addr::new(8, 8, 4, 4);
 }
 
-/// DNS server answers.
+/// DNS server resource records.
 ///
-/// This is created by [`Response::next_answer`].
+/// This is created by [`Response::next_rr`].
 ///
 /// # References
 ///
@@ -123,7 +123,7 @@ pub mod servers {
 /// * [RFC 1035 Section 4.1.4](https://www.rfc-editor.org/rfc/rfc1035#section-4.1.4)
 #[derive(Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
-pub struct Answer<'a> {
+pub struct ResourceRecord<'a> {
     /// A domain name to which this resource record pertains.
     ///
     /// This will be `None` if the domain name contains invalid characters or if
@@ -131,13 +131,10 @@ pub struct Answer<'a> {
     pub name: Option<&'a str>,
     /// Resource record type.
     ///
-    /// Only A records are supported at the moment, which means we can assume
-    /// this is `Ok(Qtype::A)` if the DNS server is operating correctly.
-    ///
     /// If the value from the DNS server does not match a valid [`Qtype`] the
     /// value will be returned in the `Err` variant.
     pub qtype: Result<Qtype, u16>,
-    /// Resource record type.
+    /// Resource record class.
     ///
     /// Only internet records are supported at the moment, which means we can
     /// assume this is `Ok(Qclass::IN)` if the DNS server is operating correctly.
@@ -157,7 +154,7 @@ pub struct Answer<'a> {
     pub ttl: u32,
     /// Resource record data.
     ///
-    /// Only A records are supported at the moment, which means we can assume
+    /// Only the RDATA in A records is supported at the moment, which means we can assume
     /// this is always an `IPv4Addr`.
     ///
     /// This is `None` if the rdata length was not exactly 4 bytes.
@@ -235,7 +232,7 @@ pub struct Response<'a, W5500: Udp> {
     reader: UdpReader<'a, W5500>,
     header: Header,
     buf: &'a mut [u8],
-    answer_idx: u16,
+    rr_idx: u16,
 }
 
 impl<'a, W5500: Udp> Response<'a, W5500> {
@@ -249,10 +246,19 @@ impl<'a, W5500: Udp> Response<'a, W5500> {
     /// Number of answers in the response.
     #[must_use]
     pub fn answer_count(&self) -> u16 {
-        self.header.ancount() + self.header.arcount()
+        self.header.ancount()
     }
 
-    /// Get the next answer from the DNS response.
+    /// Number of resource records in the response.
+    #[must_use]
+    pub fn rr_count(&self) -> u16 {
+        self.header
+            .ancount()
+            .saturating_add(self.header.nscount())
+            .saturating_add(self.header.arcount())
+    }
+
+    /// Get the next resource record from the DNS response.
     ///
     /// # Errors
     ///
@@ -262,12 +268,12 @@ impl<'a, W5500: Udp> Response<'a, W5500> {
     /// * [`Error::UnexpectedEof`]
     ///
     /// If any error occurs the entire response should be discarded,
-    /// and you should not continue to call `next_answer`.
-    pub fn next_answer(&mut self) -> Result<Option<Answer>, Error<W5500::Error>> {
-        if self.answer_idx >= self.answer_count() {
+    /// and you should not continue to call `next_rr`.
+    pub fn next_rr(&mut self) -> Result<Option<ResourceRecord>, Error<W5500::Error>> {
+        if self.rr_idx >= self.rr_count() {
             Ok(None)
         } else {
-            self.answer_idx = self.answer_idx.saturating_add(1);
+            self.rr_idx = self.rr_idx.saturating_add(1);
 
             let name: Option<&str> = read_labels(&mut self.reader, self.buf)?;
 
@@ -305,7 +311,7 @@ impl<'a, W5500: Udp> Response<'a, W5500> {
             };
 
             // now we are at the rest of the answer.
-            Ok(Some(Answer {
+            Ok(Some(ResourceRecord {
                 name,
                 qtype: qtype.try_into(),
                 class: class.try_into(),
@@ -570,7 +576,7 @@ impl Client {
             reader,
             header,
             buf,
-            answer_idx: 0,
+            rr_idx: 0,
         })
     }
 }
