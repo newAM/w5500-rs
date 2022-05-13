@@ -35,7 +35,7 @@
 //!     block!(dns_client.response(&mut w5500, &mut hostname_buffer, query_id))?;
 //!
 //! while let Some(rr) = response.next_rr()? {
-//!     println!("name: {:?}", r.name);
+//!     println!("name: {:?}", rr.name);
 //!     println!("TTL: {}", rr.ttl);
 //!     println!("IP: {:?}", rr.rdata);
 //! }
