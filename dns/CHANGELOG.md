@@ -10,9 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `Response.rr_count`.
 
 ### Changed
-- Changed `Response.next_answer` to `Response.next_rr`.
-- Changed `Answer` to `ResourceRecord`.
 - Changed `Answer.rdata` type from `Option<Ipv4Addr>` to `RData`.
+- Renamed `Answer` to `ResourceRecord`.
+- Renamed `Response.next_answer` to `Response.next_rr`.
 
 ## [0.1.1] - 2022-05-09
 ### Fixed
