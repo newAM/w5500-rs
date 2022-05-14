@@ -22,7 +22,7 @@ w5500-hl = { path = "../hl", version = "0.9.0" }
 heapless = { version = "0.7", default-features = false }
 hkdf = { version = "0.12", default-features = false }
 hmac = { version = "0.12", default-features = false }
-p256 = { version = "0.10.1", default-features = false, features = ["arithmetic", "ecdh"] }
+p256 = { version = "0.11", default-features = false, features = ["arithmetic", "ecdh"] }
 rand_core = { version = "0.6", default-features = false }
 sha2 = { version = "0.10", default-features = false }
 subtle = { version = "2", default-features = false }

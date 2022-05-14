@@ -295,8 +295,10 @@ impl KeySchedule {
     }
 
     pub fn initialize_handshake_secret(&mut self) {
-        (self.secret, self.hkdf) =
-            Hkdf::<Sha256>::extract(Some(&self.secret), self.shared_secret().unwrap().as_bytes());
+        (self.secret, self.hkdf) = Hkdf::<Sha256>::extract(
+            Some(&self.secret),
+            self.shared_secret().unwrap().raw_secret_bytes(),
+        );
 
         let transcript_hash_bytes: GenericArray<u8, _> = self.transcript_hash_bytes();
         let client_secret: GenericArray<u8, _> =
