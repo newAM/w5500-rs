@@ -65,12 +65,10 @@ impl GHash {
     pub fn finalize(self) -> [u8; BLOCKSIZE] {
         let mut block = [0_u8; BLOCKSIZE];
 
-        for (chunk, i) in block
+        block
             .chunks_mut(4)
             .zip(&[self.s.3, self.s.2, self.s.1, self.s.0])
-        {
-            chunk.copy_from_slice(&i.to_be_bytes());
-        }
+            .for_each(|(chunk, i)| chunk.copy_from_slice(&i.to_be_bytes()));
 
         block
     }
