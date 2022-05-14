@@ -220,12 +220,12 @@ fn dns_query(ta: &mut TestArgs) {
     }
     let mut buf: [u8; 256] = [0; 256];
     let mut response = dns_client.response(ta.w5500, &mut buf, id).unwrap();
-    while let Some(answer) = response.next_answer().unwrap() {
-        println!("name={:?}", answer.name);
-        println!("qtype={:?}", answer.qtype);
-        println!("class={:?}", answer.class);
-        println!("ttl={:?}", answer.ttl);
-        println!("rdata={:?}", answer.rdata);
+    while let Some(rr) = response.next_rr().unwrap() {
+        println!("name={:?}", rr.name);
+        println!("qtype={:?}", rr.qtype);
+        println!("class={:?}", rr.class);
+        println!("ttl={:?}", rr.ttl);
+        println!("rdata={:?}", rr.rdata);
     }
     response.done().unwrap();
 }

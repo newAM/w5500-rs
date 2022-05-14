@@ -7,7 +7,7 @@ use w5500_dns::{
         },
         UdpHeader,
     },
-    Answer, Client, Qclass, Qtype, DST_PORT,
+    Client, Qclass, Qtype, RData, ResourceRecord, ServiceData, DST_PORT,
 };
 
 const SRC_PORT: u16 = 12345;
@@ -94,46 +94,46 @@ fn label_compression_start() {
     let mut response = CLIENT.response(&mut w5500, &mut buf, 0x475F).unwrap();
 
     assert_eq!(
-        response.next_answer().unwrap(),
-        Some(Answer {
+        response.next_rr().unwrap(),
+        Some(ResourceRecord {
             name: Some("docs.rs"),
             qtype: Ok(Qtype::A),
             class: Ok(Qclass::IN),
             ttl: 60,
-            rdata: Some(Ipv4Addr::new(18, 65, 229, 115)),
+            rdata: RData::A(Ipv4Addr::new(18, 65, 229, 115)),
         })
     );
     assert_eq!(
-        response.next_answer().unwrap(),
-        Some(Answer {
+        response.next_rr().unwrap(),
+        Some(ResourceRecord {
             name: Some("docs.rs"),
             qtype: Ok(Qtype::A),
             class: Ok(Qclass::IN),
             ttl: 60,
-            rdata: Some(Ipv4Addr::new(18, 65, 229, 80)),
+            rdata: RData::A(Ipv4Addr::new(18, 65, 229, 80)),
         })
     );
     assert_eq!(
-        response.next_answer().unwrap(),
-        Some(Answer {
+        response.next_rr().unwrap(),
+        Some(ResourceRecord {
             name: Some("docs.rs"),
             qtype: Ok(Qtype::A),
             class: Ok(Qclass::IN),
             ttl: 60,
-            rdata: Some(Ipv4Addr::new(18, 65, 229, 76)),
+            rdata: RData::A(Ipv4Addr::new(18, 65, 229, 76)),
         })
     );
     assert_eq!(
-        response.next_answer().unwrap(),
-        Some(Answer {
+        response.next_rr().unwrap(),
+        Some(ResourceRecord {
             name: Some("docs.rs"),
             qtype: Ok(Qtype::A),
             class: Ok(Qclass::IN),
             ttl: 60,
-            rdata: Some(Ipv4Addr::new(18, 65, 229, 105)),
+            rdata: RData::A(Ipv4Addr::new(18, 65, 229, 105)),
         })
     );
-    assert_eq!(response.next_answer().unwrap(), None);
+    assert_eq!(response.next_rr().unwrap(), None);
 }
 
 /// Label compression in the middle of the label
@@ -146,18 +146,109 @@ fn label_compression_mid() {
         0xc0, 0xa8, 0x00, 0x02,
     ];
     let mut w5500: MockW5500 = MockW5500::new(&RESPONSE);
-    let mut buf: [u8; 16] = [0; 16];
+    let mut buf: [u8; 1024] = [0; 1024];
     let mut response = CLIENT.response(&mut w5500, &mut buf, 0xB420).unwrap();
 
     assert_eq!(
-        response.next_answer().unwrap(),
-        Some(Answer {
+        response.next_rr().unwrap(),
+        Some(ResourceRecord {
             name: Some("iMac.local"),
             qtype: Ok(Qtype::A),
             class: Ok(Qclass::IN),
             ttl: 10,
-            rdata: Some(Ipv4Addr::new(192, 168, 0, 2)),
+            rdata: RData::A(Ipv4Addr::new(192, 168, 0, 2)),
         })
     );
-    assert_eq!(response.next_answer().unwrap(), None);
+    assert_eq!(response.next_rr().unwrap(), None);
+}
+
+/// Label compression in the middle of the label
+#[test]
+fn ptr_response() {
+    stderrlog::new()
+        .verbosity(3)
+        .timestamp(stderrlog::Timestamp::Nanosecond)
+        .init()
+        .unwrap();
+    const RESPONSE: [u8; 309] = [
+        0x00, 0x00, 0x84, 0x00, 0x00, 0x01, 0x00, 0x05, 0x00, 0x00, 0x00, 0x00, 0x05, 0x5f, 0x68,
+        0x74, 0x74, 0x70, 0x04, 0x5f, 0x74, 0x63, 0x70, 0x05, 0x6c, 0x6f, 0x63, 0x61, 0x6c, 0x00,
+        0x00, 0x0c, 0x00, 0x01, 0xc0, 0x0c, 0x00, 0x0c, 0x00, 0x01, 0x00, 0x00, 0x00, 0x0a, 0x00,
+        0x09, 0x06, 0x43, 0x6c, 0x6f, 0x73, 0x65, 0x74, 0xc0, 0x0c, 0xc0, 0x2e, 0x00, 0x10, 0x00,
+        0x01, 0x00, 0x00, 0x00, 0x0a, 0x00, 0xab, 0x0f, 0x76, 0x65, 0x6e, 0x64, 0x6f, 0x72, 0x3d,
+        0x53, 0x79, 0x6e, 0x6f, 0x6c, 0x6f, 0x67, 0x79, 0x0c, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x3d,
+        0x44, 0x53, 0x32, 0x31, 0x38, 0x2b, 0x14, 0x73, 0x65, 0x72, 0x69, 0x61, 0x6c, 0x3d, 0x31,
+        0x39, 0x32, 0x30, 0x50, 0x43, 0x4e, 0x38, 0x34, 0x33, 0x34, 0x30, 0x32, 0x0f, 0x76, 0x65,
+        0x72, 0x73, 0x69, 0x6f, 0x6e, 0x5f, 0x6d, 0x61, 0x6a, 0x6f, 0x72, 0x3d, 0x36, 0x0f, 0x76,
+        0x65, 0x72, 0x73, 0x69, 0x6f, 0x6e, 0x5f, 0x6d, 0x69, 0x6e, 0x6f, 0x72, 0x3d, 0x32, 0x13,
+        0x76, 0x65, 0x72, 0x73, 0x69, 0x6f, 0x6e, 0x5f, 0x62, 0x75, 0x69, 0x6c, 0x64, 0x3d, 0x32,
+        0x35, 0x35, 0x35, 0x36, 0x0f, 0x61, 0x64, 0x6d, 0x69, 0x6e, 0x5f, 0x70, 0x6f, 0x72, 0x74,
+        0x3d, 0x35, 0x30, 0x30, 0x30, 0x16, 0x73, 0x65, 0x63, 0x75, 0x72, 0x65, 0x5f, 0x61, 0x64,
+        0x6d, 0x69, 0x6e, 0x5f, 0x70, 0x6f, 0x72, 0x74, 0x3d, 0x35, 0x30, 0x30, 0x31, 0x1d, 0x6d,
+        0x61, 0x63, 0x5f, 0x61, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x3d, 0x30, 0x30, 0x3a, 0x31,
+        0x31, 0x3a, 0x33, 0x32, 0x3a, 0x61, 0x37, 0x3a, 0x32, 0x66, 0x3a, 0x38, 0x65, 0xc0, 0x2e,
+        0x00, 0x21, 0x00, 0x01, 0x00, 0x00, 0x00, 0x0a, 0x00, 0x0f, 0x00, 0x00, 0x00, 0x00, 0x13,
+        0x88, 0x06, 0x43, 0x6c, 0x6f, 0x73, 0x65, 0x74, 0xc0, 0x17, 0xc1, 0x00, 0x00, 0x1c, 0x00,
+        0x01, 0x00, 0x00, 0x00, 0x0a, 0x00, 0x10, 0xfe, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x02, 0x11, 0x32, 0xff, 0xfe, 0xa7, 0x2f, 0x8e, 0xc1, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00,
+        0x00, 0x00, 0x0a, 0x00, 0x04, 0xc0, 0xa8, 0x01, 0x8a,
+    ];
+    let mut w5500: MockW5500 = MockW5500::new(&RESPONSE);
+    let mut buf: [u8; 1024] = [0; 1024];
+    let mut response = CLIENT.response(&mut w5500, &mut buf, 0).expect("response");
+    assert_eq!(
+        response.next_rr().expect("_http"),
+        Some(ResourceRecord {
+            name: Some("_http._tcp.local"),
+            qtype: Ok(Qtype::PTR),
+            class: Ok(Qclass::IN),
+            ttl: 10,
+            rdata: RData::Unsupported,
+        })
+    );
+    assert_eq!(
+        response.next_rr().expect("Closet"),
+        Some(ResourceRecord {
+            name: Some("Closet._http._tcp.local"),
+            qtype: Ok(Qtype::TXT),
+            class: Ok(Qclass::IN),
+            ttl: 10,
+            rdata: RData::Unsupported,
+        })
+    );
+    assert_eq!(
+        response.next_rr().expect("Closet"),
+        Some(ResourceRecord {
+            name: Some("Closet._http._tcp.local"),
+            qtype: Ok(Qtype::SVR),
+            class: Ok(Qclass::IN),
+            ttl: 10,
+            rdata: RData::SVR(ServiceData {
+                priority: 0,
+                weight: 0,
+                port: 5000
+            }),
+        })
+    );
+    assert_eq!(
+        response.next_rr().expect("Closet"),
+        Some(ResourceRecord {
+            name: Some("Closet.local"),
+            qtype: Ok(Qtype::AAAA),
+            class: Ok(Qclass::IN),
+            ttl: 10,
+            rdata: RData::Unsupported,
+        })
+    );
+    assert_eq!(
+        response.next_rr().expect("Closet"),
+        Some(ResourceRecord {
+            name: Some("Closet.local"),
+            qtype: Ok(Qtype::A),
+            class: Ok(Qclass::IN),
+            ttl: 10,
+            rdata: RData::A(Ipv4Addr::new(192, 168, 1, 138)),
+        })
+    );
+    assert_eq!(response.next_rr().unwrap(), None);
 }

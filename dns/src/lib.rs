@@ -34,10 +34,10 @@
 //! let mut response: Response<_> =
 //!     block!(dns_client.response(&mut w5500, &mut hostname_buffer, query_id))?;
 //!
-//! while let Some(answer) = response.next_answer()? {
-//!     println!("name: {:?}", answer.name);
-//!     println!("TTL: {}", answer.ttl);
-//!     println!("IP: {:?}", answer.rdata);
+//! while let Some(rr) = response.next_rr()? {
+//!     println!("name: {:?}", rr.name);
+//!     println!("TTL: {}", rr.ttl);
+//!     println!("IP: {:?}", rr.rdata);
 //! }
 //! response.done()?;
 //! # Ok::<(), w5500_hl::Error<std::io::ErrorKind>>(())
@@ -113,9 +113,39 @@ pub mod servers {
     pub const GOOGLE_2: Ipv4Addr = Ipv4Addr::new(8, 8, 4, 4);
 }
 
-/// DNS server answers.
+/// Decoded fields from SRV rdata.
+#[derive(Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "defmt", derive(defmt::Format))]
+pub struct ServiceData {
+    /// The priority of this target host.
+    pub priority: u16,
+    /// A server selection mechanism.
+    pub weight: u16,
+    /// The port on this target host of this service.
+    pub port: u16,
+}
+
+/// Decoded rdata.
+#[derive(Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "defmt", derive(defmt::Format))]
+pub enum RData {
+    /// Decoded rdata for A records.
+    A(Ipv4Addr),
+    /// Decoded rdata for SVR records.
+    SVR(ServiceData),
+    /// Record type's rdata is unsupported.
+    Unsupported,
+}
+
+impl Default for RData {
+    fn default() -> Self {
+        RData::Unsupported
+    }
+}
+
+/// DNS server resource records.
 ///
-/// This is created by [`Response::next_answer`].
+/// This is created by [`Response::next_rr`].
 ///
 /// # References
 ///
@@ -123,7 +153,7 @@ pub mod servers {
 /// * [RFC 1035 Section 4.1.4](https://www.rfc-editor.org/rfc/rfc1035#section-4.1.4)
 #[derive(Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
-pub struct Answer<'a> {
+pub struct ResourceRecord<'a> {
     /// A domain name to which this resource record pertains.
     ///
     /// This will be `None` if the domain name contains invalid characters or if
@@ -131,13 +161,10 @@ pub struct Answer<'a> {
     pub name: Option<&'a str>,
     /// Resource record type.
     ///
-    /// Only A records are supported at the moment, which means we can assume
-    /// this is `Ok(Qtype::A)` if the DNS server is operating correctly.
-    ///
     /// If the value from the DNS server does not match a valid [`Qtype`] the
     /// value will be returned in the `Err` variant.
     pub qtype: Result<Qtype, u16>,
-    /// Resource record type.
+    /// Resource record class.
     ///
     /// Only internet records are supported at the moment, which means we can
     /// assume this is `Ok(Qclass::IN)` if the DNS server is operating correctly.
@@ -157,11 +184,10 @@ pub struct Answer<'a> {
     pub ttl: u32,
     /// Resource record data.
     ///
-    /// Only A records are supported at the moment, which means we can assume
-    /// this is always an `IPv4Addr`.
+    /// Only the RDATA in A and SVR records is supported at the moment.
     ///
-    /// This is `None` if the rdata length was not exactly 4 bytes.
-    pub rdata: Option<Ipv4Addr>,
+    /// This is `RData::Unsupported` if the rdata is not from a supported record type.
+    pub rdata: RData,
 }
 
 // https://www.rfc-editor.org/rfc/rfc1035#section-4.1.4
@@ -226,6 +252,24 @@ fn read_labels<'l, E, Reader: Read<E> + Seek<E>>(
     }
 }
 
+fn read_u16<E, Reader: Read<E>>(reader: &mut Reader) -> Result<u16, Error<E>> {
+    let v: u16 = {
+        let mut buf: [u8; 2] = [0; core::mem::size_of::<u16>()];
+        reader.read_exact(&mut buf)?;
+        u16::from_be_bytes(buf)
+    };
+    Ok(v)
+}
+
+fn read_u32<E, Reader: Read<E>>(reader: &mut Reader) -> Result<u32, Error<E>> {
+    let v: u32 = {
+        let mut buf: [u8; 4] = [0; 4];
+        reader.read_exact(&mut buf)?;
+        u32::from_be_bytes(buf)
+    };
+    Ok(v)
+}
+
 /// DNS response from the server.
 ///
 /// This is created with [`Client::response`].
@@ -235,7 +279,7 @@ pub struct Response<'a, W5500: Udp> {
     reader: UdpReader<'a, W5500>,
     header: Header,
     buf: &'a mut [u8],
-    answer_idx: u16,
+    rr_idx: u16,
 }
 
 impl<'a, W5500: Udp> Response<'a, W5500> {
@@ -252,7 +296,16 @@ impl<'a, W5500: Udp> Response<'a, W5500> {
         self.header.ancount()
     }
 
-    /// Get the next answer from the DNS response.
+    /// Number of resource records in the response.
+    #[must_use]
+    pub fn rr_count(&self) -> u16 {
+        self.header
+            .ancount()
+            .saturating_add(self.header.nscount())
+            .saturating_add(self.header.arcount())
+    }
+
+    /// Get the next resource record from the DNS response.
     ///
     /// # Errors
     ///
@@ -262,48 +315,52 @@ impl<'a, W5500: Udp> Response<'a, W5500> {
     /// * [`Error::UnexpectedEof`]
     ///
     /// If any error occurs the entire response should be discarded,
-    /// and you should not continue to call `next_answer`.
-    pub fn next_answer(&mut self) -> Result<Option<Answer>, Error<W5500::Error>> {
-        if self.answer_idx >= self.answer_count() {
+    /// and you should not continue to call `next_rr`.
+    pub fn next_rr(&mut self) -> Result<Option<ResourceRecord>, Error<W5500::Error>> {
+        if self.rr_idx >= self.rr_count() {
             Ok(None)
         } else {
-            self.answer_idx = self.answer_idx.saturating_add(1);
+            self.rr_idx = self.rr_idx.saturating_add(1);
 
             let name: Option<&str> = read_labels(&mut self.reader, self.buf)?;
 
-            let qtype: u16 = {
-                let mut buf: [u8; 2] = [0; 2];
-                self.reader.read_exact(&mut buf)?;
-                u16::from_be_bytes(buf)
-            };
-            let class: u16 = {
-                let mut buf: [u8; 2] = [0; 2];
-                self.reader.read_exact(&mut buf)?;
-                u16::from_be_bytes(buf)
-            };
-            let ttl: u32 = {
-                let mut buf: [u8; 4] = [0; 4];
-                self.reader.read_exact(&mut buf)?;
-                u32::from_be_bytes(buf)
-            };
-            let rdlength: u16 = {
-                let mut buf: [u8; 2] = [0; 2];
-                self.reader.read_exact(&mut buf)?;
-                u16::from_be_bytes(buf)
+            let qtype = read_u16(&mut self.reader)?;
+            let class = read_u16(&mut self.reader)?;
+            let ttl = read_u32(&mut self.reader)?;
+            let rdlength = read_u16(&mut self.reader)?;
+
+            let qtype = qtype.try_into();
+
+            let before_rdata_pos = self.reader.stream_position();
+
+            let rdata = match qtype {
+                Ok(Qtype::A) => {
+                    let mut buf: [u8; 4] = [0; 4];
+                    self.reader.read_exact(&mut buf)?;
+                    RData::A(Ipv4Addr::from(buf))
+                }
+                Ok(Qtype::SVR) => {
+                    let priority = read_u16(&mut self.reader)?;
+                    let weight = read_u16(&mut self.reader)?;
+                    let port = read_u16(&mut self.reader)?;
+                    RData::SVR(ServiceData {
+                        priority,
+                        weight,
+                        port,
+                    })
+                }
+                _ => RData::Unsupported,
             };
 
-            let rdata: Option<Ipv4Addr> = if rdlength == 4 {
-                let mut buf: [u8; 4] = [0; 4];
-                self.reader.read_exact(&mut buf)?;
-                Some(Ipv4Addr::from(buf))
-            } else {
-                None
-            };
+            if rdlength != 0 {
+                self.reader
+                    .seek(SeekFrom::Start(before_rdata_pos.saturating_add(rdlength)))?;
+            }
 
             // now we are at the rest of the answer.
-            Ok(Some(Answer {
+            Ok(Some(ResourceRecord {
                 name,
-                qtype: qtype.try_into(),
+                qtype,
                 class: class.try_into(),
                 ttl,
                 rdata,
@@ -336,7 +393,7 @@ impl<'a, W5500: Udp> Query<'a, W5500> {
     /// # References
     ///
     /// * [RFC 1035 Section 4.1.2](https://www.rfc-editor.org/rfc/rfc1035#section-4.1.2)
-    pub fn question(mut self, qname: &Hostname) -> Result<Self, Error<W5500::Error>> {
+    pub fn question(mut self, qtype: Qtype, qname: &Hostname) -> Result<Self, Error<W5500::Error>> {
         const REMAIN_LEN: u16 = 5;
 
         if self.writer.remain() < u16::from(qname.len()) + REMAIN_LEN {
@@ -354,8 +411,8 @@ impl<'a, W5500: Udp> Query<'a, W5500> {
 
         let question_remainder: [u8; REMAIN_LEN as usize] = [
             0, // null terminator for above labels
-            Qtype::A.high_byte(),
-            Qtype::A.low_byte(),
+            qtype.high_byte(),
+            qtype.low_byte(),
             Qclass::IN.high_byte(),
             Qclass::IN.low_byte(),
         ];
@@ -505,7 +562,7 @@ impl Client {
         w5500: &'a mut W5500,
         hostname: &Hostname,
     ) -> Result<u16, Error<W5500::Error>> {
-        self.query(w5500)?.question(hostname)?.send()
+        self.query(w5500)?.question(Qtype::A, hostname)?.send()
     }
 
     /// Retrieve a DNS response after sending an [`a_question`]
@@ -566,7 +623,7 @@ impl Client {
             reader,
             header,
             buf,
-            answer_idx: 0,
+            rr_idx: 0,
         })
     }
 }

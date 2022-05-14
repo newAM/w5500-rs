@@ -5,6 +5,7 @@ use crate::ll::{
     net::{Eui48Addr, Ipv4Addr, SocketAddrV4},
     Protocol, Sn, SocketCommand, SocketMode, SocketStatus,
 };
+use crate::qtype::Qtype;
 use crate::{read_labels, Query, Response};
 use w5500_hl::{
     io::{Read, Seek, SeekFrom},
@@ -100,7 +101,27 @@ impl Client {
         w5500: &'a mut W5500,
         hostname: &Hostname,
     ) -> Result<(), Error<W5500::Error>> {
-        self.query(w5500)?.question(hostname)?.send()?;
+        self.query(w5500)?.question(Qtype::A, hostname)?.send()?;
+        Ok(())
+    }
+
+    /// Send an MDNS PTR record query.
+    ///
+    /// This will only broadcst an MDNS PTR record query, it will not wait for any replies from
+    /// MDNS responders.
+    ///
+    /// # Errors
+    ///
+    /// This method can only return:
+    ///
+    /// * [`Error::Other`]
+    /// * [`Error::OutOfMemory`]
+    pub fn ptr_question<'a, W5500: Udp>(
+        &mut self,
+        w5500: &'a mut W5500,
+        hostname: &Hostname,
+    ) -> Result<(), Error<W5500::Error>> {
+        self.query(w5500)?.question(Qtype::PTR, hostname)?.send()?;
         Ok(())
     }
 
@@ -156,7 +177,7 @@ impl Client {
             reader,
             header,
             buf,
-            answer_idx: 0,
+            rr_idx: 0,
         })
     }
 }
