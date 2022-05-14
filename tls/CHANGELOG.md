@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.0] - 2022-05-14
 ### Changed
 - Minor tweaks to improve performance and code size.
+- Updated `p256` from `0.10.1` to `0.11.0`.
 
 ## [0.1.0-alpha.1] - 2022-05-04
 - Initial release
