@@ -115,6 +115,7 @@ pub mod servers {
 
 /// Decoded fields from SRV rdata.
 #[derive(Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "defmt", derive(defmt::Format))]
 pub struct ServiceData {
     /// The priority of this target host.
     pub priority: u16,
@@ -126,6 +127,7 @@ pub struct ServiceData {
 
 /// Decoded rdata.
 #[derive(Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "defmt", derive(defmt::Format))]
 pub enum RData {
     /// Decoded rdata for A records.
     A(Ipv4Addr),
