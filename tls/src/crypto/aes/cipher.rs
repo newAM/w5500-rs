@@ -197,9 +197,10 @@ impl Aes128 {
     }
 
     fn add_round_key(&self, round: usize, block: &mut [u8; 16]) {
-        for (idx, byte) in block.iter_mut().enumerate() {
-            *byte ^= self.round_key[(round * NB * 4) + idx];
-        }
+        block
+            .iter_mut()
+            .enumerate()
+            .for_each(|(idx, byte)| *byte ^= self.round_key[(round * NB * 4) + idx])
     }
 
     pub fn encrypt_block_inplace(&self, block: &mut [u8; 16]) {
