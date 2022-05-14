@@ -113,6 +113,34 @@ pub mod servers {
     pub const GOOGLE_2: Ipv4Addr = Ipv4Addr::new(8, 8, 4, 4);
 }
 
+/// Decoded fields from SRV rdata.
+#[derive(Debug, PartialEq, Eq)]
+pub struct ServiceData {
+    /// The priority of this target host.
+    pub priority: u16,
+    /// A server selection mechanism.
+    pub weight: u16,
+    /// The port on this target host of this service.
+    pub port: u16,
+}
+
+/// Decoded rdata.
+#[derive(Debug, PartialEq, Eq)]
+pub enum RData {
+    /// Decoded rdata for A records.
+    A(Ipv4Addr),
+    /// Decoded rdata for SVR records.
+    SVR(ServiceData),
+    /// Record type's rdata is unsupported.
+    Unsupported,
+}
+
+impl Default for RData {
+    fn default() -> Self {
+        RData::Unsupported
+    }
+}
+
 /// DNS server resource records.
 ///
 /// This is created by [`Response::next_rr`].
@@ -154,11 +182,10 @@ pub struct ResourceRecord<'a> {
     pub ttl: u32,
     /// Resource record data.
     ///
-    /// Only the RDATA in A records is supported at the moment, which means we can assume
-    /// this is always an `IPv4Addr`.
+    /// Only the RDATA in A and SVR records is supported at the moment.
     ///
-    /// This is `None` if the rdata length was not exactly 4 bytes.
-    pub rdata: Option<Ipv4Addr>,
+    /// This is `RData::Unsupported` if the rdata is not from a supported record type.
+    pub rdata: RData,
 }
 
 // https://www.rfc-editor.org/rfc/rfc1035#section-4.1.4
@@ -223,6 +250,24 @@ fn read_labels<'l, E, Reader: Read<E> + Seek<E>>(
     }
 }
 
+fn read_u16<E, Reader: Read<E>>(reader: &mut Reader) -> Result<u16, Error<E>> {
+    let v: u16 = {
+        let mut buf: [u8; 2] = [0; core::mem::size_of::<u16>()];
+        reader.read_exact(&mut buf)?;
+        u16::from_be_bytes(buf)
+    };
+    Ok(v)
+}
+
+fn read_u32<E, Reader: Read<E>>(reader: &mut Reader) -> Result<u32, Error<E>> {
+    let v: u32 = {
+        let mut buf: [u8; 4] = [0; 4];
+        reader.read_exact(&mut buf)?;
+        u32::from_be_bytes(buf)
+    };
+    Ok(v)
+}
+
 /// DNS response from the server.
 ///
 /// This is created with [`Client::response`].
@@ -277,43 +322,43 @@ impl<'a, W5500: Udp> Response<'a, W5500> {
 
             let name: Option<&str> = read_labels(&mut self.reader, self.buf)?;
 
-            let qtype: u16 = {
-                let mut buf: [u8; 2] = [0; 2];
-                self.reader.read_exact(&mut buf)?;
-                u16::from_be_bytes(buf)
-            };
-            let class: u16 = {
-                let mut buf: [u8; 2] = [0; 2];
-                self.reader.read_exact(&mut buf)?;
-                u16::from_be_bytes(buf)
-            };
-            let ttl: u32 = {
-                let mut buf: [u8; 4] = [0; 4];
-                self.reader.read_exact(&mut buf)?;
-                u32::from_be_bytes(buf)
-            };
-            let rdlength: u16 = {
-                let mut buf: [u8; 2] = [0; 2];
-                self.reader.read_exact(&mut buf)?;
-                u16::from_be_bytes(buf)
+            let qtype = read_u16(&mut self.reader)?;
+            let class = read_u16(&mut self.reader)?;
+            let ttl = read_u32(&mut self.reader)?;
+            let rdlength = read_u16(&mut self.reader)?;
+
+            let qtype = qtype.try_into();
+
+            let before_rdata_pos = self.reader.stream_position();
+
+            let rdata = match qtype {
+                Ok(Qtype::A) => {
+                    let mut buf: [u8; 4] = [0; 4];
+                    self.reader.read_exact(&mut buf)?;
+                    RData::A(Ipv4Addr::from(buf))
+                }
+                Ok(Qtype::SVR) => {
+                    let priority = read_u16(&mut self.reader)?;
+                    let weight = read_u16(&mut self.reader)?;
+                    let port = read_u16(&mut self.reader)?;
+                    RData::SVR(ServiceData {
+                        priority,
+                        weight,
+                        port,
+                    })
+                }
+                _ => RData::Unsupported,
             };
 
-            let rdata: Option<Ipv4Addr> = if rdlength == 4 {
-                let mut buf: [u8; 4] = [0; 4];
-                self.reader.read_exact(&mut buf)?;
-                Some(Ipv4Addr::from(buf))
-            } else if rdlength != 0 {
-                let seek_ptr: i16 = i16::try_from(rdlength).map_err(|_| Error::UnexpectedEof)?;
-                self.reader.seek(SeekFrom::Current(seek_ptr))?;
-                None
-            } else {
-                None
-            };
+            if rdlength != 0 {
+                self.reader
+                    .seek(SeekFrom::Start(before_rdata_pos.saturating_add(rdlength)))?;
+            }
 
             // now we are at the rest of the answer.
             Ok(Some(ResourceRecord {
                 name,
-                qtype: qtype.try_into(),
+                qtype,
                 class: class.try_into(),
                 ttl,
                 rdata,

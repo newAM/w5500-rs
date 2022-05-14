@@ -7,7 +7,7 @@ use w5500_dns::{
         },
         UdpHeader,
     },
-    Client, Qclass, Qtype, ResourceRecord, DST_PORT,
+    Client, Qclass, Qtype, RData, ResourceRecord, ServiceData, DST_PORT,
 };
 
 const SRC_PORT: u16 = 12345;
@@ -100,7 +100,7 @@ fn label_compression_start() {
             qtype: Ok(Qtype::A),
             class: Ok(Qclass::IN),
             ttl: 60,
-            rdata: Some(Ipv4Addr::new(18, 65, 229, 115)),
+            rdata: RData::A(Ipv4Addr::new(18, 65, 229, 115)),
         })
     );
     assert_eq!(
@@ -110,7 +110,7 @@ fn label_compression_start() {
             qtype: Ok(Qtype::A),
             class: Ok(Qclass::IN),
             ttl: 60,
-            rdata: Some(Ipv4Addr::new(18, 65, 229, 80)),
+            rdata: RData::A(Ipv4Addr::new(18, 65, 229, 80)),
         })
     );
     assert_eq!(
@@ -120,7 +120,7 @@ fn label_compression_start() {
             qtype: Ok(Qtype::A),
             class: Ok(Qclass::IN),
             ttl: 60,
-            rdata: Some(Ipv4Addr::new(18, 65, 229, 76)),
+            rdata: RData::A(Ipv4Addr::new(18, 65, 229, 76)),
         })
     );
     assert_eq!(
@@ -130,7 +130,7 @@ fn label_compression_start() {
             qtype: Ok(Qtype::A),
             class: Ok(Qclass::IN),
             ttl: 60,
-            rdata: Some(Ipv4Addr::new(18, 65, 229, 105)),
+            rdata: RData::A(Ipv4Addr::new(18, 65, 229, 105)),
         })
     );
     assert_eq!(response.next_rr().unwrap(), None);
@@ -156,7 +156,7 @@ fn label_compression_mid() {
             qtype: Ok(Qtype::A),
             class: Ok(Qclass::IN),
             ttl: 10,
-            rdata: Some(Ipv4Addr::new(192, 168, 0, 2)),
+            rdata: RData::A(Ipv4Addr::new(192, 168, 0, 2)),
         })
     );
     assert_eq!(response.next_rr().unwrap(), None);
@@ -203,7 +203,7 @@ fn ptr_response() {
             qtype: Ok(Qtype::PTR),
             class: Ok(Qclass::IN),
             ttl: 10,
-            rdata: None,
+            rdata: RData::Unsupported,
         })
     );
     assert_eq!(
@@ -213,7 +213,7 @@ fn ptr_response() {
             qtype: Ok(Qtype::TXT),
             class: Ok(Qclass::IN),
             ttl: 10,
-            rdata: None,
+            rdata: RData::Unsupported,
         })
     );
     assert_eq!(
@@ -223,7 +223,11 @@ fn ptr_response() {
             qtype: Ok(Qtype::SVR),
             class: Ok(Qclass::IN),
             ttl: 10,
-            rdata: None,
+            rdata: RData::SVR(ServiceData {
+                priority: 0,
+                weight: 0,
+                port: 5000
+            }),
         })
     );
     assert_eq!(
@@ -233,7 +237,7 @@ fn ptr_response() {
             qtype: Ok(Qtype::AAAA),
             class: Ok(Qclass::IN),
             ttl: 10,
-            rdata: None,
+            rdata: RData::Unsupported,
         })
     );
     assert_eq!(
@@ -243,7 +247,7 @@ fn ptr_response() {
             qtype: Ok(Qtype::A),
             class: Ok(Qclass::IN),
             ttl: 10,
-            rdata: Some(Ipv4Addr::new(192, 168, 1, 138)),
+            rdata: RData::A(Ipv4Addr::new(192, 168, 1, 138)),
         })
     );
     assert_eq!(response.next_rr().unwrap(), None);
