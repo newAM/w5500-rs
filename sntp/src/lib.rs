@@ -34,7 +34,7 @@ mod fixed_point;
 mod timestamp;
 
 pub use fixed_point::FixedPoint;
-pub use timestamp::Timestamp;
+pub use timestamp::{Timestamp, TimestampError};
 pub use w5500_hl as hl;
 pub use w5500_hl::ll;
 

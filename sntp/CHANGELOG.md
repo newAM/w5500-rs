@@ -10,10 +10,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added exports for `chrono` and `time`.
 
 ### Changed
+- Changed `Client.server` to public.
 - Changed the server argument of `Client::new` from `Ipv4Addr` to `SocketAddrV4`.
 - Changed the error type of `Timestamp` conversions from `()` to `TimestampError`.
 - Moved socket setup from `Client.request` to `Client.setup_socket` to avoid repeat initialization.
-- Changed `Client.server` to public, removed `Client::server` and `Client::set_server` methods.
+
+### Removed
+- Removed `Client::server` and `Client::set_server` methods.
 
 ## [0.1.0] - 2022-05-03
 - Initial release
