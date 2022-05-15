@@ -178,21 +178,28 @@ impl Client {
         const PRECISION: u8 = 0;
 
         // https://www.rfc-editor.org/rfc/rfc4330.html#section-4
-        let mut request_pkt: [u8; 48] = [0; 48];
-        request_pkt[0] = LI | VN | MODE;
-        request_pkt[1] = STRATUM;
-        request_pkt[2] = POLL;
-        request_pkt[3] = PRECISION;
-        // 4..8 root relay
-        // 8..12 root dispersion
-        // 12..16 reference identifier
-        // 16..24 reference timestamp
-        // 24..32 originate timestamp
-        // 32..40 receive timestamp
-        // 40..48 transmit timestamp
+        #[rustfmt::skip]
+        const REQUEST_PKT: [u8; 48] = [
+            LI | VN | MODE, STRATUM, POLL, PRECISION,
+            // 4..8 root relay
+            0, 0, 0, 0,
+            // 8..12 root dispersion
+            0, 0, 0, 0,
+            // 12..16 reference identifier
+            0, 0, 0, 0,
+            // 16..24 reference timestamp
+            0, 0, 0, 0, 0, 0, 0, 0,
+            // 24..32 originate timestamp
+            0, 0, 0, 0, 0, 0, 0, 0,
+            // 32..40 receive timestamp
+            0, 0, 0, 0, 0, 0, 0, 0,
+            // 40..48 transmit timestamp
+            // in the future this can be provided as an argument
+            0, 0, 0, 0, 0, 0, 0, 0,
+        ];
 
         let mut writer: UdpWriter<W5500> = w5500.udp_writer(self.sn)?;
-        writer.write_all(&request_pkt)?;
+        writer.write_all(&REQUEST_PKT)?;
         writer.send()?;
 
         Ok(())
