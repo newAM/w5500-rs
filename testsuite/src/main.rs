@@ -20,7 +20,7 @@ use w5500_mqtt::{
     Client as MqttClient, ClientId, Error as MqttError, Event as MqttEvent,
     SRC_PORT as MQTT_SRC_PORT,
 };
-use w5500_sntp::{Client as SntpClient, Timestamp};
+use w5500_sntp::{chrono, Client as SntpClient, Timestamp};
 use w5500_tls::{Client as TlsClient, Event as TlsEvent};
 
 // change this for your network
@@ -237,13 +237,11 @@ fn dns_query(ta: &mut TestArgs) {
 fn sntp(ta: &mut TestArgs) {
     let sntp_client: SntpClient = SntpClient::new(SNTP_SN, 123, SNTP_SERVER);
     sntp_client.setup_socket(ta.w5500).unwrap();
-    let transmit_timestamp: Timestamp = chrono::offset::Utc::now().naive_utc().try_into().unwrap();
 
-    std::thread::sleep(Duration::from_millis(500));
+    // possible future use
+    // let transmit_timestamp: Timestamp = chrono::offset::Utc::now().naive_utc().try_into().unwrap();
 
-    sntp_client
-        .request(ta.w5500, Some(transmit_timestamp))
-        .unwrap();
+    sntp_client.request(ta.w5500).unwrap();
 
     let start: Instant = Instant::now();
     while ta.w5500.sn_rx_rsr(SNTP_SN).unwrap() == 0 {

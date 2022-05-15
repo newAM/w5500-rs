@@ -44,6 +44,12 @@ use hl::{
 };
 use ll::{net::SocketAddrV4, Registers, Sn, SocketInterrupt, SocketInterruptMask};
 
+#[cfg(feature = "chrono")]
+pub use chrono;
+
+#[cfg(feature = "time")]
+pub use time;
+
 /// IANA SNTP destination port.
 pub const DST_PORT: u16 = 123;
 

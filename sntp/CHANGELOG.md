@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - `impl TryFrom<chrono::naive::NaiveDateTime> for Timestamp`.
+- Added exports for `chrono` and `time`.
 
 ### Changed
 - Changed the server argument of `Client::new` from `Ipv4Addr` to `SocketAddrV4`.
