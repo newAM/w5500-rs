@@ -173,12 +173,16 @@ impl Client {
     /// const SNTP_SERVER: Ipv4Addr = Ipv4Addr::new(216, 239, 35, 4);
     ///
     /// let sntp_client: Client = Client::new(Sn::Sn3, SNTP_SRC_PORT, SNTP_SERVER);
-    /// sntp_client.request(&mut w5500)?;
+    /// sntp_client.request(&mut w5500, None)?;
     /// # Ok::<(), w5500_hl::Error<std::io::ErrorKind>>(())
     /// ```
     ///
     /// [`on_recv_interrupt`]: Self::on_recv_interrupt
-    pub fn request<W5500: Registers>(&self, w5500: &mut W5500) -> Result<(), Error<W5500::Error>> {
+    pub fn request<W5500: Registers>(
+        &self,
+        w5500: &mut W5500,
+        transmit_timestamp: Option<Timestamp>,
+    ) -> Result<(), Error<W5500::Error>> {
         const LI: u8 = (LeapIndicator::NoWarning as u8) << 6;
         const VN: u8 = VERSION_NUMBER << 3;
         const MODE: u8 = Mode::Client as u8;
@@ -188,25 +192,20 @@ impl Client {
         const PRECISION: u8 = 0;
 
         // https://www.rfc-editor.org/rfc/rfc4330.html#section-4
-        #[rustfmt::skip]
-        const REQUEST_PKT: [u8; 48] = [
-            LI | VN | MODE, STRATUM, POLL, PRECISION,
-            // root delay
-            0, 0, 0, 0,
-            // root dispersion
-            0, 0, 0, 0,
-            // reference identifier
-            0, 0, 0, 0,
-            // reference timestamp
-            0, 0, 0, 0, 0, 0, 0, 0,
-            // originate timestamp
-            0, 0, 0, 0, 0, 0, 0, 0,
-            // receive timestamp
-            0, 0, 0, 0, 0, 0, 0, 0,
-            // transmit timestamp
-            // in the future this can be provided as an argument
-            0, 0, 0, 0, 0, 0, 0, 0,
-        ];
+        let mut request_pkt: [u8; 48] = [0; 48];
+        request_pkt[0] = LI | VN | MODE;
+        request_pkt[1] = STRATUM;
+        request_pkt[2] = POLL;
+        request_pkt[3] = PRECISION;
+        // 4..8 root relay
+        // 8..12 root dispersion
+        // 12..16 reference identifier
+        // 16..24 reference timestamp
+        // 24..32 originate timestamp
+        // 32..40 receive timestamp
+        if let Some(timestamp) = transmit_timestamp {
+            request_pkt[40..48].copy_from_slice(&timestamp.bits.to_be_bytes());
+        }
 
         let simr: u8 = w5500.simr()?;
         w5500.set_simr(self.sn.bitmask() | simr)?;
@@ -216,7 +215,7 @@ impl Client {
         w5500.udp_bind(self.sn, self.port)?;
 
         let mut writer: UdpWriter<W5500> = w5500.udp_writer(self.sn)?;
-        writer.write_all(&REQUEST_PKT)?;
+        writer.write_all(&request_pkt)?;
         writer.udp_send_to(&self.server)?;
 
         Ok(())
@@ -252,7 +251,7 @@ impl Client {
     /// const SNTP_SERVER: Ipv4Addr = Ipv4Addr::new(216, 239, 35, 4);
     ///
     /// let sntp_client: Client = Client::new(Sn::Sn3, SNTP_SRC_PORT, SNTP_SERVER);
-    /// sntp_client.request(&mut w5500)?;
+    /// sntp_client.request(&mut w5500, None)?;
     ///
     /// // ... wait for RECV interrupt with a timeout
     ///

@@ -57,7 +57,7 @@ fn end_to_end() {
 
     let mut w5500: W5500 = W5500::default();
     w5500.set_socket_buffer_logging(false);
-    client.request(&mut w5500).unwrap();
+    client.request(&mut w5500, None).unwrap();
 
     let buf: Vec<u8> = server.recv();
     assert_eq!(buf.len(), 48);
