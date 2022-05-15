@@ -6,6 +6,7 @@ publish = false
 edition = "2021"
 
 [dependencies]
+chrono = "0.4"
 ftdi-embedded-hal = { version = "0.11", features = ["libftd2xx", "libftd2xx-static"] }
 libftd2xx = "0.32.0"
 log = "0.4"
@@ -17,4 +18,5 @@ w5500-dns = { path = "../dns", features = ["std", "embedded-hal", "log"] }
 w5500-hl = { path = "../hl", features = ["std", "embedded-hal"] }
 w5500-ll = { path = "../ll", features = ["std", "embedded-hal"] }
 w5500-mqtt = { path = "../mqtt", features = ["std", "embedded-hal", "log"] }
+w5500-sntp = { path = "../sntp", features = ["std", "embedded-hal", "log", "chrono"] }
 w5500-tls = { path = "../tls", features = ["std", "embedded-hal", "log"] }

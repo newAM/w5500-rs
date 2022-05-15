@@ -9,8 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `impl TryFrom<chrono::naive::NaiveDateTime> for Timestamp`.
 
 ### Changed
+- Changed the server argument of `Client::new` from `Ipv4Addr` to `SocketAddrV4`.
 - Changed the error type of `Timestamp` conversions from `()` to `TimestampError`.
-- Changed `Client.request` to accept a `transmit_timestamp` argument.
+- Moved socket setup from `Client.request` to `Client.setup_socket` to avoid repeat initialization.
+- Changed `Client.server` to public, removed `Client::server` and `Client::set_server` methods.
 
 ## [0.1.0] - 2022-05-03
 - Initial release
