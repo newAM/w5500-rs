@@ -34,7 +34,7 @@ mod fixed_point;
 mod timestamp;
 
 pub use fixed_point::FixedPoint;
-pub use timestamp::Timestamp;
+pub use timestamp::{Timestamp, TimestampError};
 pub use w5500_hl as hl;
 pub use w5500_hl::ll;
 
@@ -42,16 +42,16 @@ use hl::{
     io::{Read, Write},
     Common, Error, Udp, UdpReader, UdpWriter,
 };
-use ll::{
-    net::{Ipv4Addr, SocketAddrV4},
-    Registers, Sn, SocketInterrupt, SocketInterruptMask,
-};
+use ll::{net::SocketAddrV4, Registers, Sn, SocketInterrupt, SocketInterruptMask};
+
+#[cfg(feature = "chrono")]
+pub use chrono;
+
+#[cfg(feature = "time")]
+pub use time;
 
 /// IANA SNTP destination port.
-#[cfg(target_os = "none")]
-const DST_PORT: u16 = 123;
-#[cfg(not(target_os = "none"))]
-const DST_PORT: u16 = 12345;
+pub const DST_PORT: u16 = 123;
 
 // 3-bit version number indicating the current protocol version
 const VERSION_NUMBER: u8 = 4;
@@ -62,7 +62,11 @@ const VERSION_NUMBER: u8 = 4;
 pub struct Client {
     sn: Sn,
     port: u16,
-    server: SocketAddrV4,
+    /// SNTP server address.
+    ///
+    /// Changes made to the server address will only apply after calling
+    /// [`Client::setup_socket`].
+    pub server: SocketAddrV4,
 }
 
 impl Client {
@@ -79,68 +83,56 @@ impl Client {
     ///
     /// ```
     /// use w5500_sntp::{
-    ///     ll::{net::Ipv4Addr, Sn},
-    ///     Client,
+    ///     ll::{
+    ///         net::{Ipv4Addr, SocketAddrV4},
+    ///         Sn,
+    ///     },
+    ///     Client, DST_PORT,
     /// };
     ///
     /// const SNTP_SRC_PORT: u16 = 123;
-    /// const SNTP_SERVER: Ipv4Addr = Ipv4Addr::new(216, 239, 35, 4);
+    /// const SNTP_SERVER: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::new(216, 239, 35, 4), DST_PORT);
     ///
     /// let sntp_client: Client = Client::new(Sn::Sn3, SNTP_SRC_PORT, SNTP_SERVER);
     /// ```
-    pub const fn new(sn: Sn, port: u16, server: Ipv4Addr) -> Self {
-        Self {
-            sn,
-            port,
-            server: SocketAddrV4::new(server, DST_PORT),
-        }
+    pub const fn new(sn: Sn, port: u16, server: SocketAddrV4) -> Self {
+        Self { sn, port, server }
     }
 
-    /// Set the SNTP server.
+    /// Setup the SNTP socket.
+    ///
+    /// This should be called once during initialization.
+    ///
+    /// This only sets up the W5500 interrupts, you must configure the W5500
+    /// interrupt pin for a falling edge trigger yourself.
     ///
     /// # Example
     ///
-    /// ```
+    /// ```no_run
+    /// # let mut w5500 = w5500_regsim::W5500::default();
     /// use w5500_sntp::{
-    ///     ll::{net::Ipv4Addr, Sn},
-    ///     Client,
+    ///     ll::{
+    ///         net::{Ipv4Addr, SocketAddrV4},
+    ///         Sn,
+    ///     },
+    ///     Client, DST_PORT,
     /// };
     ///
     /// const SNTP_SRC_PORT: u16 = 123;
-    /// const SNTP_SERVER: Ipv4Addr = Ipv4Addr::new(216, 239, 35, 4);
-    /// const LOCAL_SNTP_SERVER: Ipv4Addr = Ipv4Addr::new(10, 0, 42, 42);
-    ///
-    /// let mut sntp_client: Client = Client::new(Sn::Sn3, SNTP_SRC_PORT, SNTP_SERVER);
-    /// assert_eq!(sntp_client.server(), SNTP_SERVER);
-    ///
-    /// // change server
-    /// sntp_client.set_server(LOCAL_SNTP_SERVER);
-    /// assert_eq!(sntp_client.server(), LOCAL_SNTP_SERVER);
-    /// ```
-    #[inline]
-    pub fn set_server(&mut self, server: Ipv4Addr) {
-        self.server.set_ip(server)
-    }
-
-    /// Get the current SNTP server.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use w5500_sntp::{
-    ///     ll::{net::Ipv4Addr, Sn},
-    ///     Client,
-    /// };
-    ///
-    /// const SNTP_SRC_PORT: u16 = 123;
-    /// const SNTP_SERVER: Ipv4Addr = Ipv4Addr::new(216, 239, 35, 4);
+    /// const SNTP_SERVER: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::new(216, 239, 35, 4), DST_PORT);
     ///
     /// let sntp_client: Client = Client::new(Sn::Sn3, SNTP_SRC_PORT, SNTP_SERVER);
-    /// assert_eq!(sntp_client.server(), SNTP_SERVER);
+    /// sntp_client.setup_socket(&mut w5500)?;
+    /// # Ok::<(), w5500_hl::Error<std::io::ErrorKind>>(())
     /// ```
-    #[inline]
-    pub fn server(&self) -> Ipv4Addr {
-        *self.server.ip()
+    pub fn setup_socket<W5500: Registers>(&self, w5500: &mut W5500) -> Result<(), W5500::Error> {
+        let simr: u8 = w5500.simr()?;
+        w5500.set_simr(self.sn.bitmask() | simr)?;
+        const MASK: SocketInterruptMask = SocketInterruptMask::ALL_MASKED.unmask_recv();
+        w5500.set_sn_imr(self.sn, MASK)?;
+        w5500.close(self.sn)?;
+        w5500.udp_bind(self.sn, self.port)?;
+        w5500.set_sn_dest(self.sn, &self.server)
     }
 
     /// Send a request to the SNTP server.
@@ -165,14 +157,18 @@ impl Client {
     /// ```no_run
     /// # let mut w5500 = w5500_regsim::W5500::default();
     /// use w5500_sntp::{
-    ///     ll::{net::Ipv4Addr, Sn},
-    ///     Client,
+    ///     ll::{
+    ///         net::{Ipv4Addr, SocketAddrV4},
+    ///         Sn,
+    ///     },
+    ///     Client, DST_PORT,
     /// };
     ///
     /// const SNTP_SRC_PORT: u16 = 123;
-    /// const SNTP_SERVER: Ipv4Addr = Ipv4Addr::new(216, 239, 35, 4);
+    /// const SNTP_SERVER: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::new(216, 239, 35, 4), DST_PORT);
     ///
     /// let sntp_client: Client = Client::new(Sn::Sn3, SNTP_SRC_PORT, SNTP_SERVER);
+    /// sntp_client.setup_socket(&mut w5500)?;
     /// sntp_client.request(&mut w5500)?;
     /// # Ok::<(), w5500_hl::Error<std::io::ErrorKind>>(())
     /// ```
@@ -191,33 +187,26 @@ impl Client {
         #[rustfmt::skip]
         const REQUEST_PKT: [u8; 48] = [
             LI | VN | MODE, STRATUM, POLL, PRECISION,
-            // root delay
+            // 4..8 root relay
             0, 0, 0, 0,
-            // root dispersion
+            // 8..12 root dispersion
             0, 0, 0, 0,
-            // reference identifier
+            // 12..16 reference identifier
             0, 0, 0, 0,
-            // reference timestamp
+            // 16..24 reference timestamp
             0, 0, 0, 0, 0, 0, 0, 0,
-            // originate timestamp
+            // 24..32 originate timestamp
             0, 0, 0, 0, 0, 0, 0, 0,
-            // receive timestamp
+            // 32..40 receive timestamp
             0, 0, 0, 0, 0, 0, 0, 0,
-            // transmit timestamp
+            // 40..48 transmit timestamp
             // in the future this can be provided as an argument
             0, 0, 0, 0, 0, 0, 0, 0,
         ];
 
-        let simr: u8 = w5500.simr()?;
-        w5500.set_simr(self.sn.bitmask() | simr)?;
-        const MASK: SocketInterruptMask = SocketInterruptMask::ALL_MASKED.unmask_recv();
-        w5500.set_sn_imr(self.sn, MASK)?;
-        w5500.close(self.sn)?;
-        w5500.udp_bind(self.sn, self.port)?;
-
         let mut writer: UdpWriter<W5500> = w5500.udp_writer(self.sn)?;
         writer.write_all(&REQUEST_PKT)?;
-        writer.udp_send_to(&self.server)?;
+        writer.send()?;
 
         Ok(())
     }
@@ -244,14 +233,18 @@ impl Client {
     /// # let mut w5500 = w5500_regsim::W5500::default();
     /// use w5500_sntp::{
     ///     hl::Error,
-    ///     ll::{net::Ipv4Addr, Sn},
-    ///     Client, Reply,
+    ///     ll::{
+    ///         net::{Ipv4Addr, SocketAddrV4},
+    ///         Sn,
+    ///     },
+    ///     Client, Reply, DST_PORT,
     /// };
     ///
     /// const SNTP_SRC_PORT: u16 = 123;
-    /// const SNTP_SERVER: Ipv4Addr = Ipv4Addr::new(216, 239, 35, 4);
+    /// const SNTP_SERVER: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::new(216, 239, 35, 4), DST_PORT);
     ///
     /// let sntp_client: Client = Client::new(Sn::Sn3, SNTP_SRC_PORT, SNTP_SERVER);
+    /// sntp_client.setup_socket(&mut w5500)?;
     /// sntp_client.request(&mut w5500)?;
     ///
     /// // ... wait for RECV interrupt with a timeout

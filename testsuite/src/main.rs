@@ -20,9 +20,11 @@ use w5500_mqtt::{
     Client as MqttClient, ClientId, Error as MqttError, Event as MqttEvent,
     SRC_PORT as MQTT_SRC_PORT,
 };
+use w5500_sntp::{chrono, Client as SntpClient, Timestamp};
 use w5500_tls::{Client as TlsClient, Event as TlsEvent};
 
 // change this for your network
+const SNTP_SERVER: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::new(10, 0, 0, 4), 123);
 const MQTT_SERVER: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::new(10, 0, 0, 4), 1883);
 const THISHOST: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::new(10, 0, 0, 3), 12345);
 const HOSTNAME_THISHOST: Hostname = Hostname::new_unwrapped("openssl");
@@ -33,6 +35,7 @@ const DHCP_SN: Sn = Sn::Sn0;
 const MQTT_SN: Sn = Sn::Sn1;
 const DNS_SN: Sn = Sn::Sn2;
 const TLS_SN: Sn = Sn::Sn3;
+const SNTP_SN: Sn = Sn::Sn4;
 const HOSTNAME: Hostname = Hostname::new_unwrapped("w5500-testsuite");
 const CLIENT_ID: ClientId = ClientId::new_unwrapped("w5500testsuite");
 
@@ -116,6 +119,7 @@ const TESTS: &[(fn(&mut TestArgs), &str)] = &[
     test!(mqtt_connect),
     test!(mqtt_disconnect),
     test!(dns_query),
+    test!(sntp),
     test!(tls_handshake),
 ];
 
@@ -228,6 +232,36 @@ fn dns_query(ta: &mut TestArgs) {
         println!("rdata={:?}", rr.rdata);
     }
     response.done().unwrap();
+}
+
+fn sntp(ta: &mut TestArgs) {
+    let sntp_client: SntpClient = SntpClient::new(SNTP_SN, 123, SNTP_SERVER);
+    sntp_client.setup_socket(ta.w5500).unwrap();
+
+    // possible future use
+    // let transmit_timestamp: Timestamp = chrono::offset::Utc::now().naive_utc().try_into().unwrap();
+
+    sntp_client.request(ta.w5500).unwrap();
+
+    let start: Instant = Instant::now();
+    while ta.w5500.sn_rx_rsr(SNTP_SN).unwrap() == 0 {
+        let elapsed = Instant::now().duration_since(start);
+        if elapsed > Duration::from_secs(3) {
+            panic!("no SNTP response after {elapsed:?}");
+        }
+    }
+
+    let reply: w5500_sntp::Reply = sntp_client.on_recv_interrupt(ta.w5500).unwrap();
+
+    fn ndt(timestamp: Timestamp) -> chrono::NaiveDateTime {
+        chrono::NaiveDateTime::try_from(timestamp).unwrap()
+    }
+
+    println!("root_delay={}", ndt(reply.reference_timestamp));
+    println!("reference_timestamp={}", ndt(reply.reference_timestamp));
+    println!("originate_timestamp={}", ndt(reply.originate_timestamp));
+    println!("receive_timestamp={}", ndt(reply.receive_timestamp));
+    println!("transmit_timestamp={}", ndt(reply.transmit_timestamp));
 }
 
 fn tls_handshake(ta: &mut TestArgs) {

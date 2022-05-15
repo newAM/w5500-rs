@@ -10,7 +10,19 @@ pub struct Timestamp {
 }
 
 impl Timestamp {
-    #[allow(dead_code)] // dead if chrono and time are not used
+    #[cfg(feature = "chrono")]
+    fn new(secs: u64, nanos: u64) -> Self {
+        let upper: u32 = secs
+            .try_into()
+            .unwrap_or_else(|_| secs.saturating_sub(1 << 32).try_into().unwrap_or(u32::MAX));
+        let lower: u32 = ((nanos * u64::from(u32::MAX)) / 1_000_000_000) as u32;
+        Self {
+            bits: ((upper as u64) << 32) | (lower as u64),
+        }
+    }
+
+    #[must_use]
+    #[cfg(any(feature = "chrono", feature = "time"))]
     fn secs(&self) -> i64 {
         let seconds_bits: u32 = (self.bits >> 32) as u32;
         // If bit 0 is set, the UTC time is in the range 1968-2036
@@ -23,7 +35,8 @@ impl Timestamp {
         }
     }
 
-    #[allow(dead_code)] // dead if chrono and time are not used
+    #[must_use]
+    #[cfg(any(feature = "chrono", feature = "time"))]
     fn nanos(&self) -> u32 {
         // safe to truncate, number is always less than u32::MAX
         ((self.bits & 0xFFFF_FFFF) * 1_000_000_000 / u64::from(u32::MAX)) as u32
@@ -43,41 +56,71 @@ impl Timestamp {
 }
 
 #[cfg(feature = "chrono")]
-impl TryFrom<Timestamp> for chrono::naive::NaiveDateTime {
-    type Error = ();
+fn origin_chrono() -> chrono::NaiveDateTime {
+    chrono::NaiveDate::from_ymd(1900, 1, 1).and_hms(0, 0, 0)
+}
 
-    fn try_from(timestamp: Timestamp) -> Result<Self, ()> {
-        let origin: chrono::NaiveDateTime =
-            chrono::NaiveDate::from_ymd(1900, 1, 1).and_hms(0, 0, 0);
-        origin
+/// Returned upon a failed conversion to or from [`Timestamp`].
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "defmt", derive(defmt::Format))]
+pub struct TimestampError(pub(crate) ());
+
+#[cfg(feature = "chrono")]
+impl TryFrom<chrono::naive::NaiveDateTime> for Timestamp {
+    type Error = TimestampError;
+
+    fn try_from(ndt: chrono::naive::NaiveDateTime) -> Result<Self, Self::Error> {
+        let elapsed: chrono::Duration = ndt.signed_duration_since(origin_chrono());
+        let secs: i64 = elapsed.num_seconds();
+        let nanos: u64 = elapsed
+            .checked_sub(&chrono::Duration::seconds(secs))
+            .unwrap_or_else(|| chrono::Duration::seconds(0))
+            .num_nanoseconds()
+            .unwrap_or(0)
+            .try_into()
+            .map_err(|_| TimestampError(()))?;
+        let secs: u64 = secs.try_into().map_err(|_| TimestampError(()))?;
+
+        Ok(Self::new(secs, nanos))
+    }
+}
+
+#[cfg(feature = "chrono")]
+impl TryFrom<Timestamp> for chrono::naive::NaiveDateTime {
+    type Error = TimestampError;
+
+    fn try_from(timestamp: Timestamp) -> Result<Self, Self::Error> {
+        origin_chrono()
             .checked_add_signed(chrono::Duration::seconds(timestamp.secs()))
-            .ok_or(())?
+            .ok_or(TimestampError(()))?
             .checked_add_signed(chrono::Duration::nanoseconds(timestamp.nanos().into()))
-            .ok_or(())
+            .ok_or(TimestampError(()))
     }
 }
 
 #[cfg(feature = "time")]
 impl TryFrom<Timestamp> for time::PrimitiveDateTime {
-    type Error = ();
+    type Error = TimestampError;
 
-    fn try_from(timestamp: Timestamp) -> Result<Self, ()> {
-        const DATE: time::Date = match time::Date::from_calendar_date(1900, time::Month::January, 1)
-        {
-            Ok(date) => date,
-            Err(_) => ::core::panic!("invalid date"),
+    fn try_from(timestamp: Timestamp) -> Result<Self, Self::Error> {
+        const ORIGIN: time::PrimitiveDateTime = {
+            const DATE: time::Date =
+                match time::Date::from_calendar_date(1900, time::Month::January, 1) {
+                    Ok(date) => date,
+                    Err(_) => ::core::panic!("invalid date"),
+                };
+            const TIME: time::Time = match time::Time::from_hms(0, 0, 0) {
+                Ok(time) => time,
+                Err(_) => ::core::panic!("invalid time"),
+            };
+            time::PrimitiveDateTime::new(DATE, TIME)
         };
-        const TIME: time::Time = match time::Time::from_hms(0, 0, 0) {
-            Ok(time) => time,
-            Err(_) => ::core::panic!("invalid time"),
-        };
-        const ORIGIN: time::PrimitiveDateTime = time::PrimitiveDateTime::new(DATE, TIME);
 
         ORIGIN
             .checked_add(time::Duration::seconds(timestamp.secs()))
-            .ok_or(())?
+            .ok_or(TimestampError(()))?
             .checked_add(time::Duration::nanoseconds(timestamp.nanos().into()))
-            .ok_or(())
+            .ok_or(TimestampError(()))
     }
 }
 
@@ -100,6 +143,12 @@ mod tests {
         let expected_datetime: NaiveDateTime = NaiveDateTime::new(expected_date, expected_time);
 
         core::assert_eq!(ndt, expected_datetime);
+
+        let timestamp_converted: Timestamp = ndt.try_into().unwrap();
+
+        core::assert_eq!(timestamp.secs(), timestamp_converted.secs());
+        let nanos_diff: u32 = timestamp.nanos().abs_diff(timestamp_converted.nanos());
+        core::assert!(nanos_diff <= 1, "nanos_diff={nanos_diff}");
     }
 
     #[test]

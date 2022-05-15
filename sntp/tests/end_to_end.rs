@@ -52,11 +52,12 @@ fn end_to_end() {
     const CLIENT_PORT: u16 = SERVER_PORT + 1;
     const SERVER_ADDR: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), SERVER_PORT);
 
-    let client = Client::new(Sn::Sn0, CLIENT_PORT, Ipv4Addr::LOCALHOST);
+    let client = Client::new(Sn::Sn0, CLIENT_PORT, SERVER_ADDR);
     let mut server = Server::new(SERVER_ADDR, CLIENT_PORT);
 
     let mut w5500: W5500 = W5500::default();
     w5500.set_socket_buffer_logging(false);
+    client.setup_socket(&mut w5500).unwrap();
     client.request(&mut w5500).unwrap();
 
     let buf: Vec<u8> = server.recv();

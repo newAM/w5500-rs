@@ -17,4 +17,5 @@ w5500-dns = { path = "../dns", features = ["std", "embedded-hal", "log"] }
 w5500-hl = { path = "../hl", features = ["std", "embedded-hal"] }
 w5500-ll = { path = "../ll", features = ["std", "embedded-hal"] }
 w5500-mqtt = { path = "../mqtt", features = ["std", "embedded-hal", "log"] }
+w5500-sntp = { path = "../sntp", features = ["std", "embedded-hal", "log", "chrono"] }
 w5500-tls = { path = "../tls", features = ["std", "embedded-hal", "log"] }
