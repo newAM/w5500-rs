@@ -401,6 +401,7 @@ pub trait Udp: Registers {
     /// ```
     ///
     /// [`std::net::UdpSocket::recv_from`]: https://doc.rust-lang.org/std/net/struct.UdpSocket.html#method.recv_from
+    /// [`block`]: crate::block
     fn udp_recv_from(
         &mut self,
         sn: Sn,
@@ -482,6 +483,7 @@ pub trait Udp: Registers {
     /// ```
     ///
     /// [`std::net::UdpSocket::peek_from`]: https://doc.rust-lang.org/std/net/struct.UdpSocket.html#method.peek_from
+    /// [`block`]: crate::block
     fn udp_peek_from(
         &mut self,
         sn: Sn,
