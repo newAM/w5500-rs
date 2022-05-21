@@ -2,6 +2,8 @@ use crate::{
     cipher_suites::CipherSuite, io::CircleReader, AlertDescription, ExtensionType, NamedGroup,
     TlsVersion,
 };
+use p256_cortex_m4::PublicKey;
+
 const P256_KEY_LEN: usize = 65;
 
 /// Server Hello key exchange message.
@@ -20,9 +22,7 @@ const P256_KEY_LEN: usize = 65;
 ///     Extension extensions<6..2^16-1>;
 /// } ServerHello;
 /// ```
-pub(crate) fn recv_server_hello(
-    reader: &mut CircleReader,
-) -> Result<p256::PublicKey, AlertDescription> {
+pub(crate) fn recv_server_hello(reader: &mut CircleReader) -> Result<PublicKey, AlertDescription> {
     let legacy_version: u16 = reader.next_u16()?;
     const EXPECTED_LEGACY_VERSION: u16 = TlsVersion::V1_2 as u16;
     if legacy_version != EXPECTED_LEGACY_VERSION {
@@ -191,7 +191,7 @@ pub(crate) fn recv_server_hello(
         return Err(AlertDescription::MissingExtension);
     }
 
-    match p256::PublicKey::from_sec1_bytes(&key_buf) {
+    match PublicKey::from_sec1_bytes(&key_buf) {
         Ok(public_key) => Ok(public_key),
         Err(_e) => {
             #[cfg(feature = "log")]

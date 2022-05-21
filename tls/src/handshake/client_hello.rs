@@ -523,7 +523,7 @@ pub fn ser(
     buf: &mut [u8],
     random: &[u8; 32],
     hostname: &Hostname,
-    client_secret: &p256::EncodedPoint,
+    client_public: &p256_cortex_m4::PublicKey,
     key_schedule: &mut KeySchedule,
     psk: &[u8],
     identity: &[u8],
@@ -595,7 +595,7 @@ pub fn ser(
             P256_UNCOMPRESSED_POINT_SIZE as u8,
         ];
         writer.copy_from_slice(&KEY_SHARE_EXTENSION_HEADER);
-        writer.copy_from_slice(client_secret.as_bytes());
+        writer.copy_from_slice(&client_public.to_uncompressed_sec1_bytes());
     }
 
     // record size limit

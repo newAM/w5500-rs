@@ -10,10 +10,11 @@
 use core::mem::size_of;
 use hkdf::Hkdf;
 use hmac::Mac;
-use p256::{
-    ecdh::{EphemeralSecret, SharedSecret},
-    EncodedPoint, PublicKey,
-};
+// use p256::{
+//     ecdh::{EphemeralSecret, SharedSecret},
+//     EncodedPoint, PublicKey,
+// };
+use p256_cortex_m4::{PublicKey, SecretKey, SharedSecret};
 use rand_core::{CryptoRng, RngCore};
 use sha2::{
     digest::{
@@ -128,7 +129,7 @@ pub(crate) fn derive_secret(
 }
 
 pub struct KeySchedule {
-    client_secret: Option<EphemeralSecret>,
+    client_secret: Option<SecretKey>,
     server_public: Option<PublicKey>,
 
     // https://datatracker.ietf.org/doc/html/rfc8446#section-4.4.1
@@ -212,9 +213,9 @@ impl KeySchedule {
 
     /// Create a new ephemeral client secret, and return the public key bytes
     /// as an uncompressed SEC1 encoded point.
-    pub fn new_client_secret<R: RngCore + CryptoRng>(&mut self, rng: &mut R) -> EncodedPoint {
-        self.client_secret.replace(EphemeralSecret::random(rng));
-        EncodedPoint::from(self.client_secret.as_ref().unwrap().public_key())
+    pub fn new_client_secret<R: RngCore + CryptoRng>(&mut self, rng: &mut R) -> PublicKey {
+        self.client_secret.replace(SecretKey::random(rng));
+        PublicKey::from(self.client_secret.as_ref().unwrap().public_key())
     }
 
     pub fn update_transcript_hash(&mut self, data: &[u8]) {
@@ -241,7 +242,7 @@ impl KeySchedule {
         Some(
             self.client_secret
                 .as_ref()?
-                .diffie_hellman(self.server_public.as_ref()?),
+                .agree(self.server_public.as_ref()?),
         )
     }
 
@@ -295,10 +296,8 @@ impl KeySchedule {
     }
 
     pub fn initialize_handshake_secret(&mut self) {
-        (self.secret, self.hkdf) = Hkdf::<Sha256>::extract(
-            Some(&self.secret),
-            self.shared_secret().unwrap().raw_secret_bytes(),
-        );
+        (self.secret, self.hkdf) =
+            Hkdf::<Sha256>::extract(Some(&self.secret), self.shared_secret().unwrap().as_bytes());
 
         let transcript_hash_bytes: GenericArray<u8, _> = self.transcript_hash_bytes();
         let client_secret: GenericArray<u8, _> =

@@ -24,3 +24,7 @@ default-members = [
     "sntp",
     "tls",
 ]
+
+[patch.crates-io]
+p256-cortex-m4-sys.path = "/home/alex/git/p256-cortex-m4-sys"
+p256-cortex-m4.path = "/home/alex/git/p256-cortex-m4"

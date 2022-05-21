@@ -79,6 +79,7 @@ use hl::{
 use io::Buffer;
 pub use io::{TlsReader, TlsWriter};
 use key_schedule::KeySchedule;
+use p256_cortex_m4::PublicKey;
 pub use rand_core;
 use rand_core::{CryptoRng, RngCore};
 use record::{ContentType, RecordHeader};
@@ -1001,8 +1002,7 @@ impl<'hn, 'psk, 'b, const N: usize> Client<'hn, 'psk, 'b, N> {
                         error!("unexpected ServerHello in state {:?}", self.state);
                         return Err(AlertDescription::UnexpectedMessage);
                     } else {
-                        let public_key: p256::PublicKey =
-                            handshake::recv_server_hello(&mut reader)?;
+                        let public_key: PublicKey = handshake::recv_server_hello(&mut reader)?;
 
                         self.key_schedule.set_server_public_key(public_key);
                         self.key_schedule.set_transcript_hash(hash.clone());
