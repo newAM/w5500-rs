@@ -272,6 +272,23 @@ impl defmt::Format for Ipv4Addr {
     }
 }
 
+#[cfg(feature = "ufmt")]
+impl ufmt::uDisplay for Ipv4Addr {
+    fn fmt<W>(&self, f: &mut ufmt::Formatter<'_, W>) -> Result<(), W::Error>
+    where
+        W: ufmt::uWrite + ?Sized,
+    {
+        ufmt::uwrite!(
+            f,
+            "{}.{}.{}.{}",
+            self.octets[0],
+            self.octets[1],
+            self.octets[2],
+            self.octets[3]
+        )
+    }
+}
+
 #[cfg(feature = "std")]
 impl From<std::net::Ipv4Addr> for Ipv4Addr {
     fn from(ip: std::net::Ipv4Addr) -> Self {
@@ -392,6 +409,26 @@ impl defmt::Format for Eui48Addr {
     fn format(&self, fmt: defmt::Formatter) {
         defmt::write!(
             fmt,
+            "{:02X}:{:02X}:{:02X}:{:02X}:{:02X}:{:02X}",
+            self.octets[0],
+            self.octets[1],
+            self.octets[2],
+            self.octets[3],
+            self.octets[4],
+            self.octets[5],
+        )
+    }
+}
+
+#[cfg(feature = "ufmt")]
+impl ufmt::uDisplay for Eui48Addr {
+    fn fmt<W>(&self, f: &mut ufmt::Formatter<'_, W>) -> Result<(), W::Error>
+    where
+        W: ufmt::uWrite + ?Sized,
+    {
+        // https://github.com/japaric/ufmt/pull/35
+        ufmt::uwrite!(
+            f,
             "{:02X}:{:02X}:{:02X}:{:02X}:{:02X}:{:02X}",
             self.octets[0],
             self.octets[1],
@@ -534,6 +571,17 @@ impl ::core::fmt::Display for SocketAddrV4 {
 impl defmt::Format for SocketAddrV4 {
     fn format(&self, fmt: defmt::Formatter) {
         defmt::write!(fmt, "{:?}:{}", self.ip(), self.port())
+    }
+}
+
+
+#[cfg(feature = "ufmt")]
+impl ufmt::uDisplay for SocketAddrV4 {
+    fn fmt<W>(&self, f: &mut ufmt::Formatter<'_, W>) -> Result<(), W::Error>
+    where
+        W: ufmt::uWrite + ?Sized,
+    {
+        ufmt::uwrite!(f, "{}:{}", self.ip(), self.port())
     }
 }
 
