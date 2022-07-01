@@ -38,7 +38,7 @@ impl SeekFrom {
                 }
             }
             SeekFrom::End(offset) => {
-                if offset > 0 || (offset.abs() as u16) > tail.wrapping_sub(head) {
+                if offset > 0 || offset.unsigned_abs() > tail.wrapping_sub(head) {
                     Err(Error::UnexpectedEof)
                 } else {
                     Ok(wrapping_add_signed(tail, offset))
@@ -47,8 +47,8 @@ impl SeekFrom {
             SeekFrom::Current(offset) => {
                 let max_pos: u16 = tail.wrapping_sub(ptr);
                 let max_neg: u16 = ptr.wrapping_sub(head);
-                if (offset > 0 && (offset.abs() as u16) > max_pos)
-                    || (offset < 0 && (offset.abs() as u16) > max_neg)
+                if (offset > 0 && offset.unsigned_abs() > max_pos)
+                    || (offset < 0 && offset.unsigned_abs() > max_neg)
                 {
                     Err(Error::UnexpectedEof)
                 } else {
