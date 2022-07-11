@@ -100,7 +100,7 @@ fn main() {
         match w5500.udp_reader(DNS_SN) {
             Ok(reader) => break reader,
             Err(Error::WouldBlock) => {
-                if Instant::now() - start > TIMEOUT {
+                if Instant::now().duration_since(start) > TIMEOUT {
                     panic!("Timeout waiting for udp_reader");
                 }
                 sleep(Duration::from_millis(10));
