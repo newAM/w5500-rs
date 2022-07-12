@@ -47,6 +47,7 @@ impl From<Options> for u8 {
 /// From [RFC 2132 Section 9.6](https://tools.ietf.org/html/rfc2132#section-9.6)
 #[repr(u8)]
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
+#[cfg_attr(feature = "defmt", derive(defmt::Format))]
 pub enum MsgType {
     /// DHCPDISCOVER
     Discover = 1,

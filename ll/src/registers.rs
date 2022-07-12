@@ -463,6 +463,7 @@ impl ::core::fmt::Display for Interrupt {
 /// [`Registers::phycfgr`]: crate::Registers::phycfgr
 /// [`Registers::set_phycfgr`]: crate::Registers::set_phycfgr
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
+#[cfg_attr(feature = "defmt", derive(defmt::Format))]
 pub struct PhyCfg(u8);
 impl_boilerplate_for!(PhyCfg);
 
