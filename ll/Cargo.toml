@@ -1,6 +1,6 @@
 [package]
 name = "w5500-ll"
-version = "0.10.3"
+version = "0.10.4"
 authors = ["Alex Martens <alex@thinglab.org>"]
 edition = "2021"
 repository = "https://github.com/newAM/w5500-rs"
