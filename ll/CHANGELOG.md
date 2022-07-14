@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added the missing `opmd` field to the `Display` impl for `PhyCfg`.
 
 ## Fixed
-- Fixed the `opmdc` field name in the `Display` impl for `PhyCfg`, which was incorrectly labeled `opmd`.
+- Fixed the `opmdc` field name in the `Display` impl for `PhyCfg`.  This field was incorrectly named `opmd`.
 
 ## [0.10.3] - 2022-04-27
 ### Added
