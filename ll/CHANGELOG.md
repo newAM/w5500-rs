@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Added a new W5500 type for VDM transfers with an infallible GPIO and an infallible SPI bus.
+- Added `defmt::Format` implementations for all register structs.
 
 ## [0.10.3] - 2022-04-27
 ### Added
