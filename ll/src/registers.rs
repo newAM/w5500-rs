@@ -701,6 +701,7 @@ impl PhyCfg {
 impl ::core::fmt::Display for PhyCfg {
     fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
         f.debug_struct("PhyCfg")
+            .field("opmd", &self.opmd())
             .field("opmdc", &self.opmdc())
             .field("dpx", &self.dpx())
             .field("spd", &self.spd())
@@ -714,7 +715,8 @@ impl defmt::Format for PhyCfg {
     fn format(&self, fmt: defmt::Formatter) {
         defmt::write!(
             fmt,
-            "PhyCfg {{ opmdc: {}, dpx: {}, spd: {}, lnk: {} }}",
+            "PhyCfg {{ opmd: {}, opmdc: {}, dpx: {}, spd: {}, lnk: {} }}",
+            self.opmd(),
             self.opmdc(),
             self.dpx(),
             self.spd(),

@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Added a new W5500 type for VDM transfers with an infallible GPIO and an infallible SPI bus.
 - Added `defmt::Format` implementations for all register structs.
+- Added the missing `opmd` field to the `Display` impl for `PhyCfg`.
+
+## Fixed
+- Fixed the `opmdc` field name in the `Display` impl for `PhyCfg`, which was incorrectly labeled `opmd`.
 
 ## [0.10.3] - 2022-04-27
 ### Added
