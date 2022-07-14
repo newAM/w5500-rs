@@ -233,6 +233,20 @@ impl ::core::fmt::Display for Mode {
     }
 }
 
+#[cfg(feature = "defmt")]
+impl defmt::Format for Mode {
+    fn format(&self, fmt: defmt::Formatter) {
+        defmt::write!(
+            fmt,
+            "Mode {{ wol_enabled: {}, pb_enabled: {}, pppoe_enabled: {}, farp_enabled: {} }}",
+            self.wol_enabled(),
+            self.pb_enabled(),
+            self.pppoe_enabled(),
+            self.farp_enabled(),
+        );
+    }
+}
+
 /// Interrupt and interrupt mask register (IR and IMR).
 ///
 /// When used for interrupt masking:
@@ -450,6 +464,20 @@ impl ::core::fmt::Display for Interrupt {
     }
 }
 
+#[cfg(feature = "defmt")]
+impl defmt::Format for Interrupt {
+    fn format(&self, fmt: defmt::Formatter) {
+        defmt::write!(
+            fmt,
+            "Interrupt {{ conflict: {}, unreach: {}, pppoe: {}, mp: {} }}",
+            self.conflict(),
+            self.unreach(),
+            self.pppoe(),
+            self.mp(),
+        );
+    }
+}
+
 /// PHY configuration register (PHYCFGR).
 ///
 /// Used for:
@@ -463,7 +491,6 @@ impl ::core::fmt::Display for Interrupt {
 /// [`Registers::phycfgr`]: crate::Registers::phycfgr
 /// [`Registers::set_phycfgr`]: crate::Registers::set_phycfgr
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
-#[cfg_attr(feature = "defmt", derive(defmt::Format))]
 pub struct PhyCfg(u8);
 impl_boilerplate_for!(PhyCfg);
 
@@ -674,11 +701,27 @@ impl PhyCfg {
 impl ::core::fmt::Display for PhyCfg {
     fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
         f.debug_struct("PhyCfg")
-            .field("opmd", &self.opmdc())
+            .field("opmd", &self.opmd())
+            .field("opmdc", &self.opmdc())
             .field("dpx", &self.dpx())
             .field("spd", &self.spd())
             .field("lnk", &self.lnk())
             .finish()
+    }
+}
+
+#[cfg(feature = "defmt")]
+impl defmt::Format for PhyCfg {
+    fn format(&self, fmt: defmt::Formatter) {
+        defmt::write!(
+            fmt,
+            "PhyCfg {{ opmd: {}, opmdc: {}, dpx: {}, spd: {}, lnk: {} }}",
+            self.opmd(),
+            self.opmdc(),
+            self.dpx(),
+            self.spd(),
+            self.lnk(),
+        );
     }
 }
 
@@ -1097,6 +1140,25 @@ impl ::core::fmt::Display for SocketMode {
     }
 }
 
+#[cfg(feature = "defmt")]
+impl defmt::Format for SocketMode {
+    fn format(&self, fmt: defmt::Formatter) {
+        defmt::write!(
+            fmt,
+            "SocketMode {{ protocol: {}, multi_enabled: {}, mfen_enabled: {}, bcastb_enabled: {}, nd_enabled: {}, mc: {}, mmb_enabled: {}, ucastb_enabled: {}, mip6b_enabled: {} }}",
+            self.protocol(),
+            self.multi_enabled(),
+            self.mfen_enabled(),
+            self.bcastb_enabled(),
+            self.nd_enabled(),
+            self.mc(),
+            self.mmb_enabled(),
+            self.ucastb_enabled(),
+            self.mip6b_enabled(),
+        );
+    }
+}
+
 /// Socket Interrupt Register (Sn_IR).
 ///
 /// Indicated the socket status, such as connection, termination,
@@ -1301,6 +1363,21 @@ impl ::core::fmt::Display for SocketInterrupt {
             .field("timeout_raised", &self.timeout_raised())
             .field("sendok_raised", &self.sendok_raised())
             .finish()
+    }
+}
+
+#[cfg(feature = "defmt")]
+impl defmt::Format for SocketInterrupt {
+    fn format(&self, fmt: defmt::Formatter) {
+        defmt::write!(
+            fmt,
+            "SocketInterrupt {{ con_raised: {}, discon_raised: {}, recv_raised: {}, timeout_raised: {}, sendok_raised: {} }}",
+            self.con_raised(),
+            self.discon_raised(),
+            self.recv_raised(),
+            self.timeout_raised(),
+            self.sendok_raised(),
+        );
     }
 }
 
@@ -1520,5 +1597,20 @@ impl ::core::fmt::Display for SocketInterruptMask {
             .field("timeout_masked", &self.timeout_masked())
             .field("sendok_masked", &self.sendok_masked())
             .finish()
+    }
+}
+
+#[cfg(feature = "defmt")]
+impl defmt::Format for SocketInterruptMask {
+    fn format(&self, fmt: defmt::Formatter) {
+        defmt::write!(
+            fmt,
+            "SocketInterruptMask {{ con_masked: {}, discon_masked: {}, recv_masked: {}, timeout_masked: {}, sendok_masked: {} }}",
+            self.con_masked(),
+            self.discon_masked(),
+            self.recv_masked(),
+            self.timeout_masked(),
+            self.sendok_masked(),
+        );
     }
 }

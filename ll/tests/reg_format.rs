@@ -64,7 +64,8 @@ fn phy_cfg() {
     assert_eq!(
         format!("{:#}", PhyCfg::DEFAULT),
         r#"PhyCfg {
-    opmd: Auto,
+    opmd: false,
+    opmdc: Auto,
     dpx: Half,
     spd: Mbps10,
     lnk: Down,
