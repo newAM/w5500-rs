@@ -83,8 +83,6 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy
-      # not using clippy-check due to this issue:
-      # https://github.com/actions-rs/clippy-check/issues/2
       - run: cargo clippy --all-features -- --deny warnings
 
   format:
