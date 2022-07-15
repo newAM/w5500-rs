@@ -17,10 +17,7 @@ jobs:
     env: {"RUSTFLAGS": "-D warnings"}
     steps:
       - uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          target: x86_64-unknown-linux-gnu
+      - uses: dtolnay/rust-toolchain@stable
       - run: cargo build
       - run: cargo build --all-features
       - run: cargo build -p testsuite
@@ -36,9 +33,8 @@ jobs:
           - "thumbv7em-none-eabi"
     steps:
       - uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
+      - uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: stable
           target: ${{ matrix.target }}
       - run: cargo build --target ${{ matrix.target }} -p w5500-ll
       - run: cargo build --target ${{ matrix.target }} -p w5500-hl
@@ -76,9 +72,7 @@ jobs:
     env: {"RUSTFLAGS": "-D warnings"}
     steps:
       - uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
+      - uses: dtolnay/rust-toolchain@stable
       - run: cargo test-all
 
   clippy:
@@ -86,9 +80,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
+      - uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: stable
           components: clippy
       # not using clippy-check due to this issue:
       # https://github.com/actions-rs/clippy-check/issues/2
@@ -99,9 +92,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
+      - uses: dtolnay/rust-toolchain@nightly
         with:
-          toolchain: nightly
           components: rustfmt
       - run: cargo +nightly fmt -- --check
 
@@ -111,9 +103,7 @@ jobs:
     env: {"RUSTDOCFLAGS": "-D warnings --cfg docsrs"}
     steps:
       - uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: nightly
+      - uses: dtolnay/rust-toolchain@nightly
       - name: rustdoc
         run: |
           cd dhcp
@@ -144,9 +134,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
+      - uses: dtolnay/rust-toolchain@stable
       - name: Publish
         run: |
           cd ll
@@ -167,9 +155,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
+      - uses: dtolnay/rust-toolchain@stable
       - name: Publish
         run: |
           cd hl
@@ -190,9 +176,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
+      - uses: dtolnay/rust-toolchain@stable
       - name: Publish
         run: |
           cd dhcp
@@ -213,9 +197,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
+      - uses: dtolnay/rust-toolchain@stable
       - name: Publish
         run: |
           cd regsim
@@ -236,9 +218,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
+      - uses: dtolnay/rust-toolchain@stable
       - name: Publish
         run: |
           cd dns
@@ -259,9 +239,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
+      - uses: dtolnay/rust-toolchain@stable
       - name: Publish
         run: |
           cd mqtt
@@ -282,9 +260,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
+      - uses: dtolnay/rust-toolchain@stable
       - name: Publish
         run: |
           cd sntp
@@ -305,9 +281,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
+      - uses: dtolnay/rust-toolchain@stable
       - name: Publish
         run: |
           cd tls
