@@ -435,12 +435,6 @@ impl<'hn, 'psk, 'b, const N: usize> Client<'hn, 'psk, 'b, N> {
                     Err(e) => return Err(self.send_fatal_alert(w5500, e, monotonic_secs)),
                 };
             }
-            State::SendFinished => {
-                if let Err(e) = self.send_client_finished(w5500) {
-                    return Err(self.send_fatal_alert(w5500, e, monotonic_secs));
-                }
-                return Ok(Event::HandshakeFinished);
-            }
             State::SendDiscon => {
                 if w5500.tcp_disconnect(self.sn).is_err() {
                     return Err(self.send_fatal_alert(
@@ -471,6 +465,13 @@ impl<'hn, 'psk, 'b, const N: usize> Client<'hn, 'psk, 'b, N> {
                 if let Some(event) = self.recv(w5500, monotonic_secs)? {
                     return Ok(event);
                 }
+            }
+
+            if matches!(self.state, State::SendFinished) {
+                if let Err(e) = self.send_client_finished(w5500) {
+                    return Err(self.send_fatal_alert(w5500, e, monotonic_secs));
+                }
+                return Ok(Event::HandshakeFinished);
             }
         }
 
