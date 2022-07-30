@@ -48,7 +48,6 @@
 //! [Wiznet W5500]: https://www.wiznet.io/product-item/w5500/
 #![cfg_attr(docsrs, feature(doc_cfg), feature(doc_auto_cfg))]
 #![cfg_attr(all(not(feature = "std"), not(test)), no_std)]
-#![deny(unsafe_code)]
 #![warn(missing_docs)]
 
 // This mod MUST go first, so that the others see its macros.
@@ -553,7 +552,7 @@ impl<'hn, 'psk, 'b, const N: usize> Client<'hn, 'psk, 'b, N> {
             self.rx.as_mut_buf(),
             &random,
             &self.hostname,
-            client_public_key.as_bytes().try_into().unwrap(),
+            &client_public_key,
             &mut self.key_schedule,
             self.psk,
             self.identity,
@@ -1002,7 +1001,7 @@ impl<'hn, 'psk, 'b, const N: usize> Client<'hn, 'psk, 'b, N> {
                         error!("unexpected ServerHello in state {:?}", self.state);
                         return Err(AlertDescription::UnexpectedMessage);
                     } else {
-                        let public_key: p256::PublicKey =
+                        let public_key: ([u32; 8], [u32; 8]) =
                             handshake::recv_server_hello(&mut reader)?;
 
                         self.key_schedule.set_server_public_key(public_key);

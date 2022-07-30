@@ -22,7 +22,7 @@ const P256_KEY_LEN: usize = 65;
 /// ```
 pub(crate) fn recv_server_hello(
     reader: &mut CircleReader,
-) -> Result<p256::PublicKey, AlertDescription> {
+) -> Result<([u32; 8], [u32; 8]), AlertDescription> {
     let legacy_version: u16 = reader.next_u16()?;
     const EXPECTED_LEGACY_VERSION: u16 = TlsVersion::V1_2 as u16;
     if legacy_version != EXPECTED_LEGACY_VERSION {
@@ -191,14 +191,20 @@ pub(crate) fn recv_server_hello(
         return Err(AlertDescription::MissingExtension);
     }
 
-    match p256::PublicKey::from_sec1_bytes(&key_buf) {
-        Ok(public_key) => Ok(public_key),
-        Err(_e) => {
-            #[cfg(feature = "log")]
-            log::error!("P256 public key decode {:?}", _e);
-            #[cfg(feature = "defmt")]
-            defmt::error!("P256 public key decode {}", defmt::Debug2Format(&_e));
-            Err(AlertDescription::DecodeError)
-        }
+    let mut server_x: [u32; 8] = [0; 8];
+    let mut server_y: [u32; 8] = [0; 8];
+
+    if unsafe {
+        p256_cm4::p256_octet_string_to_point(
+            server_x.as_mut_ptr(),
+            server_y.as_mut_ptr(),
+            key_buf.as_ptr(),
+            key_buf.len() as u32,
+        )
+    } {
+        Ok((server_x, server_y))
+    } else {
+        error!("P256 public key decode");
+        Err(AlertDescription::DecodeError)
     }
 }
