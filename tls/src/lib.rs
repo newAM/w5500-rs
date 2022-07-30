@@ -546,14 +546,14 @@ impl<'hn, 'psk, 'b, const N: usize> Client<'hn, 'psk, 'b, N> {
         #[cfg(feature = "std")]
         self.key_schedule.client_random.replace(random);
 
-        let client_secret = self.key_schedule.new_client_secret(rng);
+        let client_public_key = self.key_schedule.new_client_secret(rng);
 
         // using fragment buffer for TX since it is unused at this point
         let len: usize = client_hello::ser(
             self.rx.as_mut_buf(),
             &random,
             &self.hostname,
-            &client_secret,
+            client_public_key.as_bytes().try_into().unwrap(),
             &mut self.key_schedule,
             self.psk,
             self.identity,
