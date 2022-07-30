@@ -553,7 +553,7 @@ impl<'hn, 'psk, 'b, const N: usize> Client<'hn, 'psk, 'b, N> {
             self.rx.as_mut_buf(),
             &random,
             &self.hostname,
-            &client_secret,
+            client_public_key.as_bytes().try_into().unwrap(),
             &mut self.key_schedule,
             self.psk,
             self.identity,
