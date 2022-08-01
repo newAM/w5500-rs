@@ -2,9 +2,9 @@
 
 TLS v1.3 client for the [Wiznet W5500] SPI internet offload chip.
 
-This requires roughly 80k of flash for a `thumbv7em-none-eabi` target
-with `-O3`, debug assertions enabled, all logging enabled, and
-the `p256-cm4` feature.
+This requires roughly 19k of flash for a `thumbv7em-none-eabi` target
+with `-O3`, debug assertions enabled, and the `p256-cm4` feature.
+Enabling all logging requires an additional ~40k of flash.
 
 ## Warning
 
