@@ -52,5 +52,5 @@ All features are disabled by default.
 * `p256-cm4`: Passthrough to [w5500-tls].
 
 [w5500-hl]: https://crates.io/crates/w5500-hl
-[w5500-hl]: https://crates.io/crates/w5500-tls
+[w5500-tls]: https://crates.io/crates/w5500-tls
 [Wiznet W5500]: https://www.wiznet.io/product-item/w5500/
