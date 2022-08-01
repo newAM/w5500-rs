@@ -7,13 +7,13 @@
 //!
 //! [RFC 5869]: https://datatracker.ietf.org/doc/html/rfc5869
 
+use crate::{
+    crypto::p256::{EphemeralSecret, PublicKey, SharedSecret},
+    AlertDescription,
+};
 use core::mem::size_of;
 use hkdf::Hkdf;
 use hmac::Mac;
-use p256::{
-    ecdh::{EphemeralSecret, SharedSecret},
-    EncodedPoint, PublicKey,
-};
 use rand_core::{CryptoRng, RngCore};
 use sha2::{
     digest::{
@@ -23,8 +23,6 @@ use sha2::{
     },
     Digest, Sha256,
 };
-
-use crate::AlertDescription;
 
 // https://firefox-source-docs.mozilla.org/security/nss/legacy/key_log_format/index.html
 #[cfg(feature = "std")]
@@ -212,9 +210,10 @@ impl KeySchedule {
 
     /// Create a new ephemeral client secret, and return the public key bytes
     /// as an uncompressed SEC1 encoded point.
-    pub fn new_client_secret<R: RngCore + CryptoRng>(&mut self, rng: &mut R) -> EncodedPoint {
-        self.client_secret.replace(EphemeralSecret::random(rng));
-        EncodedPoint::from(self.client_secret.as_ref().unwrap().public_key())
+    pub fn new_client_secret<R: RngCore + CryptoRng>(&mut self, rng: &mut R) -> [u8; 65] {
+        let (private, public) = crate::crypto::p256::keygen(rng);
+        self.client_secret.replace(private);
+        public
     }
 
     pub fn update_transcript_hash(&mut self, data: &[u8]) {
@@ -237,12 +236,11 @@ impl KeySchedule {
         self.server_public.replace(key);
     }
 
-    pub fn shared_secret(&self) -> Option<SharedSecret> {
-        Some(
-            self.client_secret
-                .as_ref()?
-                .diffie_hellman(self.server_public.as_ref()?),
-        )
+    fn shared_secret(&self) -> Option<SharedSecret> {
+        Some(crate::crypto::p256::diffie_hellman(
+            self.client_secret.as_ref()?,
+            self.server_public.as_ref()?,
+        ))
     }
 
     fn binder_key(&mut self, psk: &[u8]) -> Hkdf<Sha256> {
@@ -295,10 +293,8 @@ impl KeySchedule {
     }
 
     pub fn initialize_handshake_secret(&mut self) {
-        (self.secret, self.hkdf) = Hkdf::<Sha256>::extract(
-            Some(&self.secret),
-            self.shared_secret().unwrap().raw_secret_bytes(),
-        );
+        let shared_secret = self.shared_secret().unwrap();
+        (self.secret, self.hkdf) = Hkdf::<Sha256>::extract(Some(&self.secret), &shared_secret);
 
         let transcript_hash_bytes: GenericArray<u8, _> = self.transcript_hash_bytes();
         let client_secret: GenericArray<u8, _> =

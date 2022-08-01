@@ -16,6 +16,7 @@ embedded-hal = ["w5500-hl/embedded-hal"]
 defmt = ["w5500-hl/defmt", "dep:defmt"]
 std = ["w5500-hl/std", "w5500-tls?/std"]
 log = ["dep:log", "w5500-tls?/log"]
+p256-cm4 = ["w5500-tls?/p256-cm4"]
 
 [dependencies]
 defmt = { version = "0.3", optional = true }

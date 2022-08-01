@@ -1,4 +1,5 @@
 mod aes;
+pub mod p256;
 mod record;
 
 pub use aes::Aes128Gcm;

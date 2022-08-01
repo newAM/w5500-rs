@@ -1,6 +1,8 @@
 use crate::{
-    cipher_suites::CipherSuite, io::CircleReader, AlertDescription, ExtensionType, NamedGroup,
-    TlsVersion,
+    cipher_suites::CipherSuite,
+    crypto::p256::{public_key_from_sec1_bytes, PublicKey},
+    io::CircleReader,
+    AlertDescription, ExtensionType, NamedGroup, TlsVersion,
 };
 const P256_KEY_LEN: usize = 65;
 
@@ -20,9 +22,7 @@ const P256_KEY_LEN: usize = 65;
 ///     Extension extensions<6..2^16-1>;
 /// } ServerHello;
 /// ```
-pub(crate) fn recv_server_hello(
-    reader: &mut CircleReader,
-) -> Result<p256::PublicKey, AlertDescription> {
+pub(crate) fn recv_server_hello(reader: &mut CircleReader) -> Result<PublicKey, AlertDescription> {
     let legacy_version: u16 = reader.next_u16()?;
     const EXPECTED_LEGACY_VERSION: u16 = TlsVersion::V1_2 as u16;
     if legacy_version != EXPECTED_LEGACY_VERSION {
@@ -191,14 +191,10 @@ pub(crate) fn recv_server_hello(
         return Err(AlertDescription::MissingExtension);
     }
 
-    match p256::PublicKey::from_sec1_bytes(&key_buf) {
-        Ok(public_key) => Ok(public_key),
-        Err(_e) => {
-            #[cfg(feature = "log")]
-            log::error!("P256 public key decode {:?}", _e);
-            #[cfg(feature = "defmt")]
-            defmt::error!("P256 public key decode {}", defmt::Debug2Format(&_e));
-            Err(AlertDescription::DecodeError)
-        }
+    if let Some(key) = public_key_from_sec1_bytes(&key_buf) {
+        Ok(key)
+    } else {
+        error!("P256 public key decode");
+        Err(AlertDescription::DecodeError)
     }
 }

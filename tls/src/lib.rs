@@ -1,7 +1,8 @@
 //! TLS v1.3 client for the [Wiznet W5500] SPI internet offload chip.
 //!
-//! This requires roughly 80k of flash for a `thumbv7em-none-eabi` target
-//! with `-O3`, debug assertions enabled, and all logging enabled.
+//! This requires roughly 19k of flash for a `thumbv7em-none-eabi` target
+//! with `-O3`, debug assertions enabled, and the `p256-cm4` feature.
+//! Enabling all logging requires an additional ~40k of flash.
 //!
 //! # Warning
 //!
@@ -43,8 +44,11 @@
 //! * `std`: Passthrough to [`w5500-hl`].
 //! * `defmt`: Enable logging with `defmt`. Also a passthrough to [`w5500-hl`].
 //! * `log`: Enable logging with `log`.
+//! * `p256-cm4`: Use [`p256-cm4`], a P256 implementation optimized for the
+//!   Cortex-M4 CPU.
 //!
 //! [`w5500-hl`]: https://github.com/newAM/w5500-hl-rs
+//! [`p256-cm4`]: https://crates.io/crates/p256-cm4
 //! [Wiznet W5500]: https://www.wiznet.io/product-item/w5500/
 #![cfg_attr(docsrs, feature(doc_cfg), feature(doc_auto_cfg))]
 #![cfg_attr(all(not(feature = "std"), not(test)), no_std)]
@@ -63,6 +67,7 @@ mod io;
 mod key_schedule;
 mod record;
 
+use crate::crypto::p256::PublicKey;
 pub use alert::{Alert, AlertDescription, AlertLevel};
 use core::{cmp::min, convert::Infallible};
 use extension::ExtensionType;
@@ -553,7 +558,7 @@ impl<'hn, 'psk, 'b, const N: usize> Client<'hn, 'psk, 'b, N> {
             self.rx.as_mut_buf(),
             &random,
             &self.hostname,
-            client_public_key.as_bytes().try_into().unwrap(),
+            &client_public_key,
             &mut self.key_schedule,
             self.psk,
             self.identity,
@@ -1002,8 +1007,7 @@ impl<'hn, 'psk, 'b, const N: usize> Client<'hn, 'psk, 'b, N> {
                         error!("unexpected ServerHello in state {:?}", self.state);
                         return Err(AlertDescription::UnexpectedMessage);
                     } else {
-                        let public_key: p256::PublicKey =
-                            handshake::recv_server_hello(&mut reader)?;
+                        let public_key: PublicKey = handshake::recv_server_hello(&mut reader)?;
 
                         self.key_schedule.set_server_public_key(public_key);
                         self.key_schedule.set_transcript_hash(hash.clone());

@@ -50,8 +50,10 @@
 //! * `defmt`: Enable logging with `defmt`. Also a passthrough to [w5500-hl].
 //! * `log`: Enable logging with `log`.
 //! * `w5500-tls`: Enable MQTT over TLS.
+//! * `p256-cm4`: Passthrough to [w5500-tls].
 //!
 //! [w5500-hl]: https://crates.io/crates/w5500-hl
+//! [w5500-tls]: https://crates.io/crates/w5500-tls
 //! [Wiznet W5500]: https://www.wiznet.io/product-item/w5500/
 #![cfg_attr(docsrs, feature(doc_cfg), feature(doc_auto_cfg))]
 #![cfg_attr(all(not(feature = "std"), not(test)), no_std)]
