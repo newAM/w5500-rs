@@ -50,8 +50,8 @@
 //! [Wiznet W5500]: https://www.wiznet.io/product-item/w5500/
 #![cfg_attr(docsrs, feature(doc_cfg), feature(doc_auto_cfg))]
 #![cfg_attr(all(not(feature = "std"), not(test)), no_std)]
-#![warn(missing_docs)]
 #![deny(unsafe_code)]
+#![warn(missing_docs)]
 
 // This mod MUST go first, so that the others see its macros.
 pub(crate) mod fmt;
