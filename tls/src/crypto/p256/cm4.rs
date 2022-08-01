@@ -7,6 +7,7 @@ pub struct PublicKey {
     y: [u32; 8],
 }
 
+#[allow(unsafe_code)]
 pub fn public_key_from_sec1_bytes(bytes: &[u8; 65]) -> Option<PublicKey> {
     let mut ret: PublicKey = Default::default();
     unsafe {
@@ -22,6 +23,7 @@ pub fn public_key_from_sec1_bytes(bytes: &[u8; 65]) -> Option<PublicKey> {
 
 pub type EphemeralSecret = [u32; 8];
 
+#[allow(unsafe_code)]
 pub fn keygen<R: RngCore + CryptoRng>(rng: &mut R) -> (EphemeralSecret, [u8; 65]) {
     let mut private_key: [u32; 8] = [0; 8];
     let mut public_x: [u32; 8] = [0; 8];
@@ -56,6 +58,7 @@ pub fn keygen<R: RngCore + CryptoRng>(rng: &mut R) -> (EphemeralSecret, [u8; 65]
 
 pub type SharedSecret = [u8; 32];
 
+#[allow(unsafe_code)]
 pub fn diffie_hellman(secret: &EphemeralSecret, public: &PublicKey) -> SharedSecret {
     let mut shared: MaybeUninit<[u8; 32]> = MaybeUninit::<[u8; 32]>::uninit();
 

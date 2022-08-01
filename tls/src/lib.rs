@@ -51,7 +51,7 @@
 #![cfg_attr(docsrs, feature(doc_cfg), feature(doc_auto_cfg))]
 #![cfg_attr(all(not(feature = "std"), not(test)), no_std)]
 #![warn(missing_docs)]
-#![cfg_attr(not(feature = "p256-cm4"), forbid(unsafe_code))]
+#![deny(unsafe_code)]
 
 // This mod MUST go first, so that the others see its macros.
 pub(crate) mod fmt;
