@@ -62,6 +62,7 @@ mod io;
 mod key_schedule;
 mod record;
 
+use crate::crypto::p256::PublicKey;
 pub use alert::{Alert, AlertDescription, AlertLevel};
 use core::{cmp::min, convert::Infallible};
 use extension::ExtensionType;
@@ -1001,8 +1002,7 @@ impl<'hn, 'psk, 'b, const N: usize> Client<'hn, 'psk, 'b, N> {
                         error!("unexpected ServerHello in state {:?}", self.state);
                         return Err(AlertDescription::UnexpectedMessage);
                     } else {
-                        let public_key: ([u32; 8], [u32; 8]) =
-                            handshake::recv_server_hello(&mut reader)?;
+                        let public_key: PublicKey = handshake::recv_server_hello(&mut reader)?;
 
                         self.key_schedule.set_server_public_key(public_key);
                         self.key_schedule.set_transcript_hash(hash.clone());

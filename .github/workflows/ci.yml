@@ -65,6 +65,8 @@ jobs:
       - run: cargo build --target ${{ matrix.target }} -p w5500-sntp --features chrono
       - run: cargo build --target ${{ matrix.target }} -p w5500-sntp --features num-rational
       - run: cargo build --target ${{ matrix.target }} -p w5500-mqtt --features w5500-tls
+      - run: cargo build --target ${{ matrix.target }} -p w5500-tls  --features p256-cm4
+        if: ${{ matrix.target == "thumbv7em-none-eabi" }}
 
   test:
     name: Test

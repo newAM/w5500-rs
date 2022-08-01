@@ -7,7 +7,11 @@
 //!
 //! [RFC 5869]: https://datatracker.ietf.org/doc/html/rfc5869
 
-use core::mem::{size_of, MaybeUninit};
+use crate::{
+    crypto::p256::{EphemeralSecret, PublicKey, SharedSecret},
+    AlertDescription,
+};
+use core::mem::size_of;
 use hkdf::Hkdf;
 use hmac::Mac;
 use rand_core::{CryptoRng, RngCore};
@@ -19,8 +23,6 @@ use sha2::{
     },
     Digest, Sha256,
 };
-
-use crate::AlertDescription;
 
 // https://firefox-source-docs.mozilla.org/security/nss/legacy/key_log_format/index.html
 #[cfg(feature = "std")]
@@ -124,8 +126,8 @@ pub(crate) fn derive_secret(
 }
 
 pub struct KeySchedule {
-    client_secret: Option<[u32; 8]>,
-    server_public: Option<([u32; 8], [u32; 8])>,
+    client_secret: Option<EphemeralSecret>,
+    server_public: Option<PublicKey>,
 
     // https://datatracker.ietf.org/doc/html/rfc8446#section-4.4.1
     // Many of the cryptographic computations in TLS make use of a
@@ -209,34 +211,9 @@ impl KeySchedule {
     /// Create a new ephemeral client secret, and return the public key bytes
     /// as an uncompressed SEC1 encoded point.
     pub fn new_client_secret<R: RngCore + CryptoRng>(&mut self, rng: &mut R) -> [u8; 65] {
-        let mut client_secret: [u32; 8] = [0; 8];
-        let mut public_x: [u32; 8] = [0; 8];
-        let mut public_y: [u32; 8] = [0; 8];
-        loop {
-            rng.fill_bytes(unsafe {
-                core::mem::transmute::<&mut [u32; 8], &mut [u8; 32]>(&mut client_secret)
-            });
-            if unsafe {
-                p256_cm4::p256_keygen(
-                    public_x.as_mut_ptr(),
-                    public_y.as_mut_ptr(),
-                    client_secret.as_ptr(),
-                )
-            } {
-                break;
-            }
-        }
-        self.client_secret.replace(client_secret);
-
-        let mut bytes: MaybeUninit<[u8; 65]> = MaybeUninit::<[u8; 65]>::uninit();
-        unsafe {
-            p256_cm4::p256_point_to_octet_string_uncompressed(
-                bytes.as_mut_ptr() as *mut u8,
-                public_x.as_ptr(),
-                public_y.as_ptr(),
-            );
-            bytes.assume_init()
-        }
+        let (private, public) = crate::crypto::p256::keygen(rng);
+        self.client_secret.replace(private);
+        public
     }
 
     pub fn update_transcript_hash(&mut self, data: &[u8]) {
@@ -255,22 +232,15 @@ impl KeySchedule {
         self.transcript_hash.clone()
     }
 
-    pub fn set_server_public_key(&mut self, key: ([u32; 8], [u32; 8])) {
+    pub fn set_server_public_key(&mut self, key: PublicKey) {
         self.server_public.replace(key);
     }
 
-    fn shared_secret(&self) -> Option<[u8; 32]> {
-        let mut shared: [u8; 32] = [0; 32];
-        let (server_x, server_y): &([u32; 8], [u32; 8]) = self.server_public.as_ref().unwrap();
-        unsafe {
-            p256_cm4::p256_ecdh_calc_shared_secret(
-                shared.as_mut_ptr(),
-                self.client_secret.as_ref().unwrap().as_ptr(),
-                server_x.as_ptr(),
-                server_y.as_ptr(),
-            )
-        }
-        .then(|| shared)
+    fn shared_secret(&self) -> Option<SharedSecret> {
+        Some(crate::crypto::p256::diffie_hellman(
+            self.client_secret.as_ref()?,
+            self.server_public.as_ref()?,
+        ))
     }
 
     fn binder_key(&mut self, psk: &[u8]) -> Hkdf<Sha256> {
