@@ -1,23 +1,14 @@
 use core::mem::MaybeUninit;
 use rand_core::{CryptoRng, RngCore};
 
+#[derive(Default)]
 pub struct PublicKey {
     x: [u32; 8],
     y: [u32; 8],
 }
 
-impl PublicKey {
-    unsafe fn new_uninit() -> Self {
-        use core::mem::MaybeUninit;
-        Self {
-            x: MaybeUninit::uninit().assume_init(),
-            y: MaybeUninit::uninit().assume_init(),
-        }
-    }
-}
-
 pub fn public_key_from_sec1_bytes(bytes: &[u8; 65]) -> Option<PublicKey> {
-    let mut ret: PublicKey = unsafe { PublicKey::new_uninit() };
+    let mut ret: PublicKey = Default::default();
     unsafe {
         p256_cm4::p256_octet_string_to_point(
             ret.x.as_mut_ptr(),
@@ -32,9 +23,9 @@ pub fn public_key_from_sec1_bytes(bytes: &[u8; 65]) -> Option<PublicKey> {
 pub type EphemeralSecret = [u32; 8];
 
 pub fn keygen<R: RngCore + CryptoRng>(rng: &mut R) -> (EphemeralSecret, [u8; 65]) {
-    let mut private_key: [u32; 8] = unsafe { MaybeUninit::uninit().assume_init() };
-    let mut public_x: [u32; 8] = unsafe { MaybeUninit::uninit().assume_init() };
-    let mut public_y: [u32; 8] = unsafe { MaybeUninit::uninit().assume_init() };
+    let mut private_key: [u32; 8] = [0; 8];
+    let mut public_x: [u32; 8] = [0; 8];
+    let mut public_y: [u32; 8] = [0; 8];
 
     loop {
         rng.fill_bytes(unsafe {
@@ -66,16 +57,16 @@ pub fn keygen<R: RngCore + CryptoRng>(rng: &mut R) -> (EphemeralSecret, [u8; 65]
 pub type SharedSecret = [u8; 32];
 
 pub fn diffie_hellman(secret: &EphemeralSecret, public: &PublicKey) -> SharedSecret {
-    let mut shared: [u8; 32] = unsafe { MaybeUninit::uninit().assume_init() };
+    let mut shared: MaybeUninit<[u8; 32]> = MaybeUninit::<[u8; 32]>::uninit();
 
     let _ignored_return_value_because_public_key_was_already_validated: bool = unsafe {
         p256_cm4::p256_ecdh_calc_shared_secret(
-            shared.as_mut_ptr(),
+            shared.as_mut_ptr() as *mut u8,
             secret.as_ptr(),
             public.x.as_ptr(),
             public.y.as_ptr(),
         )
     };
 
-    shared
+    unsafe { shared.assume_init() }
 }

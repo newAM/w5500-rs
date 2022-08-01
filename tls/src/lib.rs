@@ -1,7 +1,8 @@
 //! TLS v1.3 client for the [Wiznet W5500] SPI internet offload chip.
 //!
 //! This requires roughly 80k of flash for a `thumbv7em-none-eabi` target
-//! with `-O3`, debug assertions enabled, and all logging enabled.
+//! with `-O3`, debug assertions enabled, all logging enabled, and
+//! the `p256-cm4` feature.
 //!
 //! # Warning
 //!
@@ -43,12 +44,14 @@
 //! * `std`: Passthrough to [`w5500-hl`].
 //! * `defmt`: Enable logging with `defmt`. Also a passthrough to [`w5500-hl`].
 //! * `log`: Enable logging with `log`.
+//! * `p256-cm4`: Use a p256 implementation optimized for the Cortex-M4 CPU.
 //!
 //! [`w5500-hl`]: https://github.com/newAM/w5500-hl-rs
 //! [Wiznet W5500]: https://www.wiznet.io/product-item/w5500/
 #![cfg_attr(docsrs, feature(doc_cfg), feature(doc_auto_cfg))]
 #![cfg_attr(all(not(feature = "std"), not(test)), no_std)]
 #![warn(missing_docs)]
+#![cfg_attr(not(feature = "p256-cm4"), forbid(unsafe_code))]
 
 // This mod MUST go first, so that the others see its macros.
 pub(crate) mod fmt;
