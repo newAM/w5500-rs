@@ -46,7 +46,9 @@ All features are disabled by default.
 * `std`: Passthrough to [`w5500-hl`].
 * `defmt`: Enable logging with `defmt`. Also a passthrough to [`w5500-hl`].
 * `log`: Enable logging with `log`.
-* `p256-cm4`: Use a p256 implementation optimized for the Cortex-M4 CPU.
+* `p256-cm4`: Use [`p256-cm4`], a P256 implementation optimized for the
+  Cortex-M4 CPU.
 
 [`w5500-hl`]: https://github.com/newAM/w5500-hl-rs
+[`p256-cm4`]: https://crates.io/crates/p256-cm4
 [Wiznet W5500]: https://www.wiznet.io/product-item/w5500/
