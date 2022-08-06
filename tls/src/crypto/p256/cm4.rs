@@ -41,7 +41,7 @@ pub fn diffie_hellman(secret: &EphemeralSecret, public: &PublicKey) -> SharedSec
     let mut shared: [u8; 32] = [0; 32];
 
     let _ignored_return_value_because_public_key_was_already_validated: bool =
-        p256_cm4::ecdh_calc_shared_secret(&mut shared, &secret, &public.x, &public.y);
+        p256_cm4::ecdh_calc_shared_secret(&mut shared, secret, &public.x, &public.y);
 
     shared
 }
