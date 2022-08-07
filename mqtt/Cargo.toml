@@ -22,7 +22,7 @@ p256-cm4 = ["w5500-tls?/p256-cm4"]
 defmt = { version = "0.3", optional = true }
 log = { version = "0.4", optional = true }
 w5500-hl = { path = "../hl", version = "0.9.0" }
-w5500-tls = { path = "../tls", version = "0.1.2", optional = true }
+w5500-tls = { path = "../tls", version = "0.1.3", optional = true }
 
 [dev-dependencies]
 bytes = "1"
