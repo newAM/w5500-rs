@@ -8,7 +8,7 @@ pub struct PublicKey {
 
 pub fn public_key_from_sec1_bytes(bytes: &[u8; 65]) -> Option<PublicKey> {
     let mut ret: PublicKey = Default::default();
-    p256_cm4::octet_string_to_point(&mut ret.x, &mut ret.y, bytes).then(|| ret)
+    p256_cm4::octet_string_to_point(&mut ret.x, &mut ret.y, bytes).then_some(ret)
 }
 
 pub type EphemeralSecret = [u32; 8];
