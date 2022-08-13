@@ -19,7 +19,7 @@ pub(crate) struct FixedHeader {
 
 impl FixedHeader {
     pub fn deser(buf: &[u8]) -> Result<Self, DeserError> {
-        let byte0: u8 = *buf.get(0).ok_or(DeserError::Fragment)?;
+        let byte0: u8 = *buf.first().ok_or(DeserError::Fragment)?;
         let ctrl_pkt: CtrlPkt = match byte0 >> 4 {
             x if x == (CtrlPkt::RESERVED as u8) => CtrlPkt::RESERVED,
             x if x == (CtrlPkt::CONNECT as u8) => CtrlPkt::CONNECT,
