@@ -9,14 +9,11 @@
 //!
 //! [`embedded-hal`]: https://github.com/rust-embedded/embedded-hal
 //! [`Registers`]: crate::Registers
-//! [VDM]: crate::blocking::vdm
+//! [VDM]: crate::eh::vdm
 
 use crate::spi::{self, AccessMode};
 
 /// W5500 blocking fixed data length implementation.
-///
-/// Unlike the VDM implementation there is an intentional lack of a `free`
-/// method to prevent you from sharing the bus with other devices.
 #[derive(Debug)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
 pub struct W5500<SPI> {
@@ -26,17 +23,16 @@ pub struct W5500<SPI> {
 
 impl<SPI, SpiError> W5500<SPI>
 where
-    SPI: embedded_hal::blocking::spi::Transfer<u8, Error = SpiError>
-        + embedded_hal::blocking::spi::Write<u8, Error = SpiError>,
+    SPI: embedded_hal::spi::blocking::SpiBus<u8, Error = SpiError>,
 {
-    /// Creates a new `W5500` driver from a SPI peripheral.
+    /// Creates a new `W5500` driver from a SPI bus.
     ///
     /// # Example
     ///
     /// ```
     /// # use embedded_hal_mock as hal;
     /// # let spi = hal::spi::Mock::new(&[]);
-    /// use w5500_ll::blocking::fdm::W5500;
+    /// use w5500_ll::eh::fdm::W5500;
     ///
     /// let mut w5500: W5500<_> = W5500::new(spi);
     /// ```
@@ -51,7 +47,7 @@ where
     /// ```
     /// # use embedded_hal_mock as hal;
     /// # let spi = hal::spi::Mock::new(&[]);
-    /// use w5500_ll::blocking::fdm::W5500;
+    /// use w5500_ll::eh::fdm::W5500;
     ///
     /// let w5500: W5500<_> = W5500::new(spi);
     /// let spi = w5500.free();
@@ -63,8 +59,7 @@ where
 
 impl<SPI, SpiError> crate::Registers for W5500<SPI>
 where
-    SPI: embedded_hal::blocking::spi::Transfer<u8, Error = SpiError>
-        + embedded_hal::blocking::spi::Write<u8, Error = SpiError>,
+    SPI: embedded_hal::spi::blocking::SpiBus<u8, Error = SpiError>,
 {
     /// SPI IO error type.
     type Error = SpiError;
@@ -76,21 +71,21 @@ where
         while let Some(chunk) = chunks.next() {
             let header = spi::fdm_header_4b(address, block, AccessMode::Read);
             self.spi.write(&header)?;
-            self.spi.transfer(chunk)?;
+            self.spi.read(chunk)?;
             address = address.wrapping_add(4);
         }
         let mut chunks = chunks.into_remainder().chunks_exact_mut(2);
         while let Some(chunk) = chunks.next() {
             let header = spi::fdm_header_2b(address, block, AccessMode::Read);
             self.spi.write(&header)?;
-            self.spi.transfer(chunk)?;
+            self.spi.read(chunk)?;
             address = address.wrapping_add(2);
         }
         let mut chunks = chunks.into_remainder().chunks_exact_mut(1);
         while let Some(chunk) = chunks.next() {
             let header = spi::fdm_header_1b(address, block, AccessMode::Read);
             self.spi.write(&header)?;
-            self.spi.transfer(chunk)?;
+            self.spi.read(chunk)?;
             address = address.wrapping_add(1);
         }
 

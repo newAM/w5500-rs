@@ -17,13 +17,12 @@ use w5500_ll::{
 ///
 /// ```no_run
 /// # use embedded_hal_mock as h;
-/// # let mut w5500 = w5500_ll::blocking::vdm::W5500::new(h::spi::Mock::new(&[]), h::pin::Mock::new(&[]));
+/// # let mut w5500 = w5500_ll::eh::vdm::W5500::new(h::spi::Mock::new(&[]));
 /// use w5500_hl::{
+///     io::Read,
 ///     ll::{Registers, Sn, SocketInterrupt},
 ///     net::{Ipv4Addr, SocketAddrV4},
-///     Tcp,
-///     TcpReader,
-///     io::Read,
+///     Tcp, TcpReader,
 /// };
 ///
 /// const MQTT_SOCKET: Sn = Sn::Sn0;
@@ -133,11 +132,12 @@ impl<'a, W5500: Registers> Read<W5500::Error> for TcpReader<'a, W5500> {
 ///
 /// ```no_run
 /// # use embedded_hal_mock as h;
-/// # let mut w5500 = w5500_ll::blocking::vdm::W5500::new(h::spi::Mock::new(&[]), h::pin::Mock::new(&[]));
+/// # let mut w5500 = w5500_ll::eh::vdm::W5500::new(h::spi::Mock::new(&[]));
 /// use w5500_hl::{
+///     io::Write,
 ///     ll::{Registers, Sn, SocketInterrupt},
 ///     net::{Ipv4Addr, SocketAddrV4},
-///     Tcp, TcpWriter, io::Write,
+///     Tcp, TcpWriter,
 /// };
 ///
 /// const MQTT_SOCKET: Sn = Sn::Sn0;
@@ -256,8 +256,7 @@ pub trait Tcp: Registers {
     /// # Example
     ///
     /// ```no_run
-    /// # use embedded_hal_mock as h;
-    /// # let mut w5500 = w5500_ll::blocking::vdm::W5500::new(h::spi::Mock::new(&[]), h::pin::Mock::new(&[]));
+    /// # let mut w5500 = w5500_ll::eh::vdm::W5500::new(embedded_hal_mock::spi::Mock::new(&[]));
     /// use w5500_hl::{
     ///     ll::{Registers, Sn, SocketInterrupt},
     ///     net::{Ipv4Addr, SocketAddrV4},
@@ -284,7 +283,7 @@ pub trait Tcp: Registers {
     ///         break;
     ///     }
     /// }
-    /// # Ok::<(), w5500_hl::ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), embedded_hal::spi::ErrorKind>(())
     /// ```
     ///
     /// [`tcp_write`]: Tcp::tcp_write
@@ -336,8 +335,7 @@ pub trait Tcp: Registers {
     /// Create an HTTP server.
     ///
     /// ```no_run
-    /// # use embedded_hal_mock as h;
-    /// # let mut w5500 = w5500_ll::blocking::vdm::W5500::new(h::spi::Mock::new(&[]), h::pin::Mock::new(&[]));
+    /// # let mut w5500 = w5500_ll::eh::vdm::W5500::new(embedded_hal_mock::spi::Mock::new(&[]));
     /// use w5500_hl::{
     ///     ll::{Registers, Sn, SocketInterrupt},
     ///     net::{Ipv4Addr, SocketAddrV4},
@@ -372,7 +370,7 @@ pub trait Tcp: Registers {
     /// let filled_buf: &[u8] = &buf[..rx_bytes.into()];
     ///
     /// // parse HTTP request here using filled_buf
-    /// # Ok::<(), w5500_hl::ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), embedded_hal::spi::ErrorKind>(())
     /// ```
     ///
     /// [`tcp_write`]: Tcp::tcp_write
@@ -414,8 +412,7 @@ pub trait Tcp: Registers {
     /// Send a MQTT CONNECT packet and read a CONNACK.
     ///
     /// ```no_run
-    /// # use embedded_hal_mock as h;
-    /// # let mut w5500 = w5500_ll::blocking::vdm::W5500::new(h::spi::Mock::new(&[]), h::pin::Mock::new(&[]));
+    /// # let mut w5500 = w5500_ll::eh::vdm::W5500::new(embedded_hal_mock::spi::Mock::new(&[]));
     /// use w5500_hl::{
     ///     ll::{Registers, Sn, SocketInterrupt},
     ///     net::{Ipv4Addr, SocketAddrV4},
@@ -441,7 +438,7 @@ pub trait Tcp: Registers {
     /// let mut buf = [0; 10];
     /// let rx_bytes: u16 = w5500.tcp_read(MQTT_SOCKET, &mut buf)?;
     /// let filled_buf = &buf[..rx_bytes.into()];
-    /// # Ok::<(), w5500_hl::ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), embedded_hal::spi::ErrorKind>(())
     /// ```
     ///
     /// [`Established`]: w5500_ll::SocketStatus::Established
@@ -476,8 +473,7 @@ pub trait Tcp: Registers {
     /// Send a MQTT CONNECT packet.
     ///
     /// ```no_run
-    /// # use embedded_hal_mock as h;
-    /// # let mut w5500 = w5500_ll::blocking::vdm::W5500::new(h::spi::Mock::new(&[]), h::pin::Mock::new(&[]));
+    /// # let mut w5500 = w5500_ll::eh::vdm::W5500::new(embedded_hal_mock::spi::Mock::new(&[]));
     /// use w5500_hl::{
     ///     ll::{Registers, Sn, SocketInterrupt},
     ///     net::{Ipv4Addr, SocketAddrV4},
@@ -497,7 +493,7 @@ pub trait Tcp: Registers {
     /// ];
     /// let tx_bytes: u16 = w5500.tcp_write(MQTT_SOCKET, &CONNECT)?;
     /// assert_eq!(usize::from(tx_bytes), CONNECT.len());
-    /// # Ok::<(), w5500_hl::ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), embedded_hal::spi::ErrorKind>(())
     /// ```
     ///
     /// [`Established`]: w5500_ll::SocketStatus::Established
@@ -537,8 +533,7 @@ pub trait Tcp: Registers {
     /// Connect and disconnect from a MQTT server.
     ///
     /// ```no_run
-    /// # use embedded_hal_mock as h;
-    /// # let mut w5500 = w5500_ll::blocking::vdm::W5500::new(h::spi::Mock::new(&[]), h::pin::Mock::new(&[]));
+    /// # let mut w5500 = w5500_ll::eh::vdm::W5500::new(embedded_hal_mock::spi::Mock::new(&[]));
     /// use w5500_hl::{
     ///     ll::{Registers, Sn, SocketInterrupt},
     ///     net::{Ipv4Addr, SocketAddrV4},
@@ -554,7 +549,7 @@ pub trait Tcp: Registers {
     /// // ... wait for a CON interrupt
     ///
     /// w5500.tcp_disconnect(MQTT_SOCKET)?;
-    /// # Ok::<(), w5500_hl::ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), embedded_hal::spi::ErrorKind>(())
     /// ```
     ///
     /// [`Closed`]: w5500_ll::SocketStatus::Closed

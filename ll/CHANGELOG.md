@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Changed
+- Updated `embedded-hal` from `~0.2.4` to `^1`.
+- Renamed the `blocking` module to `eh`.
+
 ## [0.10.4] - 2022-07-14
 ### Added
 - Added a new W5500 type for VDM transfers with an infallible GPIO and an infallible SPI bus.

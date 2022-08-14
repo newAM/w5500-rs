@@ -14,16 +14,12 @@ homepage = "https://github.com/newAM/w5500-rs"
 [features]
 std = []
 
-[dependencies.embedded-hal]
-version = "0.2.4"
-optional = true
-
-[dependencies.defmt]
-version = "0.3"
-optional = true
+[dependencies]
+embedded-hal = { version = "1.0.0-alpha.8", optional = true }
+defmt = { version = "0.3", optional = true }
 
 [dev-dependencies]
-embedded-hal-mock = "0.8"
+embedded-hal-mock = { git = "https://github.com/dbrgn/embedded-hal-mock", branch = "1-alpha" }
 
 [package.metadata.docs.rs]
 all-features = true
