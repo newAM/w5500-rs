@@ -15,9 +15,9 @@ on-top of what is provided here.
 Reading the VERSIONR register (a constant value).
 
 ```rust
-use w5500_ll::{blocking::vdm::W5500, Registers};
+use w5500_ll::{eh1::vdm::W5500, Registers};
 
-let mut w5500 = W5500::new(spi, pin);
+let mut w5500 = W5500::new(spi);
 let version: u8 = w5500.version()?;
 assert_eq!(version, 0x04);
 ```
@@ -27,14 +27,19 @@ assert_eq!(version, 0x04);
 All features are disabled by default.
 
 * `defmt`: Enable formatting most types with `defmt`.
-* `embedded-hal`: Enables the [`blocking`] module which contains
-  implementations of the [`Registers`] trait using the `embedded-hal` traits.
+* `eh0`: Enables the [`eh0`] module which contains
+  implementations of the [`Registers`] trait
+  using the `embedded-hal` version 0.2 traits.
+* `eh1`: Enables the [`eh1`] module which contains
+  implementations of the [`Registers`] trait
+  using the `embedded-hal` version 1 traits.
 * `std`: Enables conversion between [`std::net`] and [`w5500_ll::net`] types.
   This is for testing purposes only, the `std` flag will not work on
   embedded systems because it uses the standard library.
 
 [`std::net`]: https://doc.rust-lang.org/std/net/index.html
 [Wiznet W5500]: https://www.wiznet.io/product-item/w5500/
-[`blocking`]: https://docs.rs/w5500-ll/latest/w5500_ll/blocking/index.html
+[`eh0`]: https://docs.rs/w5500-ll/latest/w5500_ll/eh0/index.html
+[`eh1`]: https://docs.rs/w5500-ll/latest/w5500_ll/eh1/index.html
 [`Registers`]: https://docs.rs/w5500-ll/latest/w5500_ll/trait.Registers.html
 [`w5500_ll::net`]: https://docs.rs/w5500-ll/latest/w5500_ll/net/index.html

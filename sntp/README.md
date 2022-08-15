@@ -10,7 +10,8 @@ SNTP client for the [Wiznet W5500] SPI internet offload chip.
 
 All features are disabled by default.
 
-* `embedded-hal`: Passthrough to [`w5500-hl`].
+* `eh0`: Passthrough to [`w5500-hl`].
+* `eh1`: Passthrough to [`w5500-hl`].
 * `std`: Passthrough to [`w5500-hl`].
 * `defmt`: Enable logging with `defmt`. Also a passthrough to [`w5500-hl`].
 * `log`: Enable logging with `log`.

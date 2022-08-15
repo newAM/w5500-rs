@@ -10,7 +10,7 @@
 //! [`Registers`]: crate::Registers
 
 use crate::spi::{vdm_header, AccessMode};
-use embedded_hal::spi::blocking::{SpiBusRead, SpiBusWrite};
+use eh1::spi::blocking::{SpiBusRead, SpiBusWrite};
 
 /// W5500 blocking variable data length implementation.
 #[derive(Debug)]
@@ -22,19 +22,20 @@ pub struct W5500<SPI> {
 
 impl<SPI, E> W5500<SPI>
 where
-    SPI: embedded_hal::spi::blocking::SpiDevice<Error = E>,
+    SPI: eh1::spi::blocking::SpiDevice<Error = E>,
 {
     /// Creates a new `W5500` driver from a SPI device.
     ///
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[]);
-    /// use w5500_ll::eh::vdm::W5500;
+    /// use w5500_ll::eh1::vdm::W5500;
     ///
     /// let mut w5500: W5500<_> = W5500::new(spi);
     /// ```
+    #[inline]
     pub fn new(spi: SPI) -> Self {
         W5500 { spi }
     }
@@ -44,13 +45,14 @@ where
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[]);
-    /// use w5500_ll::eh::vdm::W5500;
+    /// use w5500_ll::eh1::vdm::W5500;
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let spi = w5500.free();
     /// ```
+    #[inline]
     pub fn free(self) -> SPI {
         self.spi
     }
@@ -58,9 +60,9 @@ where
 
 impl<SPI, E> crate::Registers for W5500<SPI>
 where
-    SPI: embedded_hal::spi::blocking::SpiDevice<Error = E>,
-    SPI::Bus: embedded_hal::spi::blocking::SpiBusRead<Error = E>
-        + embedded_hal::spi::blocking::SpiBusWrite<Error = E>,
+    SPI: eh1::spi::blocking::SpiDevice<Error = E>,
+    SPI::Bus:
+        eh1::spi::blocking::SpiBusRead<Error = E> + eh1::spi::blocking::SpiBusWrite<Error = E>,
 {
     /// SPI IO error type.
     type Error = E;

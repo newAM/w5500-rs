@@ -10,7 +10,7 @@ use w5500_dhcp::{Client as DhcpClient, Hostname, State as DhcpState};
 use w5500_dns::Client as DnsClient;
 use w5500_hl::Tcp;
 use w5500_ll::{
-    eh::vdm::W5500,
+    eh1::vdm::W5500,
     net::{Eui48Addr, Ipv4Addr, SocketAddrV4},
     reset, Registers, Sn, VERSION,
 };

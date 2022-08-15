@@ -5,8 +5,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- Added support for `embedded-hal` version `1.0.0-alpha.8` with the `eh1` feature.
+
 ### Changed
 - Updated `w5500-tls` from `0.1.2` to `0.1.3`.
+- Changed the name of the `embedded-hal` feature to `eh0`.
 
 ## [0.1.2] - 2022-08-01
 ### Added

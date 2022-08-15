@@ -5,9 +5,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- Added support for `embedded-hal` version `1.0.0-alpha.8` with the `eh1` feature.
+
 ### Changed
-- Updated `embedded-hal` from `~0.2.4` to `^1`.
-- Renamed the `blocking` module to `eh`.
+- Changed the `embedded-hal` version `0.2` feature name to `eh0`.
+- Renamed the `blocking` module to `eh0`.
+- Moved the `reset` function into `eh0` and `eh1` modules.
 
 ## [0.10.4] - 2022-07-14
 ### Added
