@@ -49,13 +49,13 @@ jobs:
       - run: cargo build --target ${{ matrix.target }} -p w5500-dns  --features defmt
       - run: cargo build --target ${{ matrix.target }} -p w5500-mqtt --features defmt
       - run: cargo build --target ${{ matrix.target }} -p w5500-tls  --features defmt
-      - run: cargo build --target ${{ matrix.target }} -p w5500-ll   --features embedded-hal
-      - run: cargo build --target ${{ matrix.target }} -p w5500-hl   --features embedded-hal
-      - run: cargo build --target ${{ matrix.target }} -p w5500-dhcp --features embedded-hal
-      - run: cargo build --target ${{ matrix.target }} -p w5500-dns  --features embedded-hal
-      - run: cargo build --target ${{ matrix.target }} -p w5500-mqtt --features embedded-hal
-      - run: cargo build --target ${{ matrix.target }} -p w5500-sntp --features embedded-hal
-      - run: cargo build --target ${{ matrix.target }} -p w5500-tls  --features embedded-hal
+      - run: cargo build --target ${{ matrix.target }} -p w5500-ll   --features eh0,eh1
+      - run: cargo build --target ${{ matrix.target }} -p w5500-hl   --features eh0,eh1
+      - run: cargo build --target ${{ matrix.target }} -p w5500-dhcp --features eh0,eh1
+      - run: cargo build --target ${{ matrix.target }} -p w5500-dns  --features eh0,eh1
+      - run: cargo build --target ${{ matrix.target }} -p w5500-mqtt --features eh0,eh1
+      - run: cargo build --target ${{ matrix.target }} -p w5500-sntp --features eh0,eh1
+      - run: cargo build --target ${{ matrix.target }} -p w5500-tls  --features eh0,eh1
       - run: cargo build --target ${{ matrix.target }} -p w5500-dhcp --features log
       - run: cargo build --target ${{ matrix.target }} -p w5500-dns  --features log
       - run: cargo build --target ${{ matrix.target }} -p w5500-mqtt --features log
