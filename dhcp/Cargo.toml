@@ -30,6 +30,5 @@ w5500-hl = { path = "../hl", features = ["std"] }
 w5500-regsim.path = "../regsim"
 
 [package.metadata.docs.rs]
-all-features = false
-features = ["log", "std", "eh0", "eh1"]
+all-features = true
 rustdoc-args = ["--cfg", "docsrs"]

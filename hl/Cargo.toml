@@ -28,5 +28,4 @@ w5500-ll = { path = "../ll", version = "0.10", features = ["eh1", "defmt"] }
 
 [package.metadata.docs.rs]
 all-features = true
-features = ["eh0", "eh1", "std"]
 rustdoc-args = ["--cfg", "docsrs"]
