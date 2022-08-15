@@ -9,7 +9,7 @@
 //!
 //! [`embedded-hal`]: https://github.com/rust-embedded/embedded-hal
 //! [`Registers`]: crate::Registers
-//! [VDM]: crate::eh::vdm
+//! [VDM]: crate::eh1::vdm
 
 use crate::spi::{self, AccessMode};
 
