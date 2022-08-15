@@ -32,5 +32,5 @@ w5500-regsim.path = "../regsim"
 
 [package.metadata.docs.rs]
 all-features = false
-features = ["log", "std", "embedded-hal", "chrono", "num-rational", "time"]
+features = ["log", "std", "eh0", "eh1", "chrono", "num-rational", "time"]
 rustdoc-args = ["--cfg", "docsrs"]

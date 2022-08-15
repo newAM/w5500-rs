@@ -25,4 +25,5 @@ ehm1 = { package = "embedded-hal-mock", git = "https://github.com/dbrgn/embedded
 
 [package.metadata.docs.rs]
 all-features = true
+features = ["eh0", "eh1", "std"]
 rustdoc-args = ["--cfg", "docsrs"]
