@@ -54,7 +54,7 @@ All features are disabled by default.
 * `eh1`: Passthrough to [w5500-hl].
 * `std`: Passthrough to [w5500-hl].
 * `defmt`: Enable logging with `defmt`. Also a passthrough to [w5500-hl].
-* `log`: Enable logging with `log`..
+* `log`: Enable logging with `log`.
 
 [w5500-hl]: https://crates.io/crates/w5500-hl
 [`std::net`]: https://doc.rust-lang.org/std/net/index.html
