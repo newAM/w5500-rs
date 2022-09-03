@@ -47,8 +47,14 @@ fn ipv4_uformat() {
 }
 
 const SOCKET_ADDR_FMT_CASES: &[(SocketAddrV4, &str)] = &[
-    (SocketAddrV4::new(Ipv4Addr::new(1, 2, 3, 4), 60), "1.2.3.4:60"),
-    (SocketAddrV4::new(Ipv4Addr::BROADCAST, u16::MAX), "255.255.255.255:65535"),
+    (
+        SocketAddrV4::new(Ipv4Addr::new(1, 2, 3, 4), 60),
+        "1.2.3.4:60",
+    ),
+    (
+        SocketAddrV4::new(Ipv4Addr::BROADCAST, u16::MAX),
+        "255.255.255.255:65535",
+    ),
     (SocketAddrV4::new(Ipv4Addr::UNSPECIFIED, 0), "0.0.0.0:0"),
 ];
 
@@ -58,7 +64,6 @@ fn socket_addr_format() {
         assert_eq!(format!("{addr}"), *expected);
     }
 }
-
 
 #[test]
 fn socket_addr_uformat() {

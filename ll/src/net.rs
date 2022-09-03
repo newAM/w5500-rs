@@ -574,7 +574,6 @@ impl defmt::Format for SocketAddrV4 {
     }
 }
 
-
 #[cfg(feature = "ufmt")]
 impl ufmt::uDisplay for SocketAddrV4 {
     fn fmt<W>(&self, f: &mut ufmt::Formatter<'_, W>) -> Result<(), W::Error>
