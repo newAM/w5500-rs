@@ -9,7 +9,7 @@
 //!
 //! [`embedded-hal`]: https://github.com/rust-embedded/embedded-hal
 //! [`Registers`]: crate::Registers
-//! [VDM]: crate::blocking::vdm
+//! [VDM]: crate::eh0::vdm
 
 use crate::spi::{self, AccessMode};
 
@@ -26,20 +26,21 @@ pub struct W5500<SPI> {
 
 impl<SPI, SpiError> W5500<SPI>
 where
-    SPI: embedded_hal::blocking::spi::Transfer<u8, Error = SpiError>
-        + embedded_hal::blocking::spi::Write<u8, Error = SpiError>,
+    SPI: eh0::blocking::spi::Transfer<u8, Error = SpiError>
+        + eh0::blocking::spi::Write<u8, Error = SpiError>,
 {
     /// Creates a new `W5500` driver from a SPI peripheral.
     ///
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm0 as hal;
     /// # let spi = hal::spi::Mock::new(&[]);
-    /// use w5500_ll::blocking::fdm::W5500;
+    /// use w5500_ll::eh0::fdm::W5500;
     ///
     /// let mut w5500: W5500<_> = W5500::new(spi);
     /// ```
+    #[inline]
     pub fn new(spi: SPI) -> Self {
         W5500 { spi }
     }
@@ -49,13 +50,14 @@ where
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm0 as hal;
     /// # let spi = hal::spi::Mock::new(&[]);
-    /// use w5500_ll::blocking::fdm::W5500;
+    /// use w5500_ll::eh0::fdm::W5500;
     ///
     /// let w5500: W5500<_> = W5500::new(spi);
     /// let spi = w5500.free();
     /// ```
+    #[inline]
     pub fn free(self) -> SPI {
         self.spi
     }
@@ -63,8 +65,8 @@ where
 
 impl<SPI, SpiError> crate::Registers for W5500<SPI>
 where
-    SPI: embedded_hal::blocking::spi::Transfer<u8, Error = SpiError>
-        + embedded_hal::blocking::spi::Write<u8, Error = SpiError>,
+    SPI: eh0::blocking::spi::Transfer<u8, Error = SpiError>
+        + eh0::blocking::spi::Write<u8, Error = SpiError>,
 {
     /// SPI IO error type.
     type Error = SpiError;

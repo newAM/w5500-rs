@@ -10,7 +10,7 @@
 //! [`Registers`]: crate::Registers
 
 use crate::spi::{vdm_header, AccessMode};
-use embedded_hal::digital::v2::OutputPin;
+use eh0::digital::v2::OutputPin;
 
 /// W5500 blocking variable data length implementation.
 #[derive(Debug)]
@@ -24,8 +24,8 @@ pub struct W5500<SPI, CS> {
 
 impl<SPI, CS, SpiError> W5500<SPI, CS>
 where
-    SPI: embedded_hal::blocking::spi::Transfer<u8, Error = SpiError>
-        + embedded_hal::blocking::spi::Write<u8, Error = SpiError>,
+    SPI: eh0::blocking::spi::Transfer<u8, Error = SpiError>
+        + eh0::blocking::spi::Write<u8, Error = SpiError>,
     CS: OutputPin<Error = core::convert::Infallible>,
 {
     /// Creates a new `W5500` driver from a SPI peripheral and a chip select
@@ -38,22 +38,23 @@ where
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm0 as hal;
     /// # let spi = hal::spi::Mock::new(&[]);
     /// # struct Pin {};
-    /// # impl embedded_hal::digital::v2::OutputPin for Pin {
+    /// # impl eh0::digital::v2::OutputPin for Pin {
     /// #     type Error = core::convert::Infallible;
     /// #     fn set_low(&mut self) -> Result<(), Self::Error> { Ok(()) }
     /// #     fn set_high(&mut self) -> Result<(), Self::Error> { Ok(()) }
     /// # }
     /// # let mut pin = Pin {};
-    /// use embedded_hal::digital::v2::OutputPin;
-    /// use w5500_ll::blocking::vdm_infallible_gpio::W5500;
+    /// use eh0::digital::v2::OutputPin;
+    /// use w5500_ll::eh0::vdm_infallible_gpio::W5500;
     ///
     /// pin.set_high().unwrap();
     /// let mut w5500: W5500<_, _> = W5500::new(spi, pin);
     /// # Ok::<(), hal::MockError>(())
     /// ```
+    #[inline]
     pub fn new(spi: SPI, cs: CS) -> Self {
         W5500 { spi, cs }
     }
@@ -63,20 +64,21 @@ where
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm0 as hal;
     /// # let spi = hal::spi::Mock::new(&[]);
     /// # struct Pin {};
-    /// # impl embedded_hal::digital::v2::OutputPin for Pin {
+    /// # impl eh0::digital::v2::OutputPin for Pin {
     /// #     type Error = core::convert::Infallible;
     /// #     fn set_low(&mut self) -> Result<(), Self::Error> { Ok(()) }
     /// #     fn set_high(&mut self) -> Result<(), Self::Error> { Ok(()) }
     /// # }
     /// # let mut pin = Pin {};
-    /// use w5500_ll::blocking::vdm_infallible_gpio::W5500;
+    /// use w5500_ll::eh0::vdm_infallible_gpio::W5500;
     ///
     /// let mut w5500 = W5500::new(spi, pin);
     /// let (spi, pin) = w5500.free();
     /// ```
+    #[inline]
     pub fn free(self) -> (SPI, CS) {
         (self.spi, self.cs)
     }
@@ -95,8 +97,8 @@ where
 
 impl<SPI, CS, SpiError> crate::Registers for W5500<SPI, CS>
 where
-    SPI: embedded_hal::blocking::spi::Transfer<u8, Error = SpiError>
-        + embedded_hal::blocking::spi::Write<u8, Error = SpiError>,
+    SPI: eh0::blocking::spi::Transfer<u8, Error = SpiError>
+        + eh0::blocking::spi::Write<u8, Error = SpiError>,
     CS: OutputPin<Error = core::convert::Infallible>,
 {
     /// SPI IO error type.

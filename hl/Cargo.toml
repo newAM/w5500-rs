@@ -13,7 +13,8 @@ homepage = "https://github.com/newAM/w5500-rs"
 
 [features]
 defmt = ["w5500-ll/defmt", "dep:defmt"]
-embedded-hal = ["w5500-ll/embedded-hal"]
+eh0 = ["w5500-ll/eh0"]
+eh1 = ["w5500-ll/eh1"]
 std = ["w5500-ll/std"]
 
 [dependencies]
@@ -21,8 +22,9 @@ defmt = { version = "0.3", optional = true }
 w5500-ll = { path = "../ll", version = "0.10" }
 
 [dev-dependencies]
-embedded-hal-mock = "0.8"
-w5500-ll = { path = "../ll", version = "0.10", features = ["embedded-hal", "defmt"] }
+embedded-hal-mock = { git = "https://github.com/dbrgn/embedded-hal-mock", branch = "1-alpha" }
+embedded-hal = "1.0.0-alpha.8"
+w5500-ll = { path = "../ll", version = "0.10", features = ["eh1", "defmt"] }
 
 [package.metadata.docs.rs]
 all-features = true

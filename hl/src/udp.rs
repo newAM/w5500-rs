@@ -52,13 +52,12 @@ impl UdpHeader {
 ///
 /// ```no_run
 /// # use embedded_hal_mock as h;
-/// # let mut w5500 = w5500_ll::blocking::vdm::W5500::new(h::spi::Mock::new(&[]), h::pin::Mock::new(&[]));
+/// # let mut w5500 = w5500_ll::eh1::vdm::W5500::new(h::spi::Mock::new(&[]));
 /// use w5500_hl::{
+///     io::Read,
 ///     ll::{Registers, Sn::Sn0},
 ///     net::{Ipv4Addr, SocketAddrV4},
-///     Udp,
-///     UdpReader,
-///     io::Read,
+///     Udp, UdpReader,
 /// };
 ///
 /// const DEST: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::new(192, 0, 2, 1), 8081);
@@ -136,13 +135,12 @@ impl<'w, W5500: Registers> Read<W5500::Error> for UdpReader<'w, W5500> {
 ///
 /// ```no_run
 /// # use embedded_hal_mock as h;
-/// # let mut w5500 = w5500_ll::blocking::vdm::W5500::new(h::spi::Mock::new(&[]), h::pin::Mock::new(&[]));
+/// # let mut w5500 = w5500_ll::eh1::vdm::W5500::new(h::spi::Mock::new(&[]));
 /// use w5500_hl::{
+///     io::Write,
 ///     ll::{Registers, Sn::Sn0},
 ///     net::{Ipv4Addr, SocketAddrV4},
-///     Udp,
-///     io::Write,
-///     UdpWriter,
+///     Udp, UdpWriter,
 /// };
 ///
 /// const DEST: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::new(192, 0, 2, 1), 8081);
@@ -160,7 +158,7 @@ impl<'w, W5500: Registers> Read<W5500::Error> for UdpReader<'w, W5500> {
 /// assert_eq!(usize::from(n_written), data.len());
 ///
 /// udp_writer.udp_send_to(&DEST)?;
-/// # Ok::<(), w5500_hl::ll::blocking::vdm::Error<_, _>>(())
+/// # Ok::<(), embedded_hal::spi::ErrorKind>(())
 /// ```
 #[derive(Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
@@ -248,14 +246,11 @@ impl<'a, W: Registers> UdpReader<'a, W> {
     /// # Example
     ///
     /// ```no_run
-    /// # use embedded_hal_mock as h;
-    /// # let mut w5500 = w5500_ll::blocking::vdm::W5500::new(h::spi::Mock::new(&[]), h::pin::Mock::new(&[]));
+    /// # let mut w5500 = w5500_ll::eh1::vdm::W5500::new(embedded_hal_mock::spi::Mock::new(&[]));
     /// use w5500_hl::{
     ///     ll::{Registers, Sn::Sn0},
     ///     net::{Ipv4Addr, SocketAddrV4},
-    ///     Udp,
-    ///     UdpReader,
-    ///     UdpHeader
+    ///     Udp, UdpHeader, UdpReader,
     /// };
     ///
     /// const DEST: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::new(192, 0, 2, 1), 8081);
@@ -317,13 +312,12 @@ pub trait Udp: Registers {
     /// Bind the first socket to port 8080.
     ///
     /// ```no_run
-    /// # use embedded_hal_mock as h;
-    /// # let mut w5500 = w5500_ll::blocking::vdm::W5500::new(h::spi::Mock::new(&[]), h::pin::Mock::new(&[]));
+    /// # let mut w5500 = w5500_ll::eh1::vdm::W5500::new(embedded_hal_mock::spi::Mock::new(&[]));
     /// use w5500_hl::ll::{Registers, Sn::Sn0};
     /// use w5500_hl::Udp;
     ///
     /// w5500.udp_bind(Sn0, 8080)?;
-    /// # Ok::<(), w5500_hl::ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), embedded_hal::spi::ErrorKind>(())
     /// ```
     ///
     /// [`net::SocketAddrV4`]: [crate::net::SocketAddrV4]
@@ -378,11 +372,10 @@ pub trait Udp: Registers {
     /// # Example
     ///
     /// ```no_run
-    /// # use embedded_hal_mock as h;
-    /// # let mut w5500 = w5500_ll::blocking::vdm::W5500::new(h::spi::Mock::new(&[]), h::pin::Mock::new(&[]));
+    /// # let mut w5500 = w5500_ll::eh1::vdm::W5500::new(embedded_hal_mock::spi::Mock::new(&[]));
     /// use w5500_hl::{
-    ///     ll::{Registers, Sn::Sn0},
     ///     block,
+    ///     ll::{Registers, Sn::Sn0},
     ///     Udp,
     /// };
     ///
@@ -459,11 +452,10 @@ pub trait Udp: Registers {
     /// # Example
     ///
     /// ```no_run
-    /// # use embedded_hal_mock as h;
-    /// # let mut w5500 = w5500_ll::blocking::vdm::W5500::new(h::spi::Mock::new(&[]), h::pin::Mock::new(&[]));
+    /// # let mut w5500 = w5500_ll::eh1::vdm::W5500::new(embedded_hal_mock::spi::Mock::new(&[]));
     /// use w5500_hl::{
-    ///     ll::{Registers, Sn::Sn0},
     ///     block,
+    ///     ll::{Registers, Sn::Sn0},
     ///     Udp,
     /// };
     ///
@@ -475,7 +467,9 @@ pub trait Udp: Registers {
     /// assert!(
     ///     usize::from(number_of_bytes) > buf.len(),
     ///     "Buffer was of len {} too small to receive all data: {} / {} bytes read",
-    ///     buf.len(), number_of_bytes, udp_header.len
+    ///     buf.len(),
+    ///     number_of_bytes,
+    ///     udp_header.len
     /// );
     ///
     /// let filled_buf = &mut buf[..number_of_bytes.into()];
@@ -536,11 +530,11 @@ pub trait Udp: Registers {
     /// # Example
     ///
     /// ```no_run
-    /// # use embedded_hal_mock as h;
-    /// # let mut w5500 = w5500_ll::blocking::vdm::W5500::new(h::spi::Mock::new(&[]), h::pin::Mock::new(&[]));
+    /// # let mut w5500 = w5500_ll::eh1::vdm::W5500::new(embedded_hal_mock::spi::Mock::new(&[]));
     /// use w5500_hl::{
+    ///     block,
     ///     ll::{Registers, Sn::Sn0},
-    ///     Udp, UdpHeader, block
+    ///     Udp, UdpHeader,
     /// };
     /// // global_allocator is currently available on nightly for embedded rust
     /// extern crate alloc;
@@ -587,8 +581,7 @@ pub trait Udp: Registers {
     /// # Example
     ///
     /// ```no_run
-    /// # use embedded_hal_mock as h;
-    /// # let mut w5500 = w5500_ll::blocking::vdm::W5500::new(h::spi::Mock::new(&[]), h::pin::Mock::new(&[]));
+    /// # let mut w5500 = w5500_ll::eh1::vdm::W5500::new(embedded_hal_mock::spi::Mock::new(&[]));
     /// use w5500_hl::{
     ///     ll::{Registers, Sn::Sn0},
     ///     net::{Ipv4Addr, SocketAddrV4},
@@ -601,7 +594,7 @@ pub trait Udp: Registers {
     /// let buf: [u8; 10] = [0; 10];
     /// let tx_bytes: u16 = w5500.udp_send_to(Sn0, &buf, &DEST)?;
     /// assert_eq!(usize::from(tx_bytes), buf.len());
-    /// # Ok::<(), w5500_hl::ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), embedded_hal::spi::ErrorKind>(())
     /// ```
     ///
     /// [`std::net::UdpSocket::send_to`]: https://doc.rust-lang.org/std/net/struct.UdpSocket.html#method.send_to
@@ -628,8 +621,7 @@ pub trait Udp: Registers {
     /// # Example
     ///
     /// ```no_run
-    /// # use embedded_hal_mock as h;
-    /// # let mut w5500 = w5500_ll::blocking::vdm::W5500::new(h::spi::Mock::new(&[]), h::pin::Mock::new(&[]));
+    /// # let mut w5500 = w5500_ll::eh1::vdm::W5500::new(embedded_hal_mock::spi::Mock::new(&[]));
     /// use w5500_hl::{
     ///     ll::{Registers, Sn::Sn0},
     ///     net::{Ipv4Addr, SocketAddrV4},
@@ -642,7 +634,7 @@ pub trait Udp: Registers {
     /// let buf: [u8; 10] = [0; 10];
     /// let tx_bytes: u16 = w5500.udp_send_to_if_free(Sn0, &buf, &DEST)?;
     /// assert_eq!(usize::from(tx_bytes), buf.len());
-    /// # Ok::<(), w5500_hl::ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), embedded_hal::spi::ErrorKind>(())
     /// ```
     ///
     /// [`std::net::UdpSocket::send_to`]: https://doc.rust-lang.org/std/net/struct.UdpSocket.html#method.send_to
@@ -669,8 +661,7 @@ pub trait Udp: Registers {
     /// # Example
     ///
     /// ```no_run
-    /// # use embedded_hal_mock as h;
-    /// # let mut w5500 = w5500_ll::blocking::vdm::W5500::new(h::spi::Mock::new(&[]), h::pin::Mock::new(&[]));
+    /// # let mut w5500 = w5500_ll::eh1::vdm::W5500::new(embedded_hal_mock::spi::Mock::new(&[]));
     /// use w5500_hl::{
     ///     ll::{Registers, Sn::Sn0},
     ///     net::{Ipv4Addr, SocketAddrV4},
@@ -686,7 +677,7 @@ pub trait Udp: Registers {
     /// // send the same to the same destination
     /// let tx_bytes: u16 = w5500.udp_send(Sn0, &buf)?;
     /// assert_eq!(usize::from(tx_bytes), buf.len());
-    /// # Ok::<(), w5500_hl::ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), embedded_hal::spi::ErrorKind>(())
     /// ```
     ///
     /// [`UdpWriter::udp_send_to`]: crate::UdpWriter::udp_send_to
@@ -721,8 +712,7 @@ pub trait Udp: Registers {
     /// # Example
     ///
     /// ```no_run
-    /// # use embedded_hal_mock as h;
-    /// # let mut w5500 = w5500_ll::blocking::vdm::W5500::new(h::spi::Mock::new(&[]), h::pin::Mock::new(&[]));
+    /// # let mut w5500 = w5500_ll::eh1::vdm::W5500::new(embedded_hal_mock::spi::Mock::new(&[]));
     /// use w5500_hl::{
     ///     ll::{Registers, Sn::Sn0},
     ///     net::{Ipv4Addr, SocketAddrV4},
@@ -738,7 +728,7 @@ pub trait Udp: Registers {
     /// // send the same to the same destination
     /// let tx_bytes: u16 = w5500.udp_send_if_free(Sn0, &buf)?;
     /// assert_eq!(usize::from(tx_bytes), buf.len());
-    /// # Ok::<(), w5500_hl::ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), embedded_hal::spi::ErrorKind>(())
     /// ```
     ///
     /// [`UdpWriter::udp_send_to`]: crate::UdpWriter::udp_send_to

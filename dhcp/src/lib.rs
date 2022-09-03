@@ -9,13 +9,14 @@
 //!
 //! All features are disabled by default.
 //!
-//! * `embedded-hal`: Passthrough to [`w5500-hl`].
+//! * `eh0`: Passthrough to [`w5500-hl`].
+//! * `eh1`: Passthrough to [`w5500-hl`].
 //! * `std`: Passthrough to [`w5500-hl`].
 //! * `defmt`: Enable logging with `defmt`. Also a passthrough to [`w5500-hl`].
 //! * `log`: Enable logging with `log`.
 //!
 //! [`std::net`]: https://doc.rust-lang.org/std/net/index.html
-//! [`w5500-hl`]: https://github.com/newAM/w5500-hl-rs
+//! [`w5500-hl`]: https://crates.io/crates/w5500-hl
 //! [Wiznet W5500]: https://www.wiznet.io/product-item/w5500/
 #![cfg_attr(docsrs, feature(doc_cfg), feature(doc_auto_cfg))]
 #![cfg_attr(all(not(feature = "std"), not(test)), no_std)]

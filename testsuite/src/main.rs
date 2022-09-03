@@ -1,7 +1,7 @@
 use ftdi_embedded_hal::{
-    embedded_hal::digital::v2::OutputPin as EhOutputPin, Delay, FtHal, InputPin, OutputPin, Spi,
+    libftd2xx::{self, Ft232h},
+    Delay, FtHal, InputPin, SpiDevice,
 };
-use libftd2xx::Ft232h;
 use rand_core::{OsRng, RngCore};
 use std::{
     process::Command,
@@ -12,9 +12,9 @@ use w5500_dhcp::{Client as DhcpClient, Hostname, State as DhcpState};
 use w5500_dns::Client as DnsClient;
 use w5500_hl::Tcp;
 use w5500_ll::{
-    blocking::vdm::W5500,
+    eh1::{reset, vdm::W5500},
     net::{Eui48Addr, Ipv4Addr, SocketAddrV4},
-    reset, Registers, Sn, VERSION,
+    Registers, Sn, VERSION,
 };
 use w5500_mqtt::{
     Client as MqttClient, ClientId, Error as MqttError, Event as MqttEvent,
@@ -39,19 +39,14 @@ const SNTP_SN: Sn = Sn::Sn4;
 const HOSTNAME: Hostname = Hostname::new_unwrapped("w5500-testsuite");
 const CLIENT_ID: ClientId = ClientId::new_unwrapped("w5500testsuite");
 
-pub fn new_w5500(
-    ftdi: &FtHal<Ft232h>,
-) -> (W5500<Spi<Ft232h>, OutputPin<Ft232h>>, InputPin<Ft232h>) {
+pub fn new_w5500(ftdi: &FtHal<Ft232h>) -> (W5500<SpiDevice<Ft232h>>, InputPin<Ft232h>) {
     let int = ftdi.adi7().unwrap();
     let mut rst = ftdi.ad6().unwrap();
-    let mut cs = ftdi.ad3().unwrap();
-    let spi = ftdi.spi().unwrap();
-
-    cs.set_high().unwrap();
+    let spi = ftdi.spi_device(3).unwrap();
 
     reset(&mut rst, &mut Delay::new()).unwrap();
 
-    let w5500 = W5500::new(spi, cs);
+    let w5500 = W5500::new(spi);
 
     (w5500, int)
 }
@@ -98,7 +93,7 @@ fn dhcp_poll_bound(ta: &mut TestArgs) {
 }
 
 struct TestArgs<'a> {
-    w5500: &'a mut W5500<Spi<'a, Ft232h>, OutputPin<'a, Ft232h>>,
+    w5500: &'a mut W5500<SpiDevice<'a, Ft232h>>,
     mono: &'a Monotonic,
     dhcp_client: DhcpClient<'static>,
     mqtt_client: MqttClient<'static>,
@@ -202,7 +197,7 @@ fn mqtt_disconnect(ta: &mut TestArgs) {
 }
 
 fn dns_query(ta: &mut TestArgs) {
-    let dns_seed: u64 = (&mut OsRng).next_u64();
+    let dns_seed: u64 = OsRng.next_u64();
     let mut dns_client: DnsClient = DnsClient::new(
         DNS_SN,
         16385,
@@ -358,7 +353,7 @@ fn main() {
     // reduce log spam from polling for link up
     sleep(Duration::from_secs(2));
 
-    let dhcp_seed: u64 = (&mut OsRng).next_u64();
+    let dhcp_seed: u64 = OsRng.next_u64();
 
     let mono: Monotonic = Monotonic::default();
     let mut args: TestArgs = TestArgs {

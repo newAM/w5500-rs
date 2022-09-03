@@ -10,7 +10,7 @@
 
 use crate::spi::{vdm_header, AccessMode};
 use core::convert::Infallible;
-use embedded_hal::digital::v2::OutputPin;
+use eh0::digital::v2::OutputPin;
 
 /// W5500 blocking variable data length implementation.
 #[derive(Debug)]
@@ -24,8 +24,8 @@ pub struct W5500<SPI, CS> {
 
 impl<SPI, CS> W5500<SPI, CS>
 where
-    SPI: embedded_hal::blocking::spi::Transfer<u8, Error = Infallible>
-        + embedded_hal::blocking::spi::Write<u8, Error = Infallible>,
+    SPI: eh0::blocking::spi::Transfer<u8, Error = Infallible>
+        + eh0::blocking::spi::Write<u8, Error = Infallible>,
     CS: OutputPin<Error = Infallible>,
 {
     /// Creates a new `W5500` driver from a SPI peripheral and a chip select
@@ -39,27 +39,28 @@ where
     ///
     /// ```
     /// # struct Moo {};
-    /// # impl embedded_hal::digital::v2::OutputPin for Moo {
+    /// # impl eh0::digital::v2::OutputPin for Moo {
     /// #     type Error = core::convert::Infallible;
     /// #     fn set_low(&mut self) -> Result<(), Self::Error> { Ok(()) }
     /// #     fn set_high(&mut self) -> Result<(), Self::Error> { Ok(()) }
     /// # }
-    /// # impl embedded_hal::blocking::spi::Transfer<u8> for Moo {
+    /// # impl eh0::blocking::spi::Transfer<u8> for Moo {
     /// #     type Error = core::convert::Infallible;
     /// #     fn transfer<'w>(&mut self, words: &'w mut [u8]) -> Result<&'w [u8], Self::Error> { Ok(words) }
     /// # }
-    /// # impl embedded_hal::blocking::spi::Write<u8> for Moo {
+    /// # impl eh0::blocking::spi::Write<u8> for Moo {
     /// #     type Error = core::convert::Infallible;
     /// #     fn write<'w>(&mut self, words: &[u8]) -> Result<(), Self::Error> { Ok(()) }
     /// # }
     /// # let mut pin = Moo {};
     /// # let mut spi = Moo {};
-    /// use embedded_hal::digital::v2::OutputPin;
-    /// use w5500_ll::blocking::vdm_infallible::W5500;
+    /// use eh0::digital::v2::OutputPin;
+    /// use w5500_ll::eh0::vdm_infallible::W5500;
     ///
     /// pin.set_high().unwrap();
     /// let mut w5500: W5500<_, _> = W5500::new(spi, pin);
     /// ```
+    #[inline]
     pub fn new(spi: SPI, cs: CS) -> Self {
         W5500 { spi, cs }
     }
@@ -70,28 +71,29 @@ where
     ///
     /// ```
     /// # struct Moo {};
-    /// # impl embedded_hal::digital::v2::OutputPin for Moo {
+    /// # impl eh0::digital::v2::OutputPin for Moo {
     /// #     type Error = core::convert::Infallible;
     /// #     fn set_low(&mut self) -> Result<(), Self::Error> { Ok(()) }
     /// #     fn set_high(&mut self) -> Result<(), Self::Error> { Ok(()) }
     /// # }
-    /// # impl embedded_hal::blocking::spi::Transfer<u8> for Moo {
+    /// # impl eh0::blocking::spi::Transfer<u8> for Moo {
     /// #     type Error = core::convert::Infallible;
     /// #     fn transfer<'w>(&mut self, words: &'w mut [u8]) -> Result<&'w [u8], Self::Error> { Ok(words) }
     /// # }
-    /// # impl embedded_hal::blocking::spi::Write<u8> for Moo {
+    /// # impl eh0::blocking::spi::Write<u8> for Moo {
     /// #     type Error = core::convert::Infallible;
     /// #     fn write<'w>(&mut self, words: &[u8]) -> Result<(), Self::Error> { Ok(()) }
     /// # }
     /// # let mut pin = Moo {};
     /// # let mut spi = Moo {};
-    /// use embedded_hal::digital::v2::OutputPin;
-    /// use w5500_ll::blocking::vdm_infallible::W5500;
+    /// use eh0::digital::v2::OutputPin;
+    /// use w5500_ll::eh0::vdm_infallible::W5500;
     ///
     /// pin.set_high().unwrap();
     /// let mut w5500: W5500<_, _> = W5500::new(spi, pin);
     /// let (spi, pin) = w5500.free();
     /// ```
+    #[inline]
     pub fn free(self) -> (SPI, CS) {
         (self.spi, self.cs)
     }
@@ -99,8 +101,8 @@ where
 
 impl<SPI, CS> crate::Registers for W5500<SPI, CS>
 where
-    SPI: embedded_hal::blocking::spi::Transfer<u8, Error = Infallible>
-        + embedded_hal::blocking::spi::Write<u8, Error = Infallible>,
+    SPI: eh0::blocking::spi::Transfer<u8, Error = Infallible>
+        + eh0::blocking::spi::Write<u8, Error = Infallible>,
     CS: OutputPin<Error = Infallible>,
 {
     /// SPI IO error type.

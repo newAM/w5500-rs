@@ -3,14 +3,14 @@
 Platform agnostic rust driver for the [Wiznet W5500] internet offload chip.
 
 This crate contains higher level (hl) socket operations, built on-top of my
-other crate, [w5500-ll], which contains register accessors, and networking
+other crate, [`w5500-ll`], which contains register accessors, and networking
 data types for the W5500.
 
 ## Design
 
 There are no separate socket structures.
 The [`Tcp`] and [`Udp`] traits provided in this crate simply extend the
-[`Registers`] trait provided in [w5500-ll].
+[`Registers`] trait provided in [`w5500-ll`].
 This makes for a less ergonomic API, but a much more portable API because
 there are no mutexes or runtime checks to enable socket structures to share
 ownership of the underlying W5500 device.
@@ -23,9 +23,10 @@ structures utilizing whatever Mutex is available for your platform / RTOS.
 
 All features are disabled by default.
 
-* `defmt`: Passthrough to [w5500-ll].
-* `embedded-hal`: Passthrough to [w5500-ll].
-* `std`: Passthrough to [w5500-ll].
+* `defmt`: Passthrough to [`w5500-ll`].
+* `eh0`: Passthrough to [`w5500-ll`].
+* `eh1`: Passthrough to [`w5500-ll`].
+* `std`: Passthrough to [`w5500-ll`].
 
 ## Examples
 
@@ -85,5 +86,5 @@ w5500.tcp_listen(HTTP_SOCKET, HTTP_PORT)?;
 [`std::net`]: https://doc.rust-lang.org/std/net/index.html
 [`Tcp`]: https://docs.rs/w5500-hl/latest/w5500_hl/trait.Tcp.html
 [`Udp`]: https://docs.rs/w5500-hl/latest/w5500_hl/trait.Udp.html
-[w5500-ll]: https://github.com/newAM/w5500-ll-rs
+[`w5500-ll`]: https://crates.io/crates/w5500-ll
 [Wiznet W5500]: https://www.wiznet.io/product-item/w5500/

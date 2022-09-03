@@ -13,21 +13,19 @@
 //! Reading the VERSIONR register (a constant value).
 //!
 //! ```
-//! # use embedded_hal_mock as hal;
+//! # use ehm1 as hal;
 //! # let spi = hal::spi::Mock::new(&[
-//! #   hal::spi::Transaction::write(vec![0x00, 0x39, 0x00]),
-//! #   hal::spi::Transaction::transfer(vec![0], vec![0x04]),
+//! #   hal::spi::Transaction::transaction_start(),
+//! #   hal::spi::Transaction::write_vec(vec![0x00, 0x39, 0x00]),
+//! #   hal::spi::Transaction::read(0x04),
+//! #   hal::spi::Transaction::transaction_end(),
 //! # ]);
-//! # let pin = hal::pin::Mock::new(&[
-//! #    hal::pin::Transaction::set(hal::pin::State::Low),
-//! #    hal::pin::Transaction::set(hal::pin::State::High),
-//! # ]);
-//! use w5500_ll::{blocking::vdm::W5500, Registers};
+//! use w5500_ll::{eh1::vdm::W5500, Registers};
 //!
-//! let mut w5500 = W5500::new(spi, pin);
+//! let mut w5500 = W5500::new(spi);
 //! let version: u8 = w5500.version()?;
 //! assert_eq!(version, 0x04);
-//! # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+//! # Ok::<(), eh1::spi::ErrorKind>(())
 //! ```
 //!
 //! # Feature Flags
@@ -35,15 +33,20 @@
 //! All features are disabled by default.
 //!
 //! * `defmt`: Enable formatting most types with `defmt`.
-//! * `embedded-hal`: Enables the [`blocking`] module which contains
-//!   implementations of the [`Registers`] trait using the `embedded-hal` traits.
+//! * `eh0`: Enables the [`eh0`] module which contains
+//!   implementations of the [`Registers`] trait
+//!   using the `embedded-hal` version 0.2 traits.
+//! * `eh1`: Enables the [`eh1`] module which contains
+//!   implementations of the [`Registers`] trait
+//!   using the `embedded-hal` version 1 traits.
 //! * `std`: Enables conversion between [`std::net`] and [`w5500_ll::net`] types.
 //!   This is for testing purposes only, the `std` flag will not work on
 //!   embedded systems because it uses the standard library.
 //!
 //! [`std::net`]: https://doc.rust-lang.org/std/net/index.html
 //! [Wiznet W5500]: https://www.wiznet.io/product-item/w5500/
-//! [`blocking`]: https://docs.rs/w5500-ll/latest/w5500_ll/blocking/index.html
+//! [`eh0`]: https://docs.rs/w5500-ll/latest/w5500_ll/eh0/index.html
+//! [`eh1`]: https://docs.rs/w5500-ll/latest/w5500_ll/eh1/index.html
 //! [`Registers`]: https://docs.rs/w5500-ll/latest/w5500_ll/trait.Registers.html
 //! [`w5500_ll::net`]: https://docs.rs/w5500-ll/latest/w5500_ll/net/index.html
 #![cfg_attr(docsrs, feature(doc_cfg), feature(doc_auto_cfg))]
@@ -51,8 +54,11 @@
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]
 
-#[cfg(feature = "embedded-hal")]
-pub mod blocking;
+#[cfg(feature = "eh0")]
+pub mod eh0;
+#[cfg(feature = "eh1")]
+pub mod eh1;
+
 pub mod net;
 pub mod spi;
 
@@ -87,21 +93,19 @@ const SOCKET_RX_OFFSET: u8 = 0x03;
 /// # Example
 ///
 /// ```
-/// # use embedded_hal_mock as hal;
+/// # use ehm1 as hal;
 /// # let spi = hal::spi::Mock::new(&[
-/// #   hal::spi::Transaction::write(vec![0x00, 0x39, 0x00]),
-/// #   hal::spi::Transaction::transfer(vec![0], vec![0x04]),
+/// #   hal::spi::Transaction::transaction_start(),
+/// #   hal::spi::Transaction::write_vec(vec![0x00, 0x39, 0x00]),
+/// #   hal::spi::Transaction::read(0x04),
+/// #   hal::spi::Transaction::transaction_end(),
 /// # ]);
-/// # let pin = hal::pin::Mock::new(&[
-/// #    hal::pin::Transaction::set(hal::pin::State::Low),
-/// #    hal::pin::Transaction::set(hal::pin::State::High),
-/// # ]);
-/// use w5500_ll::{blocking::vdm::W5500, Registers, VERSION};
+/// use w5500_ll::{eh1::vdm::W5500, Registers, VERSION};
 ///
-/// let mut w5500 = W5500::new(spi, pin);
+/// let mut w5500 = W5500::new(spi);
 /// let version: u8 = w5500.version()?;
 /// assert_eq!(version, VERSION);
-/// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+/// # Ok::<(), eh1::spi::ErrorKind>(())
 /// ```
 pub const VERSION: u8 = 0x04;
 
@@ -220,26 +224,24 @@ impl Sn {
     /// As an argument of [`set_simr`]:
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x18, 0x04]),
-    /// #   hal::spi::Transaction::write(vec![0x0A]),
-    /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x18, 0x04]),
+    /// #   hal::spi::Transaction::write_vec(vec![0x0A]),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{
-    ///     blocking::vdm::W5500,
+    ///     eh1::vdm::W5500,
     ///     Registers,
     ///     Sn::{Sn1, Sn3},
     /// };
     ///
-    /// let mut w5500 = W5500::new(spi, pin);
+    /// let mut w5500 = W5500::new(spi);
     /// // enable socket 1 and socket 3 interrupts
     /// const SOCKET_INTERRUPT_MASK: u8 = Sn1.bitmask() | Sn3.bitmask();
     /// w5500.set_simr(SOCKET_INTERRUPT_MASK)?;
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     ///
     /// [`set_simr`]: crate::Registers::set_simr
@@ -254,18 +256,16 @@ impl Sn {
     /// Check all sockets for a pending interrupt.
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x17, 0x00]),
-    /// #   hal::spi::Transaction::transfer(vec![0], vec![0]),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x17, 0x00]),
+    /// #   hal::spi::Transaction::read(0),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// # ]);
-    /// use w5500_ll::{blocking::vdm::W5500, Registers, Sn, SocketCommand};
+    /// use w5500_ll::{eh1::vdm::W5500, Registers, Sn, SocketCommand};
     ///
-    /// let mut w5500 = W5500::new(spi, pin);
+    /// let mut w5500 = W5500::new(spi);
     ///
     /// let sir: u8 = w5500.sir()?;
     /// for sn in Sn::iter() {
@@ -274,7 +274,7 @@ impl Sn {
     ///         // handle socket interrupt
     ///     }
     /// }
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     #[inline]
     pub fn iter() -> core::slice::Iter<'static, Self> {
@@ -324,50 +324,48 @@ impl TryFrom<u8> for Sn {
 ///
 /// ```
 /// # use w5500_ll::Sn::*;
-/// # use embedded_hal_mock as hal;
+/// # use ehm1 as hal;
 /// # let spi = hal::spi::Mock::new(&[
-/// #   hal::spi::Transaction::write(vec![0x00, 0x01, (Sn0.block() << 3) | 0x04]),
-/// #   hal::spi::Transaction::write(vec![SocketCommand::Close.into()]),
-/// #   hal::spi::Transaction::write(vec![0x00, 0x01, (Sn1.block() << 3) | 0x04]),
-/// #   hal::spi::Transaction::write(vec![SocketCommand::Close.into()]),
-/// #   hal::spi::Transaction::write(vec![0x00, 0x01, (Sn2.block() << 3) | 0x04]),
-/// #   hal::spi::Transaction::write(vec![SocketCommand::Close.into()]),
-/// #   hal::spi::Transaction::write(vec![0x00, 0x01, (Sn3.block() << 3) | 0x04]),
-/// #   hal::spi::Transaction::write(vec![SocketCommand::Close.into()]),
-/// #   hal::spi::Transaction::write(vec![0x00, 0x01, (Sn4.block() << 3) | 0x04]),
-/// #   hal::spi::Transaction::write(vec![SocketCommand::Close.into()]),
-/// #   hal::spi::Transaction::write(vec![0x00, 0x01, (Sn5.block() << 3) | 0x04]),
-/// #   hal::spi::Transaction::write(vec![SocketCommand::Close.into()]),
-/// #   hal::spi::Transaction::write(vec![0x00, 0x01, (Sn6.block() << 3) | 0x04]),
-/// #   hal::spi::Transaction::write(vec![SocketCommand::Close.into()]),
-/// #   hal::spi::Transaction::write(vec![0x00, 0x01, (Sn7.block() << 3) | 0x04]),
-/// #   hal::spi::Transaction::write(vec![SocketCommand::Close.into()]),
+/// #   hal::spi::Transaction::transaction_start(),
+/// #   hal::spi::Transaction::write_vec(vec![0x00, 0x01, (Sn0.block() << 3) | 0x04]),
+/// #   hal::spi::Transaction::write_vec(vec![SocketCommand::Close.into()]),
+/// #   hal::spi::Transaction::transaction_end(),
+/// #   hal::spi::Transaction::transaction_start(),
+/// #   hal::spi::Transaction::write_vec(vec![0x00, 0x01, (Sn1.block() << 3) | 0x04]),
+/// #   hal::spi::Transaction::write_vec(vec![SocketCommand::Close.into()]),
+/// #   hal::spi::Transaction::transaction_end(),
+/// #   hal::spi::Transaction::transaction_start(),
+/// #   hal::spi::Transaction::write_vec(vec![0x00, 0x01, (Sn2.block() << 3) | 0x04]),
+/// #   hal::spi::Transaction::write_vec(vec![SocketCommand::Close.into()]),
+/// #   hal::spi::Transaction::transaction_end(),
+/// #   hal::spi::Transaction::transaction_start(),
+/// #   hal::spi::Transaction::write_vec(vec![0x00, 0x01, (Sn3.block() << 3) | 0x04]),
+/// #   hal::spi::Transaction::write_vec(vec![SocketCommand::Close.into()]),
+/// #   hal::spi::Transaction::transaction_end(),
+/// #   hal::spi::Transaction::transaction_start(),
+/// #   hal::spi::Transaction::write_vec(vec![0x00, 0x01, (Sn4.block() << 3) | 0x04]),
+/// #   hal::spi::Transaction::write_vec(vec![SocketCommand::Close.into()]),
+/// #   hal::spi::Transaction::transaction_end(),
+/// #   hal::spi::Transaction::transaction_start(),
+/// #   hal::spi::Transaction::write_vec(vec![0x00, 0x01, (Sn5.block() << 3) | 0x04]),
+/// #   hal::spi::Transaction::write_vec(vec![SocketCommand::Close.into()]),
+/// #   hal::spi::Transaction::transaction_end(),
+/// #   hal::spi::Transaction::transaction_start(),
+/// #   hal::spi::Transaction::write_vec(vec![0x00, 0x01, (Sn6.block() << 3) | 0x04]),
+/// #   hal::spi::Transaction::write_vec(vec![SocketCommand::Close.into()]),
+/// #   hal::spi::Transaction::transaction_end(),
+/// #   hal::spi::Transaction::transaction_start(),
+/// #   hal::spi::Transaction::write_vec(vec![0x00, 0x01, (Sn7.block() << 3) | 0x04]),
+/// #   hal::spi::Transaction::write_vec(vec![SocketCommand::Close.into()]),
+/// #   hal::spi::Transaction::transaction_end(),
 /// # ]);
-/// # let pin = hal::pin::Mock::new(&[
-/// #    hal::pin::Transaction::set(hal::pin::State::Low),
-/// #    hal::pin::Transaction::set(hal::pin::State::High),
-/// #    hal::pin::Transaction::set(hal::pin::State::Low),
-/// #    hal::pin::Transaction::set(hal::pin::State::High),
-/// #    hal::pin::Transaction::set(hal::pin::State::Low),
-/// #    hal::pin::Transaction::set(hal::pin::State::High),
-/// #    hal::pin::Transaction::set(hal::pin::State::Low),
-/// #    hal::pin::Transaction::set(hal::pin::State::High),
-/// #    hal::pin::Transaction::set(hal::pin::State::Low),
-/// #    hal::pin::Transaction::set(hal::pin::State::High),
-/// #    hal::pin::Transaction::set(hal::pin::State::Low),
-/// #    hal::pin::Transaction::set(hal::pin::State::High),
-/// #    hal::pin::Transaction::set(hal::pin::State::Low),
-/// #    hal::pin::Transaction::set(hal::pin::State::High),
-/// #    hal::pin::Transaction::set(hal::pin::State::Low),
-/// #    hal::pin::Transaction::set(hal::pin::State::High),
-/// # ]);
-/// use w5500_ll::{blocking::vdm::W5500, Registers, SocketCommand, SOCKETS};
+/// use w5500_ll::{eh1::vdm::W5500, Registers, SocketCommand, SOCKETS};
 ///
-/// let mut w5500 = W5500::new(spi, pin);
+/// let mut w5500 = W5500::new(spi);
 /// for socket in SOCKETS.iter() {
 ///     w5500.set_sn_cr(*socket, SocketCommand::Close)?;
 /// }
-/// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+/// # Ok::<(), eh1::spi::ErrorKind>(())
 /// ```
 pub const SOCKETS: [Sn; 8] = [
     Sn::Sn0,
@@ -379,40 +377,6 @@ pub const SOCKETS: [Sn; 8] = [
     Sn::Sn6,
     Sn::Sn7,
 ];
-
-/// Reset the W5500 using the reset pin.
-///
-/// This function performs the following sequence:
-///
-/// 1. Set the reset pin low.
-/// 2. Wait 1 ms (2x longer than the minimum reset cycle time of 500 µs).
-/// 3. Set the reset pin high.
-/// 4. Wait 2 ms (2x longer than the maximum PLL lock time of 1 ms).
-///
-/// # Example
-///
-/// ```
-/// # use embedded_hal_mock as hal;
-/// # let mut delay = hal::delay::MockNoop::new();
-/// # let mut reset_pin = hal::pin::Mock::new(&[
-/// #    hal::pin::Transaction::set(hal::pin::State::Low),
-/// #    hal::pin::Transaction::set(hal::pin::State::High),
-/// # ]);
-/// w5500_ll::reset(&mut reset_pin, &mut delay)?;
-/// # Ok::<(), hal::MockError>(())
-/// ```
-#[cfg(feature = "embedded-hal")]
-pub fn reset<P, D, E>(pin: &mut P, delay: &mut D) -> Result<(), E>
-where
-    P: embedded_hal::digital::v2::OutputPin<Error = E>,
-    D: embedded_hal::blocking::delay::DelayMs<u8>,
-{
-    pin.set_low()?;
-    delay.delay_ms(1);
-    pin.set_high()?;
-    delay.delay_ms(2);
-    Ok(())
-}
 
 /// W5500 register setters and getters.
 ///
@@ -449,21 +413,19 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x00, 0x00]),
-    /// #   hal::spi::Transaction::transfer(vec![0], vec![0]),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x00, 0x00]),
+    /// #   hal::spi::Transaction::read(0),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// # ]);
-    /// use w5500_ll::{blocking::vdm::W5500, Mode, Registers};
+    /// use w5500_ll::{eh1::vdm::W5500, Mode, Registers};
     ///
-    /// let mut w5500 = W5500::new(spi, pin);
+    /// let mut w5500 = W5500::new(spi);
     /// let mode: Mode = w5500.mr()?;
     /// assert_eq!(mode, Mode::default());
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn mr(&mut self) -> Result<Mode, Self::Error> {
         let mut reg: [u8; 1] = [0];
@@ -476,21 +438,19 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x00, 0x04]),
-    /// #   hal::spi::Transaction::write(vec![w5500_ll::Mode::WOL_MASK]),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x00, 0x04]),
+    /// #   hal::spi::Transaction::write(w5500_ll::Mode::WOL_MASK),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// # ]);
-    /// use w5500_ll::{blocking::vdm::W5500, Mode, Registers};
+    /// use w5500_ll::{eh1::vdm::W5500, Mode, Registers};
     ///
     /// const MODE: Mode = Mode::DEFAULT.enable_wol();
-    /// let mut w5500 = W5500::new(spi, pin);
+    /// let mut w5500 = W5500::new(spi);
     /// w5500.set_mr(MODE)?;
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn set_mr(&mut self, mode: Mode) -> Result<(), Self::Error> {
         self.write(Reg::MR.addr(), COMMON_BLOCK_OFFSET, &[mode.into()])
@@ -501,21 +461,19 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x01, 0x00]),
-    /// #   hal::spi::Transaction::transfer(vec![0, 0, 0, 0], vec![0, 0, 0, 0]),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x01, 0x00]),
+    /// #   hal::spi::Transaction::read_vec(vec![0, 0, 0, 0]),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// # ]);
-    /// use w5500_ll::{blocking::vdm::W5500, net::Ipv4Addr, Registers};
+    /// use w5500_ll::{eh1::vdm::W5500, net::Ipv4Addr, Registers};
     ///
-    /// let mut w5500 = W5500::new(spi, pin);
+    /// let mut w5500 = W5500::new(spi);
     /// let gar = w5500.gar()?;
     /// assert_eq!(gar, Ipv4Addr::UNSPECIFIED);
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn gar(&mut self) -> Result<Ipv4Addr, Self::Error> {
         let mut gar = Ipv4Addr::UNSPECIFIED;
@@ -528,20 +486,18 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x01, 0x04]),
-    /// #   hal::spi::Transaction::write(vec![192, 168, 0, 1]),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x01, 0x04]),
+    /// #   hal::spi::Transaction::write_vec(vec![192, 168, 0, 1]),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// # ]);
-    /// use w5500_ll::{blocking::vdm::W5500, net::Ipv4Addr, Registers};
+    /// use w5500_ll::{eh1::vdm::W5500, net::Ipv4Addr, Registers};
     ///
-    /// let mut w5500 = W5500::new(spi, pin);
+    /// let mut w5500 = W5500::new(spi);
     /// w5500.set_gar(&Ipv4Addr::new(192, 168, 0, 1))?;
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn set_gar(&mut self, gar: &Ipv4Addr) -> Result<(), Self::Error> {
         self.write(Reg::GAR0.addr(), COMMON_BLOCK_OFFSET, &gar.octets)
@@ -552,21 +508,19 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x05, 0x00]),
-    /// #   hal::spi::Transaction::transfer(vec![0, 0, 0, 0], vec![0, 0, 0, 0]),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x05, 0x00]),
+    /// #   hal::spi::Transaction::read_vec(vec![0, 0, 0, 0]),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// # ]);
-    /// use w5500_ll::{blocking::vdm::W5500, net::Ipv4Addr, Registers};
+    /// use w5500_ll::{eh1::vdm::W5500, net::Ipv4Addr, Registers};
     ///
-    /// let mut w5500 = W5500::new(spi, pin);
+    /// let mut w5500 = W5500::new(spi);
     /// let subr = w5500.subr()?;
     /// assert_eq!(subr, Ipv4Addr::UNSPECIFIED);
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn subr(&mut self) -> Result<Ipv4Addr, Self::Error> {
         let mut subr = Ipv4Addr::UNSPECIFIED;
@@ -579,20 +533,18 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x05, 0x04]),
-    /// #   hal::spi::Transaction::write(vec![255, 255, 255, 0]),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x05, 0x04]),
+    /// #   hal::spi::Transaction::write_vec(vec![255, 255, 255, 0]),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// # ]);
-    /// use w5500_ll::{blocking::vdm::W5500, net::Ipv4Addr, Registers};
+    /// use w5500_ll::{eh1::vdm::W5500, net::Ipv4Addr, Registers};
     ///
-    /// let mut w5500 = W5500::new(spi, pin);
+    /// let mut w5500 = W5500::new(spi);
     /// w5500.set_subr(&Ipv4Addr::new(255, 255, 255, 0))?;
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn set_subr(&mut self, subr: &Ipv4Addr) -> Result<(), Self::Error> {
         self.write(Reg::SUBR0.addr(), COMMON_BLOCK_OFFSET, &subr.octets)
@@ -603,21 +555,19 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x09, 0x00]),
-    /// #   hal::spi::Transaction::transfer(vec![0, 0, 0, 0, 0, 0], vec![0, 0, 0, 0, 0, 0]),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x09, 0x00]),
+    /// #   hal::spi::Transaction::read_vec(vec![0, 0, 0, 0, 0, 0]),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// # ]);
-    /// use w5500_ll::{blocking::vdm::W5500, net::Eui48Addr, Registers};
+    /// use w5500_ll::{eh1::vdm::W5500, net::Eui48Addr, Registers};
     ///
-    /// let mut w5500 = W5500::new(spi, pin);
+    /// let mut w5500 = W5500::new(spi);
     /// let shar = w5500.shar()?;
     /// assert_eq!(shar, Eui48Addr::UNSPECIFIED);
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn shar(&mut self) -> Result<Eui48Addr, Self::Error> {
         let mut shar = Eui48Addr::UNSPECIFIED;
@@ -630,20 +580,18 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x09, 0x04]),
-    /// #   hal::spi::Transaction::write(vec![0x12, 0x34, 0, 0, 0, 0]),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x09, 0x04]),
+    /// #   hal::spi::Transaction::write_vec(vec![0x12, 0x34, 0, 0, 0, 0]),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// # ]);
-    /// use w5500_ll::{blocking::vdm::W5500, net::Eui48Addr, Registers};
+    /// use w5500_ll::{eh1::vdm::W5500, net::Eui48Addr, Registers};
     ///
-    /// let mut w5500 = W5500::new(spi, pin);
+    /// let mut w5500 = W5500::new(spi);
     /// w5500.set_shar(&Eui48Addr::new(0x12, 0x34, 0x00, 0x00, 0x00, 0x00))?;
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn set_shar(&mut self, shar: &Eui48Addr) -> Result<(), Self::Error> {
         self.write(Reg::SHAR0.addr(), COMMON_BLOCK_OFFSET, &shar.octets)
@@ -654,21 +602,19 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x0F, 0x00]),
-    /// #   hal::spi::Transaction::transfer(vec![0, 0, 0, 0], vec![0, 0, 0, 0]),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x0F, 0x00]),
+    /// #   hal::spi::Transaction::read_vec(vec![0, 0, 0, 0]),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// # ]);
-    /// use w5500_ll::{blocking::vdm::W5500, net::Ipv4Addr, Registers};
+    /// use w5500_ll::{eh1::vdm::W5500, net::Ipv4Addr, Registers};
     ///
-    /// let mut w5500 = W5500::new(spi, pin);
+    /// let mut w5500 = W5500::new(spi);
     /// let sipr = w5500.sipr()?;
     /// assert_eq!(sipr, Ipv4Addr::UNSPECIFIED);
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn sipr(&mut self) -> Result<Ipv4Addr, Self::Error> {
         let mut sipr = Ipv4Addr::UNSPECIFIED;
@@ -681,20 +627,18 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x0F, 0x04]),
-    /// #   hal::spi::Transaction::write(vec![192, 168, 0, 150]),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x0F, 0x04]),
+    /// #   hal::spi::Transaction::write_vec(vec![192, 168, 0, 150]),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// # ]);
-    /// use w5500_ll::{blocking::vdm::W5500, net::Ipv4Addr, Registers};
+    /// use w5500_ll::{eh1::vdm::W5500, net::Ipv4Addr, Registers};
     ///
-    /// let mut w5500 = W5500::new(spi, pin);
+    /// let mut w5500 = W5500::new(spi);
     /// w5500.set_sipr(&Ipv4Addr::new(192, 168, 0, 150))?;
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn set_sipr(&mut self, sipr: &Ipv4Addr) -> Result<(), Self::Error> {
         self.write(Reg::SIPR0.addr(), COMMON_BLOCK_OFFSET, &sipr.octets)
@@ -719,21 +663,19 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x13, 0x00]),
-    /// #   hal::spi::Transaction::transfer(vec![0, 0], vec![0, 0]),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x13, 0x00]),
+    /// #   hal::spi::Transaction::read_vec(vec![0, 0]),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// # ]);
-    /// use w5500_ll::{blocking::vdm::W5500, Registers};
+    /// use w5500_ll::{eh1::vdm::W5500, Registers};
     ///
-    /// let mut w5500 = W5500::new(spi, pin);
+    /// let mut w5500 = W5500::new(spi);
     /// let intlevel: u16 = w5500.intlevel()?;
     /// assert_eq!(intlevel, 0x00);
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn intlevel(&mut self) -> Result<u16, Self::Error> {
         let mut buf: [u8; 2] = [0; 2];
@@ -748,20 +690,18 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x13, 0x04]),
-    /// #   hal::spi::Transaction::write(vec![0x12, 0x34]),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x13, 0x04]),
+    /// #   hal::spi::Transaction::write_vec(vec![0x12, 0x34]),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// # ]);
-    /// use w5500_ll::{blocking::vdm::W5500, Registers};
+    /// use w5500_ll::{eh1::vdm::W5500, Registers};
     ///
-    /// let mut w5500 = W5500::new(spi, pin);
+    /// let mut w5500 = W5500::new(spi);
     /// w5500.set_intlevel(0x1234)?;
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn set_intlevel(&mut self, intlevel: u16) -> Result<(), Self::Error> {
         self.write(
@@ -778,21 +718,19 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x15, 0x00]),
-    /// #   hal::spi::Transaction::transfer(vec![0], vec![0]),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x15, 0x00]),
+    /// #   hal::spi::Transaction::read(0),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// # ]);
-    /// use w5500_ll::{blocking::vdm::W5500, Interrupt, Registers};
+    /// use w5500_ll::{eh1::vdm::W5500, Interrupt, Registers};
     ///
-    /// let mut w5500 = W5500::new(spi, pin);
+    /// let mut w5500 = W5500::new(spi);
     /// let ir: Interrupt = w5500.ir()?;
     /// assert_eq!(ir, Interrupt::default());
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn ir(&mut self) -> Result<Interrupt, Self::Error> {
         let mut reg: [u8; 1] = [0];
@@ -807,25 +745,23 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x15, 0x00]),
-    /// #   hal::spi::Transaction::transfer(vec![0], vec![0]),
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x15, 0x04]),
-    /// #   hal::spi::Transaction::write(vec![0]),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x15, 0x00]),
+    /// #   hal::spi::Transaction::read(0),
+    /// #   hal::spi::Transaction::transaction_end(),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x15, 0x04]),
+    /// #   hal::spi::Transaction::write(0),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// # ]);
-    /// use w5500_ll::{blocking::vdm::W5500, Interrupt, Registers};
+    /// use w5500_ll::{eh1::vdm::W5500, Interrupt, Registers};
     ///
-    /// let mut w5500 = W5500::new(spi, pin);
+    /// let mut w5500 = W5500::new(spi);
     /// let ir: Interrupt = w5500.ir()?;
     /// w5500.set_ir(ir)?;
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn set_ir(&mut self, interrupt: Interrupt) -> Result<(), Self::Error> {
         self.write(Reg::IR.addr(), COMMON_BLOCK_OFFSET, &[interrupt.into()])
@@ -838,21 +774,19 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x16, 0x00]),
-    /// #   hal::spi::Transaction::transfer(vec![0], vec![0]),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x16, 0x00]),
+    /// #   hal::spi::Transaction::read(0),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// # ]);
-    /// use w5500_ll::{blocking::vdm::W5500, Interrupt, Registers};
+    /// use w5500_ll::{eh1::vdm::W5500, Interrupt, Registers};
     ///
-    /// let mut w5500 = W5500::new(spi, pin);
+    /// let mut w5500 = W5500::new(spi);
     /// let imr: Interrupt = w5500.imr()?;
     /// assert_eq!(imr, Interrupt::default());
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn imr(&mut self) -> Result<Interrupt, Self::Error> {
         let mut reg: [u8; 1] = [0];
@@ -871,23 +805,21 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// use w5500_ll::{blocking::vdm::W5500, Interrupt, Registers};
-    /// # use embedded_hal_mock as hal;
+    /// use w5500_ll::{eh1::vdm::W5500, Interrupt, Registers};
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x16, 0x04]),
-    /// #   hal::spi::Transaction::write(vec![Interrupt::MP_MASK]),
-    /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x16, 0x04]),
+    /// #   hal::spi::Transaction::write_vec(vec![Interrupt::MP_MASK]),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
     ///
     /// // enable the magic packet interrupt
     /// const IMR: Interrupt = Interrupt::DEFAULT.set_mp();
     ///
-    /// let mut w5500 = W5500::new(spi, pin);
+    /// let mut w5500 = W5500::new(spi);
     /// w5500.set_imr(IMR)?;
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn set_imr(&mut self, mask: Interrupt) -> Result<(), Self::Error> {
         self.write(Reg::IMR.addr(), COMMON_BLOCK_OFFSET, &[mask.into()])
@@ -903,18 +835,16 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x17, 0x00]),
-    /// #   hal::spi::Transaction::transfer(vec![0], vec![0]),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x17, 0x00]),
+    /// #   hal::spi::Transaction::read(0),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// # ]);
-    /// use w5500_ll::{blocking::vdm::W5500, Registers, SOCKETS};
+    /// use w5500_ll::{eh1::vdm::W5500, Registers, SOCKETS};
     ///
-    /// let mut w5500 = W5500::new(spi, pin);
+    /// let mut w5500 = W5500::new(spi);
     /// let sir = w5500.sir()?;
     /// // clear all socket interrupts
     /// for socket in SOCKETS.iter() {
@@ -923,7 +853,7 @@ pub trait Registers {
     ///         w5500.set_sn_ir(*socket, sn_ir)?;
     ///     }
     /// }
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     ///
     /// [`sn_ir`]: Registers::sn_ir
@@ -944,20 +874,18 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x18, 0x00]),
-    /// #   hal::spi::Transaction::transfer(vec![0], vec![0]),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x18, 0x00]),
+    /// #   hal::spi::Transaction::read(0),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// # ]);
-    /// use w5500_ll::{blocking::vdm::W5500, Registers};
+    /// use w5500_ll::{eh1::vdm::W5500, Registers};
     ///
-    /// let mut w5500 = W5500::new(spi, pin);
+    /// let mut w5500 = W5500::new(spi);
     /// let simr: u8 = w5500.simr()?;
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn simr(&mut self) -> Result<u8, Self::Error> {
         let mut reg: [u8; 1] = [0];
@@ -972,21 +900,23 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x18, 0x04]),
-    /// #   hal::spi::Transaction::write(vec![0xFF]),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x18, 0x04]),
+    /// #   hal::spi::Transaction::write(0xFF),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
     /// # let pin = hal::pin::Mock::new(&[
     /// #    hal::pin::Transaction::set(hal::pin::State::Low),
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
     /// # ]);
-    /// use w5500_ll::{blocking::vdm::W5500, Registers};
+    /// use w5500_ll::{eh1::vdm::W5500, Registers};
     ///
-    /// let mut w5500 = W5500::new(spi, pin);
+    /// let mut w5500 = W5500::new(spi);
     /// // enable all socket interrupts
     /// w5500.set_simr(0xFF)?;
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn set_simr(&mut self, simr: u8) -> Result<(), Self::Error> {
         self.write(Reg::SIMR.addr(), COMMON_BLOCK_OFFSET, &[simr])
@@ -1007,21 +937,19 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x19, 0x00]),
-    /// #   hal::spi::Transaction::transfer(vec![0, 0], vec![0x07, 0xD0]),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x19, 0x00]),
+    /// #   hal::spi::Transaction::read_vec(vec![0x07, 0xD0]),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// # ]);
-    /// use w5500_ll::{blocking::vdm::W5500, Registers};
+    /// use w5500_ll::{eh1::vdm::W5500, Registers};
     ///
-    /// let mut w5500 = W5500::new(spi, pin);
+    /// let mut w5500 = W5500::new(spi);
     /// let rtr: u16 = w5500.rtr()?;
     /// assert_eq!(rtr, 0x07D0);
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn rtr(&mut self) -> Result<u16, Self::Error> {
         let mut buf: [u8; 2] = [0; 2];
@@ -1036,20 +964,18 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x19, 0x04]),
-    /// #   hal::spi::Transaction::write(vec![0x12, 0x34]),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x19, 0x04]),
+    /// #   hal::spi::Transaction::write_vec(vec![0x12, 0x34]),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// # ]);
-    /// use w5500_ll::{blocking::vdm::W5500, Registers};
+    /// use w5500_ll::{eh1::vdm::W5500, Registers};
     ///
-    /// let mut w5500 = W5500::new(spi, pin);
+    /// let mut w5500 = W5500::new(spi);
     /// w5500.set_rtr(0x1234)?;
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn set_rtr(&mut self, rtr: u16) -> Result<(), Self::Error> {
         self.write(Reg::RTR0.addr(), COMMON_BLOCK_OFFSET, &rtr.to_be_bytes())
@@ -1067,20 +993,18 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x1B, 0x00]),
-    /// #   hal::spi::Transaction::transfer(vec![0], vec![0x08]),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x1B, 0x00]),
+    /// #   hal::spi::Transaction::read(0x08),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// # ]);
-    /// use w5500_ll::{blocking::vdm::W5500, Registers};
+    /// use w5500_ll::{eh1::vdm::W5500, Registers};
     ///
-    /// let mut w5500 = W5500::new(spi, pin);
+    /// let mut w5500 = W5500::new(spi);
     /// let rcr: u8 = w5500.rcr()?;
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn rcr(&mut self) -> Result<u8, Self::Error> {
         let mut reg: [u8; 1] = [0];
@@ -1095,20 +1019,18 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x1B, 0x04]),
-    /// #   hal::spi::Transaction::write(vec![0x0A]),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x1B, 0x04]),
+    /// #   hal::spi::Transaction::write(0x0A),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// # ]);
-    /// use w5500_ll::{blocking::vdm::W5500, Registers};
+    /// use w5500_ll::{eh1::vdm::W5500, Registers};
     ///
-    /// let mut w5500 = W5500::new(spi, pin);
+    /// let mut w5500 = W5500::new(spi);
     /// w5500.set_rcr(0x0A)?;
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn set_rcr(&mut self, rcr: u8) -> Result<(), Self::Error> {
         self.write(Reg::RCR.addr(), COMMON_BLOCK_OFFSET, &[rcr])
@@ -1124,20 +1046,18 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x1C, 0x00]),
-    /// #   hal::spi::Transaction::transfer(vec![0], vec![0x08]),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x1C, 0x00]),
+    /// #   hal::spi::Transaction::read(0x08),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// # ]);
-    /// use w5500_ll::{blocking::vdm::W5500, Registers};
+    /// use w5500_ll::{eh1::vdm::W5500, Registers};
     ///
-    /// let mut w5500 = W5500::new(spi, pin);
+    /// let mut w5500 = W5500::new(spi);
     /// let ptimer: u8 = w5500.ptimer()?;
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn ptimer(&mut self) -> Result<u8, Self::Error> {
         let mut reg: [u8; 1] = [0];
@@ -1152,20 +1072,18 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x1C, 0x04]),
-    /// #   hal::spi::Transaction::write(vec![0xC8]),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x1C, 0x04]),
+    /// #   hal::spi::Transaction::write(0xC8),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// # ]);
-    /// use w5500_ll::{blocking::vdm::W5500, Registers};
+    /// use w5500_ll::{eh1::vdm::W5500, Registers};
     ///
-    /// let mut w5500 = W5500::new(spi, pin);
+    /// let mut w5500 = W5500::new(spi);
     /// w5500.set_ptimer(200)?;
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn set_ptimer(&mut self, ptimer: u8) -> Result<(), Self::Error> {
         self.write(Reg::PTIMER.addr(), COMMON_BLOCK_OFFSET, &[ptimer])
@@ -1179,20 +1097,18 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x1D, 0x00]),
-    /// #   hal::spi::Transaction::transfer(vec![0], vec![0x08]),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x1D, 0x00]),
+    /// #   hal::spi::Transaction::read(0x08),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// # ]);
-    /// use w5500_ll::{blocking::vdm::W5500, Registers};
+    /// use w5500_ll::{eh1::vdm::W5500, Registers};
     ///
-    /// let mut w5500 = W5500::new(spi, pin);
+    /// let mut w5500 = W5500::new(spi);
     /// let pmagic: u8 = w5500.pmagic()?;
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn pmagic(&mut self) -> Result<u8, Self::Error> {
         let mut reg: [u8; 1] = [0];
@@ -1207,20 +1123,18 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x1D, 0x04]),
-    /// #   hal::spi::Transaction::write(vec![0x01]),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x1D, 0x04]),
+    /// #   hal::spi::Transaction::write(0x01),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// # ]);
-    /// use w5500_ll::{blocking::vdm::W5500, Registers};
+    /// use w5500_ll::{eh1::vdm::W5500, Registers};
     ///
-    /// let mut w5500 = W5500::new(spi, pin);
+    /// let mut w5500 = W5500::new(spi);
     /// w5500.set_pmagic(0x01)?;
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn set_pmagic(&mut self, pmagic: u8) -> Result<(), Self::Error> {
         self.write(Reg::PMAGIC.addr(), COMMON_BLOCK_OFFSET, &[pmagic])
@@ -1231,21 +1145,19 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x1E, 0x00]),
-    /// #   hal::spi::Transaction::transfer(vec![0, 0, 0, 0, 0, 0], vec![0, 0, 0, 0, 0, 0]),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x1E, 0x00]),
+    /// #   hal::spi::Transaction::read_vec(vec![0, 0, 0, 0, 0, 0]),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// # ]);
-    /// use w5500_ll::{blocking::vdm::W5500, net::Eui48Addr, Registers};
+    /// use w5500_ll::{eh1::vdm::W5500, net::Eui48Addr, Registers};
     ///
-    /// let mut w5500 = W5500::new(spi, pin);
+    /// let mut w5500 = W5500::new(spi);
     /// let phar = w5500.phar()?;
     /// assert_eq!(phar, Eui48Addr::UNSPECIFIED);
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn phar(&mut self) -> Result<Eui48Addr, Self::Error> {
         let mut phar = Eui48Addr::UNSPECIFIED;
@@ -1258,20 +1170,18 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x1E, 0x04]),
-    /// #   hal::spi::Transaction::write(vec![0x12, 0x34, 0, 0, 0, 0]),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x1E, 0x04]),
+    /// #   hal::spi::Transaction::write_vec(vec![0x12, 0x34, 0, 0, 0, 0]),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// # ]);
-    /// use w5500_ll::{blocking::vdm::W5500, net::Eui48Addr, Registers};
+    /// use w5500_ll::{eh1::vdm::W5500, net::Eui48Addr, Registers};
     ///
-    /// let mut w5500 = W5500::new(spi, pin);
+    /// let mut w5500 = W5500::new(spi);
     /// w5500.set_phar(&Eui48Addr::new(0x12, 0x34, 0x00, 0x00, 0x00, 0x00))?;
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn set_phar(&mut self, phar: &Eui48Addr) -> Result<(), Self::Error> {
         self.write(Reg::PHAR0.addr(), COMMON_BLOCK_OFFSET, &phar.octets)
@@ -1285,21 +1195,19 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x24, 0x00]),
-    /// #   hal::spi::Transaction::transfer(vec![0, 0], vec![0, 0]),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x24, 0x00]),
+    /// #   hal::spi::Transaction::read_vec(vec![0, 0]),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// # ]);
-    /// use w5500_ll::{blocking::vdm::W5500, Registers};
+    /// use w5500_ll::{eh1::vdm::W5500, Registers};
     ///
-    /// let mut w5500 = W5500::new(spi, pin);
+    /// let mut w5500 = W5500::new(spi);
     /// let psid: u16 = w5500.psid()?;
     /// assert_eq!(psid, 0x0000);
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn psid(&mut self) -> Result<u16, Self::Error> {
         let mut buf: [u8; 2] = [0; 2];
@@ -1314,20 +1222,18 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x24, 0x04]),
-    /// #   hal::spi::Transaction::write(vec![0x12, 0x34]),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x24, 0x04]),
+    /// #   hal::spi::Transaction::write_vec(vec![0x12, 0x34]),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// # ]);
-    /// use w5500_ll::{blocking::vdm::W5500, Registers};
+    /// use w5500_ll::{eh1::vdm::W5500, Registers};
     ///
-    /// let mut w5500 = W5500::new(spi, pin);
+    /// let mut w5500 = W5500::new(spi);
     /// w5500.set_psid(0x1234)?;
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn set_psid(&mut self, psid: u16) -> Result<(), Self::Error> {
         self.write(Reg::PSID0.addr(), COMMON_BLOCK_OFFSET, &psid.to_be_bytes())
@@ -1340,21 +1246,19 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x26, 0x00]),
-    /// #   hal::spi::Transaction::transfer(vec![0, 0], vec![0, 0]),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x26, 0x00]),
+    /// #   hal::spi::Transaction::read_vec(vec![0, 0]),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// # ]);
-    /// use w5500_ll::{blocking::vdm::W5500, Registers};
+    /// use w5500_ll::{eh1::vdm::W5500, Registers};
     ///
-    /// let mut w5500 = W5500::new(spi, pin);
+    /// let mut w5500 = W5500::new(spi);
     /// let pmru: u16 = w5500.pmru()?;
     /// assert_eq!(pmru, 0x0000);
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn pmru(&mut self) -> Result<u16, Self::Error> {
         let mut buf: [u8; 2] = [0; 2];
@@ -1369,20 +1273,18 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x26, 0x04]),
-    /// #   hal::spi::Transaction::write(vec![0x12, 0x34]),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x26, 0x04]),
+    /// #   hal::spi::Transaction::write_vec(vec![0x12, 0x34]),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// # ]);
-    /// use w5500_ll::{blocking::vdm::W5500, Registers};
+    /// use w5500_ll::{eh1::vdm::W5500, Registers};
     ///
-    /// let mut w5500 = W5500::new(spi, pin);
+    /// let mut w5500 = W5500::new(spi);
     /// w5500.set_pmru(0x1234)?;
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn set_pmru(&mut self, pmru: u16) -> Result<(), Self::Error> {
         self.write(Reg::PMRU0.addr(), COMMON_BLOCK_OFFSET, &pmru.to_be_bytes())
@@ -1400,21 +1302,19 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x28, 0x00]),
-    /// #   hal::spi::Transaction::transfer(vec![0, 0, 0, 0], vec![0, 0, 0, 0]),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x28, 0x00]),
+    /// #   hal::spi::Transaction::read_vec(vec![0, 0, 0, 0]),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// # ]);
-    /// use w5500_ll::{blocking::vdm::W5500, net::Ipv4Addr, Registers};
+    /// use w5500_ll::{eh1::vdm::W5500, net::Ipv4Addr, Registers};
     ///
-    /// let mut w5500 = W5500::new(spi, pin);
+    /// let mut w5500 = W5500::new(spi);
     /// let uipr = w5500.uipr()?;
     /// assert_eq!(uipr, Ipv4Addr::UNSPECIFIED);
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn uipr(&mut self) -> Result<Ipv4Addr, Self::Error> {
         let mut uipr = Ipv4Addr::UNSPECIFIED;
@@ -1429,20 +1329,18 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x2C, 0x00]),
-    /// #   hal::spi::Transaction::transfer(vec![0, 0], vec![0, 0]),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x2C, 0x00]),
+    /// #   hal::spi::Transaction::read_vec(vec![0, 0]),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// # ]);
-    /// use w5500_ll::{blocking::vdm::W5500, Registers};
+    /// use w5500_ll::{eh1::vdm::W5500, Registers};
     ///
-    /// let mut w5500 = W5500::new(spi, pin);
+    /// let mut w5500 = W5500::new(spi);
     /// let uportr = w5500.uportr()?;
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn uportr(&mut self) -> Result<u16, Self::Error> {
         let mut buf: [u8; 2] = [0; 2];
@@ -1455,21 +1353,19 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x2E, 0x00]),
-    /// #   hal::spi::Transaction::transfer(vec![0], vec![0b10111000]),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x2E, 0x00]),
+    /// #   hal::spi::Transaction::read(0b10111000),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// # ]);
-    /// use w5500_ll::{blocking::vdm::W5500, PhyCfg, Registers};
+    /// use w5500_ll::{eh1::vdm::W5500, PhyCfg, Registers};
     ///
-    /// let mut w5500 = W5500::new(spi, pin);
+    /// let mut w5500 = W5500::new(spi);
     /// let phy_cfg: PhyCfg = w5500.phycfgr()?;
     /// assert_eq!(phy_cfg, PhyCfg::default());
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn phycfgr(&mut self) -> Result<PhyCfg, Self::Error> {
         let mut reg: [u8; 1] = [0];
@@ -1482,21 +1378,19 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x2E, 0x04]),
-    /// #   hal::spi::Transaction::write(vec![0b11111000]),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x2E, 0x04]),
+    /// #   hal::spi::Transaction::write(0b11111000),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// # ]);
-    /// use w5500_ll::{blocking::vdm::W5500, OperationMode, PhyCfg, Registers};
+    /// use w5500_ll::{eh1::vdm::W5500, OperationMode, PhyCfg, Registers};
     ///
     /// const PHY_CFG: PhyCfg = PhyCfg::DEFAULT.set_opmdc(OperationMode::Auto);
-    /// let mut w5500 = W5500::new(spi, pin);
+    /// let mut w5500 = W5500::new(spi);
     /// w5500.set_phycfgr(PHY_CFG)?;
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn set_phycfgr(&mut self, phycfg: PhyCfg) -> Result<(), Self::Error> {
         self.write(Reg::PHYCFGR.addr(), COMMON_BLOCK_OFFSET, &[phycfg.into()])
@@ -1512,21 +1406,19 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x39, 0x00]),
-    /// #   hal::spi::Transaction::transfer(vec![0], vec![0x04]),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x39, 0x00]),
+    /// #   hal::spi::Transaction::read(0x04),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// # ]);
-    /// use w5500_ll::{blocking::vdm::W5500, Registers};
+    /// use w5500_ll::{eh1::vdm::W5500, Registers};
     ///
-    /// let mut w5500 = W5500::new(spi, pin);
+    /// let mut w5500 = W5500::new(spi);
     /// let version = w5500.version()?;
     /// assert_eq!(version, 0x04);
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn version(&mut self) -> Result<u8, Self::Error> {
         let mut reg: [u8; 1] = [0];
@@ -1539,21 +1431,19 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x00, 0x08]),
-    /// #   hal::spi::Transaction::transfer(vec![0], vec![0x00]),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x00, 0x08]),
+    /// #   hal::spi::Transaction::read(0),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// # ]);
-    /// use w5500_ll::{blocking::vdm::W5500, Registers, Sn, SocketMode};
+    /// use w5500_ll::{eh1::vdm::W5500, Registers, Sn, SocketMode};
     ///
-    /// let mut w5500 = W5500::new(spi, pin);
+    /// let mut w5500 = W5500::new(spi);
     /// let socket_mode = w5500.sn_mr(Sn::Sn0)?;
     /// assert_eq!(socket_mode, SocketMode::default());
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn sn_mr(&mut self, sn: Sn) -> Result<SocketMode, Self::Error> {
         let mut reg: [u8; 1] = [0];
@@ -1566,21 +1456,19 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x00, 0x08 | 0x04]),
-    /// #   hal::spi::Transaction::write(vec![0x01]),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x00, 0x08 | 0x04]),
+    /// #   hal::spi::Transaction::write_vec(vec![0x01]),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// # ]);
-    /// use w5500_ll::{blocking::vdm::W5500, Protocol, Registers, Sn, SocketMode};
+    /// use w5500_ll::{eh1::vdm::W5500, Protocol, Registers, Sn, SocketMode};
     ///
     /// const SOCKET_MODE: SocketMode = SocketMode::DEFAULT.set_protocol(Protocol::Tcp);
-    /// let mut w5500 = W5500::new(spi, pin);
+    /// let mut w5500 = W5500::new(spi);
     /// w5500.set_sn_mr(Sn::Sn0, SOCKET_MODE)?;
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn set_sn_mr(&mut self, sn: Sn, mode: SocketMode) -> Result<(), Self::Error> {
         self.write(SnReg::MR.addr(), sn.block(), &[mode.into()])
@@ -1594,33 +1482,31 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x01, 0x08 | 0x04]),
-    /// #   hal::spi::Transaction::write(vec![0x01]),
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x01, 0x08]),
-    /// #   hal::spi::Transaction::transfer(vec![0], vec![1]),
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x01, 0x08]),
-    /// #   hal::spi::Transaction::transfer(vec![0], vec![0]),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x01, 0x08 | 0x04]),
+    /// #   hal::spi::Transaction::write(0x01),
+    /// #   hal::spi::Transaction::transaction_end(),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x01, 0x08]),
+    /// #   hal::spi::Transaction::read(1),
+    /// #   hal::spi::Transaction::transaction_end(),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x01, 0x08]),
+    /// #   hal::spi::Transaction::read(0),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// # ]);
-    /// use w5500_ll::{blocking::vdm::W5500, Registers, Sn, SocketCommand};
+    /// use w5500_ll::{eh1::vdm::W5500, Registers, Sn, SocketCommand};
     ///
-    /// let mut w5500 = W5500::new(spi, pin);
+    /// let mut w5500 = W5500::new(spi);
     /// w5500.set_sn_cr(Sn::Sn0, SocketCommand::Open)?;
     /// loop {
     ///     if w5500.sn_cr(Sn::Sn0)? == SocketCommand::Accepted.into() {
     ///         break;
     ///     }
     /// }
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn sn_cr(&mut self, sn: Sn) -> Result<u8, Self::Error> {
         let mut reg: [u8; 1] = [0];
@@ -1633,20 +1519,18 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x01, 0x08 | 0x04]),
-    /// #   hal::spi::Transaction::write(vec![0x01]),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x01, 0x08 | 0x04]),
+    /// #   hal::spi::Transaction::write(0x01),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// # ]);
-    /// use w5500_ll::{blocking::vdm::W5500, Registers, Sn, SocketCommand};
+    /// use w5500_ll::{eh1::vdm::W5500, Registers, Sn, SocketCommand};
     ///
-    /// let mut w5500 = W5500::new(spi, pin);
+    /// let mut w5500 = W5500::new(spi);
     /// w5500.set_sn_cr(Sn::Sn0, SocketCommand::Open)?;
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn set_sn_cr(&mut self, sn: Sn, cmd: SocketCommand) -> Result<(), Self::Error> {
         self.write(SnReg::CR.addr(), sn.block(), &[cmd.into()])
@@ -1657,20 +1541,18 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x02, 0x08]),
-    /// #   hal::spi::Transaction::transfer(vec![0], vec![0]),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x02, 0x08]),
+    /// #   hal::spi::Transaction::read(0),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// # ]);
-    /// use w5500_ll::{blocking::vdm::W5500, Registers, Sn};
+    /// use w5500_ll::{eh1::vdm::W5500, Registers, Sn};
     ///
-    /// let mut w5500 = W5500::new(spi, pin);
+    /// let mut w5500 = W5500::new(spi);
     /// let socket_interrupts = w5500.sn_ir(Sn::Sn0)?;
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn sn_ir(&mut self, sn: Sn) -> Result<SocketInterrupt, Self::Error> {
         let mut reg: [u8; 1] = [0];
@@ -1687,44 +1569,40 @@ pub trait Registers {
     /// Clearing all raised interrupts.
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x02, 0x08]),
-    /// #   hal::spi::Transaction::transfer(vec![0], vec![0]),
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x02, 0x08 | 0x04]),
-    /// #   hal::spi::Transaction::write(vec![0]),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x02, 0x08]),
+    /// #   hal::spi::Transaction::read(0),
+    /// #   hal::spi::Transaction::transaction_end(),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x02, 0x08 | 0x04]),
+    /// #   hal::spi::Transaction::write(0),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// # ]);
-    /// use w5500_ll::{blocking::vdm::W5500, Registers, Sn, SocketInterrupt};
+    /// use w5500_ll::{eh1::vdm::W5500, Registers, Sn, SocketInterrupt};
     ///
-    /// let mut w5500 = W5500::new(spi, pin);
+    /// let mut w5500 = W5500::new(spi);
     /// let socket_interrupts: SocketInterrupt = w5500.sn_ir(Sn::Sn0)?;
     /// w5500.set_sn_ir(Sn::Sn0, socket_interrupts)?;
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     ///
     /// Clearing only the SENDOK interrupt.
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x02, 0x08 | 0x04]),
-    /// #   hal::spi::Transaction::write(vec![SocketInterrupt::SENDOK_MASK]),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x02, 0x08 | 0x04]),
+    /// #   hal::spi::Transaction::write(SocketInterrupt::SENDOK_MASK),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// # ]);
-    /// use w5500_ll::{blocking::vdm::W5500, Registers, Sn, SocketInterrupt};
+    /// use w5500_ll::{eh1::vdm::W5500, Registers, Sn, SocketInterrupt};
     ///
-    /// let mut w5500 = W5500::new(spi, pin);
+    /// let mut w5500 = W5500::new(spi);
     /// w5500.set_sn_ir(Sn::Sn0, SocketInterrupt::SENDOK_MASK)?;
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn set_sn_ir<T: Into<u8>>(&mut self, sn: Sn, sn_ir: T) -> Result<(), Self::Error> {
         self.write(SnReg::IR.addr(), sn.block(), &[sn_ir.into()])
@@ -1748,21 +1626,19 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x03, 0x08]),
-    /// #   hal::spi::Transaction::transfer(vec![0], vec![0]),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x03, 0x08]),
+    /// #   hal::spi::Transaction::read(0),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// # ]);
-    /// use w5500_ll::{blocking::vdm::W5500, Registers, Sn, SocketStatus};
+    /// use w5500_ll::{eh1::vdm::W5500, Registers, Sn, SocketStatus};
     ///
-    /// let mut w5500 = W5500::new(spi, pin);
+    /// let mut w5500 = W5500::new(spi);
     /// let sn_sr = w5500.sn_sr(Sn::Sn0)?;
     /// assert_eq!(sn_sr, Ok(SocketStatus::Closed));
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     ///
     /// [`Ok`]: https://doc.rust-lang.org/core/result/enum.Result.html#variant.Ok
@@ -1781,20 +1657,18 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x04, 0x08]),
-    /// #   hal::spi::Transaction::transfer(vec![0, 0], vec![0, 0]),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x04, 0x08]),
+    /// #   hal::spi::Transaction::read_vec(vec![0, 0]),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// # ]);
-    /// use w5500_ll::{blocking::vdm::W5500, Registers, Sn, SocketMode};
+    /// use w5500_ll::{eh1::vdm::W5500, Registers, Sn, SocketMode};
     ///
-    /// let mut w5500 = W5500::new(spi, pin);
+    /// let mut w5500 = W5500::new(spi);
     /// let socket_port: u16 = w5500.sn_port(Sn::Sn0)?;
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn sn_port(&mut self, sn: Sn) -> Result<u16, Self::Error> {
         let mut reg: [u8; 2] = [0; 2];
@@ -1809,20 +1683,18 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x04, 0x08 | 0x04]),
-    /// #   hal::spi::Transaction::write(vec![0x00, 68]),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x04, 0x08 | 0x04]),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 68]),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// # ]);
-    /// use w5500_ll::{blocking::vdm::W5500, Registers, Sn};
+    /// use w5500_ll::{eh1::vdm::W5500, Registers, Sn};
     ///
-    /// let mut w5500 = W5500::new(spi, pin);
+    /// let mut w5500 = W5500::new(spi);
     /// w5500.set_sn_port(Sn::Sn0, 68)?;
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn set_sn_port(&mut self, sn: Sn, port: u16) -> Result<(), Self::Error> {
         self.write(SnReg::PORT0.addr(), sn.block(), &u16::to_be_bytes(port))
@@ -1837,23 +1709,18 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x06, 0x08]),
-    /// #   hal::spi::Transaction::transfer(
-    /// #       vec![0, 0, 0, 0, 0, 0],
-    /// #       vec![0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF]
-    /// #   ),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x06, 0x08]),
+    /// #   hal::spi::Transaction::read_vec(vec![0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF]),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// # ]);
-    /// use w5500_ll::{blocking::vdm::W5500, Registers, Sn};
+    /// use w5500_ll::{eh1::vdm::W5500, Registers, Sn};
     ///
-    /// let mut w5500 = W5500::new(spi, pin);
+    /// let mut w5500 = W5500::new(spi);
     /// let dhar = w5500.sn_dhar(Sn::Sn0)?;
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn sn_dhar(&mut self, sn: Sn) -> Result<Eui48Addr, Self::Error> {
         let mut dhar: Eui48Addr = Eui48Addr::UNSPECIFIED;
@@ -1868,23 +1735,19 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x06, 0x08 | 0x04]),
-    /// #   hal::spi::Transaction::write(
-    /// #       vec![0x12, 0x34, 0x00, 0x00, 0x00, 0x00]
-    /// #   ),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x06, 0x08 | 0x04]),
+    /// #   hal::spi::Transaction::write_vec(vec![0x12, 0x34, 0x00, 0x00, 0x00, 0x00]),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// # ]);
-    /// use w5500_ll::{blocking::vdm::W5500, net::Eui48Addr, Registers, Sn};
+    /// use w5500_ll::{eh1::vdm::W5500, net::Eui48Addr, Registers, Sn};
     ///
     /// let dhar = Eui48Addr::new(0x12, 0x34, 0x00, 0x00, 0x00, 0x00);
-    /// let mut w5500 = W5500::new(spi, pin);
+    /// let mut w5500 = W5500::new(spi);
     /// w5500.set_sn_dhar(Sn::Sn0, &dhar)?;
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn set_sn_dhar(&mut self, sn: Sn, dhar: &Eui48Addr) -> Result<(), Self::Error> {
         self.write(SnReg::DHAR0.addr(), sn.block(), &dhar.octets)
@@ -1908,21 +1771,19 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x0C, 0x08]),
-    /// #   hal::spi::Transaction::transfer(vec![0, 0, 0, 0], vec![0, 0, 0, 0]),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x0C, 0x08]),
+    /// #   hal::spi::Transaction::read_vec(vec![0, 0, 0, 0]),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// # ]);
-    /// use w5500_ll::{blocking::vdm::W5500, net::Ipv4Addr, Registers, Sn};
+    /// use w5500_ll::{eh1::vdm::W5500, net::Ipv4Addr, Registers, Sn};
     ///
-    /// let mut w5500 = W5500::new(spi, pin);
+    /// let mut w5500 = W5500::new(spi);
     /// let dipr = w5500.sn_dipr(Sn::Sn0)?;
     /// assert_eq!(dipr, Ipv4Addr::UNSPECIFIED);
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn sn_dipr(&mut self, sn: Sn) -> Result<Ipv4Addr, Self::Error> {
         let mut dipr: Ipv4Addr = Ipv4Addr::UNSPECIFIED;
@@ -1937,20 +1798,18 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x0C, 0x08 | 0x04]),
-    /// #   hal::spi::Transaction::write(vec![192, 168, 0, 11]),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x0C, 0x08 | 0x04]),
+    /// #   hal::spi::Transaction::write_vec(vec![192, 168, 0, 11]),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// # ]);
-    /// use w5500_ll::{blocking::vdm::W5500, net::Ipv4Addr, Registers, Sn};
+    /// use w5500_ll::{eh1::vdm::W5500, net::Ipv4Addr, Registers, Sn};
     ///
-    /// let mut w5500 = W5500::new(spi, pin);
+    /// let mut w5500 = W5500::new(spi);
     /// w5500.set_sn_dipr(Sn::Sn0, &Ipv4Addr::new(192, 168, 0, 11))?;
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn set_sn_dipr(&mut self, sn: Sn, dipr: &Ipv4Addr) -> Result<(), Self::Error> {
         self.write(SnReg::DIPR0.addr(), sn.block(), &dipr.octets)
@@ -1975,20 +1834,18 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x10, 0x08]),
-    /// #   hal::spi::Transaction::transfer(vec![0, 0], vec![0, 0]),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x10, 0x08]),
+    /// #   hal::spi::Transaction::read_vec(vec![0, 0]),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// # ]);
-    /// use w5500_ll::{blocking::vdm::W5500, Registers, Sn, SocketMode};
+    /// use w5500_ll::{eh1::vdm::W5500, Registers, Sn, SocketMode};
     ///
-    /// let mut w5500 = W5500::new(spi, pin);
+    /// let mut w5500 = W5500::new(spi);
     /// let socket_destination_port: u16 = w5500.sn_dport(Sn::Sn0)?;
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn sn_dport(&mut self, sn: Sn) -> Result<u16, Self::Error> {
         let mut reg: [u8; 2] = [0; 2];
@@ -2003,20 +1860,18 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x10, 0x08 | 0x04]),
-    /// #   hal::spi::Transaction::write(vec![0x00, 67]),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x10, 0x08 | 0x04]),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 67]),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// # ]);
-    /// use w5500_ll::{blocking::vdm::W5500, Registers, Sn};
+    /// use w5500_ll::{eh1::vdm::W5500, Registers, Sn};
     ///
-    /// let mut w5500 = W5500::new(spi, pin);
+    /// let mut w5500 = W5500::new(spi);
     /// w5500.set_sn_dport(Sn::Sn0, 67)?;
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn set_sn_dport(&mut self, sn: Sn, port: u16) -> Result<(), Self::Error> {
         self.write(SnReg::DPORT0.addr(), sn.block(), &u16::to_be_bytes(port))
@@ -2033,21 +1888,19 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x0C, 0x08]),
-    /// #   hal::spi::Transaction::transfer(vec![0, 0, 0, 0, 0, 0], vec![0, 0, 0, 0, 0, 0]),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x0C, 0x08]),
+    /// #   hal::spi::Transaction::read_vec(vec![0, 0, 0, 0, 0, 0]),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// # ]);
-    /// use w5500_ll::{blocking::vdm::W5500, net::SocketAddrV4, Registers, Sn};
+    /// use w5500_ll::{eh1::vdm::W5500, net::SocketAddrV4, Registers, Sn};
     ///
-    /// let mut w5500 = W5500::new(spi, pin);
+    /// let mut w5500 = W5500::new(spi);
     /// let addr = w5500.sn_dest(Sn::Sn0)?;
     /// assert_eq!(addr, SocketAddrV4::default());
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn sn_dest(&mut self, sn: Sn) -> Result<SocketAddrV4, Self::Error> {
         let mut buf: [u8; 6] = [0; 6];
@@ -2069,25 +1922,23 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x0C, 0x08 | 0x04]),
-    /// #   hal::spi::Transaction::write(vec![192, 168, 0, 11, 0, 67]),
-    /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x0C, 0x08 | 0x04]),
+    /// #   hal::spi::Transaction::write_vec(vec![192, 168, 0, 11, 0, 67]),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{
-    ///     blocking::vdm::W5500,
+    ///     eh1::vdm::W5500,
     ///     net::{Ipv4Addr, SocketAddrV4},
     ///     Registers, Sn,
     /// };
     ///
     /// let addr: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::new(192, 168, 0, 11), 67);
-    /// let mut w5500 = W5500::new(spi, pin);
+    /// let mut w5500 = W5500::new(spi);
     /// w5500.set_sn_dest(Sn::Sn0, &addr)?;
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn set_sn_dest(&mut self, sn: Sn, addr: &SocketAddrV4) -> Result<(), Self::Error> {
         let buf: [u8; 6] = [
@@ -2138,20 +1989,18 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x12, 0x08]),
-    /// #   hal::spi::Transaction::transfer(vec![0, 0], vec![0x00, 0x00]),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x12, 0x08]),
+    /// #   hal::spi::Transaction::read_vec(vec![0x00, 0x00]),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// # ]);
-    /// use w5500_ll::{blocking::vdm::W5500, Registers, Sn};
+    /// use w5500_ll::{eh1::vdm::W5500, Registers, Sn};
     ///
-    /// let mut w5500 = W5500::new(spi, pin);
+    /// let mut w5500 = W5500::new(spi);
     /// let sn__mssr: u16 = w5500.sn_mssr(Sn::Sn0)?;
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn sn_mssr(&mut self, sn: Sn) -> Result<u16, Self::Error> {
         let mut reg: [u8; 2] = [0; 2];
@@ -2166,20 +2015,18 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x12, 0x08 | 0x04]),
-    /// #   hal::spi::Transaction::write(vec![0x05, 0xB4]),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x12, 0x08 | 0x04]),
+    /// #   hal::spi::Transaction::write_vec(vec![0x05, 0xB4]),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// # ]);
-    /// use w5500_ll::{blocking::vdm::W5500, Registers, Sn};
+    /// use w5500_ll::{eh1::vdm::W5500, Registers, Sn};
     ///
-    /// let mut w5500 = W5500::new(spi, pin);
+    /// let mut w5500 = W5500::new(spi);
     /// w5500.set_sn_mssr(Sn::Sn0, 1460)?;
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn set_sn_mssr(&mut self, sn: Sn, mssr: u16) -> Result<(), Self::Error> {
         self.write(SnReg::MSSR0.addr(), sn.block(), &u16::to_be_bytes(mssr))
@@ -2198,20 +2045,18 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x15, 0x08]),
-    /// #   hal::spi::Transaction::transfer(vec![0], vec![0]),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x15, 0x08]),
+    /// #   hal::spi::Transaction::read(0),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// # ]);
-    /// use w5500_ll::{blocking::vdm::W5500, Registers, Sn};
+    /// use w5500_ll::{eh1::vdm::W5500, Registers, Sn};
     ///
-    /// let mut w5500 = W5500::new(spi, pin);
+    /// let mut w5500 = W5500::new(spi);
     /// let tos: u8 = w5500.sn_tos(Sn::Sn0)?;
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn sn_tos(&mut self, sn: Sn) -> Result<u8, Self::Error> {
         let mut reg: [u8; 1] = [0];
@@ -2226,20 +2071,18 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x15, 0x08 | 0x04]),
-    /// #   hal::spi::Transaction::write(vec![0x01]),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x15, 0x08 | 0x04]),
+    /// #   hal::spi::Transaction::write(0x01),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// # ]);
-    /// use w5500_ll::{blocking::vdm::W5500, Registers, Sn};
+    /// use w5500_ll::{eh1::vdm::W5500, Registers, Sn};
     ///
-    /// let mut w5500 = W5500::new(spi, pin);
+    /// let mut w5500 = W5500::new(spi);
     /// w5500.set_sn_tos(Sn::Sn0, 1)?;
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn set_sn_tos(&mut self, sn: Sn, tos: u8) -> Result<(), Self::Error> {
         self.write(SnReg::TOS.addr(), sn.block(), &[tos])
@@ -2255,20 +2098,18 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x16, 0x08]),
-    /// #   hal::spi::Transaction::transfer(vec![0], vec![0x80]),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x16, 0x08]),
+    /// #   hal::spi::Transaction::read(0x80),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// # ]);
-    /// use w5500_ll::{blocking::vdm::W5500, Registers, Sn};
+    /// use w5500_ll::{eh1::vdm::W5500, Registers, Sn};
     ///
-    /// let mut w5500 = W5500::new(spi, pin);
+    /// let mut w5500 = W5500::new(spi);
     /// let ttl: u8 = w5500.sn_ttl(Sn::Sn0)?;
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn sn_ttl(&mut self, sn: Sn) -> Result<u8, Self::Error> {
         let mut reg: [u8; 1] = [0];
@@ -2283,20 +2124,18 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x16, 0x08 | 0x04]),
-    /// #   hal::spi::Transaction::write(vec![0x80]),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x16, 0x08 | 0x04]),
+    /// #   hal::spi::Transaction::write(0x80),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// # ]);
-    /// use w5500_ll::{blocking::vdm::W5500, Registers, Sn};
+    /// use w5500_ll::{eh1::vdm::W5500, Registers, Sn};
     ///
-    /// let mut w5500 = W5500::new(spi, pin);
+    /// let mut w5500 = W5500::new(spi);
     /// w5500.set_sn_ttl(Sn::Sn0, 0x80)?;
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn set_sn_ttl(&mut self, sn: Sn, ttl: u8) -> Result<(), Self::Error> {
         self.write(SnReg::TTL.addr(), sn.block(), &[ttl])
@@ -2324,21 +2163,19 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x1E, 0x08]),
-    /// #   hal::spi::Transaction::transfer(vec![0], vec![0x02]),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x1E, 0x08]),
+    /// #   hal::spi::Transaction::read(0x02),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// # ]);
-    /// use w5500_ll::{blocking::vdm::W5500, BufferSize, Registers, Sn};
+    /// use w5500_ll::{eh1::vdm::W5500, BufferSize, Registers, Sn};
     ///
-    /// let mut w5500 = W5500::new(spi, pin);
+    /// let mut w5500 = W5500::new(spi);
     /// let sn_rxbuf_size = w5500.sn_rxbuf_size(Sn::Sn0)?;
     /// assert_eq!(sn_rxbuf_size, Ok(BufferSize::KB2));
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     ///
     /// [`Ok`]: https://doc.rust-lang.org/core/result/enum.Result.html#variant.Ok
@@ -2356,20 +2193,18 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x1E, 0x08 | 0x04]),
-    /// #   hal::spi::Transaction::write(vec![1]),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x1E, 0x08 | 0x04]),
+    /// #   hal::spi::Transaction::write(1),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// # ]);
-    /// use w5500_ll::{blocking::vdm::W5500, BufferSize, Registers, Sn};
+    /// use w5500_ll::{eh1::vdm::W5500, BufferSize, Registers, Sn};
     ///
-    /// let mut w5500 = W5500::new(spi, pin);
+    /// let mut w5500 = W5500::new(spi);
     /// w5500.set_sn_rxbuf_size(Sn::Sn0, BufferSize::KB1)?;
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn set_sn_rxbuf_size(&mut self, sn: Sn, size: BufferSize) -> Result<(), Self::Error> {
         self.write(SnReg::RXBUF_SIZE.addr(), sn.block(), &[size.into()])
@@ -2397,21 +2232,19 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x1F, 0x08]),
-    /// #   hal::spi::Transaction::transfer(vec![0], vec![0x02]),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x1F, 0x08]),
+    /// #   hal::spi::Transaction::read(0x02),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// # ]);
-    /// use w5500_ll::{blocking::vdm::W5500, BufferSize, Registers, Sn};
+    /// use w5500_ll::{eh1::vdm::W5500, BufferSize, Registers, Sn};
     ///
-    /// let mut w5500 = W5500::new(spi, pin);
+    /// let mut w5500 = W5500::new(spi);
     /// let sn_txbuf_size = w5500.sn_txbuf_size(Sn::Sn0)?;
     /// assert_eq!(sn_txbuf_size, Ok(BufferSize::KB2));
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     ///
     /// [`Ok`]: https://doc.rust-lang.org/core/result/enum.Result.html#variant.Ok
@@ -2429,20 +2262,18 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x1F, 0x08 | 0x04]),
-    /// #   hal::spi::Transaction::write(vec![1]),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x1F, 0x08 | 0x04]),
+    /// #   hal::spi::Transaction::write(1),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// # ]);
-    /// use w5500_ll::{blocking::vdm::W5500, BufferSize, Registers, Sn};
+    /// use w5500_ll::{eh1::vdm::W5500, BufferSize, Registers, Sn};
     ///
-    /// let mut w5500 = W5500::new(spi, pin);
+    /// let mut w5500 = W5500::new(spi);
     /// w5500.set_sn_txbuf_size(Sn::Sn0, BufferSize::KB1)?;
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn set_sn_txbuf_size(&mut self, sn: Sn, size: BufferSize) -> Result<(), Self::Error> {
         self.write(SnReg::TXBUF_SIZE.addr(), sn.block(), &[size.into()])
@@ -2475,20 +2306,18 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x20, 0x08]),
-    /// #   hal::spi::Transaction::transfer(vec![0, 0], vec![0x08, 0x00]),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x20, 0x08]),
+    /// #   hal::spi::Transaction::read_vec(vec![0x08, 0x00]),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// # ]);
-    /// use w5500_ll::{blocking::vdm::W5500, Registers, Sn, SocketMode};
+    /// use w5500_ll::{eh1::vdm::W5500, Registers, Sn, SocketMode};
     ///
-    /// let mut w5500 = W5500::new(spi, pin);
+    /// let mut w5500 = W5500::new(spi);
     /// let sn_tx_fsr: u16 = w5500.sn_tx_fsr(Sn::Sn0)?;
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn sn_tx_fsr(&mut self, sn: Sn) -> Result<u16, Self::Error> {
         let mut reg: [u8; 2] = [0; 2];
@@ -2518,20 +2347,18 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x22, 0x08]),
-    /// #   hal::spi::Transaction::transfer(vec![0, 0], vec![0x00, 0x00]),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x22, 0x08]),
+    /// #   hal::spi::Transaction::read_vec(vec![0, 0]),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// # ]);
-    /// use w5500_ll::{blocking::vdm::W5500, Registers, Sn, SocketMode};
+    /// use w5500_ll::{eh1::vdm::W5500, Registers, Sn, SocketMode};
     ///
-    /// let mut w5500 = W5500::new(spi, pin);
+    /// let mut w5500 = W5500::new(spi);
     /// let sn_tx_rd: u16 = w5500.sn_tx_rd(Sn::Sn0)?;
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn sn_tx_rd(&mut self, sn: Sn) -> Result<u16, Self::Error> {
         let mut reg: [u8; 2] = [0; 2];
@@ -2557,20 +2384,18 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x24, 0x08]),
-    /// #   hal::spi::Transaction::transfer(vec![0, 0], vec![0x00, 0x00]),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x24, 0x08]),
+    /// #   hal::spi::Transaction::read_vec(vec![0, 0]),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// # ]);
-    /// use w5500_ll::{blocking::vdm::W5500, Registers, Sn};
+    /// use w5500_ll::{eh1::vdm::W5500, Registers, Sn};
     ///
-    /// let mut w5500 = W5500::new(spi, pin);
+    /// let mut w5500 = W5500::new(spi);
     /// let sn_tx_wr: u16 = w5500.sn_tx_wr(Sn::Sn0)?;
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn sn_tx_wr(&mut self, sn: Sn) -> Result<u16, Self::Error> {
         let mut reg: [u8; 2] = [0; 2];
@@ -2598,20 +2423,18 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x26, 0x08]),
-    /// #   hal::spi::Transaction::transfer(vec![0, 0], vec![0x00, 0x00]),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x26, 0x08]),
+    /// #   hal::spi::Transaction::read_vec(vec![0, 0]),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// # ]);
-    /// use w5500_ll::{blocking::vdm::W5500, Registers, Sn};
+    /// use w5500_ll::{eh1::vdm::W5500, Registers, Sn};
     ///
-    /// let mut w5500 = W5500::new(spi, pin);
+    /// let mut w5500 = W5500::new(spi);
     /// let sn_rx_rsr: u16 = w5500.sn_rx_rsr(Sn::Sn0)?;
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn sn_rx_rsr(&mut self, sn: Sn) -> Result<u16, Self::Error> {
         let mut reg: [u8; 2] = [0; 2];
@@ -2636,20 +2459,18 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x28, 0x08]),
-    /// #   hal::spi::Transaction::transfer(vec![0, 0], vec![0x00, 0x00]),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x28, 0x08]),
+    /// #   hal::spi::Transaction::read_vec(vec![0, 0]),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// # ]);
-    /// use w5500_ll::{blocking::vdm::W5500, Registers, Sn};
+    /// use w5500_ll::{eh1::vdm::W5500, Registers, Sn};
     ///
-    /// let mut w5500 = W5500::new(spi, pin);
+    /// let mut w5500 = W5500::new(spi);
     /// let sn_rx_rd: u16 = w5500.sn_rx_rd(Sn::Sn0)?;
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn sn_rx_rd(&mut self, sn: Sn) -> Result<u16, Self::Error> {
         let mut reg: [u8; 2] = [0; 2];
@@ -2673,20 +2494,18 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x2A, 0x08]),
-    /// #   hal::spi::Transaction::transfer(vec![0, 0], vec![0x00, 0x00]),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x2A, 0x08]),
+    /// #   hal::spi::Transaction::read_vec(vec![0, 0]),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// # ]);
-    /// use w5500_ll::{blocking::vdm::W5500, Registers, Sn};
+    /// use w5500_ll::{eh1::vdm::W5500, Registers, Sn};
     ///
-    /// let mut w5500 = W5500::new(spi, pin);
+    /// let mut w5500 = W5500::new(spi);
     /// let sn_rx_wr: u16 = w5500.sn_rx_wr(Sn::Sn0)?;
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn sn_rx_wr(&mut self, sn: Sn) -> Result<u16, Self::Error> {
         let mut reg: [u8; 2] = [0; 2];
@@ -2699,21 +2518,19 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x2C, 0x08]),
-    /// #   hal::spi::Transaction::transfer(vec![0], vec![0xFF]),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x2C, 0x08]),
+    /// #   hal::spi::Transaction::read(0xFF),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// # ]);
-    /// use w5500_ll::{blocking::vdm::W5500, Registers, Sn, SocketInterruptMask};
+    /// use w5500_ll::{eh1::vdm::W5500, Registers, Sn, SocketInterruptMask};
     ///
-    /// let mut w5500 = W5500::new(spi, pin);
+    /// let mut w5500 = W5500::new(spi);
     /// let sn_imr: SocketInterruptMask = w5500.sn_imr(Sn::Sn0)?;
     /// assert_eq!(sn_imr, SocketInterruptMask::default());
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn sn_imr(&mut self, sn: Sn) -> Result<SocketInterruptMask, Self::Error> {
         let mut reg: [u8; 1] = [0];
@@ -2726,20 +2543,18 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x2C, 0x08 | 0x04]),
-    /// #   hal::spi::Transaction::write(vec![0xE0]),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x2C, 0x08 | 0x04]),
+    /// #   hal::spi::Transaction::write(0xE0),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// # ]);
-    /// use w5500_ll::{blocking::vdm::W5500, Registers, Sn, SocketInterruptMask};
+    /// use w5500_ll::{eh1::vdm::W5500, Registers, Sn, SocketInterruptMask};
     ///
-    /// let mut w5500 = W5500::new(spi, pin);
+    /// let mut w5500 = W5500::new(spi);
     /// w5500.set_sn_imr(Sn::Sn0, SocketInterruptMask::ALL_MASKED)?;
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn set_sn_imr(&mut self, sn: Sn, mask: SocketInterruptMask) -> Result<(), Self::Error> {
         self.write(SnReg::IMR.addr(), sn.block(), &[mask.into()])
@@ -2752,21 +2567,19 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x2D, 0x08]),
-    /// #   hal::spi::Transaction::transfer(vec![0, 0], vec![0x40, 0x00]),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x2D, 0x08]),
+    /// #   hal::spi::Transaction::read_vec(vec![0x40, 0x00]),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// # ]);
-    /// use w5500_ll::{blocking::vdm::W5500, Registers, Sn};
+    /// use w5500_ll::{eh1::vdm::W5500, Registers, Sn};
     ///
-    /// let mut w5500 = W5500::new(spi, pin);
+    /// let mut w5500 = W5500::new(spi);
     /// let frag: u16 = w5500.sn_frag(Sn::Sn0)?;
     /// assert_eq!(frag, 0x4000);
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn sn_frag(&mut self, sn: Sn) -> Result<u16, Self::Error> {
         let mut buf: [u8; 2] = [0; 2];
@@ -2781,20 +2594,18 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x2D, 0x08 | 0x04]),
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x00]),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x2D, 0x08 | 0x04]),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x00]),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// # ]);
-    /// use w5500_ll::{blocking::vdm::W5500, Registers, Sn};
+    /// use w5500_ll::{eh1::vdm::W5500, Registers, Sn};
     ///
-    /// let mut w5500 = W5500::new(spi, pin);
+    /// let mut w5500 = W5500::new(spi);
     /// w5500.set_sn_frag(Sn::Sn0, 0)?;
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn set_sn_frag(&mut self, sn: Sn, frag: u16) -> Result<(), Self::Error> {
         self.write(SnReg::FRAG0.addr(), sn.block(), &u16::to_be_bytes(frag))
@@ -2823,20 +2634,18 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x2F, 0x08]),
-    /// #   hal::spi::Transaction::transfer(vec![0], vec![0]),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x2F, 0x08]),
+    /// #   hal::spi::Transaction::read(0),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// # ]);
-    /// use w5500_ll::{blocking::vdm::W5500, Registers, Sn};
+    /// use w5500_ll::{eh1::vdm::W5500, Registers, Sn};
     ///
-    /// let mut w5500 = W5500::new(spi, pin);
+    /// let mut w5500 = W5500::new(spi);
     /// let sn_kpalvtr: u8 = w5500.sn_kpalvtr(Sn::Sn0)?;
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn sn_kpalvtr(&mut self, sn: Sn) -> Result<u8, Self::Error> {
         let mut buf: [u8; 1] = [0];
@@ -2851,21 +2660,19 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # use embedded_hal_mock as hal;
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x2F, 0x08 | 0x04]),
-    /// #   hal::spi::Transaction::write(vec![0x0A]),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x2F, 0x08 | 0x04]),
+    /// #   hal::spi::Transaction::write(0x0A),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// # ]);
-    /// use w5500_ll::{blocking::vdm::W5500, Registers, Sn};
+    /// use w5500_ll::{eh1::vdm::W5500, Registers, Sn};
     ///
-    /// let mut w5500 = W5500::new(spi, pin);
+    /// let mut w5500 = W5500::new(spi);
     /// // 50s keep alive timer
     /// w5500.set_sn_kpalvtr(Sn::Sn0, 10)?;
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn set_sn_kpalvtr(&mut self, sn: Sn, kpalvtr: u8) -> Result<(), Self::Error> {
         self.write(SnReg::KPALVTR.addr(), sn.block(), &[kpalvtr])
@@ -2877,33 +2684,36 @@ pub trait Registers {
     ///
     /// ```
     /// use core::cmp::min;
-    /// use w5500_ll::{blocking::vdm::W5500, Registers, Sn, SocketCommand};
-    /// # use embedded_hal_mock as hal;
+    /// use w5500_ll::{eh1::vdm::W5500, Registers, Sn, SocketCommand};
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, w5500_ll::SnReg::TX_FSR0.addr() as u8, 0x08]),
-    /// #   hal::spi::Transaction::transfer(vec![0, 0], vec![0x08, 0x00]),
-    /// #   hal::spi::Transaction::write(vec![0x00, w5500_ll::SnReg::TX_WR0.addr() as u8, 0x08]),
-    /// #   hal::spi::Transaction::transfer(vec![0, 0], vec![0x00, 0x00]),
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x00, (Sn::Sn0.tx_block() as u8) << 3 | 0x04]),
-    /// #   hal::spi::Transaction::write(vec![0x12, 0x34, 0x56, 0x78, 0x9A]),
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x24, 0x08 | 0x04]),
-    /// #   hal::spi::Transaction::write(vec![0x00, 5]),
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x01, 0x08 | 0x04]),
-    /// #   hal::spi::Transaction::write(vec![SocketCommand::Send.into()]),
+    /// #   // sn_tx_fsr
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, w5500_ll::SnReg::TX_FSR0.addr() as u8, 0x08]),
+    /// #   hal::spi::Transaction::read_vec(vec![0x08, 0x00]),
+    /// #   hal::spi::Transaction::transaction_end(),
+    /// #   // sn_tx_write
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, w5500_ll::SnReg::TX_WR0.addr() as u8, 0x08]),
+    /// #   hal::spi::Transaction::read_vec(vec![0, 0]),
+    /// #   hal::spi::Transaction::transaction_end(),
+    /// #   // set_sn_tx_buf
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x00, (Sn::Sn0.tx_block() as u8) << 3 | 0x04]),
+    /// #   hal::spi::Transaction::write_vec(vec![0x12, 0x34, 0x56, 0x78, 0x9A]),
+    /// #   hal::spi::Transaction::transaction_end(),
+    /// #   // set_sn_tx_wr
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x24, 0x08 | 0x04]),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 5]),
+    /// #   hal::spi::Transaction::transaction_end(),
+    /// #   // set_sn_cr
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x01, 0x08 | 0x04]),
+    /// #   hal::spi::Transaction::write_vec(vec![SocketCommand::Send.into()]),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// # ]);
-    /// # let mut w5500 = W5500::new(spi, pin);
+    /// # let mut w5500 = W5500::new(spi);
     ///
     /// // the socket should already be opened at this point
     /// const THE_SOCKET: Sn = Sn::Sn0;
@@ -2923,7 +2733,7 @@ pub trait Registers {
     /// w5500.set_sn_tx_buf(THE_SOCKET, ptr, &buf[..usize::from(tx_bytes)])?;
     /// w5500.set_sn_tx_wr(THE_SOCKET, ptr.wrapping_add(tx_bytes))?;
     /// w5500.set_sn_cr(THE_SOCKET, SocketCommand::Send)?;
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn set_sn_tx_buf(&mut self, sn: Sn, ptr: u16, buf: &[u8]) -> Result<(), Self::Error> {
         self.write(ptr, sn.tx_block(), buf)
@@ -2938,21 +2748,18 @@ pub trait Registers {
     ///
     /// ```
     /// use core::cmp::min;
-    /// use w5500_ll::{blocking::vdm::W5500, Registers, Sn, SocketCommand};
-    /// # use embedded_hal_mock as hal;
+    /// use w5500_ll::{eh1::vdm::W5500, Registers, Sn, SocketCommand};
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x00, (Sn::Sn0.tx_block() as u8) << 3]),
-    /// #   hal::spi::Transaction::transfer(vec![0], vec![0]),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x00, (Sn::Sn0.tx_block() as u8) << 3]),
+    /// #   hal::spi::Transaction::read(0),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// # ]);
-    /// # let mut w5500 = W5500::new(spi, pin);
+    /// # let mut w5500 = W5500::new(spi);
     /// let mut buf: [u8; 1] = [0];
     /// w5500.sn_tx_buf(Sn::Sn0, 0, &mut buf)?;
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn sn_tx_buf(&mut self, sn: Sn, ptr: u16, buf: &mut [u8]) -> Result<(), Self::Error> {
         self.read(ptr, sn.tx_block(), buf)
@@ -2964,33 +2771,31 @@ pub trait Registers {
     ///
     /// ```
     /// use core::cmp::min;
-    /// use w5500_ll::{blocking::vdm::W5500, Registers, Sn, SocketCommand};
-    /// # use embedded_hal_mock as hal;
+    /// use w5500_ll::{eh1::vdm::W5500, Registers, Sn, SocketCommand};
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, w5500_ll::SnReg::RX_RSR0.addr() as u8, 0x08]),
-    /// #   hal::spi::Transaction::transfer(vec![0, 0], vec![0, 4]),
-    /// #   hal::spi::Transaction::write(vec![0x00, w5500_ll::SnReg::RX_RD0.addr() as u8, 0x08]),
-    /// #   hal::spi::Transaction::transfer(vec![0, 0], vec![0, 0]),
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x00, (Sn::Sn0.rx_block() as u8) << 3]),
-    /// #   hal::spi::Transaction::transfer(vec![0, 0, 0, 0], vec![0, 0, 0, 0]),
-    /// #   hal::spi::Transaction::write(vec![0x00, w5500_ll::SnReg::RX_RD0.addr() as u8, 0x08 | 0x04]),
-    /// #   hal::spi::Transaction::write(vec![0, 4]),
-    /// #   hal::spi::Transaction::write(vec![0x00, w5500_ll::SnReg::CR.addr() as u8, 0x08 | 0x04]),
-    /// #   hal::spi::Transaction::write(vec![SocketCommand::Recv.into()]),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, w5500_ll::SnReg::RX_RSR0.addr() as u8, 0x08]),
+    /// #   hal::spi::Transaction::read_vec(vec![0, 4]),
+    /// #   hal::spi::Transaction::transaction_end(),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, w5500_ll::SnReg::RX_RD0.addr() as u8, 0x08]),
+    /// #   hal::spi::Transaction::read_vec(vec![0, 0]),
+    /// #   hal::spi::Transaction::transaction_end(),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x00, (Sn::Sn0.rx_block() as u8) << 3]),
+    /// #   hal::spi::Transaction::read_vec(vec![0, 0, 0, 0]),
+    /// #   hal::spi::Transaction::transaction_end(),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, w5500_ll::SnReg::RX_RD0.addr() as u8, 0x08 | 0x04]),
+    /// #   hal::spi::Transaction::write_vec(vec![0, 4]),
+    /// #   hal::spi::Transaction::transaction_end(),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, w5500_ll::SnReg::CR.addr() as u8, 0x08 | 0x04]),
+    /// #   hal::spi::Transaction::write(SocketCommand::Recv.into()),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// # ]);
-    /// # let mut w5500 = W5500::new(spi, pin);
+    /// # let mut w5500 = W5500::new(spi);
     ///
     /// // the socket should already be opened at this point
     /// // a socket interrupt will indicate there is data to be retrieved
@@ -3011,7 +2816,7 @@ pub trait Registers {
     /// w5500.sn_rx_buf(THE_SOCKET, ptr, &mut buf[..usize::from(rx_bytes)])?;
     /// w5500.set_sn_rx_rd(THE_SOCKET, ptr.wrapping_add(rx_bytes))?;
     /// w5500.set_sn_cr(THE_SOCKET, SocketCommand::Recv)?;
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn sn_rx_buf(&mut self, sn: Sn, ptr: u16, buf: &mut [u8]) -> Result<(), Self::Error> {
         self.read(ptr, sn.rx_block(), buf)
@@ -3026,21 +2831,18 @@ pub trait Registers {
     ///
     /// ```
     /// use core::cmp::min;
-    /// use w5500_ll::{blocking::vdm::W5500, Registers, Sn, SocketCommand};
-    /// # use embedded_hal_mock as hal;
+    /// use w5500_ll::{eh1::vdm::W5500, Registers, Sn, SocketCommand};
+    /// # use ehm1 as hal;
     /// # let spi = hal::spi::Mock::new(&[
-    /// #   hal::spi::Transaction::write(vec![0x00, 0x00, (Sn::Sn0.rx_block() as u8) << 3 | 0x04]),
-    /// #   hal::spi::Transaction::write(vec![0]),
+    /// #   hal::spi::Transaction::transaction_start(),
+    /// #   hal::spi::Transaction::write_vec(vec![0x00, 0x00, (Sn::Sn0.rx_block() as u8) << 3 | 0x04]),
+    /// #   hal::spi::Transaction::write(0),
+    /// #   hal::spi::Transaction::transaction_end(),
     /// # ]);
-    /// # let pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
-    /// #    hal::pin::Transaction::set(hal::pin::State::Low),
-    /// # ]);
-    /// # let mut w5500 = W5500::new(spi, pin);
+    /// # let mut w5500 = W5500::new(spi);
     /// let buf: [u8; 1] = [0];
     /// w5500.set_sn_rx_buf(Sn::Sn0, 0, &buf)?;
-    /// # Ok::<(), w5500_ll::blocking::vdm::Error<_, _>>(())
+    /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn set_sn_rx_buf(&mut self, sn: Sn, ptr: u16, buf: &[u8]) -> Result<(), Self::Error> {
         self.write(ptr, sn.rx_block(), buf)
