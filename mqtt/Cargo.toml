@@ -12,16 +12,18 @@ categories = ["embedded", "hardware-support", "no-std"]
 homepage = "https://github.com/newAM/w5500-rs"
 
 [features]
+defmt = ["w5500-hl/defmt", "dep:defmt"]
 eh0 = ["w5500-hl/eh0"]
 eh1 = ["w5500-hl/eh1"]
-defmt = ["w5500-hl/defmt", "dep:defmt"]
-std = ["w5500-hl/std", "w5500-tls?/std"]
 log = ["dep:log", "w5500-tls?/log"]
 p256-cm4 = ["w5500-tls?/p256-cm4"]
+std = ["w5500-hl/std", "w5500-tls?/std", "ufmt?/std"]
+ufmt = ["w5500-hl/ufmt", "dep:ufmt"]
 
 [dependencies]
 defmt = { version = "0.3", optional = true }
 log = { version = "0.4", optional = true }
+ufmt = { version = "0.2", optional = true }
 w5500-hl = { path = "../hl", version = "0.9.0" }
 w5500-tls = { path = "../tls", version = "0.1.3", optional = true }
 

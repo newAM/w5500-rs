@@ -49,6 +49,12 @@ jobs:
       - run: cargo build --target ${{ matrix.target }} -p w5500-dns  --features defmt
       - run: cargo build --target ${{ matrix.target }} -p w5500-mqtt --features defmt
       - run: cargo build --target ${{ matrix.target }} -p w5500-tls  --features defmt
+      - run: cargo build --target ${{ matrix.target }} -p w5500-ll   --features ufmt
+      - run: cargo build --target ${{ matrix.target }} -p w5500-hl   --features ufmt
+      - run: cargo build --target ${{ matrix.target }} -p w5500-dhcp --features ufmt
+      - run: cargo build --target ${{ matrix.target }} -p w5500-dns  --features ufmt
+      - run: cargo build --target ${{ matrix.target }} -p w5500-mqtt --features ufmt
+      - run: cargo build --target ${{ matrix.target }} -p w5500-tls  --features ufmt
       - run: cargo build --target ${{ matrix.target }} -p w5500-ll   --features eh0,eh1
       - run: cargo build --target ${{ matrix.target }} -p w5500-hl   --features eh0,eh1
       - run: cargo build --target ${{ matrix.target }} -p w5500-dhcp --features eh0,eh1

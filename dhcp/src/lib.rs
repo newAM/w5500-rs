@@ -9,11 +9,12 @@
 //!
 //! All features are disabled by default.
 //!
+//! * `defmt`: Enable logging with `defmt`.
 //! * `eh0`: Passthrough to [`w5500-hl`].
 //! * `eh1`: Passthrough to [`w5500-hl`].
-//! * `std`: Passthrough to [`w5500-hl`].
-//! * `defmt`: Enable logging with `defmt`. Also a passthrough to [`w5500-hl`].
 //! * `log`: Enable logging with `log`.
+//! * `std`: Passthrough to [`w5500-hl`].
+//! * `ufmt`: Enable formatting types with `ufmt`.
 //!
 //! [`std::net`]: https://doc.rust-lang.org/std/net/index.html
 //! [`w5500-hl`]: https://crates.io/crates/w5500-hl
@@ -56,6 +57,7 @@ const LINK_UP_TIMEOUT_SECS: u32 = 1;
 /// DHCP client states.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
+#[cfg_attr(feature = "ufmt", derive(ufmt::derive::uDebug))]
 #[non_exhaustive] // may support rebooting and ini-reboot in the future
 #[doc(hidden)]
 pub enum State {
@@ -111,6 +113,7 @@ pub enum State {
 /// ```
 #[derive(Debug)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
+#[cfg_attr(feature = "ufmt", derive(ufmt::derive::uDebug))]
 pub struct Client<'a> {
     /// Socket to use for the DHCP client.
     sn: Sn,

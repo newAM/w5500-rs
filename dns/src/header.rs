@@ -1,6 +1,7 @@
 /// Query or Response flag.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
+#[cfg_attr(feature = "ufmt", derive(ufmt::derive::uDebug))]
 pub(crate) enum Qr {
     Query,
     Response,
@@ -13,6 +14,7 @@ pub(crate) enum Qr {
 /// * [RFC 1035 Section 4.1.1](https://www.rfc-editor.org/rfc/rfc1035#section-4.1.1)
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
+#[cfg_attr(feature = "ufmt", derive(ufmt::derive::uDebug))]
 #[repr(u8)]
 pub enum ResponseCode {
     /// No Error.
@@ -71,6 +73,7 @@ impl TryFrom<u8> for ResponseCode {
 /// * [RFC 1035 Section 4.1.1](https://www.rfc-editor.org/rfc/rfc1035#section-4.1.1)
 #[derive(Debug)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
+#[cfg_attr(feature = "ufmt", derive(ufmt::derive::uDebug))]
 pub(crate) struct Header {
     buf: [u8; Self::LEN_USIZE],
 }

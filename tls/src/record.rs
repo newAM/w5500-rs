@@ -20,6 +20,7 @@ use crate::{AlertDescription, TlsVersion};
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[non_exhaustive]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
+#[cfg_attr(feature = "ufmt", derive(ufmt::derive::uDebug))]
 pub enum ContentType {
     ChangeCipherSpec = 20,
     Alert = 21,

@@ -47,6 +47,7 @@ pub fn send_publish<E, Writer: Write<E>>(
 /// [`Client::process`]: crate::Client::process
 #[derive(Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
+#[cfg_attr(feature = "ufmt", derive(ufmt::derive::uDebug))]
 pub struct PublishReader<E, Reader: Read<E> + Seek<E>> {
     pub(crate) reader: Reader,
     pub(crate) topic_len: u16,

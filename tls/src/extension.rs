@@ -8,6 +8,7 @@
 #[non_exhaustive]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
+#[cfg_attr(feature = "ufmt", derive(ufmt::derive::uDebug))]
 pub enum ExtensionType {
     ServerName = 0,                           // RFC 6066
     MaxFragmentLength = 1,                    // RFC 6066
@@ -90,6 +91,7 @@ impl TryFrom<u16> for ExtensionType {
 
 #[derive(Debug)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
+#[cfg_attr(feature = "ufmt", derive(ufmt::derive::uDebug))]
 pub struct Extension<'a> {
     pub tipe: ExtensionType,
     pub data: &'a [u8],

@@ -21,10 +21,11 @@
 //!
 //! All features are disabled by default.
 //!
-//! * `defmt`: Passthrough to [`w5500-ll`].
+//! * `defmt`: Enable formatting types with `defmt`.
 //! * `eh0`: Passthrough to [`w5500-ll`].
 //! * `eh1`: Passthrough to [`w5500-ll`].
 //! * `std`: Passthrough to [`w5500-ll`].
+//! * `ufmt`: Enable formatting types with `ufmt`.
 //!
 //! # Examples
 //!
@@ -135,6 +136,7 @@ where
 /// Higher level W5500 errors.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
+#[cfg_attr(feature = "ufmt", derive(ufmt::derive::uDebug))]
 pub enum Error<E> {
     /// Unexpected "end of file".
     ///

@@ -5,6 +5,7 @@ use crate::{properties::Properties, ClientId, CtrlPkt};
 /// [Connect Reason Codes](https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901079)
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
+#[cfg_attr(feature = "ufmt", derive(ufmt::derive::uDebug))]
 #[repr(u8)]
 pub enum ConnectReasonCode {
     /// The Server does not wish to reveal the reason for the failure, or none of the other Reason Codes apply.

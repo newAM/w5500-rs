@@ -16,6 +16,7 @@ use crate::spi::{self, AccessMode};
 /// W5500 blocking fixed data length implementation.
 #[derive(Debug)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
+#[cfg_attr(feature = "ufmt", derive(ufmt::derive::uDebug))]
 pub struct W5500<SPI> {
     /// SPI bus.
     spi: SPI,

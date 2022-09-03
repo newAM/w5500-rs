@@ -40,13 +40,14 @@
 //!
 //! All features are disabled by default.
 //!
+//! * `defmt`: Enable logging with `defmt`.
 //! * `eh0`: Passthrough to [`w5500-hl`].
 //! * `eh1`: Passthrough to [`w5500-hl`].
-//! * `std`: Passthrough to [`w5500-hl`].
-//! * `defmt`: Enable logging with `defmt`. Also a passthrough to [`w5500-hl`].
 //! * `log`: Enable logging with `log`.
 //! * `p256-cm4`: Use [`p256-cm4`], a P256 implementation optimized for the
 //!   Cortex-M4 CPU.
+//! * `std`: Passthrough to [`w5500-hl`].
+//! * `ufmt`: Enable formatting types with `ufmt`.
 //!
 //! [`w5500-hl`]: https://crates.io/crates/w5500-hl
 //! [`p256-cm4`]: https://crates.io/crates/p256-cm4
@@ -128,6 +129,7 @@ impl TlsVersion {
 /// will create a new connection.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
+#[cfg_attr(feature = "ufmt", derive(ufmt::derive::uDebug))]
 pub enum Error {
     /// Alert sent from the server.
     Server(Alert),
@@ -152,6 +154,7 @@ const TIMEOUT_SECS: u32 = 10;
 // https://datatracker.ietf.org/doc/html/rfc8446#appendix-A.1
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
+#[cfg_attr(feature = "ufmt", derive(ufmt::derive::uDebug))]
 pub enum State {
     /// Reset and idle.
     Reset,
@@ -185,6 +188,7 @@ pub enum State {
 /// This is returned by [`Client::process`].
 #[derive(Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
+#[cfg_attr(feature = "ufmt", derive(ufmt::derive::uDebug))]
 pub enum Event {
     /// A hint to call [`Client::process`] after this many seconds have elapsed.
     ///

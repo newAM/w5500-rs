@@ -247,6 +247,18 @@ impl defmt::Format for Mode {
     }
 }
 
+#[cfg(feature = "ufmt")]
+impl ufmt::uDisplay for Mode {
+    fn fmt<W: ufmt::uWrite + ?Sized>(&self, f: &mut ufmt::Formatter<W>) -> Result<(), W::Error> {
+        f.debug_struct("Mode")?
+            .field("wol_enabled", &self.wol_enabled())?
+            .field("pb_enabled", &self.pb_enabled())?
+            .field("pppoe_enabled", &self.pppoe_enabled())?
+            .field("farp_enabled", &self.farp_enabled())?
+            .finish()
+    }
+}
+
 /// Interrupt and interrupt mask register (IR and IMR).
 ///
 /// When used for interrupt masking:
@@ -475,6 +487,18 @@ impl defmt::Format for Interrupt {
             self.pppoe(),
             self.mp(),
         );
+    }
+}
+
+#[cfg(feature = "ufmt")]
+impl ufmt::uDisplay for Interrupt {
+    fn fmt<W: ufmt::uWrite + ?Sized>(&self, f: &mut ufmt::Formatter<W>) -> Result<(), W::Error> {
+        f.debug_struct("Interrupt")?
+            .field("conflict", &self.conflict())?
+            .field("unreach", &self.unreach())?
+            .field("pppoe", &self.pppoe())?
+            .field("mp", &self.mp())?
+            .finish()
     }
 }
 
@@ -722,6 +746,19 @@ impl defmt::Format for PhyCfg {
             self.spd(),
             self.lnk(),
         );
+    }
+}
+
+#[cfg(feature = "ufmt")]
+impl ufmt::uDisplay for PhyCfg {
+    fn fmt<W: ufmt::uWrite + ?Sized>(&self, f: &mut ufmt::Formatter<W>) -> Result<(), W::Error> {
+        f.debug_struct("PhyCfg")?
+            .field("opmd", &self.opmd())?
+            .field("opmdc", &self.opmdc())?
+            .field("dpx", &self.dpx())?
+            .field("spd", &self.spd())?
+            .field("lnk", &self.lnk())?
+            .finish()
     }
 }
 
@@ -1159,6 +1196,23 @@ impl defmt::Format for SocketMode {
     }
 }
 
+#[cfg(feature = "ufmt")]
+impl ufmt::uDisplay for SocketMode {
+    fn fmt<W: ufmt::uWrite + ?Sized>(&self, f: &mut ufmt::Formatter<W>) -> Result<(), W::Error> {
+        f.debug_struct("SocketMode")?
+            .field("protocol", &self.protocol())?
+            .field("multi_enabled", &self.multi_enabled())?
+            .field("mfen_enabled", &self.mfen_enabled())?
+            .field("bcastb_enabled", &self.bcastb_enabled())?
+            .field("nd_enabled", &self.nd_enabled())?
+            .field("mc", &self.mc())?
+            .field("mmb_enabled", &self.mmb_enabled())?
+            .field("ucastb_enabled", &self.ucastb_enabled())?
+            .field("mip6b_enabled", &self.mip6b_enabled())?
+            .finish()
+    }
+}
+
 /// Socket Interrupt Register (Sn_IR).
 ///
 /// Indicated the socket status, such as connection, termination,
@@ -1378,6 +1432,19 @@ impl defmt::Format for SocketInterrupt {
             self.timeout_raised(),
             self.sendok_raised(),
         );
+    }
+}
+
+#[cfg(feature = "ufmt")]
+impl ufmt::uDisplay for SocketInterrupt {
+    fn fmt<W: ufmt::uWrite + ?Sized>(&self, f: &mut ufmt::Formatter<W>) -> Result<(), W::Error> {
+        f.debug_struct("SocketInterrupt")?
+            .field("con_raised", &self.con_raised())?
+            .field("discon_raised", &self.discon_raised())?
+            .field("recv_raised", &self.recv_raised())?
+            .field("timeout_raised", &self.timeout_raised())?
+            .field("sendok_raised", &self.sendok_raised())?
+            .finish()
     }
 }
 
@@ -1612,5 +1679,18 @@ impl defmt::Format for SocketInterruptMask {
             self.timeout_masked(),
             self.sendok_masked(),
         );
+    }
+}
+
+#[cfg(feature = "ufmt")]
+impl ufmt::uDisplay for SocketInterruptMask {
+    fn fmt<W: ufmt::uWrite + ?Sized>(&self, f: &mut ufmt::Formatter<W>) -> Result<(), W::Error> {
+        f.debug_struct("SocketInterruptMask")?
+            .field("con_masked", &self.con_masked())?
+            .field("discon_masked", &self.discon_masked())?
+            .field("recv_masked", &self.recv_masked())?
+            .field("timeout_masked", &self.timeout_masked())?
+            .field("sendok_masked", &self.sendok_masked())?
+            .finish()
     }
 }

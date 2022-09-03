@@ -9,6 +9,7 @@ use crate::Error;
 /// [`std::io::SeekFrom`]: https://doc.rust-lang.org/std/io/enum.SeekFrom.html
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
+#[cfg_attr(feature = "ufmt", derive(ufmt::derive::uDebug))]
 pub enum SeekFrom {
     /// Sets the offset to the provided number of bytes.
     Start(u16),

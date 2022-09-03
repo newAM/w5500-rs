@@ -11,6 +11,7 @@ use w5500_ll::{
 /// W5500 UDP Header.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
+#[cfg_attr(feature = "ufmt", derive(ufmt::derive::uDebug))]
 pub struct UdpHeader {
     /// Origin IP address and port.
     pub origin: SocketAddrV4,
@@ -78,6 +79,7 @@ impl UdpHeader {
 /// ```
 #[derive(Debug)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
+#[cfg_attr(feature = "ufmt", derive(ufmt::derive::uDebug))]
 pub struct UdpReader<'w, W: Registers> {
     inner: TcpReader<'w, W>,
     header: UdpHeader,
@@ -162,6 +164,7 @@ impl<'w, W5500: Registers> Read<W5500::Error> for UdpReader<'w, W5500> {
 /// ```
 #[derive(Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
+#[cfg_attr(feature = "ufmt", derive(ufmt::derive::uDebug))]
 pub struct UdpWriter<'w, W5500: Registers> {
     pub(crate) w5500: &'w mut W5500,
     pub(crate) sn: Sn,

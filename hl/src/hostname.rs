@@ -4,6 +4,7 @@
 /// implementing protocols such as DNS and DHCP to use.
 #[derive(Debug, Clone, Copy)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
+#[cfg_attr(feature = "ufmt", derive(ufmt::derive::uDebug))]
 pub struct Hostname<'a> {
     hostname: &'a str,
 }
@@ -194,6 +195,7 @@ impl<'a> Hostname<'a> {
 /// The error type returned when a str to [`Hostname`] conversion fails.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
+#[cfg_attr(feature = "ufmt", derive(ufmt::derive::uDebug))]
 pub struct TryFromStrError(pub(crate) ());
 
 impl<'a> TryFrom<&'a str> for Hostname<'a> {

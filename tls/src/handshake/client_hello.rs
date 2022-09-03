@@ -43,6 +43,7 @@ macro_rules! const_concat_bytes {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[non_exhaustive]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
+#[cfg_attr(feature = "ufmt", derive(ufmt::derive::uDebug))]
 pub enum SignatureScheme {
     // RSASSA-PKCS1-v1_5 algorithms
     RsaPkcs1Sha256 = 0x0401, // required
@@ -121,6 +122,7 @@ pub(crate) enum NameType {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[allow(non_camel_case_types, dead_code)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
+#[cfg_attr(feature = "ufmt", derive(ufmt::derive::uDebug))]
 pub(crate) enum NamedGroup {
     // Elliptic Curve Groups (ECDHE)
     secp256r1 = 0x0017, // required
@@ -177,6 +179,7 @@ impl TryFrom<u16> for NamedGroup {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[allow(dead_code)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
+#[cfg_attr(feature = "ufmt", derive(ufmt::derive::uDebug))]
 pub(crate) enum PskKeyExchangeMode {
     /// PSK-only key establishment.
     ///

@@ -3,6 +3,7 @@
 
 #[derive(Debug)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
+#[cfg_attr(feature = "ufmt", derive(ufmt::derive::uDebug))]
 pub(crate) struct Rand {
     state: u64,
 }
