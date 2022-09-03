@@ -48,6 +48,7 @@ impl From<Options> for u8 {
 #[repr(u8)]
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
+#[cfg_attr(feature = "ufmt", derive(ufmt::derive::uDebug))]
 pub enum MsgType {
     /// DHCPDISCOVER
     Discover = 1,
