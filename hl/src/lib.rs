@@ -93,7 +93,7 @@
 //! [`std::net`]: https://doc.rust-lang.org/std/net/index.html
 //! [`Tcp`]: https://docs.rs/w5500-hl/latest/w5500_hl/trait.Tcp.html
 //! [`Udp`]: https://docs.rs/w5500-hl/latest/w5500_hl/trait.Udp.html
-//! [`w5500-ll`]: https://github.com/newAM/w5500-ll-rs
+//! [`w5500-ll`]: https://crates.io/crates/w5500-ll
 //! [Wiznet W5500]: https://www.wiznet.io/product-item/w5500/
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![cfg_attr(all(not(feature = "std"), not(test)), no_std)]

@@ -48,7 +48,7 @@
 //! * `p256-cm4`: Use [`p256-cm4`], a P256 implementation optimized for the
 //!   Cortex-M4 CPU.
 //!
-//! [`w5500-hl`]: https://github.com/newAM/w5500-hl-rs
+//! [`w5500-hl`]: https://crates.io/crates/w5500-hl
 //! [`p256-cm4`]: https://crates.io/crates/p256-cm4
 //! [Wiznet W5500]: https://www.wiznet.io/product-item/w5500/
 #![cfg_attr(docsrs, feature(doc_cfg), feature(doc_auto_cfg))]

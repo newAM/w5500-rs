@@ -18,5 +18,5 @@ All features are disabled by default.
 * `log`: Enable logging with `log`.
 
 [`std::net`]: https://doc.rust-lang.org/std/net/index.html
-[`w5500-hl`]: https://github.com/newAM/w5500-hl-rs
+[`w5500-hl`]: https://crates.io/crates/w5500-hl
 [Wiznet W5500]: https://www.wiznet.io/product-item/w5500/
