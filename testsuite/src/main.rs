@@ -197,7 +197,7 @@ fn mqtt_disconnect(ta: &mut TestArgs) {
 }
 
 fn dns_query(ta: &mut TestArgs) {
-    let dns_seed: u64 = (&mut OsRng).next_u64();
+    let dns_seed: u64 = OsRng.next_u64();
     let mut dns_client: DnsClient = DnsClient::new(
         DNS_SN,
         16385,
@@ -353,7 +353,7 @@ fn main() {
     // reduce log spam from polling for link up
     sleep(Duration::from_secs(2));
 
-    let dhcp_seed: u64 = (&mut OsRng).next_u64();
+    let dhcp_seed: u64 = OsRng.next_u64();
 
     let mono: Monotonic = Monotonic::default();
     let mut args: TestArgs = TestArgs {
