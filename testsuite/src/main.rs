@@ -1,4 +1,7 @@
-use ftdi_embedded_hal::{libftd2xx::Ft232h, Delay, FtHal, InputPin, SpiDevice};
+use ftdi_embedded_hal::{
+    libftd2xx::{self, Ft232h},
+    Delay, FtHal, InputPin, SpiDevice,
+};
 use rand_core::{OsRng, RngCore};
 use std::{
     process::Command,
