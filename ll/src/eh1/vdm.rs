@@ -15,6 +15,7 @@ use eh1::spi::blocking::{SpiBusRead, SpiBusWrite};
 /// W5500 blocking variable data length implementation.
 #[derive(Debug)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
+#[cfg_attr(feature = "ufmt", derive(ufmt::derive::uDebug))]
 pub struct W5500<SPI> {
     /// SPI bus + chip select pin.
     spi: SPI,

@@ -16,7 +16,7 @@ fn mac_format() {
 }
 
 #[test]
-fn mac_uformat() {
+fn mac_ufmt() {
     for (mac, expected) in MAC_FMT_CASES {
         let mut s = String::new();
         ufmt::uwrite!(s, "{}", mac).unwrap();
@@ -38,7 +38,7 @@ fn ipv4_format() {
 }
 
 #[test]
-fn ipv4_uformat() {
+fn ipv4_ufmt() {
     for (ip, expected) in IPV4_FMT_CASES {
         let mut s = String::new();
         ufmt::uwrite!(s, "{}", ip).unwrap();
@@ -66,7 +66,7 @@ fn socket_addr_format() {
 }
 
 #[test]
-fn socket_addr_uformat() {
+fn socket_addr_ufmt() {
     for (addr, expected) in SOCKET_ADDR_FMT_CASES {
         let mut s = String::new();
         ufmt::uwrite!(s, "{}", addr).unwrap();

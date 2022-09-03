@@ -426,7 +426,6 @@ impl ufmt::uDisplay for Eui48Addr {
     where
         W: ufmt::uWrite + ?Sized,
     {
-        // https://github.com/japaric/ufmt/pull/35
         ufmt::uwrite!(
             f,
             "{:02X}:{:02X}:{:02X}:{:02X}:{:02X}:{:02X}",

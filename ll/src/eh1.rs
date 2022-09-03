@@ -10,6 +10,7 @@ pub mod vdm;
 /// Error type for [`reset`].
 #[derive(Debug)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
+#[cfg_attr(feature = "ufmt", derive(ufmt::derive::uDebug))]
 pub enum ResetError<Pin, Delay> {
     /// GPIO pin error
     Pin(Pin),

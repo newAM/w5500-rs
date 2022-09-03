@@ -15,6 +15,7 @@ use eh0::digital::v2::OutputPin;
 /// W5500 blocking variable data length implementation.
 #[derive(Debug)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
+#[cfg_attr(feature = "ufmt", derive(ufmt::derive::uDebug))]
 pub struct W5500<SPI, CS> {
     /// SPI bus.
     spi: SPI,
