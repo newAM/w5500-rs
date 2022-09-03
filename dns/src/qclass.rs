@@ -5,6 +5,7 @@
 /// * [RFC 1035 Section 3.2.4](https://tools.ietf.org/rfc/rfc1035#section-3.2.4).
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
+#[cfg_attr(feature = "ufmt", derive(ufmt::derive::uDebug))]
 #[repr(u16)]
 pub enum Qclass {
     /// Internet

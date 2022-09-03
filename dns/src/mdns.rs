@@ -20,6 +20,7 @@ const MDNS_HARDWARE_DST: Eui48Addr = Eui48Addr::new(0x01, 0x00, 0x5E, 0x00, 0x00
 /// W5500 MDNS client.
 #[derive(Debug)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
+#[cfg_attr(feature = "ufmt", derive(ufmt::derive::uDebug))]
 pub struct Client {
     sn: Sn,
     port: u16,

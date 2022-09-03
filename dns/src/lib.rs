@@ -51,11 +51,12 @@
 //!
 //! All features are disabled by default.
 //!
+//! * `defmt`: Enable logging with `defmt`.
 //! * `eh0`: Passthrough to [w5500-hl].
 //! * `eh1`: Passthrough to [w5500-hl].
-//! * `std`: Passthrough to [w5500-hl].
-//! * `defmt`: Enable logging with `defmt`. Also a passthrough to [w5500-hl].
 //! * `log`: Enable logging with `log`.
+//! * `std`: Passthrough to [w5500-hl].
+//! * `ufmt`: Enable formatting types with `ufmt`.
 //!
 //! [w5500-hl]: https://crates.io/crates/w5500-hl
 //! [`std::net`]: https://doc.rust-lang.org/std/net/index.html
@@ -117,6 +118,7 @@ pub mod servers {
 /// Decoded fields from SRV rdata.
 #[derive(Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
+#[cfg_attr(feature = "ufmt", derive(ufmt::derive::uDebug))]
 pub struct ServiceData {
     /// The priority of this target host.
     pub priority: u16,
@@ -129,6 +131,7 @@ pub struct ServiceData {
 /// Decoded rdata.
 #[derive(Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
+#[cfg_attr(feature = "ufmt", derive(ufmt::derive::uDebug))]
 pub enum RData {
     /// Decoded rdata for A records.
     A(Ipv4Addr),
@@ -154,6 +157,7 @@ impl Default for RData {
 /// * [RFC 1035 Section 4.1.4](https://www.rfc-editor.org/rfc/rfc1035#section-4.1.4)
 #[derive(Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
+#[cfg_attr(feature = "ufmt", derive(ufmt::derive::uDebug))]
 pub struct ResourceRecord<'a> {
     /// A domain name to which this resource record pertains.
     ///
@@ -276,6 +280,7 @@ fn read_u32<E, Reader: Read<E>>(reader: &mut Reader) -> Result<u32, Error<E>> {
 /// This is created with [`Client::response`].
 #[derive(Debug)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
+#[cfg_attr(feature = "ufmt", derive(ufmt::derive::uDebug))]
 pub struct Response<'a, W5500: Udp> {
     reader: UdpReader<'a, W5500>,
     header: Header,
@@ -383,6 +388,7 @@ impl<'a, W5500: Udp> Response<'a, W5500> {
 /// This is created with [`Client::query`].
 #[derive(Debug)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
+#[cfg_attr(feature = "ufmt", derive(ufmt::derive::uDebug))]
 struct Query<'a, W5500: Udp> {
     writer: UdpWriter<'a, W5500>,
     header: Header,
@@ -443,6 +449,7 @@ impl<'a, W5500: Udp> Query<'a, W5500> {
 /// W5500 DNS client.
 #[derive(Debug)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
+#[cfg_attr(feature = "ufmt", derive(ufmt::derive::uDebug))]
 pub struct Client {
     sn: Sn,
     port: u16,
