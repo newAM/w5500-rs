@@ -42,13 +42,14 @@ This will not work for majority of web (HTTPS) applications.
 
 All features are disabled by default.
 
+* `defmt`: Enable logging with `defmt`.
 * `eh0`: Passthrough to [`w5500-hl`].
 * `eh1`: Passthrough to [`w5500-hl`].
-* `std`: Passthrough to [`w5500-hl`].
-* `defmt`: Enable logging with `defmt`. Also a passthrough to [`w5500-hl`].
 * `log`: Enable logging with `log`.
 * `p256-cm4`: Use [`p256-cm4`], a P256 implementation optimized for the
   Cortex-M4 CPU.
+* `std`: Passthrough to [`w5500-hl`].
+* `ufmt`: Enable formatting types with `ufmt`.
 
 [`w5500-hl`]: https://crates.io/crates/w5500-hl
 [`p256-cm4`]: https://crates.io/crates/p256-cm4

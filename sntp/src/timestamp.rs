@@ -5,6 +5,7 @@
 /// * [RFC 4330 Section 3](https://datatracker.ietf.org/doc/html/rfc4330#section-3)
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
+#[cfg_attr(feature = "ufmt", derive(ufmt::derive::uDebug))]
 pub struct Timestamp {
     pub(crate) bits: u64,
 }
@@ -63,6 +64,7 @@ fn origin_chrono() -> chrono::NaiveDateTime {
 /// Returned upon a failed conversion to or from [`Timestamp`].
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
+#[cfg_attr(feature = "ufmt", derive(ufmt::derive::uDebug))]
 pub struct TimestampError(pub(crate) ());
 
 #[cfg(feature = "chrono")]

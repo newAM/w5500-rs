@@ -4,6 +4,7 @@
 /// values.
 #[derive(Debug, Clone, Copy)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
+#[cfg_attr(feature = "ufmt", derive(ufmt::derive::uDebug))]
 pub struct FixedPoint {
     pub(crate) bits: u32,
 }

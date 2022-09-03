@@ -35,6 +35,7 @@ pub(crate) use server_hello::recv_server_hello;
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[non_exhaustive]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
+#[cfg_attr(feature = "ufmt", derive(ufmt::derive::uDebug))]
 pub enum HandshakeType {
     ClientHello = 1,
     ServerHello = 2,

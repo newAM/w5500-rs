@@ -10,14 +10,15 @@ SNTP client for the [Wiznet W5500] SPI internet offload chip.
 
 All features are disabled by default.
 
+* `chrono`: Enable conversion to `chrono::naive::NaiveDateTime`.
+* `defmt`: Enable logging with `defmt`.
 * `eh0`: Passthrough to [`w5500-hl`].
 * `eh1`: Passthrough to [`w5500-hl`].
-* `std`: Passthrough to [`w5500-hl`].
-* `defmt`: Enable logging with `defmt`. Also a passthrough to [`w5500-hl`].
 * `log`: Enable logging with `log`.
-* `chrono`: Enable conversion to `chrono::naive::NaiveDateTime`.
-* `time`: Enable conversion to `time::PrimitiveDateTime`.
 * `num-rational`: Enable conversion to `num_rational::Ratio`.
+* `std`: Passthrough to [`w5500-hl`].
+* `time`: Enable conversion to `time::PrimitiveDateTime`.
+* `ufmt`: Enable formatting types with `ufmt`.
 
 ## Reference Documentation
 

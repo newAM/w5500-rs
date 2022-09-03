@@ -11,6 +11,7 @@
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 #[non_exhaustive]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
+#[cfg_attr(feature = "ufmt", derive(ufmt::derive::uDebug))]
 pub enum AlertLevel {
     /// Warning.
     Warning = 1,
@@ -83,6 +84,7 @@ impl TryFrom<u8> for AlertLevel {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[non_exhaustive]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
+#[cfg_attr(feature = "ufmt", derive(ufmt::derive::uDebug))]
 pub enum AlertDescription {
     /// This alert notifies the recipient that the sender will
     /// not send any more messages on this connection.  Any data received
@@ -276,6 +278,7 @@ impl AlertDescription {
 /// See [`AlertLevel`] and [`AlertDescription`].
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
+#[cfg_attr(feature = "ufmt", derive(ufmt::derive::uDebug))]
 pub struct Alert {
     /// Alert level.
     pub level: AlertLevel,

@@ -17,6 +17,7 @@ use w5500_hl::{
 /// `a` and `b`.
 #[derive(Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
+#[cfg_attr(feature = "ufmt", derive(ufmt::derive::uDebug))]
 pub(crate) struct CircleReader<'a> {
     a: &'a [u8],
     b: &'a [u8],
@@ -172,6 +173,7 @@ impl<'a> CircleReader<'a> {
 /// [`Client::writer`]: crate::Client::writer
 #[derive(Debug)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
+#[cfg_attr(feature = "ufmt", derive(ufmt::derive::uDebug))]
 pub struct TlsWriter<'w, 'ks, W5500: Registers> {
     pub(crate) w5500: &'w mut W5500,
     pub(crate) key_schedule: &'ks mut KeySchedule,
@@ -306,6 +308,7 @@ impl<'w, 'ks, W5500: Registers> Write<W5500::Error> for TlsWriter<'w, 'ks, W5500
 /// ```
 #[derive(Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
+#[cfg_attr(feature = "ufmt", derive(ufmt::derive::uDebug))]
 pub struct TlsReader<'buf, 'ptr> {
     inner: CircleReader<'buf>,
     head: &'ptr mut usize,

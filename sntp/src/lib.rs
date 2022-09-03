@@ -8,14 +8,15 @@
 //!
 //! All features are disabled by default.
 //!
+//! * `chrono`: Enable conversion to `chrono::naive::NaiveDateTime`.
+//! * `defmt`: Enable logging with `defmt`.
 //! * `eh0`: Passthrough to [`w5500-hl`].
 //! * `eh1`: Passthrough to [`w5500-hl`].
-//! * `std`: Passthrough to [`w5500-hl`].
-//! * `defmt`: Enable logging with `defmt`. Also a passthrough to [`w5500-hl`].
 //! * `log`: Enable logging with `log`.
-//! * `chrono`: Enable conversion to `chrono::naive::NaiveDateTime`.
-//! * `time`: Enable conversion to `time::PrimitiveDateTime`.
 //! * `num-rational`: Enable conversion to `num_rational::Ratio`.
+//! * `std`: Passthrough to [`w5500-hl`].
+//! * `time`: Enable conversion to `time::PrimitiveDateTime`.
+//! * `ufmt`: Enable formatting types with `ufmt`.
 //!
 //! # Reference Documentation
 //!
@@ -60,6 +61,7 @@ const VERSION_NUMBER: u8 = 4;
 /// W5500 SNTP client.
 #[derive(Debug)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
+#[cfg_attr(feature = "ufmt", derive(ufmt::derive::uDebug))]
 pub struct Client {
     sn: Sn,
     port: u16,
@@ -344,6 +346,7 @@ impl Client {
 /// Reply from the SNTP server.
 #[derive(Debug)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
+#[cfg_attr(feature = "ufmt", derive(ufmt::derive::uDebug))]
 pub struct Reply {
     /// Leap indicator warning of an impending leap second to be
     /// inserted/deleted in the last minute of the current day.
@@ -389,6 +392,7 @@ pub struct Reply {
 /// * [RFC 4330 Section 4](https://datatracker.ietf.org/doc/html/rfc4330#section-4)
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
+#[cfg_attr(feature = "ufmt", derive(ufmt::derive::uDebug))]
 #[repr(u8)]
 pub enum LeapIndicator {
     /// No warning
@@ -420,6 +424,7 @@ impl LeapIndicator {
 /// * [RFC 4330 Section 4](https://datatracker.ietf.org/doc/html/rfc4330#section-4)
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
+#[cfg_attr(feature = "ufmt", derive(ufmt::derive::uDebug))]
 #[repr(u8)]
 #[non_exhaustive]
 enum Mode {
@@ -449,6 +454,7 @@ impl TryFrom<u8> for Mode {
 #[non_exhaustive]
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
+#[cfg_attr(feature = "ufmt", derive(ufmt::derive::uDebug))]
 pub enum Stratum {
     /// Kiss-o'-Death
     ///
