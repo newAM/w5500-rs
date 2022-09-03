@@ -32,8 +32,8 @@
 //!
 //! All features are disabled by default.
 //!
-//! * `defmt`: Enable formatting most types with `defmt`.
-//! * `ufmt`: Enable formatting most types with `ufmt`.
+//! * `defmt`: Enable formatting types with `defmt`.
+//! * `ufmt`: Enable formatting types with `ufmt`.
 //! * `eh0`: Enables the [`eh0`] module which contains
 //!   implementations of the [`Registers`] trait
 //!   using the `embedded-hal` version 0.2 traits.

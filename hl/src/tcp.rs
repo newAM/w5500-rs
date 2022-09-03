@@ -58,6 +58,7 @@ use w5500_ll::{
 /// ```
 #[derive(Debug)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
+#[cfg_attr(feature = "ufmt", derive(ufmt::derive::uDebug))]
 pub struct TcpReader<'w, W5500: Registers> {
     pub(crate) w5500: &'w mut W5500,
     pub(crate) sn: Sn,
@@ -158,6 +159,7 @@ impl<'a, W5500: Registers> Read<W5500::Error> for TcpReader<'a, W5500> {
 /// ```
 #[derive(Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
+#[cfg_attr(feature = "ufmt", derive(ufmt::derive::uDebug))]
 pub struct TcpWriter<'w, W5500: Registers> {
     pub(crate) w5500: &'w mut W5500,
     pub(crate) sn: Sn,
