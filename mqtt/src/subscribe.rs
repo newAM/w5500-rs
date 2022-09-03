@@ -10,6 +10,7 @@ use w5500_hl::{io::Write, Error as HlError};
 /// * [SUBACK Payload](https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901178)
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
+#[cfg_attr(feature = "ufmt", derive(ufmt::derive::uDebug))]
 #[repr(u8)]
 pub enum SubAckReasonCode {
     /// Granted QoS 0
@@ -99,6 +100,7 @@ impl TryFrom<u8> for SubAckReasonCode {
 /// * [UNSUBACK Payload](https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901194)
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
+#[cfg_attr(feature = "ufmt", derive(ufmt::derive::uDebug))]
 #[repr(u8)]
 pub enum UnSubAckReasonCode {
     /// The subscription is deleted.
@@ -140,6 +142,7 @@ impl TryFrom<u8> for UnSubAckReasonCode {
 /// `SUBSCRIBE` acknowledgment.
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
+#[cfg_attr(feature = "ufmt", derive(ufmt::derive::uDebug))]
 pub struct SubAck {
     /// Packet Identifier.
     ///
@@ -157,6 +160,7 @@ pub struct SubAck {
 /// `UNSUBSCRIBE` acknowledgment.
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
+#[cfg_attr(feature = "ufmt", derive(ufmt::derive::uDebug))]
 pub struct UnSubAck {
     /// Packet Identifier.
     ///

@@ -45,13 +45,14 @@
 //!
 //! All features are disabled by default.
 //!
+//! * `defmt`: Enable logging with `defmt`.
 //! * `eh0`: Passthrough to [w5500-hl].
 //! * `eh1`: Passthrough to [w5500-hl].
-//! * `std`: Passthrough to [w5500-hl].
-//! * `defmt`: Enable logging with `defmt`. Also a passthrough to [w5500-hl].
 //! * `log`: Enable logging with `log`.
-//! * `w5500-tls`: Enable MQTT over TLS.
 //! * `p256-cm4`: Passthrough to [w5500-tls].
+//! * `std`: Passthrough to [w5500-hl].
+//! * `ufmt`: Enable formatting types with `ufmt`.
+//! * `w5500-tls`: Enable MQTT over TLS.
 //!
 //! [w5500-hl]: https://crates.io/crates/w5500-hl
 //! [w5500-tls]: https://crates.io/crates/w5500-tls
@@ -106,6 +107,7 @@ pub const SRC_PORT: u16 = 33650;
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 #[repr(u8)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
+#[cfg_attr(feature = "ufmt", derive(ufmt::derive::uDebug))]
 #[allow(clippy::upper_case_acronyms)]
 pub(crate) enum CtrlPkt {
     RESERVED = 0x0,
@@ -129,6 +131,7 @@ pub(crate) enum CtrlPkt {
 /// Internal MQTT client state.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
+#[cfg_attr(feature = "ufmt", derive(ufmt::derive::uDebug))]
 pub enum State {
     /// W5500 socket is in an unknown state.
     Init,
@@ -144,6 +147,7 @@ pub enum State {
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
+#[cfg_attr(feature = "ufmt", derive(ufmt::derive::uDebug))]
 struct StateTimeout {
     /// MQTT client state
     state: State,
@@ -193,6 +197,7 @@ fn write_variable_byte_integer<E, Writer: Write<E>>(
 /// This is returned by [`Client::process`].
 #[derive(Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
+#[cfg_attr(feature = "ufmt", derive(ufmt::derive::uDebug))]
 pub enum Event<E, Reader: Read<E> + Seek<E>> {
     /// A hint to call [`Client::process`] after this many seconds have elapsed.
     ///
@@ -226,6 +231,7 @@ pub enum Event<E, Reader: Read<E> + Seek<E>> {
 /// The next call to [`Client::process`] will create a new connection.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
+#[cfg_attr(feature = "ufmt", derive(ufmt::derive::uDebug))]
 pub enum Error<E> {
     /// A timeout occurred while waiting for the client to transition from this
     /// state.
@@ -317,6 +323,7 @@ const PACKET_ID_LEN: u32 = 2;
 /// [Topic Names and Topic Filters]: https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901241
 #[derive(Debug)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
+#[cfg_attr(feature = "ufmt", derive(ufmt::derive::uDebug))]
 pub struct Client<'a> {
     sn: Sn,
     src_port: u16,
