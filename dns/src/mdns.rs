@@ -87,7 +87,7 @@ impl Client {
 
     /// Send an MDNS A record query.
     ///
-    /// This will only broadcst an MDNS A record query, it will not wait for any replies from
+    /// This will only broadcast an MDNS A record query, it will not wait for any replies from
     /// MDNS responders.
     ///
     /// # Errors
@@ -107,7 +107,7 @@ impl Client {
 
     /// Send an MDNS PTR record query.
     ///
-    /// This will only broadcst an MDNS PTR record query, it will not wait for any replies from
+    /// This will only broadcast an MDNS PTR record query, it will not wait for any replies from
     /// MDNS responders.
     ///
     /// # Errors
