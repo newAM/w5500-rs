@@ -3,7 +3,7 @@ use crate::{
 };
 use w5500_hl::{io::Write, Error as HlError};
 
-/// Subscribe scknowledgment codes.
+/// Subscribe acknowledgment codes.
 ///
 /// # References
 ///
