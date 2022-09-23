@@ -535,7 +535,7 @@ impl W5500 {
             }
             Some(SocketType::Udp(ref mut udp)) => {
                 log::info!("[{sn:?}] sending to {dest}");
-                let num: usize = udp.send_to(&local_tx_buf, &dest)?;
+                let num: usize = udp.send_to(&local_tx_buf, dest)?;
                 assert_eq!(num, local_tx_buf.len());
             }
             Some(SocketType::TcpListener(_)) => {
