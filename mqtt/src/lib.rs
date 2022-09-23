@@ -510,6 +510,7 @@ impl<'a> Client<'a> {
         }
 
         match w5500.tcp_reader(self.sn) {
+            #[allow(clippy::single_match)]
             Ok(reader) => match recv(reader, &mut self.state_timeout)? {
                 Some(event) => return Ok(event),
                 None => (),

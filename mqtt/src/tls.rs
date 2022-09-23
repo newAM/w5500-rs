@@ -197,6 +197,7 @@ impl<'id, 'hn, 'psk, 'b, const N: usize> Client<'id, 'hn, 'psk, 'b, N> {
 
         match self.tls.reader() {
             Ok(reader) => {
+                #[allow(clippy::single_match)]
                 match recv(reader, &mut self.state_timeout).map_err(Error::map_w5500_infallible)? {
                     Some(event) => return Ok(event),
                     None => (),
