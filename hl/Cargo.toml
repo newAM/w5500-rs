@@ -22,8 +22,8 @@ defmt = { version = "0.3", optional = true }
 w5500-ll = { path = "../ll", version = "0.10" }
 
 [dev-dependencies]
-embedded-hal-mock = { git = "https://github.com/dbrgn/embedded-hal-mock", branch = "1-alpha" }
-embedded-hal = "1.0.0-alpha.8"
+embedded-hal-mock = { git = "https://github.com/newAM/embedded-hal-mock", branch = "1.0.0-alpha.9" }
+embedded-hal = "=1.0.0-alpha.9"
 w5500-ll = { path = "../ll", version = "0.10", features = ["eh1", "defmt"] }
 
 [package.metadata.docs.rs]

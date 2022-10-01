@@ -10,7 +10,7 @@
 //! [`Registers`]: crate::Registers
 
 use crate::spi::{vdm_header, AccessMode};
-use eh1::spi::blocking::{SpiBusRead, SpiBusWrite};
+use eh1::spi::{SpiBusRead, SpiBusWrite};
 
 /// W5500 blocking variable data length implementation.
 #[derive(Debug)]
@@ -22,7 +22,7 @@ pub struct W5500<SPI> {
 
 impl<SPI, E> W5500<SPI>
 where
-    SPI: eh1::spi::blocking::SpiDevice<Error = E>,
+    SPI: eh1::spi::SpiDevice<Error = E>,
 {
     /// Creates a new `W5500` driver from a SPI device.
     ///
@@ -60,9 +60,8 @@ where
 
 impl<SPI, E> crate::Registers for W5500<SPI>
 where
-    SPI: eh1::spi::blocking::SpiDevice<Error = E>,
-    SPI::Bus:
-        eh1::spi::blocking::SpiBusRead<Error = E> + eh1::spi::blocking::SpiBusWrite<Error = E>,
+    SPI: eh1::spi::SpiDevice<Error = E>,
+    SPI::Bus: eh1::spi::SpiBusRead<Error = E> + eh1::spi::SpiBusWrite<Error = E>,
 {
     /// SPI IO error type.
     type Error = E;

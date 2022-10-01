@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
-- Added support for `embedded-hal` version `1.0.0-alpha.8` with the `eh1` feature.
+- Added support for `embedded-hal` version `1.0.0-alpha.9` with the `eh1` feature.
 
 ### Changed
 - Updated `w5500-tls` from `0.1.2` to `0.1.3`.
