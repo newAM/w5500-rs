@@ -43,8 +43,8 @@ pub fn reset<P, D, PinError, DelayError>(
     delay: &mut D,
 ) -> Result<(), ResetError<PinError, DelayError>>
 where
-    P: eh1::digital::blocking::OutputPin<Error = PinError>,
-    D: eh1::delay::blocking::DelayUs<Error = DelayError>,
+    P: eh1::digital::OutputPin<Error = PinError>,
+    D: eh1::delay::DelayUs<Error = DelayError>,
 {
     pin.set_low().map_err(ResetError::Pin)?;
     delay.delay_ms(1).map_err(ResetError::Delay)?;

@@ -16,12 +16,12 @@ std = []
 
 [dependencies]
 eh0 = { package = "embedded-hal", version = "0.2.7", optional = true }
-eh1 = { package = "embedded-hal", version = "1.0.0-alpha.8", optional = true }
+eh1 = { package = "embedded-hal", version = "=1.0.0-alpha.9", optional = true }
 defmt = { version = "0.3", optional = true }
 
 [dev-dependencies]
 ehm0 = { package = "embedded-hal-mock", version = "0.8" }
-ehm1 = { package = "embedded-hal-mock", git = "https://github.com/dbrgn/embedded-hal-mock", branch = "1-alpha" }
+ehm1 = { package = "embedded-hal-mock", git = "https://github.com/newAM/embedded-hal-mock", branch = "1.0.0-alpha.9" }
 
 [package.metadata.docs.rs]
 all-features = true
