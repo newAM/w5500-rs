@@ -125,6 +125,8 @@
         };
       in {
         packages = {
+          inherit (cargoArtifacts) stdNightly;
+
           testsuite = craneLib.buildPackage {
             inherit src;
             cargoArtifacts = cargoArtifacts.stdNightly;
