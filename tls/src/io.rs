@@ -312,13 +312,6 @@ pub struct TlsReader<'buf, 'ptr> {
     wrap: usize,
 }
 
-// TODO: use wrapping_add_signed when stabilized
-// https://github.com/rust-lang/rust/issues/87840
-// https://github.com/rust-lang/rust/blob/21b0325c68421b00c6c91055ac330bd5ffe1ea6b/library/core/src/num/uint_macros.rs#L1205
-fn wrapping_add_signed(ptr: u16, offset: i16) -> u16 {
-    ptr.wrapping_add(offset as u16)
-}
-
 impl<'buf, 'ptr> Seek for TlsReader<'buf, 'ptr> {
     fn seek<Infallible>(&mut self, pos: SeekFrom) -> Result<(), HlError<Infallible>> {
         match pos {
@@ -356,7 +349,7 @@ impl<'buf, 'ptr> Seek for TlsReader<'buf, 'ptr> {
                 if offset < min_val || offset > max_val {
                     Err(HlError::UnexpectedEof)
                 } else {
-                    self.inner.ptr = wrapping_add_signed(self.inner.ptr, offset);
+                    self.inner.ptr = self.inner.ptr.wrapping_add_signed(offset);
                     Ok(())
                 }
             }
