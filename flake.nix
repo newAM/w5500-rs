@@ -128,20 +128,7 @@
             };
           }));
 
-          docs = lib.listToAttrs (lib.forEach testMembers (p: {
-            name = "doc-${p}";
-            value = craneLibNightly.cargoDoc {
-              pname = "w5500-${p}";
-              inherit src;
-              cargoArtifacts = cargoArtifactsNightly;
-              # RUSTDOCFLAGS = "-D warnings --cfg docsrs";
-              buildPhaseCargoCommand = ''
-                RUSTDOCFLAGS = "-D warnings --cfg docsrs" cargoWithProfile rustdoc --all-features
-              '';
-            };
-          }));
-
-          generatedChecks = lib.recursiveUpdate tests docs;
+          generatedChecks = tests;
         in
           lib.recursiveUpdate generatedChecks
           {
@@ -152,6 +139,15 @@
             };
 
             rustfmt = craneLibNightly.cargoFmt {inherit src;};
+
+            docs = craneLibNightly.cargoDoc {
+              inherit src;
+              cargoArtifacts = cargoArtifactsNightly;
+
+              RUSTDOCFLAGS = "-D warnings --cfg docsrs";
+
+              cargoExtraArgs = "--all-features";
+            };
 
             testsuite-build = self.packages.${system}.testsuite;
 
