@@ -6,6 +6,12 @@
 //! This is a best-effort implementation to aid in development of application
 //! code, not all features of the W5500 will be fully simulated.
 //!
+//! # Feature Flags
+//!
+//! All features are disabled by default.
+//!
+//! * `async`: **Nightly only.** Implement asynchronous traits.
+//!
 //! # Notes
 //!
 //! This is in an early alpha state, there are many todos throughout the code.
@@ -66,6 +72,8 @@
 //! [`std::net`]: https://doc.rust-lang.org/std/net/index.html
 //! [`w5500-hl`]: https://crates.io/crates/w5500-hl
 //! [`w5500_ll::Registers`]: https://docs.rs/w5500-ll/latest/w5500_ll/trait.Registers.html
+#![cfg_attr(docsrs, feature(doc_cfg), feature(doc_auto_cfg))]
+#![cfg_attr(feature = "async", feature(type_alias_impl_trait))]
 
 use std::{
     fs::File,
@@ -1156,5 +1164,22 @@ impl Registers for W5500 {
                 Ok(())
             }
         }
+    }
+}
+
+#[cfg(feature = "async")]
+impl w5500_ll::aio::Registers for W5500 {
+    type Error = std::io::ErrorKind;
+
+    type ReadFuture<'a> = impl core::future::Future<Output = Result<(), Self::Error>> + 'a where Self: 'a;
+
+    fn read<'a>(&'a mut self, address: u16, block: u8, data: &'a mut [u8]) -> Self::ReadFuture<'a> {
+        async move { w5500_ll::Registers::read(self, address, block, data) }
+    }
+
+    type WriteFuture<'a> = impl core::future::Future<Output = Result<(), Self::Error>> + 'a where Self: 'a;
+
+    fn write<'a>(&'a mut self, address: u16, block: u8, data: &'a [u8]) -> Self::WriteFuture<'a> {
+        async move { w5500_ll::Registers::write(self, address, block, data) }
     }
 }

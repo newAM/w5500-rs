@@ -8,6 +8,12 @@ to simulate the W5500 on your local PC.
 This is a best-effort implementation to aid in development of application
 code, not all features of the W5500 will be fully simulated.
 
+## Feature Flags
+
+All features are disabled by default.
+
+* `async`: **Nightly only.** Implement asynchronous traits.
+
 ## Notes
 
 This is in an early alpha state, there are many todos throughout the code.
