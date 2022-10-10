@@ -43,13 +43,15 @@
           lib.filter (m: !(lib.hasSuffix "/afl" m) && m != "testsuite")
           workspaceCargoToml.workspace.members;
 
+        targets = ["thumbv7em-none-eabi" "thumbv6m-none-eabi"];
+
         craneLib = (crane.mkLib pkgs).overrideToolchain (pkgs.rust-bin.stable.latest.default.override {
-          targets = ["thumbv7em-none-eabi" "thumbv6m-none-eabi"];
+          inherit targets;
         });
 
         # https://rust-lang.github.io/rustup-components-history/x86_64-unknown-linux-gnu.html
         craneLibNightly = (crane.mkLib pkgs).overrideToolchain (pkgs.rust-bin.nightly.latest.default.override {
-          targets = ["thumbv7em-none-eabi" "thumbv6m-none-eabi"];
+          inherit targets;
         });
 
         src = craneLib.cleanCargoSource ./.;
@@ -106,6 +108,13 @@
             inherit src;
             inherit cargoArtifacts;
             cargoExtraArgs = "-p testsuite";
+          };
+
+          # TODO: check (v6, v7 x std, nightly)
+          ll = craneLib.buildPackage {
+            inherit src;
+            inherit cargoArtifacts;
+            cargoExtraArgs = "-p w5500-ll --target thumbv6m-none-eabi";
           };
         };
 
