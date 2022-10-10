@@ -128,7 +128,7 @@ pub trait Read<E> {
     fn done(self) -> Result<(), E>;
 }
 
-/// Socket asyncrhonous reader trait.
+/// Socket asynchronous reader trait.
 #[cfg(feature = "async")]
 pub trait AsyncRead<E> {
     type ReadFuture<'a>: core::future::Future<Output = Result<u16, E>> + 'a
@@ -174,7 +174,7 @@ pub trait Write<E> {
     fn send(self) -> Result<(), E>;
 }
 
-/// Socket asyncrhonous writer trait.
+/// Socket asynchronous writer trait.
 #[cfg(feature = "async")]
 pub trait AsyncWrite<E> {
     type WriteFuture<'a>: core::future::Future<Output = Result<u16, E>> + 'a
