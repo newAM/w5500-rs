@@ -6,7 +6,7 @@ use crate::{
     PROPERTY_LEN_LEN,
 };
 
-pub(crate) fn recv<E, Reader: Read<E> + Seek<E>>(
+pub(crate) fn recv<E, Reader: Read<E> + Seek>(
     mut reader: Reader,
     state_timeout: &mut StateTimeout,
 ) -> Result<Option<Event<E, Reader>>, Error<E>> {
