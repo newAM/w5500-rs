@@ -19,6 +19,15 @@ fn reg_versionr() {
     assert_eq!(w5500.version().unwrap(), VERSION);
 }
 
+#[tokio::test]
+async fn async_smoke() {
+    let mut w5500 = W5500::default();
+    assert_eq!(
+        w5500_ll::aio::Registers::version(&mut w5500).await.unwrap(),
+        VERSION
+    );
+}
+
 #[test]
 fn sn_tx_fsr_reset_value() {
     let mut w5500 = W5500::default();

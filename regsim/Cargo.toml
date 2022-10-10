@@ -11,6 +11,9 @@ keywords = ["W5500", "wiznet"]
 categories = ["embedded", "development-tools"]
 homepage = "https://github.com/newAM/w5500-rs"
 
+[features]
+async = ["w5500-ll/async"]
+
 [dependencies]
 log = "0.4"
 w5500-ll = { path = "../ll", version = "0.10", features = ["std"] }
@@ -20,3 +23,8 @@ trust-dns-client = "0.22"
 w5500-hl.path = "../hl"
 stderrlog = "0.5"
 httparse = { version = "1", default-features = false }
+tokio = { version = "1.21.1", features = ["rt", "macros"] }
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
