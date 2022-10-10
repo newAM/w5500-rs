@@ -88,34 +88,55 @@
         filterNoStdFeatures = lib.filter (m: !(lib.elem m noStdFeatures));
         mkFeatures = lib.concatStringsSep ",";
 
-        allStdCompatFeatures = mkFeatures (filterNoStdFeatures allFeatures);
-        allStdStableCompatFeatures = mkFeatures (
+        allStdFeatures = mkFeatures (filterNoStdFeatures allFeatures);
+        allStdStableFeatures = mkFeatures (
           lib.filter (m: !(lib.elem m (noStdFeatures ++ nightlyFeatures))) allFeatures
         );
 
-        cargoArtifactsNightly = craneLibNightly.buildDepsOnly {
-          inherit src;
-          cargoExtraArgs = "--features ${allStdCompatFeatures}";
-        };
-
-        cargoArtifacts = craneLibNightly.buildDepsOnly {
-          inherit src;
-          cargoExtraArgs = "--features ${allStdStableCompatFeatures}";
+        cargoArtifacts = {
+          stdNightly = craneLibNightly.buildDepsOnly {
+            inherit src;
+            cargoExtraArgs = "--features ${allStdFeatures}";
+          };
+          stdStable = craneLib.buildDepsOnly {
+            inherit src;
+            cargoExtraArgs = "--features ${allStdStableFeatures}";
+          };
+          # v6Nightly = craneLibNightly.buildDepsOnly {
+          #   inherit src;
+          #   cargoExtraArgs = "--features ${features}";
+          # };
+          # v6Stable = craneLib.buildDepsOnly {
+          #   inherit src;
+          #   cargoExtraArgs = "--features ${features}";
+          # };
+          # v7Nightly = craneLibNightly.buildDepsOnly {
+          #   inherit src;
+          #   cargoExtraArgs = "--features ${allFeatures}";
+          # };
+          # v7Stable = craneLib.buildDepsOnly {
+          #   inherit src;
+          #   cargoExtraArgs = let
+          #     features = mkFeatures (
+          #       lib.filter (m: !(lib.elem m nightlyFeatures)) allFeatures
+          #     );
+          #   in "--features ${features}";
+          # };
         };
       in {
         packages = {
           testsuite = craneLib.buildPackage {
             inherit src;
-            inherit cargoArtifacts;
+            cargoArtifacts = cargoArtifacts.stdNightly;
             cargoExtraArgs = "-p testsuite";
           };
 
           # TODO: check (v6, v7 x std, nightly)
-          ll = craneLib.buildPackage {
-            inherit src;
-            inherit cargoArtifacts;
-            cargoExtraArgs = "-p w5500-ll --target thumbv6m-none-eabi";
-          };
+          # llStable = craneLib.buildPackage {
+          #   inherit src;
+          #   cargoArtifacts = cargoArtifacts.v7Stable;
+          #   cargoExtraArgs = "-p w5500-ll --target thumbv7em-none-eabi";
+          # };
         };
 
         checks = let
@@ -126,7 +147,7 @@
             value = craneLibNightly.cargoTest {
               pname = "w5500-${p}";
               inherit src;
-              cargoArtifacts = cargoArtifactsNightly;
+              cargoArtifacts = cargoArtifacts.stdNightly;
               cargoExtraArgs = let
                 featuresNoDefmt = mkFeatures (filterNoStdFeatures (lib.getAttr p features));
                 featureArgs =
@@ -143,7 +164,7 @@
           {
             clippy = craneLibNightly.cargoClippy {
               inherit src;
-              cargoArtifacts = cargoArtifactsNightly;
+              cargoArtifacts = cargoArtifacts.stdNightly;
               cargoClippyExtraArgs = "--all-features --all-targets -- --deny warnings";
             };
 
@@ -151,7 +172,7 @@
 
             docs = craneLibNightly.cargoDoc {
               inherit src;
-              cargoArtifacts = cargoArtifactsNightly;
+              cargoArtifacts = cargoArtifacts.stdNightly;
 
               RUSTDOCFLAGS = "-D warnings --cfg docsrs";
 
