@@ -83,7 +83,7 @@ impl<'a> CircleReader<'a> {
     }
 
     pub fn stream_position(&self) -> u16 {
-        self.ptr as u16
+        self.ptr
     }
 
     pub fn next_n<const N: usize>(&mut self) -> Result<[u8; N], AlertDescription> {

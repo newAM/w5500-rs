@@ -15,11 +15,19 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     env: {"RUSTFLAGS": "-D warnings"}
+    strategy:
+      matrix:
+        toolchain:
+          - "stable"
+          - "nightly"
     steps:
       - uses: actions/checkout@v3
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ matrix.toolchain }}
       - run: cargo build
       - run: cargo build --all-features
+        if: ${{ matrix.toolchain == 'nightly' }}
       - run: cargo build -p testsuite
 
   build_no_std:
@@ -28,14 +36,18 @@ jobs:
     env: {"RUSTFLAGS": "-D warnings"}
     strategy:
       matrix:
+        toolchain:
+          - "stable"
+          - "nightly"
         target:
           - "thumbv6m-none-eabi"
           - "thumbv7em-none-eabi"
     steps:
       - uses: actions/checkout@v3
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@master
         with:
           target: ${{ matrix.target }}
+          toolchain: ${{ matrix.toolchain }}
       - run: cargo build --target ${{ matrix.target }} -p w5500-ll
       - run: cargo build --target ${{ matrix.target }} -p w5500-hl
       - run: cargo build --target ${{ matrix.target }} -p w5500-dhcp
@@ -65,6 +77,10 @@ jobs:
       - run: cargo build --target ${{ matrix.target }} -p w5500-sntp --features chrono
       - run: cargo build --target ${{ matrix.target }} -p w5500-sntp --features num-rational
       - run: cargo build --target ${{ matrix.target }} -p w5500-mqtt --features w5500-tls
+      - run: cargo build --target ${{ matrix.target }} -p w5500-ll   --features async
+        if: ${{ matrix.toolchain == 'nightly' }}
+      - run: cargo build --target ${{ matrix.target }} -p w5500-ll   --features eha0
+        if: ${{ matrix.toolchain == 'nightly' }}
       - run: cargo build --target ${{ matrix.target }} -p w5500-tls  --features p256-cm4
         if: ${{ matrix.target == 'thumbv7em-none-eabi' }}
       - run: cargo build --target ${{ matrix.target }} -p w5500-mqtt --features w5500-tls,p256-cm4
@@ -76,7 +92,7 @@ jobs:
     env: {"RUSTFLAGS": "-D warnings"}
     steps:
       - uses: actions/checkout@v3
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@nightly
       - run: cargo test-all
 
   clippy:
@@ -84,7 +100,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@nightly
         with:
           components: clippy
       - run: cargo clippy --all-features -- --deny warnings
@@ -136,7 +152,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@nightly
       - name: Publish
         run: |
           cd ll
@@ -157,7 +173,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@nightly
       - name: Publish
         run: |
           cd hl
@@ -178,7 +194,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@nightly
       - name: Publish
         run: |
           cd dhcp
@@ -199,7 +215,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@nightly
       - name: Publish
         run: |
           cd regsim
@@ -220,7 +236,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@nightly
       - name: Publish
         run: |
           cd dns
@@ -241,7 +257,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@nightly
       - name: Publish
         run: |
           cd mqtt
@@ -262,7 +278,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@nightly
       - name: Publish
         run: |
           cd sntp
@@ -283,7 +299,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@nightly
       - name: Publish
         run: |
           cd tls
