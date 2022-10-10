@@ -79,7 +79,7 @@ fn check_recv_request(msg: &Message, xid: u32, mac_with_hardware_type: Vec<u8>) 
     assert_eq!(msg.hops(), 0);
     assert_eq!(msg.xid(), xid);
     assert_eq!(msg.secs(), 0);
-    assert_eq!(msg.flags().broadcast(), true);
+    assert!(msg.flags().broadcast());
     assert_eq!(msg.ciaddr(), std::net::Ipv4Addr::UNSPECIFIED);
     assert_eq!(msg.yiaddr(), std::net::Ipv4Addr::UNSPECIFIED);
     assert_eq!(msg.siaddr(), std::net::Ipv4Addr::UNSPECIFIED);
@@ -170,7 +170,7 @@ fn end_to_end() {
     assert_eq!(msg.hops(), 0);
     assert_eq!(msg.xid(), 0xcc6913b8);
     assert_eq!(msg.secs(), 0);
-    assert_eq!(msg.flags().broadcast(), true);
+    assert!(msg.flags().broadcast());
     assert_eq!(msg.ciaddr(), std::net::Ipv4Addr::UNSPECIFIED);
     assert_eq!(msg.yiaddr(), std::net::Ipv4Addr::UNSPECIFIED);
     assert_eq!(msg.siaddr(), std::net::Ipv4Addr::UNSPECIFIED);
@@ -296,7 +296,7 @@ fn end_to_end() {
         )
         .unwrap();
     let msg: Message = server.recv();
-    check_recv_request(&msg, 0x8809cefa, mac_with_hardware_type.clone());
+    check_recv_request(&msg, 0x8809cefa, mac_with_hardware_type);
     const LEASE_NEXT_CALL: u32 = LEASE_TIME
         .saturating_sub(LEASE_TIME / 8)
         .saturating_sub(T1_NEXT_CALL)

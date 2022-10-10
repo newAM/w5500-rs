@@ -3,6 +3,7 @@
 //! <https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_Toc3901006>
 
 #[derive(Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "defmt", derive(defmt::Format))]
 pub(crate) enum DeserError {
     Fragment,
     Decode,

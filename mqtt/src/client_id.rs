@@ -126,7 +126,8 @@ mod test {
             .for_each(|client_id| {
                 assert!(
                     ClientId::new(client_id).is_some(),
-                    "ClientId '{client_id}' is valid"
+                    "ClientId '{}' is valid",
+                    client_id
                 )
             })
     }
@@ -138,7 +139,8 @@ mod test {
             .for_each(|client_id| {
                 assert!(
                     ClientId::new(client_id).is_none(),
-                    "ClientId '{client_id}' is invalid"
+                    "ClientId '{}' is invalid",
+                    client_id
                 )
             })
     }

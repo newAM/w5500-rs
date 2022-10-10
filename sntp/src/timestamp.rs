@@ -138,7 +138,7 @@ mod tests {
 
         let ndt: NaiveDateTime = timestamp.try_into().unwrap();
 
-        let expected_date: NaiveDate = NaiveDate::from_ymd(2022, 04, 10);
+        let expected_date: NaiveDate = NaiveDate::from_ymd(2022, 4, 10);
         let expected_time: NaiveTime = NaiveTime::from_hms_nano(16, 19, 48, 140324298);
         let expected_datetime: NaiveDateTime = NaiveDateTime::new(expected_date, expected_time);
 

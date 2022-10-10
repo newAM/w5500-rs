@@ -187,6 +187,7 @@ impl Fixture {
         assert_eq!(actual, packet);
     }
 
+    #[allow(clippy::type_complexity)]
     pub fn client_process(
         &mut self,
     ) -> Result<
@@ -219,10 +220,7 @@ impl Fixture {
                     == SubAck {
                         pkt_id,
                         code: SubAckReasonCode::QoS0,
-                    } =>
-            {
-                ()
-            }
+                    } => {}
             x => panic!("Expected SubAck, got {x:?}"),
         }
     }
