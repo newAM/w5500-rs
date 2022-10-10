@@ -21,6 +21,7 @@
 //!
 //! All features are disabled by default.
 //!
+//! * `async`: Passthrough to [`w5500-ll`].
 //! * `defmt`: Passthrough to [`w5500-ll`].
 //! * `eh0`: Passthrough to [`w5500-ll`].
 //! * `eh1`: Passthrough to [`w5500-ll`].

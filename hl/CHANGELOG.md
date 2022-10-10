@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Added support for `embedded-hal` version `1.0.0-alpha.9` with the `eh1` feature.
+- Added `async` and `eha0` features that passthrough to w5500-ll.
 
 ### Changed
 - Changed the name of the `embedded-hal` feature to `eh0`.
