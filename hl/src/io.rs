@@ -18,13 +18,6 @@ pub enum SeekFrom {
     Current(i16),
 }
 
-// TODO: use wrapping_add_signed when stabilized
-// https://github.com/rust-lang/rust/issues/87840
-// https://github.com/rust-lang/rust/blob/21b0325c68421b00c6c91055ac330bd5ffe1ea6b/library/core/src/num/uint_macros.rs#L1205
-fn wrapping_add_signed(ptr: u16, offset: i16) -> u16 {
-    ptr.wrapping_add(offset as u16)
-}
-
 impl SeekFrom {
     /// Calculate the next value of `ptr` for the given seek method.
     #[doc(hidden)]
@@ -41,7 +34,7 @@ impl SeekFrom {
                 if offset > 0 || offset.unsigned_abs() > tail.wrapping_sub(head) {
                     Err(Error::UnexpectedEof)
                 } else {
-                    Ok(wrapping_add_signed(tail, offset))
+                    Ok(tail.wrapping_add_signed(offset))
                 }
             }
             SeekFrom::Current(offset) => {
@@ -52,7 +45,7 @@ impl SeekFrom {
                 {
                     Err(Error::UnexpectedEof)
                 } else {
-                    Ok(wrapping_add_signed(ptr, offset))
+                    Ok(ptr.wrapping_add_signed(offset))
                 }
             }
         }
