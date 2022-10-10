@@ -78,13 +78,13 @@ impl UdpHeader {
 /// ```
 #[derive(Debug)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
-pub struct UdpReader<'w, W: Registers> {
-    inner: TcpReader<'w, W>,
+pub struct UdpReader<'w, W5500> {
+    inner: TcpReader<'w, W5500>,
     header: UdpHeader,
 }
 
-impl<'w, W5500: Registers> Seek<W5500::Error> for UdpReader<'w, W5500> {
-    fn seek(&mut self, pos: SeekFrom) -> Result<(), Error<W5500::Error>> {
+impl<'w, W5500> Seek for UdpReader<'w, W5500> {
+    fn seek<E>(&mut self, pos: SeekFrom) -> Result<(), Error<E>> {
         self.inner.seek(pos)
     }
 
@@ -162,7 +162,7 @@ impl<'w, W5500: Registers> Read<W5500::Error> for UdpReader<'w, W5500> {
 /// ```
 #[derive(Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
-pub struct UdpWriter<'w, W5500: Registers> {
+pub struct UdpWriter<'w, W5500> {
     pub(crate) w5500: &'w mut W5500,
     pub(crate) sn: Sn,
     pub(crate) head_ptr: u16,
@@ -170,8 +170,8 @@ pub struct UdpWriter<'w, W5500: Registers> {
     pub(crate) ptr: u16,
 }
 
-impl<'w, W5500: Registers> Seek<W5500::Error> for UdpWriter<'w, W5500> {
-    fn seek(&mut self, pos: SeekFrom) -> Result<(), Error<W5500::Error>> {
+impl<'w, W5500> Seek for UdpWriter<'w, W5500> {
+    fn seek<E>(&mut self, pos: SeekFrom) -> Result<(), Error<E>> {
         self.ptr = pos.new_ptr(self.ptr, self.head_ptr, self.tail_ptr)?;
         Ok(())
     }

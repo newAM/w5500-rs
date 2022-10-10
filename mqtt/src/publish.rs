@@ -47,7 +47,7 @@ pub fn send_publish<E, Writer: Write<E>>(
 /// [`Client::process`]: crate::Client::process
 #[derive(Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
-pub struct PublishReader<E, Reader: Read<E> + Seek<E>> {
+pub struct PublishReader<E, Reader: Read<E> + Seek> {
     pub(crate) reader: Reader,
     pub(crate) topic_len: u16,
     pub(crate) topic_idx: u16,
@@ -56,7 +56,7 @@ pub struct PublishReader<E, Reader: Read<E> + Seek<E>> {
     pub(crate) _reader_error: PhantomData<E>,
 }
 
-impl<E, Reader: Read<E> + Seek<E>> PublishReader<E, Reader> {
+impl<E, Reader: Read<E> + Seek> PublishReader<E, Reader> {
     /// Length of the topic in bytes.
     #[inline]
     pub fn topic_len(&self) -> u16 {

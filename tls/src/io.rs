@@ -181,8 +181,8 @@ pub struct TlsWriter<'w, 'ks, W5500: Registers> {
     pub(crate) ptr: u16,
 }
 
-impl<'w, 'ks, W5500: Registers> Seek<W5500::Error> for TlsWriter<'w, 'ks, W5500> {
-    fn seek(&mut self, pos: SeekFrom) -> Result<(), HlError<W5500::Error>> {
+impl<'w, 'ks, W5500: Registers> Seek for TlsWriter<'w, 'ks, W5500> {
+    fn seek<E>(&mut self, pos: SeekFrom) -> Result<(), HlError<E>> {
         self.ptr = pos.new_ptr(self.ptr, self.head_ptr, self.tail_ptr)?;
         Ok(())
     }
@@ -319,8 +319,8 @@ fn wrapping_add_signed(ptr: u16, offset: i16) -> u16 {
     ptr.wrapping_add(offset as u16)
 }
 
-impl<'buf, 'ptr> Seek<Infallible> for TlsReader<'buf, 'ptr> {
-    fn seek(&mut self, pos: SeekFrom) -> Result<(), HlError<Infallible>> {
+impl<'buf, 'ptr> Seek for TlsReader<'buf, 'ptr> {
+    fn seek<Infallible>(&mut self, pos: SeekFrom) -> Result<(), HlError<Infallible>> {
         match pos {
             SeekFrom::Start(n) => {
                 if n > self.stream_len() {

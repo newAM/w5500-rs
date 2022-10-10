@@ -66,7 +66,7 @@ impl SeekFrom {
 /// similar to [`std::io::Seek`].
 ///
 /// [`std::io::Seek`]: https://doc.rust-lang.org/stable/std/io/trait.Seek.html
-pub trait Seek<E> {
+pub trait Seek {
     /// Seek to an offset, in bytes, within the socket buffer.
     ///
     /// Seeking beyond the limits will result [`Error::UnexpectedEof`].
@@ -78,7 +78,7 @@ pub trait Seek<E> {
     ///   the UDP datagram length, whichever is less.
     /// * [`TcpWriter`](crate::TcpWriter) is limited by socket free size.
     /// * [`TcpReader`](crate::TcpReader) is limited by the received size.
-    fn seek(&mut self, pos: SeekFrom) -> Result<(), Error<E>>;
+    fn seek<E>(&mut self, pos: SeekFrom) -> Result<(), Error<E>>;
 
     /// Rewind to the beginning of the stream.
     ///

@@ -58,7 +58,7 @@ use w5500_ll::{
 /// ```
 #[derive(Debug)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
-pub struct TcpReader<'w, W5500: Registers> {
+pub struct TcpReader<'w, W5500> {
     pub(crate) w5500: &'w mut W5500,
     pub(crate) sn: Sn,
     pub(crate) head_ptr: u16,
@@ -66,8 +66,8 @@ pub struct TcpReader<'w, W5500: Registers> {
     pub(crate) ptr: u16,
 }
 
-impl<'w, W5500: Registers> Seek<W5500::Error> for TcpReader<'w, W5500> {
-    fn seek(&mut self, pos: SeekFrom) -> Result<(), Error<W5500::Error>> {
+impl<'w, W5500> Seek for TcpReader<'w, W5500> {
+    fn seek<E>(&mut self, pos: SeekFrom) -> Result<(), Error<E>> {
         self.ptr = pos.new_ptr(self.ptr, self.head_ptr, self.tail_ptr)?;
         Ok(())
     }
@@ -158,7 +158,7 @@ impl<'a, W5500: Registers> Read<W5500::Error> for TcpReader<'a, W5500> {
 /// ```
 #[derive(Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
-pub struct TcpWriter<'w, W5500: Registers> {
+pub struct TcpWriter<'w, W5500> {
     pub(crate) w5500: &'w mut W5500,
     pub(crate) sn: Sn,
     pub(crate) head_ptr: u16,
@@ -166,8 +166,8 @@ pub struct TcpWriter<'w, W5500: Registers> {
     pub(crate) ptr: u16,
 }
 
-impl<'w, W5500: Registers> Seek<W5500::Error> for TcpWriter<'w, W5500> {
-    fn seek(&mut self, pos: SeekFrom) -> Result<(), Error<W5500::Error>> {
+impl<'w, W5500> Seek for TcpWriter<'w, W5500> {
+    fn seek<E>(&mut self, pos: SeekFrom) -> Result<(), Error<E>> {
         self.ptr = pos.new_ptr(self.ptr, self.head_ptr, self.tail_ptr)?;
         Ok(())
     }

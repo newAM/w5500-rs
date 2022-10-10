@@ -192,7 +192,7 @@ pub struct ResourceRecord<'a> {
 }
 
 // https://www.rfc-editor.org/rfc/rfc1035#section-4.1.4
-fn read_labels<'l, E, Reader: Read<E> + Seek<E>>(
+fn read_labels<'l, E, Reader: Read<E> + Seek>(
     reader: &mut Reader,
     labels: &'l mut [u8],
 ) -> Result<Option<&'l str>, Error<E>> {
