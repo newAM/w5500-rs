@@ -24,6 +24,7 @@
 //! * `defmt`: Passthrough to [`w5500-ll`].
 //! * `eh0`: Passthrough to [`w5500-ll`].
 //! * `eh1`: Passthrough to [`w5500-ll`].
+//! * `eha0`: Passthrough to [`w5500-ll`].
 //! * `std`: Passthrough to [`w5500-ll`].
 //!
 //! # Examples
@@ -97,6 +98,7 @@
 //! [Wiznet W5500]: https://www.wiznet.io/product-item/w5500/
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![cfg_attr(all(not(feature = "std"), not(test)), no_std)]
+#![cfg_attr(feature = "async", feature(type_alias_impl_trait))]
 
 mod hostname;
 pub mod io;

@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Changed the name of the `embedded-hal` feature to `eh0`.
+- Changed `Seek<E>::seek` to `Seek::seek<E>`, moving the seek error generic from the `Seek` trait to the `seek` method.
 
 ## [0.9.0] - 2022-05-03
 ### Added

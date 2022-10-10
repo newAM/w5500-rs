@@ -12,9 +12,11 @@ categories = ["embedded", "hardware-support", "no-std"]
 homepage = "https://github.com/newAM/w5500-rs"
 
 [features]
+async = ["w5500-ll/async"]
 defmt = ["w5500-ll/defmt", "dep:defmt"]
 eh0 = ["w5500-ll/eh0"]
 eh1 = ["w5500-ll/eh1"]
+eha0 = ["w5500-ll/eha0"]
 std = ["w5500-ll/std"]
 
 [dependencies]

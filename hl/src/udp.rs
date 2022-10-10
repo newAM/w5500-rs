@@ -78,13 +78,13 @@ impl UdpHeader {
 /// ```
 #[derive(Debug)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
-pub struct UdpReader<'w, W: Registers> {
-    inner: TcpReader<'w, W>,
+pub struct UdpReader<'w, W5500> {
+    inner: TcpReader<'w, W5500>,
     header: UdpHeader,
 }
 
-impl<'w, W5500: Registers> Seek<W5500::Error> for UdpReader<'w, W5500> {
-    fn seek(&mut self, pos: SeekFrom) -> Result<(), Error<W5500::Error>> {
+impl<'w, W5500> Seek for UdpReader<'w, W5500> {
+    fn seek<E>(&mut self, pos: SeekFrom) -> Result<(), Error<E>> {
         self.inner.seek(pos)
     }
 
@@ -125,6 +125,25 @@ impl<'w, W5500: Registers> Read<W5500::Error> for UdpReader<'w, W5500> {
     }
 }
 
+#[cfg(feature = "async")]
+impl<'w, W5500: w5500_ll::aio::Registers + 'w> crate::io::AsyncRead<W5500::Error>
+    for UdpReader<'w, W5500>
+{
+    type ReadFuture<'a> = impl core::future::Future<Output = Result<u16, W5500::Error>> + 'a
+        where Self: 'a;
+
+    fn read<'a>(&'a mut self, buf: &'a mut [u8]) -> Self::ReadFuture<'a> {
+        async move { self.inner.read(buf).await }
+    }
+
+    type ReadExactFuture<'a> = impl core::future::Future<Output = Result<(), Error<W5500::Error>>> + 'a
+        where Self: 'a;
+
+    fn read_exact<'a>(&'a mut self, buf: &'a mut [u8]) -> Self::ReadExactFuture<'a> {
+        async move { self.inner.read_exact(buf).await }
+    }
+}
+
 /// Streaming writer for a UDP socket buffer.
 ///
 /// This implements the [`Seek`] traits.
@@ -162,7 +181,7 @@ impl<'w, W5500: Registers> Read<W5500::Error> for UdpReader<'w, W5500> {
 /// ```
 #[derive(Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
-pub struct UdpWriter<'w, W5500: Registers> {
+pub struct UdpWriter<'w, W5500> {
     pub(crate) w5500: &'w mut W5500,
     pub(crate) sn: Sn,
     pub(crate) head_ptr: u16,
@@ -170,8 +189,8 @@ pub struct UdpWriter<'w, W5500: Registers> {
     pub(crate) ptr: u16,
 }
 
-impl<'w, W5500: Registers> Seek<W5500::Error> for UdpWriter<'w, W5500> {
-    fn seek(&mut self, pos: SeekFrom) -> Result<(), Error<W5500::Error>> {
+impl<'w, W5500> Seek for UdpWriter<'w, W5500> {
+    fn seek<E>(&mut self, pos: SeekFrom) -> Result<(), Error<E>> {
         self.ptr = pos.new_ptr(self.ptr, self.head_ptr, self.tail_ptr)?;
         Ok(())
     }
@@ -223,6 +242,47 @@ impl<'w, W5500: Registers> Write<W5500::Error> for UdpWriter<'w, W5500> {
         self.w5500.set_sn_tx_wr(self.sn, self.ptr)?;
         self.w5500.set_sn_cr(self.sn, SocketCommand::Send)?;
         Ok(())
+    }
+}
+
+#[cfg(feature = "async")]
+impl<'w, W5500: w5500_ll::aio::Registers + 'w> crate::io::AsyncWrite<W5500::Error>
+    for UdpWriter<'w, W5500>
+{
+    type WriteFuture<'a> = impl core::future::Future<Output = Result<u16, W5500::Error>> + 'a
+        where Self: 'a;
+
+    fn write<'a>(&'a mut self, buf: &'a [u8]) -> Self::WriteFuture<'a> {
+        async move {
+            let write_size: u16 = min(self.remain(), buf.len().try_into().unwrap_or(u16::MAX));
+            if write_size != 0 {
+                self.w5500
+                    .set_sn_tx_buf(self.sn, self.ptr, &buf[..usize::from(write_size)])
+                    .await?;
+                self.ptr = self.ptr.wrapping_add(write_size);
+
+                Ok(write_size)
+            } else {
+                Ok(0)
+            }
+        }
+    }
+
+    type WriteAllFuture<'a> = impl core::future::Future<Output = Result<(), Error<W5500::Error>>> + 'a
+        where Self: 'a;
+
+    fn write_all<'a>(&'a mut self, buf: &'a [u8]) -> Self::WriteAllFuture<'a> {
+        async move {
+            let buf_len: u16 = buf.len().try_into().unwrap_or(u16::MAX);
+            let write_size: u16 = min(self.remain(), buf_len);
+            if write_size != buf_len {
+                Err(Error::OutOfMemory)
+            } else {
+                self.w5500.set_sn_tx_buf(self.sn, self.ptr, buf).await?;
+                self.ptr = self.ptr.wrapping_add(write_size);
+                Ok(())
+            }
+        }
     }
 }
 

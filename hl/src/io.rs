@@ -66,7 +66,7 @@ impl SeekFrom {
 /// similar to [`std::io::Seek`].
 ///
 /// [`std::io::Seek`]: https://doc.rust-lang.org/stable/std/io/trait.Seek.html
-pub trait Seek<E> {
+pub trait Seek {
     /// Seek to an offset, in bytes, within the socket buffer.
     ///
     /// Seeking beyond the limits will result [`Error::UnexpectedEof`].
@@ -78,7 +78,7 @@ pub trait Seek<E> {
     ///   the UDP datagram length, whichever is less.
     /// * [`TcpWriter`](crate::TcpWriter) is limited by socket free size.
     /// * [`TcpReader`](crate::TcpReader) is limited by the received size.
-    fn seek(&mut self, pos: SeekFrom) -> Result<(), Error<E>>;
+    fn seek<E>(&mut self, pos: SeekFrom) -> Result<(), Error<E>>;
 
     /// Rewind to the beginning of the stream.
     ///
@@ -128,6 +128,22 @@ pub trait Read<E> {
     fn done(self) -> Result<(), E>;
 }
 
+/// Socket asyncrhonous reader trait.
+#[cfg(feature = "async")]
+pub trait AsyncRead<E> {
+    type ReadFuture<'a>: core::future::Future<Output = Result<u16, E>> + 'a
+    where
+        Self: 'a;
+
+    fn read<'a>(&'a mut self, buf: &'a mut [u8]) -> Self::ReadFuture<'a>;
+
+    type ReadExactFuture<'a>: core::future::Future<Output = Result<(), Error<E>>> + 'a
+    where
+        Self: 'a;
+
+    fn read_exact<'a>(&'a mut self, buf: &'a mut [u8]) -> Self::ReadExactFuture<'a>;
+}
+
 /// Socket writer trait.
 pub trait Write<E> {
     /// Write data to the socket buffer, and return the number of bytes written.
@@ -156,6 +172,22 @@ pub trait Write<E> {
     /// [`write_all`]: Self::write_all
     /// [`write`]: Self::write
     fn send(self) -> Result<(), E>;
+}
+
+/// Socket asyncrhonous writer trait.
+#[cfg(feature = "async")]
+pub trait AsyncWrite<E> {
+    type WriteFuture<'a>: core::future::Future<Output = Result<u16, E>> + 'a
+    where
+        Self: 'a;
+
+    fn write<'a>(&'a mut self, buf: &'a [u8]) -> Self::WriteFuture<'a>;
+
+    type WriteAllFuture<'a>: core::future::Future<Output = Result<(), Error<E>>> + 'a
+    where
+        Self: 'a;
+
+    fn write_all<'a>(&'a mut self, buf: &'a [u8]) -> Self::WriteAllFuture<'a>;
 }
 
 #[cfg(test)]

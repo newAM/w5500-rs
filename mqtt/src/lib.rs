@@ -193,7 +193,7 @@ fn write_variable_byte_integer<E, Writer: Write<E>>(
 /// This is returned by [`Client::process`].
 #[derive(Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
-pub enum Event<E, Reader: Read<E> + Seek<E>> {
+pub enum Event<E, Reader: Read<E> + Seek> {
     /// A hint to call [`Client::process`] after this many seconds have elapsed.
     ///
     /// This is just a hint and does not have to be used.
