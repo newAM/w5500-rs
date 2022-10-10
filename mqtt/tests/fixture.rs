@@ -9,7 +9,7 @@ use mqttbytes::{
 use std::{
     io::{Read, Write},
     net::{TcpListener, TcpStream},
-    time::Instant,
+    time::{Duration, Instant},
 };
 use w5500_hl::TcpReader;
 use w5500_mqtt::{
@@ -33,11 +33,13 @@ impl Server {
             stream: None,
         }
     }
+
     pub fn accept(&mut self) {
         let (stream, _addr) = self.listener.accept().expect("accept failed");
         stream.set_nonblocking(true).unwrap();
         self.stream.replace(stream);
     }
+
     pub fn read(&mut self) -> Result<Packet, mqttbytes::Error> {
         let mut buf = bytes::BytesMut::with_capacity(u16::MAX as usize);
         buf.resize(u16::MAX as usize, 0);
@@ -55,7 +57,9 @@ impl Server {
     }
 
     pub fn write_all(&mut self, buf: &[u8]) {
-        self.stream.as_ref().unwrap().write_all(buf).unwrap()
+        let mut stream: &TcpStream = self.stream.as_ref().unwrap();
+        stream.write_all(buf).unwrap();
+        stream.flush().unwrap()
     }
 
     pub fn send_connack_code(&mut self, code: ConnectReturnCode) {
@@ -226,13 +230,24 @@ impl Fixture {
     }
 
     pub fn client_expect_publish(&mut self, topic: &str, payload: &[u8]) {
-        let event = self
-            .client
-            .process(&mut self.w5500, self.mono.monotonic_secs())
-            .unwrap();
-        let mut reader = match event {
-            Event::Publish(reader) => reader,
-            e => panic!("Expected Publish event got {:?}", e),
+        const TIMEOUT: Duration = Duration::from_secs(1);
+        let start: Instant = Instant::now();
+
+        let mut reader = loop {
+            let event = self
+                .client
+                .process(&mut self.w5500, self.mono.monotonic_secs())
+                .unwrap();
+
+            match event {
+                Event::Publish(reader) => break reader,
+                e => log::info!("Unexpected event {:?}", e),
+            }
+
+            let elapsed: Duration = start.elapsed();
+            if elapsed > TIMEOUT {
+                panic!("Expected Publish event got nothing after {:?}", elapsed);
+            }
         };
 
         let mut topic_buf: Vec<u8> = vec![0; topic.len()];
