@@ -37,10 +37,10 @@ pub trait Registers {
     /// ```
     /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x00, 0x00]),
-    /// #   ehm1::spi::Transaction::async_read(0),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x00, 0x00]),
+    /// #   ehm1::spi::Transaction::read(0),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Mode};
     ///
@@ -63,10 +63,10 @@ pub trait Registers {
     /// ```
     /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x00, 0x04]),
-    /// #   ehm1::spi::Transaction::async_write(w5500_ll::Mode::WOL_MASK),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x00, 0x04]),
+    /// #   ehm1::spi::Transaction::write(w5500_ll::Mode::WOL_MASK),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Mode};
     ///
@@ -87,10 +87,10 @@ pub trait Registers {
     /// ```
     /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x01, 0x00]),
-    /// #   ehm1::spi::Transaction::async_read_vec(vec![0, 0, 0, 0]),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x01, 0x00]),
+    /// #   ehm1::spi::Transaction::read_vec(vec![0, 0, 0, 0]),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, net::Ipv4Addr};
     ///
@@ -113,10 +113,10 @@ pub trait Registers {
     /// ```
     /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x01, 0x04]),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![192, 168, 0, 1]),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x01, 0x04]),
+    /// #   ehm1::spi::Transaction::write_vec(vec![192, 168, 0, 1]),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, net::Ipv4Addr};
     ///
@@ -136,10 +136,10 @@ pub trait Registers {
     /// ```
     /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x05, 0x00]),
-    /// #   ehm1::spi::Transaction::async_read_vec(vec![0, 0, 0, 0]),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x05, 0x00]),
+    /// #   ehm1::spi::Transaction::read_vec(vec![0, 0, 0, 0]),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, net::Ipv4Addr};
     ///
@@ -162,10 +162,10 @@ pub trait Registers {
     /// ```
     /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x05, 0x04]),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![255, 255, 255, 0]),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x05, 0x04]),
+    /// #   ehm1::spi::Transaction::write_vec(vec![255, 255, 255, 0]),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, net::Ipv4Addr};
     ///
@@ -185,10 +185,10 @@ pub trait Registers {
     /// ```
     /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x09, 0x00]),
-    /// #   ehm1::spi::Transaction::async_read_vec(vec![0, 0, 0, 0, 0, 0]),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x09, 0x00]),
+    /// #   ehm1::spi::Transaction::read_vec(vec![0, 0, 0, 0, 0, 0]),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, net::Eui48Addr};
     ///
@@ -211,10 +211,10 @@ pub trait Registers {
     /// ```
     /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x09, 0x04]),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x12, 0x34, 0, 0, 0, 0]),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x09, 0x04]),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x12, 0x34, 0, 0, 0, 0]),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, net::Eui48Addr};
     ///
@@ -236,10 +236,10 @@ pub trait Registers {
     /// ```
     /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x0F, 0x00]),
-    /// #   ehm1::spi::Transaction::async_read_vec(vec![0, 0, 0, 0]),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x0F, 0x00]),
+    /// #   ehm1::spi::Transaction::read_vec(vec![0, 0, 0, 0]),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, net::Ipv4Addr};
     ///
@@ -262,10 +262,10 @@ pub trait Registers {
     /// ```
     /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x0F, 0x04]),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![192, 168, 0, 150]),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x0F, 0x04]),
+    /// #   ehm1::spi::Transaction::write_vec(vec![192, 168, 0, 150]),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, net::Ipv4Addr};
     ///
@@ -299,10 +299,10 @@ pub trait Registers {
     /// ```
     /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x13, 0x00]),
-    /// #   ehm1::spi::Transaction::async_read_vec(vec![0, 0]),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x13, 0x00]),
+    /// #   ehm1::spi::Transaction::read_vec(vec![0, 0]),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500};
     ///
@@ -327,10 +327,10 @@ pub trait Registers {
     /// ```
     /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x13, 0x04]),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x12, 0x34]),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x13, 0x04]),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x12, 0x34]),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500};
     ///
@@ -356,10 +356,10 @@ pub trait Registers {
     /// ```
     /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x15, 0x00]),
-    /// #   ehm1::spi::Transaction::async_read(0),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x15, 0x00]),
+    /// #   ehm1::spi::Transaction::read(0),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Interrupt};
     ///
@@ -384,14 +384,14 @@ pub trait Registers {
     /// ```
     /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x15, 0x00]),
-    /// #   ehm1::spi::Transaction::async_read(0),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x15, 0x04]),
-    /// #   ehm1::spi::Transaction::async_write(0),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x15, 0x00]),
+    /// #   ehm1::spi::Transaction::read(0),
+    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x15, 0x04]),
+    /// #   ehm1::spi::Transaction::write(0),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Interrupt};
     ///
@@ -414,10 +414,10 @@ pub trait Registers {
     /// ```
     /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x16, 0x00]),
-    /// #   ehm1::spi::Transaction::async_read(0),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x16, 0x00]),
+    /// #   ehm1::spi::Transaction::read(0),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Interrupt};
     ///
@@ -447,10 +447,10 @@ pub trait Registers {
     /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Interrupt};
     /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x16, 0x04]),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![Interrupt::MP_MASK]),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x16, 0x04]),
+    /// #   ehm1::spi::Transaction::write_vec(vec![Interrupt::MP_MASK]),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
     ///
     /// // enable the magic packet interrupt
@@ -477,10 +477,10 @@ pub trait Registers {
     /// ```
     /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x17, 0x00]),
-    /// #   ehm1::spi::Transaction::async_read(0),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x17, 0x00]),
+    /// #   ehm1::spi::Transaction::read(0),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, SOCKETS};
     ///
@@ -517,10 +517,10 @@ pub trait Registers {
     /// ```
     /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x18, 0x00]),
-    /// #   ehm1::spi::Transaction::async_read(0),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x18, 0x00]),
+    /// #   ehm1::spi::Transaction::read(0),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500};
     ///
@@ -544,10 +544,10 @@ pub trait Registers {
     /// ```
     /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x18, 0x04]),
-    /// #   ehm1::spi::Transaction::async_write(0xFF),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x18, 0x04]),
+    /// #   ehm1::spi::Transaction::write(0xFF),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500};
     ///
@@ -578,10 +578,10 @@ pub trait Registers {
     /// ```
     /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x19, 0x00]),
-    /// #   ehm1::spi::Transaction::async_read_vec(vec![0x07, 0xD0]),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x19, 0x00]),
+    /// #   ehm1::spi::Transaction::read_vec(vec![0x07, 0xD0]),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500};
     ///
@@ -606,10 +606,10 @@ pub trait Registers {
     /// ```
     /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x19, 0x04]),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x12, 0x34]),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x19, 0x04]),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x12, 0x34]),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500};
     ///
@@ -636,10 +636,10 @@ pub trait Registers {
     /// ```
     /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x1B, 0x00]),
-    /// #   ehm1::spi::Transaction::async_read(0x08),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x1B, 0x00]),
+    /// #   ehm1::spi::Transaction::read(0x08),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500};
     ///
@@ -663,10 +663,10 @@ pub trait Registers {
     /// ```
     /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x1B, 0x04]),
-    /// #   ehm1::spi::Transaction::async_write(0x0A),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x1B, 0x04]),
+    /// #   ehm1::spi::Transaction::write(0x0A),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500};
     ///
@@ -691,10 +691,10 @@ pub trait Registers {
     /// ```
     /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x1C, 0x00]),
-    /// #   ehm1::spi::Transaction::async_read(0x08),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x1C, 0x00]),
+    /// #   ehm1::spi::Transaction::read(0x08),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500};
     ///
@@ -718,10 +718,10 @@ pub trait Registers {
     /// ```
     /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x1C, 0x04]),
-    /// #   ehm1::spi::Transaction::async_write(0xC8),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x1C, 0x04]),
+    /// #   ehm1::spi::Transaction::write(0xC8),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500};
     ///
@@ -744,10 +744,10 @@ pub trait Registers {
     /// ```
     /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x1D, 0x00]),
-    /// #   ehm1::spi::Transaction::async_read(0x08),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x1D, 0x00]),
+    /// #   ehm1::spi::Transaction::read(0x08),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500};
     ///
@@ -771,10 +771,10 @@ pub trait Registers {
     /// ```
     /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x1D, 0x04]),
-    /// #   ehm1::spi::Transaction::async_write(0x01),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x1D, 0x04]),
+    /// #   ehm1::spi::Transaction::write(0x01),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500};
     ///
@@ -794,10 +794,10 @@ pub trait Registers {
     /// ```
     /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x1E, 0x00]),
-    /// #   ehm1::spi::Transaction::async_read_vec(vec![0, 0, 0, 0, 0, 0]),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x1E, 0x00]),
+    /// #   ehm1::spi::Transaction::read_vec(vec![0, 0, 0, 0, 0, 0]),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, net::Eui48Addr};
     ///
@@ -820,10 +820,10 @@ pub trait Registers {
     /// ```
     /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x1E, 0x04]),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x12, 0x34, 0, 0, 0, 0]),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x1E, 0x04]),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x12, 0x34, 0, 0, 0, 0]),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, net::Eui48Addr};
     ///
@@ -848,10 +848,10 @@ pub trait Registers {
     /// ```
     /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x24, 0x00]),
-    /// #   ehm1::spi::Transaction::async_read_vec(vec![0, 0]),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x24, 0x00]),
+    /// #   ehm1::spi::Transaction::read_vec(vec![0, 0]),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500};
     ///
@@ -876,10 +876,10 @@ pub trait Registers {
     /// ```
     /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x24, 0x04]),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x12, 0x34]),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x24, 0x04]),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x12, 0x34]),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500};
     ///
@@ -901,10 +901,10 @@ pub trait Registers {
     /// ```
     /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x26, 0x00]),
-    /// #   ehm1::spi::Transaction::async_read_vec(vec![0, 0]),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x26, 0x00]),
+    /// #   ehm1::spi::Transaction::read_vec(vec![0, 0]),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500};
     ///
@@ -929,10 +929,10 @@ pub trait Registers {
     /// ```
     /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x26, 0x04]),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x12, 0x34]),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x26, 0x04]),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x12, 0x34]),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500};
     ///
@@ -959,10 +959,10 @@ pub trait Registers {
     /// ```
     /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x28, 0x00]),
-    /// #   ehm1::spi::Transaction::async_read_vec(vec![0, 0, 0, 0]),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x28, 0x00]),
+    /// #   ehm1::spi::Transaction::read_vec(vec![0, 0, 0, 0]),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, net::Ipv4Addr};
     ///
@@ -987,10 +987,10 @@ pub trait Registers {
     /// ```
     /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x2C, 0x00]),
-    /// #   ehm1::spi::Transaction::async_read_vec(vec![0, 0]),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x2C, 0x00]),
+    /// #   ehm1::spi::Transaction::read_vec(vec![0, 0]),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500};
     ///
@@ -1012,10 +1012,10 @@ pub trait Registers {
     /// ```
     /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x2E, 0x00]),
-    /// #   ehm1::spi::Transaction::async_read(0b10111000),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x2E, 0x00]),
+    /// #   ehm1::spi::Transaction::read(0b10111000),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, PhyCfg};
     ///
@@ -1038,10 +1038,10 @@ pub trait Registers {
     /// ```
     /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x2E, 0x04]),
-    /// #   ehm1::spi::Transaction::async_write(0b11111000),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x2E, 0x04]),
+    /// #   ehm1::spi::Transaction::write(0b11111000),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, OperationMode, PhyCfg};
     ///
@@ -1067,10 +1067,10 @@ pub trait Registers {
     /// ```
     /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x39, 0x00]),
-    /// #   ehm1::spi::Transaction::async_read(0x04),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x39, 0x00]),
+    /// #   ehm1::spi::Transaction::read(0x04),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500};
     ///
@@ -1093,10 +1093,10 @@ pub trait Registers {
     /// ```
     /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x00, 0x08]),
-    /// #   ehm1::spi::Transaction::async_read(0),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x00, 0x08]),
+    /// #   ehm1::spi::Transaction::read(0),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn, SocketMode};
     ///
@@ -1118,10 +1118,10 @@ pub trait Registers {
     /// ```
     /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x00, 0x08 | 0x04]),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x01]),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x00, 0x08 | 0x04]),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x01]),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Protocol, Sn, SocketMode};
     ///
@@ -1145,18 +1145,18 @@ pub trait Registers {
     /// ```
     /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x01, 0x08 | 0x04]),
-    /// #   ehm1::spi::Transaction::async_write(0x01),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x01, 0x08]),
-    /// #   ehm1::spi::Transaction::async_read(1),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x01, 0x08]),
-    /// #   ehm1::spi::Transaction::async_read(0),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x01, 0x08 | 0x04]),
+    /// #   ehm1::spi::Transaction::write(0x01),
+    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x01, 0x08]),
+    /// #   ehm1::spi::Transaction::read(1),
+    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x01, 0x08]),
+    /// #   ehm1::spi::Transaction::read(0),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn, SocketCommand};
     ///
@@ -1178,10 +1178,10 @@ pub trait Registers {
     /// ```
     /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x01, 0x08 | 0x04]),
-    /// #   ehm1::spi::Transaction::async_write(0x01),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x01, 0x08 | 0x04]),
+    /// #   ehm1::spi::Transaction::write(0x01),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn, SocketCommand};
     ///
@@ -1201,10 +1201,10 @@ pub trait Registers {
     /// ```
     /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x02, 0x08]),
-    /// #   ehm1::spi::Transaction::async_read(0),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x02, 0x08]),
+    /// #   ehm1::spi::Transaction::read(0),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn};
     ///
@@ -1229,14 +1229,14 @@ pub trait Registers {
     /// ```
     /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x02, 0x08]),
-    /// #   ehm1::spi::Transaction::async_read(0),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x02, 0x08 | 0x04]),
-    /// #   ehm1::spi::Transaction::async_write(0),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x02, 0x08]),
+    /// #   ehm1::spi::Transaction::read(0),
+    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x02, 0x08 | 0x04]),
+    /// #   ehm1::spi::Transaction::write(0),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn, SocketInterrupt};
     ///
@@ -1251,10 +1251,10 @@ pub trait Registers {
     /// ```
     /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x02, 0x08 | 0x04]),
-    /// #   ehm1::spi::Transaction::async_write(SocketInterrupt::SENDOK_MASK),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x02, 0x08 | 0x04]),
+    /// #   ehm1::spi::Transaction::write(SocketInterrupt::SENDOK_MASK),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn, SocketInterrupt};
     ///
@@ -1290,10 +1290,10 @@ pub trait Registers {
     /// ```
     /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x03, 0x08]),
-    /// #   ehm1::spi::Transaction::async_read(0),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x03, 0x08]),
+    /// #   ehm1::spi::Transaction::read(0),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn, SocketStatus};
     ///
@@ -1321,10 +1321,10 @@ pub trait Registers {
     /// ```
     /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x04, 0x08]),
-    /// #   ehm1::spi::Transaction::async_read_vec(vec![0, 0]),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x04, 0x08]),
+    /// #   ehm1::spi::Transaction::read_vec(vec![0, 0]),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn, SocketMode};
     ///
@@ -1347,10 +1347,10 @@ pub trait Registers {
     /// ```
     /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x04, 0x08 | 0x04]),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 68]),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x04, 0x08 | 0x04]),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 68]),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn};
     ///
@@ -1374,10 +1374,10 @@ pub trait Registers {
     /// ```
     /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x06, 0x08]),
-    /// #   ehm1::spi::Transaction::async_read_vec(vec![0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF]),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x06, 0x08]),
+    /// #   ehm1::spi::Transaction::read_vec(vec![0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF]),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn};
     ///
@@ -1401,10 +1401,10 @@ pub trait Registers {
     /// ```
     /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x06, 0x08 | 0x04]),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x12, 0x34, 0x00, 0x00, 0x00, 0x00]),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x06, 0x08 | 0x04]),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x12, 0x34, 0x00, 0x00, 0x00, 0x00]),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, net::Eui48Addr, Sn};
     ///
@@ -1438,10 +1438,10 @@ pub trait Registers {
     /// ```
     /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x0C, 0x08]),
-    /// #   ehm1::spi::Transaction::async_read_vec(vec![0, 0, 0, 0]),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x0C, 0x08]),
+    /// #   ehm1::spi::Transaction::read_vec(vec![0, 0, 0, 0]),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, net::Ipv4Addr, Sn};
     ///
@@ -1466,10 +1466,10 @@ pub trait Registers {
     /// ```
     /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x0C, 0x08 | 0x04]),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![192, 168, 0, 11]),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x0C, 0x08 | 0x04]),
+    /// #   ehm1::spi::Transaction::write_vec(vec![192, 168, 0, 11]),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, net::Ipv4Addr, Sn};
     ///
@@ -1505,10 +1505,10 @@ pub trait Registers {
     /// ```
     /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x10, 0x08]),
-    /// #   ehm1::spi::Transaction::async_read_vec(vec![0, 0]),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x10, 0x08]),
+    /// #   ehm1::spi::Transaction::read_vec(vec![0, 0]),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn, SocketMode};
     ///
@@ -1532,10 +1532,10 @@ pub trait Registers {
     /// ```
     /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x10, 0x08 | 0x04]),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 67]),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x10, 0x08 | 0x04]),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 67]),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn};
     ///
@@ -1561,10 +1561,10 @@ pub trait Registers {
     /// ```
     /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x0C, 0x08]),
-    /// #   ehm1::spi::Transaction::async_read_vec(vec![0, 0, 0, 0, 0, 0]),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x0C, 0x08]),
+    /// #   ehm1::spi::Transaction::read_vec(vec![0, 0, 0, 0, 0, 0]),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, net::SocketAddrV4, Sn};
     ///
@@ -1595,10 +1595,10 @@ pub trait Registers {
     /// ```
     /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x0C, 0x08 | 0x04]),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![192, 168, 0, 11, 0, 67]),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x0C, 0x08 | 0x04]),
+    /// #   ehm1::spi::Transaction::write_vec(vec![192, 168, 0, 11, 0, 67]),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{
     ///     aio::Registers,
@@ -1663,10 +1663,10 @@ pub trait Registers {
     /// ```
     /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x12, 0x08]),
-    /// #   ehm1::spi::Transaction::async_read_vec(vec![0x00, 0x00]),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x12, 0x08]),
+    /// #   ehm1::spi::Transaction::read_vec(vec![0x00, 0x00]),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn};
     ///
@@ -1689,10 +1689,10 @@ pub trait Registers {
     /// ```
     /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x12, 0x08 | 0x04]),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x05, 0xB4]),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x12, 0x08 | 0x04]),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x05, 0xB4]),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn};
     ///
@@ -1720,10 +1720,10 @@ pub trait Registers {
     /// ```
     /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x15, 0x08]),
-    /// #   ehm1::spi::Transaction::async_read(0),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x15, 0x08]),
+    /// #   ehm1::spi::Transaction::read(0),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn};
     ///
@@ -1746,10 +1746,10 @@ pub trait Registers {
     /// ```
     /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x15, 0x08 | 0x04]),
-    /// #   ehm1::spi::Transaction::async_write(0x01),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x15, 0x08 | 0x04]),
+    /// #   ehm1::spi::Transaction::write(0x01),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn};
     ///
@@ -1773,10 +1773,10 @@ pub trait Registers {
     /// ```
     /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x16, 0x08]),
-    /// #   ehm1::spi::Transaction::async_read(0x80),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x16, 0x08]),
+    /// #   ehm1::spi::Transaction::read(0x80),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn};
     ///
@@ -1799,10 +1799,10 @@ pub trait Registers {
     /// ```
     /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x16, 0x08 | 0x04]),
-    /// #   ehm1::spi::Transaction::async_write(0x80),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x16, 0x08 | 0x04]),
+    /// #   ehm1::spi::Transaction::write(0x80),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn};
     ///
@@ -1838,10 +1838,10 @@ pub trait Registers {
     /// ```
     /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x1E, 0x08]),
-    /// #   ehm1::spi::Transaction::async_read(0x02),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x1E, 0x08]),
+    /// #   ehm1::spi::Transaction::read(0x02),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, BufferSize, Sn};
     ///
@@ -1869,10 +1869,10 @@ pub trait Registers {
     /// ```
     /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x1E, 0x08 | 0x04]),
-    /// #   ehm1::spi::Transaction::async_write(1),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x1E, 0x08 | 0x04]),
+    /// #   ehm1::spi::Transaction::write(1),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, BufferSize, Sn};
     ///
@@ -1909,10 +1909,10 @@ pub trait Registers {
     /// ```
     /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x1F, 0x08]),
-    /// #   ehm1::spi::Transaction::async_read(0x02),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x1F, 0x08]),
+    /// #   ehm1::spi::Transaction::read(0x02),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, BufferSize, Sn};
     ///
@@ -1940,10 +1940,10 @@ pub trait Registers {
     /// ```
     /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x1F, 0x08 | 0x04]),
-    /// #   ehm1::spi::Transaction::async_write(1),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x1F, 0x08 | 0x04]),
+    /// #   ehm1::spi::Transaction::write(1),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, BufferSize, Sn};
     ///
@@ -1985,10 +1985,10 @@ pub trait Registers {
     /// ```
     /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x20, 0x08]),
-    /// #   ehm1::spi::Transaction::async_read_vec(vec![0x08, 0x00]),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x20, 0x08]),
+    /// #   ehm1::spi::Transaction::read_vec(vec![0x08, 0x00]),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn, SocketMode};
     ///
@@ -2027,10 +2027,10 @@ pub trait Registers {
     /// ```
     /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x22, 0x08]),
-    /// #   ehm1::spi::Transaction::async_read_vec(vec![0, 0]),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x22, 0x08]),
+    /// #   ehm1::spi::Transaction::read_vec(vec![0, 0]),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn, SocketMode};
     ///
@@ -2065,10 +2065,10 @@ pub trait Registers {
     /// ```
     /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x24, 0x08]),
-    /// #   ehm1::spi::Transaction::async_read_vec(vec![0, 0]),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x24, 0x08]),
+    /// #   ehm1::spi::Transaction::read_vec(vec![0, 0]),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn};
     ///
@@ -2106,10 +2106,10 @@ pub trait Registers {
     /// ```
     /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x26, 0x08]),
-    /// #   ehm1::spi::Transaction::async_read_vec(vec![0, 0]),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x26, 0x08]),
+    /// #   ehm1::spi::Transaction::read_vec(vec![0, 0]),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn};
     ///
@@ -2143,10 +2143,10 @@ pub trait Registers {
     /// ```
     /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x28, 0x08]),
-    /// #   ehm1::spi::Transaction::async_read_vec(vec![0, 0]),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x28, 0x08]),
+    /// #   ehm1::spi::Transaction::read_vec(vec![0, 0]),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn};
     ///
@@ -2180,10 +2180,10 @@ pub trait Registers {
     /// ```
     /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x2A, 0x08]),
-    /// #   ehm1::spi::Transaction::async_read_vec(vec![0, 0]),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x2A, 0x08]),
+    /// #   ehm1::spi::Transaction::read_vec(vec![0, 0]),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn};
     ///
@@ -2205,10 +2205,10 @@ pub trait Registers {
     /// ```
     /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x2C, 0x08]),
-    /// #   ehm1::spi::Transaction::async_read(0xFF),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x2C, 0x08]),
+    /// #   ehm1::spi::Transaction::read(0xFF),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn, SocketInterruptMask};
     ///
@@ -2230,10 +2230,10 @@ pub trait Registers {
     /// ```
     /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x2C, 0x08 | 0x04]),
-    /// #   ehm1::spi::Transaction::async_write(0xE0),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x2C, 0x08 | 0x04]),
+    /// #   ehm1::spi::Transaction::write(0xE0),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn, SocketInterruptMask};
     ///
@@ -2257,10 +2257,10 @@ pub trait Registers {
     /// ```
     /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x2D, 0x08]),
-    /// #   ehm1::spi::Transaction::async_read_vec(vec![0x40, 0x00]),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x2D, 0x08]),
+    /// #   ehm1::spi::Transaction::read_vec(vec![0x40, 0x00]),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn};
     ///
@@ -2284,10 +2284,10 @@ pub trait Registers {
     /// ```
     /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x2D, 0x08 | 0x04]),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x00]),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x2D, 0x08 | 0x04]),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x00]),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn};
     ///
@@ -2325,10 +2325,10 @@ pub trait Registers {
     /// ```
     /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x2F, 0x08]),
-    /// #   ehm1::spi::Transaction::async_read(0),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x2F, 0x08]),
+    /// #   ehm1::spi::Transaction::read(0),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn};
     ///
@@ -2352,10 +2352,10 @@ pub trait Registers {
     /// ```
     /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x2F, 0x08 | 0x04]),
-    /// #   ehm1::spi::Transaction::async_write(0x0A),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x2F, 0x08 | 0x04]),
+    /// #   ehm1::spi::Transaction::write(0x0A),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn};
     ///
@@ -2379,30 +2379,30 @@ pub trait Registers {
     /// use w5500_ll::{eh1::vdm::W5500, aio::Registers, Sn, SocketCommand};
     /// # let spi = ehm1::spi::Mock::new(&[
     /// #   // sn_tx_fsr
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, w5500_ll::SnReg::TX_FSR0.addr() as u8, 0x08]),
-    /// #   ehm1::spi::Transaction::async_read_vec(vec![0x08, 0x00]),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, w5500_ll::SnReg::TX_FSR0.addr() as u8, 0x08]),
+    /// #   ehm1::spi::Transaction::read_vec(vec![0x08, 0x00]),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// #   // sn_tx_write
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, w5500_ll::SnReg::TX_WR0.addr() as u8, 0x08]),
-    /// #   ehm1::spi::Transaction::async_read_vec(vec![0, 0]),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, w5500_ll::SnReg::TX_WR0.addr() as u8, 0x08]),
+    /// #   ehm1::spi::Transaction::read_vec(vec![0, 0]),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// #   // set_sn_tx_buf
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x00, (Sn::Sn0.tx_block() as u8) << 3 | 0x04]),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x12, 0x34, 0x56, 0x78, 0x9A]),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x00, (Sn::Sn0.tx_block() as u8) << 3 | 0x04]),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x12, 0x34, 0x56, 0x78, 0x9A]),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// #   // set_sn_tx_wr
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x24, 0x08 | 0x04]),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 5]),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x24, 0x08 | 0x04]),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 5]),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// #   // set_sn_cr
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x01, 0x08 | 0x04]),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![SocketCommand::Send.into()]),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x01, 0x08 | 0x04]),
+    /// #   ehm1::spi::Transaction::write_vec(vec![SocketCommand::Send.into()]),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
     /// # let mut w5500 = W5500::new(spi);
     ///
@@ -2440,12 +2440,12 @@ pub trait Registers {
     /// ```
     /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
     /// use core::cmp::min;
-    /// use w5500_ll::{eh1::vdm::W5500, aio::Registers, Sn, SocketCommand};
+    /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn, SocketCommand};
     /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x00, (Sn::Sn0.tx_block() as u8) << 3]),
-    /// #   ehm1::spi::Transaction::async_read(0),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x00, (Sn::Sn0.tx_block() as u8) << 3]),
+    /// #   ehm1::spi::Transaction::read(0),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
     /// # let mut w5500 = W5500::new(spi);
     /// let mut buf: [u8; 1] = [0];
@@ -2465,26 +2465,26 @@ pub trait Registers {
     /// use core::cmp::min;
     /// use w5500_ll::{eh1::vdm::W5500, aio::Registers, Sn, SocketCommand};
     /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, w5500_ll::SnReg::RX_RSR0.addr() as u8, 0x08]),
-    /// #   ehm1::spi::Transaction::async_read_vec(vec![0, 4]),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, w5500_ll::SnReg::RX_RD0.addr() as u8, 0x08]),
-    /// #   ehm1::spi::Transaction::async_read_vec(vec![0, 0]),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x00, (Sn::Sn0.rx_block() as u8) << 3]),
-    /// #   ehm1::spi::Transaction::async_read_vec(vec![0, 0, 0, 0]),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, w5500_ll::SnReg::RX_RD0.addr() as u8, 0x08 | 0x04]),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0, 4]),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, w5500_ll::SnReg::CR.addr() as u8, 0x08 | 0x04]),
-    /// #   ehm1::spi::Transaction::async_write(SocketCommand::Recv.into()),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, w5500_ll::SnReg::RX_RSR0.addr() as u8, 0x08]),
+    /// #   ehm1::spi::Transaction::read_vec(vec![0, 4]),
+    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, w5500_ll::SnReg::RX_RD0.addr() as u8, 0x08]),
+    /// #   ehm1::spi::Transaction::read_vec(vec![0, 0]),
+    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x00, (Sn::Sn0.rx_block() as u8) << 3]),
+    /// #   ehm1::spi::Transaction::read_vec(vec![0, 0, 0, 0]),
+    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, w5500_ll::SnReg::RX_RD0.addr() as u8, 0x08 | 0x04]),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0, 4]),
+    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, w5500_ll::SnReg::CR.addr() as u8, 0x08 | 0x04]),
+    /// #   ehm1::spi::Transaction::write(SocketCommand::Recv.into()),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
     /// # let mut w5500 = W5500::new(spi);
     ///
@@ -2525,10 +2525,10 @@ pub trait Registers {
     /// use core::cmp::min;
     /// use w5500_ll::{eh1::vdm::W5500, aio::Registers, Sn, SocketCommand};
     /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::async_transaction_start(),
-    /// #   ehm1::spi::Transaction::async_write_vec(vec![0x00, 0x00, (Sn::Sn0.rx_block() as u8) << 3 | 0x04]),
-    /// #   ehm1::spi::Transaction::async_write(0),
-    /// #   ehm1::spi::Transaction::async_transaction_end(),
+    /// #   ehm1::spi::Transaction::transaction_start(),
+    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x00, (Sn::Sn0.rx_block() as u8) << 3 | 0x04]),
+    /// #   ehm1::spi::Transaction::write(0),
+    /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
     /// # let mut w5500 = W5500::new(spi);
     /// let buf: [u8; 1] = [0];
