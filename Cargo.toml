@@ -24,3 +24,7 @@ default-members = [
     "sntp",
     "tls",
 ]
+
+[patch.crates-io]
+embedded-hal = { git = "http://github.com/newAM/embedded-hal", branch = "eha-nightly" }
+embedded-hal-async = { git = "http://github.com/newAM/embedded-hal", branch = "eha-nightly" }
