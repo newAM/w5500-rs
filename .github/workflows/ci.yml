@@ -134,8 +134,10 @@ jobs:
           cargo +nightly rustdoc --all-features
           cd ../mqtt
           cargo +nightly rustdoc --all-features
-          cd ../regsim
-          cargo +nightly rustdoc --all-features
+          # TODO: re-enable
+          # https://github.com/rust-lang/rust/issues/103403
+          # cd ../regsim
+          # cargo +nightly rustdoc --all-features
           cd ../sntp
           cargo +nightly rustdoc --all-features
 
