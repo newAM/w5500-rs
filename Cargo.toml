@@ -28,5 +28,5 @@ default-members = [
 # TODO: remove
 # https://github.com/rust-embedded/embedded-hal/pull/421
 [patch.crates-io]
-embedded-hal = { git = "http://github.com/newAM/embedded-hal", branch = "eha-nightly" }
-embedded-hal-async = { git = "http://github.com/newAM/embedded-hal", branch = "eha-nightly" }
+embedded-hal = { git = "http://github.com/rust-embedded/embedded-hal" }
+embedded-hal-async = { git = "http://github.com/rust-embedded/embedded-hal" }
