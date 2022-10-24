@@ -59,7 +59,9 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![cfg_attr(
     any(feature = "eha0", feature = "async"),
-    feature(type_alias_impl_trait)
+    feature(type_alias_impl_trait),
+    feature(async_fn_in_trait),
+    allow(incomplete_features), // async_fn_in_trait
 )]
 #![deny(unsafe_code)]
 #![warn(missing_docs)]

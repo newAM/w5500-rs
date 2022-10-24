@@ -73,7 +73,12 @@
 //! [`w5500-hl`]: https://crates.io/crates/w5500-hl
 //! [`w5500_ll::Registers`]: https://docs.rs/w5500-ll/latest/w5500_ll/trait.Registers.html
 #![cfg_attr(docsrs, feature(doc_cfg), feature(doc_auto_cfg))]
-#![cfg_attr(feature = "async", feature(type_alias_impl_trait))]
+#![cfg_attr(
+    feature = "async",
+    feature(type_alias_impl_trait),
+    feature(async_fn_in_trait),
+    allow(incomplete_features) // async_fn_in_trait
+)]
 
 use std::{
     fs::File,
@@ -1171,15 +1176,11 @@ impl Registers for W5500 {
 impl w5500_ll::aio::Registers for W5500 {
     type Error = std::io::ErrorKind;
 
-    type ReadFuture<'a> = impl core::future::Future<Output = Result<(), Self::Error>> + 'a where Self: 'a;
-
-    fn read<'a>(&'a mut self, address: u16, block: u8, data: &'a mut [u8]) -> Self::ReadFuture<'a> {
-        async move { w5500_ll::Registers::read(self, address, block, data) }
+    async fn read(&mut self, address: u16, block: u8, data: &mut [u8]) -> Result<(), Self::Error> {
+        w5500_ll::Registers::read(self, address, block, data)
     }
 
-    type WriteFuture<'a> = impl core::future::Future<Output = Result<(), Self::Error>> + 'a where Self: 'a;
-
-    fn write<'a>(&'a mut self, address: u16, block: u8, data: &'a [u8]) -> Self::WriteFuture<'a> {
-        async move { w5500_ll::Registers::write(self, address, block, data) }
+    async fn write(&mut self, address: u16, block: u8, data: &[u8]) -> Result<(), Self::Error> {
+        w5500_ll::Registers::write(self, address, block, data)
     }
 }
