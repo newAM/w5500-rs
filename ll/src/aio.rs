@@ -782,7 +782,7 @@ pub trait Registers {
     /// w5500.set_pmagic(0x01).await?;
     /// # Ok(()) }
     /// ```
-    async fn set_pmagic(&mut self, pmagic: u8) -> Result<u8, Self::Error> {
+    async fn set_pmagic(&mut self, pmagic: u8) -> Result<(), Self::Error> {
         self.write(Reg::PMAGIC.addr(), COMMON_BLOCK_OFFSET, &[pmagic])
             .await
     }
