@@ -75,7 +75,6 @@
 #![cfg_attr(docsrs, feature(doc_cfg), feature(doc_auto_cfg))]
 #![cfg_attr(
     feature = "async",
-    feature(type_alias_impl_trait),
     feature(async_fn_in_trait),
     allow(incomplete_features) // async_fn_in_trait
 )]
