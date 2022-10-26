@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Added support for `embedded-hal` version `1.0.0-alpha.9` with the `eh1` feature.
-- Added support for `embedded-hal-async` version `0.1.0-alpha.1` with the `eha0` feature.
+- Added support for `embedded-hal-async` version `0.1.0-alpha.3` with the `eha0` feature.
 - Added an `aio` module with async traits.
 
 ### Changed
