@@ -24,9 +24,3 @@ default-members = [
     "sntp",
     "tls",
 ]
-
-# TODO: remove
-# https://github.com/rust-embedded/embedded-hal/pull/421
-[patch.crates-io]
-embedded-hal = { git = "http://github.com/rust-embedded/embedded-hal", rev = "f565750dbd3d27f6f66a14e1f5adfd5b850cc726" }
-embedded-hal-async = { git = "http://github.com/rust-embedded/embedded-hal", rev = "f565750dbd3d27f6f66a14e1f5adfd5b850cc726" }
