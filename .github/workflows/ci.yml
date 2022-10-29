@@ -103,7 +103,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@nightly
         with:
           components: clippy
-      - run: cargo clippy --all-features -- --deny warnings
+      - run: cargo clippy --all-features --all-targets -- --deny warnings
 
   format:
     name: Format

@@ -29,7 +29,7 @@ pub struct Server {
 impl Server {
     pub fn new(server_port: u16) -> Self {
         Self {
-            listener: TcpListener::bind(&format!("127.0.0.1:{server_port}")).expect("bind failed"),
+            listener: TcpListener::bind(format!("127.0.0.1:{server_port}")).expect("bind failed"),
             stream: None,
         }
     }
