@@ -40,7 +40,7 @@
 //! * `eh1`: Enables the [`eh1`] module which contains
 //!   implementations of the [`Registers`] trait
 //!   using the `embedded-hal` version 1 traits.
-//! * `eha0`: **Nightly only.**
+//! * `eha0a`: **Nightly only.**
 //!   Implements the [`aio::Registers`] trait for types in the [`eh1`] module
 //!   using the `embedded-hal-async` alpha traits.
 //! * `std`: Enables conversion between [`std::net`] and [`w5500_ll::net`] types.
@@ -58,7 +58,7 @@
 #![cfg_attr(docsrs, feature(doc_cfg), feature(doc_auto_cfg))]
 #![cfg_attr(not(feature = "std"), no_std)]
 #![cfg_attr(
-    any(feature = "eha0", feature = "async"),
+    any(feature = "eha0a", feature = "async"),
     feature(async_fn_in_trait),
     allow(incomplete_features), // async_fn_in_trait
 )]
