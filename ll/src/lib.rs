@@ -62,7 +62,7 @@
     feature(async_fn_in_trait),
     allow(incomplete_features), // async_fn_in_trait
 )]
-#![deny(unsafe_code)]
+#![forbid(unsafe_code)]
 #![warn(missing_docs)]
 
 #[cfg(feature = "async")]

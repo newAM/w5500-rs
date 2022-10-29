@@ -91,7 +91,6 @@ where
 }
 
 #[cfg(feature = "eha0a")]
-#[allow(unsafe_code)]
 impl<SPI, E> crate::aio::Registers for W5500<SPI>
 where
     SPI: eha0a::spi::SpiDevice<Error = E>,
@@ -105,8 +104,7 @@ where
     /// Read from the W5500 asynchronously.
     async fn read(&mut self, address: u16, block: u8, data: &mut [u8]) -> Result<(), Self::Error> {
         let header = vdm_header(address, block, AccessMode::Read);
-        eha0a::spi::SpiDevice::transaction(&mut self.spi, move |bus| async move {
-            let bus = unsafe { &mut *bus };
+        eha0a::spi::transaction!(&mut self.spi, move |bus| async move {
             bus.write(&header).await?;
             bus.read(data).await
         })
@@ -116,8 +114,8 @@ where
     /// Write to the W5500 asynchronously.
     async fn write(&mut self, address: u16, block: u8, data: &[u8]) -> Result<(), Self::Error> {
         let header = vdm_header(address, block, AccessMode::Write);
-        eha0a::spi::SpiDevice::transaction(&mut self.spi, move |bus| async move {
-            let bus = unsafe { &mut *bus };
+
+        eha0a::spi::transaction!(&mut self.spi, move |bus| async move {
             bus.write(&header).await?;
             bus.write(data).await
         })
