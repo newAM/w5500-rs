@@ -4,6 +4,8 @@
 //! [`embedded-hal`]: https://github.com/rust-embedded/embedded-hal
 //! [`Registers`]: crate::Registers
 
+pub use eh1 as embedded_hal;
+
 pub mod fdm;
 pub mod vdm;
 
