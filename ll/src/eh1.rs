@@ -6,6 +6,9 @@
 
 pub use eh1 as embedded_hal;
 
+#[cfg(feature = "eha0a")]
+pub use eha0a as embedded_hal_async;
+
 pub mod fdm;
 pub mod vdm;
 

@@ -5,8 +5,6 @@ use crate::{
     COMMON_BLOCK_OFFSET,
 };
 
-pub use eha0a as embedded_hal_async;
-
 /// Asynchronous register IO.
 pub trait Registers {
     /// Register accessor error type.
