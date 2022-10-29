@@ -25,6 +25,7 @@ eha0 = { package = "embedded-hal-async", version = "=0.1.0-alpha.3", optional = 
 
 [dev-dependencies]
 ehm0 = { package = "embedded-hal-mock", version = "0.8" }
+tokio = { version = "1.21.2", features = ["rt", "macros"] }
 
 [dev-dependencies.ehm1]
 package = "embedded-hal-mock"

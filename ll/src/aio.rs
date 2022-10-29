@@ -35,7 +35,8 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
     /// #   ehm1::spi::Transaction::transaction_start(),
     /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x00, 0x00]),
@@ -61,7 +62,8 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
     /// #   ehm1::spi::Transaction::transaction_start(),
     /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x00, 0x04]),
@@ -85,7 +87,8 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
     /// #   ehm1::spi::Transaction::transaction_start(),
     /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x01, 0x00]),
@@ -111,7 +114,8 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
     /// #   ehm1::spi::Transaction::transaction_start(),
     /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x01, 0x04]),
@@ -134,7 +138,8 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
     /// #   ehm1::spi::Transaction::transaction_start(),
     /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x05, 0x00]),
@@ -160,7 +165,8 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
     /// #   ehm1::spi::Transaction::transaction_start(),
     /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x05, 0x04]),
@@ -183,7 +189,8 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
     /// #   ehm1::spi::Transaction::transaction_start(),
     /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x09, 0x00]),
@@ -209,7 +216,8 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
     /// #   ehm1::spi::Transaction::transaction_start(),
     /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x09, 0x04]),
@@ -234,7 +242,8 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
     /// #   ehm1::spi::Transaction::transaction_start(),
     /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x0F, 0x00]),
@@ -260,7 +269,8 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
     /// #   ehm1::spi::Transaction::transaction_start(),
     /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x0F, 0x04]),
@@ -297,7 +307,8 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
     /// #   ehm1::spi::Transaction::transaction_start(),
     /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x13, 0x00]),
@@ -325,7 +336,8 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
     /// #   ehm1::spi::Transaction::transaction_start(),
     /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x13, 0x04]),
@@ -354,7 +366,8 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
     /// #   ehm1::spi::Transaction::transaction_start(),
     /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x15, 0x00]),
@@ -382,7 +395,8 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
     /// #   ehm1::spi::Transaction::transaction_start(),
     /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x15, 0x00]),
@@ -412,7 +426,8 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
     /// #   ehm1::spi::Transaction::transaction_start(),
     /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x16, 0x00]),
@@ -444,7 +459,8 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Interrupt};
     /// # let spi = ehm1::spi::Mock::new(&[
     /// #   ehm1::spi::Transaction::transaction_start(),
@@ -475,7 +491,8 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
     /// #   ehm1::spi::Transaction::transaction_start(),
     /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x17, 0x00]),
@@ -515,7 +532,8 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
     /// #   ehm1::spi::Transaction::transaction_start(),
     /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x18, 0x00]),
@@ -542,7 +560,8 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
     /// #   ehm1::spi::Transaction::transaction_start(),
     /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x18, 0x04]),
@@ -576,7 +595,8 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
     /// #   ehm1::spi::Transaction::transaction_start(),
     /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x19, 0x00]),
@@ -604,7 +624,8 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
     /// #   ehm1::spi::Transaction::transaction_start(),
     /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x19, 0x04]),
@@ -634,7 +655,8 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
     /// #   ehm1::spi::Transaction::transaction_start(),
     /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x1B, 0x00]),
@@ -661,7 +683,8 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
     /// #   ehm1::spi::Transaction::transaction_start(),
     /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x1B, 0x04]),
@@ -689,7 +712,8 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
     /// #   ehm1::spi::Transaction::transaction_start(),
     /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x1C, 0x00]),
@@ -716,7 +740,8 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
     /// #   ehm1::spi::Transaction::transaction_start(),
     /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x1C, 0x04]),
@@ -742,7 +767,8 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
     /// #   ehm1::spi::Transaction::transaction_start(),
     /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x1D, 0x00]),
@@ -769,7 +795,8 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
     /// #   ehm1::spi::Transaction::transaction_start(),
     /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x1D, 0x04]),
@@ -792,7 +819,8 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
     /// #   ehm1::spi::Transaction::transaction_start(),
     /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x1E, 0x00]),
@@ -818,7 +846,8 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
     /// #   ehm1::spi::Transaction::transaction_start(),
     /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x1E, 0x04]),
@@ -846,7 +875,8 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
     /// #   ehm1::spi::Transaction::transaction_start(),
     /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x24, 0x00]),
@@ -874,7 +904,8 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
     /// #   ehm1::spi::Transaction::transaction_start(),
     /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x24, 0x04]),
@@ -899,7 +930,8 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
     /// #   ehm1::spi::Transaction::transaction_start(),
     /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x26, 0x00]),
@@ -927,7 +959,8 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
     /// #   ehm1::spi::Transaction::transaction_start(),
     /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x26, 0x04]),
@@ -957,7 +990,8 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
     /// #   ehm1::spi::Transaction::transaction_start(),
     /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x28, 0x00]),
@@ -985,7 +1019,8 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
     /// #   ehm1::spi::Transaction::transaction_start(),
     /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x2C, 0x00]),
@@ -1010,7 +1045,8 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
     /// #   ehm1::spi::Transaction::transaction_start(),
     /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x2E, 0x00]),
@@ -1036,7 +1072,8 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
     /// #   ehm1::spi::Transaction::transaction_start(),
     /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x2E, 0x04]),
@@ -1065,7 +1102,8 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
     /// #   ehm1::spi::Transaction::transaction_start(),
     /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x39, 0x00]),
@@ -1091,7 +1129,8 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
     /// #   ehm1::spi::Transaction::transaction_start(),
     /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x00, 0x08]),
@@ -1116,7 +1155,8 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
     /// #   ehm1::spi::Transaction::transaction_start(),
     /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x00, 0x08 | 0x04]),
@@ -1143,7 +1183,8 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
     /// #   ehm1::spi::Transaction::transaction_start(),
     /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x01, 0x08 | 0x04]),
@@ -1176,7 +1217,8 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
     /// #   ehm1::spi::Transaction::transaction_start(),
     /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x01, 0x08 | 0x04]),
@@ -1199,7 +1241,8 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
     /// #   ehm1::spi::Transaction::transaction_start(),
     /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x02, 0x08]),
@@ -1227,7 +1270,8 @@ pub trait Registers {
     /// Clearing all raised interrupts.
     ///
     /// ```
-    /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
     /// #   ehm1::spi::Transaction::transaction_start(),
     /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x02, 0x08]),
@@ -1249,7 +1293,8 @@ pub trait Registers {
     /// Clearing only the SENDOK interrupt.
     ///
     /// ```
-    /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
     /// #   ehm1::spi::Transaction::transaction_start(),
     /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x02, 0x08 | 0x04]),
@@ -1288,7 +1333,8 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
     /// #   ehm1::spi::Transaction::transaction_start(),
     /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x03, 0x08]),
@@ -1319,7 +1365,8 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
     /// #   ehm1::spi::Transaction::transaction_start(),
     /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x04, 0x08]),
@@ -1345,7 +1392,8 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
     /// #   ehm1::spi::Transaction::transaction_start(),
     /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x04, 0x08 | 0x04]),
@@ -1372,7 +1420,8 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
     /// #   ehm1::spi::Transaction::transaction_start(),
     /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x06, 0x08]),
@@ -1399,7 +1448,8 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
     /// #   ehm1::spi::Transaction::transaction_start(),
     /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x06, 0x08 | 0x04]),
@@ -1436,7 +1486,8 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
     /// #   ehm1::spi::Transaction::transaction_start(),
     /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x0C, 0x08]),
@@ -1464,7 +1515,8 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
     /// #   ehm1::spi::Transaction::transaction_start(),
     /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x0C, 0x08 | 0x04]),
@@ -1503,7 +1555,8 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
     /// #   ehm1::spi::Transaction::transaction_start(),
     /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x10, 0x08]),
@@ -1530,7 +1583,8 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
     /// #   ehm1::spi::Transaction::transaction_start(),
     /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x10, 0x08 | 0x04]),
@@ -1559,7 +1613,8 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
     /// #   ehm1::spi::Transaction::transaction_start(),
     /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x0C, 0x08]),
@@ -1593,7 +1648,8 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
     /// #   ehm1::spi::Transaction::transaction_start(),
     /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x0C, 0x08 | 0x04]),
@@ -1661,7 +1717,8 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
     /// #   ehm1::spi::Transaction::transaction_start(),
     /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x12, 0x08]),
@@ -1687,7 +1744,8 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
     /// #   ehm1::spi::Transaction::transaction_start(),
     /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x12, 0x08 | 0x04]),
@@ -1718,7 +1776,8 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
     /// #   ehm1::spi::Transaction::transaction_start(),
     /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x15, 0x08]),
@@ -1744,7 +1803,8 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
     /// #   ehm1::spi::Transaction::transaction_start(),
     /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x15, 0x08 | 0x04]),
@@ -1771,7 +1831,8 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
     /// #   ehm1::spi::Transaction::transaction_start(),
     /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x16, 0x08]),
@@ -1797,7 +1858,8 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
     /// #   ehm1::spi::Transaction::transaction_start(),
     /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x16, 0x08 | 0x04]),
@@ -1836,7 +1898,8 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
     /// #   ehm1::spi::Transaction::transaction_start(),
     /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x1E, 0x08]),
@@ -1867,7 +1930,8 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
     /// #   ehm1::spi::Transaction::transaction_start(),
     /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x1E, 0x08 | 0x04]),
@@ -1907,7 +1971,8 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
     /// #   ehm1::spi::Transaction::transaction_start(),
     /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x1F, 0x08]),
@@ -1938,7 +2003,8 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
     /// #   ehm1::spi::Transaction::transaction_start(),
     /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x1F, 0x08 | 0x04]),
@@ -1983,7 +2049,8 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
     /// #   ehm1::spi::Transaction::transaction_start(),
     /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x20, 0x08]),
@@ -2025,7 +2092,8 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
     /// #   ehm1::spi::Transaction::transaction_start(),
     /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x22, 0x08]),
@@ -2063,7 +2131,8 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
     /// #   ehm1::spi::Transaction::transaction_start(),
     /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x24, 0x08]),
@@ -2104,7 +2173,8 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
     /// #   ehm1::spi::Transaction::transaction_start(),
     /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x26, 0x08]),
@@ -2141,7 +2211,8 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
     /// #   ehm1::spi::Transaction::transaction_start(),
     /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x28, 0x08]),
@@ -2178,7 +2249,8 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
     /// #   ehm1::spi::Transaction::transaction_start(),
     /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x2A, 0x08]),
@@ -2203,7 +2275,8 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
     /// #   ehm1::spi::Transaction::transaction_start(),
     /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x2C, 0x08]),
@@ -2228,7 +2301,8 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
     /// #   ehm1::spi::Transaction::transaction_start(),
     /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x2C, 0x08 | 0x04]),
@@ -2255,7 +2329,8 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
     /// #   ehm1::spi::Transaction::transaction_start(),
     /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x2D, 0x08]),
@@ -2282,7 +2357,8 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
     /// #   ehm1::spi::Transaction::transaction_start(),
     /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x2D, 0x08 | 0x04]),
@@ -2323,7 +2399,8 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
     /// #   ehm1::spi::Transaction::transaction_start(),
     /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x2F, 0x08]),
@@ -2350,7 +2427,8 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// # let spi = ehm1::spi::Mock::new(&[
     /// #   ehm1::spi::Transaction::transaction_start(),
     /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x2F, 0x08 | 0x04]),
@@ -2374,7 +2452,8 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// use core::cmp::min;
     /// use w5500_ll::{eh1::vdm::W5500, aio::Registers, Sn, SocketCommand};
     /// # let spi = ehm1::spi::Mock::new(&[
@@ -2438,7 +2517,8 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// use core::cmp::min;
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn, SocketCommand};
     /// # let spi = ehm1::spi::Mock::new(&[
@@ -2461,7 +2541,8 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// use core::cmp::min;
     /// use w5500_ll::{eh1::vdm::W5500, aio::Registers, Sn, SocketCommand};
     /// # let spi = ehm1::spi::Mock::new(&[
@@ -2521,7 +2602,8 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # async fn dox() -> Result<(), eh1::spi::ErrorKind> {
+    /// # #[tokio::main(flavor = "current_thread")]
+    /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// use core::cmp::min;
     /// use w5500_ll::{eh1::vdm::W5500, aio::Registers, Sn, SocketCommand};
     /// # let spi = ehm1::spi::Mock::new(&[
