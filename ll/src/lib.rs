@@ -294,19 +294,29 @@ impl Sn {
     }
 }
 
-impl From<Sn> for u8 {
-    #[inline]
-    fn from(s: Sn) -> Self {
-        s as u8
-    }
+macro_rules! from_sn_for {
+    ($ty:ident) => {
+        impl From<Sn> for $ty {
+            #[inline]
+            fn from(s: Sn) -> Self {
+                s as $ty
+            }
+        }
+    };
 }
 
-impl From<Sn> for usize {
-    #[inline]
-    fn from(s: Sn) -> Self {
-        usize::from(u8::from(s))
-    }
-}
+from_sn_for!(u8);
+from_sn_for!(u16);
+from_sn_for!(u32);
+from_sn_for!(u64);
+from_sn_for!(u128);
+from_sn_for!(usize);
+from_sn_for!(i8);
+from_sn_for!(i16);
+from_sn_for!(i32);
+from_sn_for!(i64);
+from_sn_for!(i128);
+from_sn_for!(isize);
 
 impl TryFrom<u8> for Sn {
     type Error = u8;
