@@ -123,42 +123,32 @@ impl<'a, W5500: Registers> Read<W5500::Error> for TcpReader<'a, W5500> {
 }
 
 #[cfg(feature = "async")]
-impl<'w, W5500: w5500_ll::aio::Registers + 'w> crate::io::AsyncRead<W5500::Error>
-    for TcpReader<'w, W5500>
+impl<W5500: w5500_ll::aio::Registers + 'static> crate::io::AsyncRead<W5500::Error>
+    for TcpReader<'static, W5500>
 {
-    type ReadFuture<'a> = impl core::future::Future<Output = Result<u16, W5500::Error>> + 'a
-        where Self: 'a;
+    async fn read(&mut self, buf: &mut [u8]) -> Result<u16, W5500::Error> {
+        let read_size: u16 = min(self.remain(), buf.len().try_into().unwrap_or(u16::MAX));
+        if read_size != 0 {
+            self.w5500
+                .sn_rx_buf(self.sn, self.ptr, &mut buf[..usize::from(read_size)])
+                .await?;
+            self.ptr = self.ptr.wrapping_add(read_size);
 
-    fn read<'a>(&'a mut self, buf: &'a mut [u8]) -> Self::ReadFuture<'a> {
-        async move {
-            let read_size: u16 = min(self.remain(), buf.len().try_into().unwrap_or(u16::MAX));
-            if read_size != 0 {
-                self.w5500
-                    .sn_rx_buf(self.sn, self.ptr, &mut buf[..usize::from(read_size)])
-                    .await?;
-                self.ptr = self.ptr.wrapping_add(read_size);
-
-                Ok(read_size)
-            } else {
-                Ok(0)
-            }
+            Ok::<u16, W5500::Error>(read_size)
+        } else {
+            Ok(0)
         }
     }
 
-    type ReadExactFuture<'a> = impl core::future::Future<Output = Result<(), Error<W5500::Error>>> + 'a
-        where Self: 'a;
-
-    fn read_exact<'a>(&'a mut self, buf: &'a mut [u8]) -> Self::ReadExactFuture<'a> {
-        async move {
-            let buf_len: u16 = buf.len().try_into().unwrap_or(u16::MAX);
-            let write_size: u16 = min(self.remain(), buf_len);
-            if write_size != buf_len {
-                Err(Error::OutOfMemory)
-            } else {
-                self.w5500.set_sn_tx_buf(self.sn, self.ptr, buf).await?;
-                self.ptr = self.ptr.wrapping_add(write_size);
-                Ok(())
-            }
+    async fn read_exact(&mut self, buf: &mut [u8]) -> Result<(), Error<W5500::Error>> {
+        let buf_len: u16 = buf.len().try_into().unwrap_or(u16::MAX);
+        let write_size: u16 = min(self.remain(), buf_len);
+        if write_size != buf_len {
+            Err(Error::OutOfMemory)
+        } else {
+            self.w5500.set_sn_tx_buf(self.sn, self.ptr, buf).await?;
+            self.ptr = self.ptr.wrapping_add(write_size);
+            Ok(())
         }
     }
 }
@@ -264,42 +254,32 @@ impl<'w, W5500: Registers> Write<W5500::Error> for TcpWriter<'w, W5500> {
 }
 
 #[cfg(feature = "async")]
-impl<'w, W5500: w5500_ll::aio::Registers + 'w> crate::io::AsyncWrite<W5500::Error>
-    for TcpWriter<'w, W5500>
+impl<W5500: w5500_ll::aio::Registers + 'static> crate::io::AsyncWrite<W5500::Error>
+    for TcpWriter<'static, W5500>
 {
-    type WriteFuture<'a> = impl core::future::Future<Output = Result<u16, W5500::Error>> + 'a
-        where Self: 'a;
+    async fn write(&mut self, buf: &[u8]) -> Result<u16, W5500::Error> {
+        let write_size: u16 = min(self.remain(), buf.len().try_into().unwrap_or(u16::MAX));
+        if write_size != 0 {
+            self.w5500
+                .set_sn_tx_buf(self.sn, self.ptr, &buf[..usize::from(write_size)])
+                .await?;
+            self.ptr = self.ptr.wrapping_add(write_size);
 
-    fn write<'a>(&'a mut self, buf: &'a [u8]) -> Self::WriteFuture<'a> {
-        async move {
-            let write_size: u16 = min(self.remain(), buf.len().try_into().unwrap_or(u16::MAX));
-            if write_size != 0 {
-                self.w5500
-                    .set_sn_tx_buf(self.sn, self.ptr, &buf[..usize::from(write_size)])
-                    .await?;
-                self.ptr = self.ptr.wrapping_add(write_size);
-
-                Ok(write_size)
-            } else {
-                Ok(0)
-            }
+            Ok(write_size)
+        } else {
+            Ok(0)
         }
     }
 
-    type WriteAllFuture<'a> = impl core::future::Future<Output = Result<(), Error<W5500::Error>>> + 'a
-        where Self: 'a;
-
-    fn write_all<'a>(&'a mut self, buf: &'a [u8]) -> Self::WriteAllFuture<'a> {
-        async move {
-            let buf_len: u16 = buf.len().try_into().unwrap_or(u16::MAX);
-            let write_size: u16 = min(self.remain(), buf_len);
-            if write_size != buf_len {
-                Err(Error::OutOfMemory)
-            } else {
-                self.w5500.set_sn_tx_buf(self.sn, self.ptr, buf).await?;
-                self.ptr = self.ptr.wrapping_add(write_size);
-                Ok(())
-            }
+    async fn write_all(&mut self, buf: &[u8]) -> Result<(), Error<W5500::Error>> {
+        let buf_len: u16 = buf.len().try_into().unwrap_or(u16::MAX);
+        let write_size: u16 = min(self.remain(), buf_len);
+        if write_size != buf_len {
+            Err(Error::OutOfMemory)
+        } else {
+            self.w5500.set_sn_tx_buf(self.sn, self.ptr, buf).await?;
+            self.ptr = self.ptr.wrapping_add(write_size);
+            Ok(())
         }
     }
 }

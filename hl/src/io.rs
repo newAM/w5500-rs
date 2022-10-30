@@ -131,17 +131,8 @@ pub trait Read<E> {
 /// Socket asynchronous reader trait.
 #[cfg(feature = "async")]
 pub trait AsyncRead<E> {
-    type ReadFuture<'a>: core::future::Future<Output = Result<u16, E>> + 'a
-    where
-        Self: 'a;
-
-    fn read<'a>(&'a mut self, buf: &'a mut [u8]) -> Self::ReadFuture<'a>;
-
-    type ReadExactFuture<'a>: core::future::Future<Output = Result<(), Error<E>>> + 'a
-    where
-        Self: 'a;
-
-    fn read_exact<'a>(&'a mut self, buf: &'a mut [u8]) -> Self::ReadExactFuture<'a>;
+    async fn read(&mut self, buf: &mut [u8]) -> Result<u16, E>;
+    async fn read_exact(&mut self, buf: &mut [u8]) -> Result<(), Error<E>>;
 }
 
 /// Socket writer trait.
@@ -177,17 +168,8 @@ pub trait Write<E> {
 /// Socket asynchronous writer trait.
 #[cfg(feature = "async")]
 pub trait AsyncWrite<E> {
-    type WriteFuture<'a>: core::future::Future<Output = Result<u16, E>> + 'a
-    where
-        Self: 'a;
-
-    fn write<'a>(&'a mut self, buf: &'a [u8]) -> Self::WriteFuture<'a>;
-
-    type WriteAllFuture<'a>: core::future::Future<Output = Result<(), Error<E>>> + 'a
-    where
-        Self: 'a;
-
-    fn write_all<'a>(&'a mut self, buf: &'a [u8]) -> Self::WriteAllFuture<'a>;
+    async fn write(&mut self, buf: &[u8]) -> Result<u16, E>;
+    async fn write_all(&mut self, buf: &[u8]) -> Result<(), Error<E>>;
 }
 
 #[cfg(test)]

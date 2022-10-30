@@ -99,7 +99,11 @@
 //! [Wiznet W5500]: https://www.wiznet.io/product-item/w5500/
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![cfg_attr(all(not(feature = "std"), not(test)), no_std)]
-#![cfg_attr(feature = "async", feature(type_alias_impl_trait))]
+#![cfg_attr(
+    feature = "async",
+    feature(async_fn_in_trait),
+    allow(incomplete_features)
+)]
 
 mod hostname;
 pub mod io;
