@@ -40,7 +40,7 @@
 //! * `eh1`: Enables the [`eh1`] module which contains
 //!   implementations of the [`Registers`] trait
 //!   using the `embedded-hal` version 1 traits.
-//! * `eha0`: **Nightly only.**
+//! * `eha0a`: **Nightly only.**
 //!   Implements the [`aio::Registers`] trait for types in the [`eh1`] module
 //!   using the `embedded-hal-async` alpha traits.
 //! * `std`: Enables conversion between [`std::net`] and [`w5500_ll::net`] types.
@@ -58,10 +58,11 @@
 #![cfg_attr(docsrs, feature(doc_cfg), feature(doc_auto_cfg))]
 #![cfg_attr(not(feature = "std"), no_std)]
 #![cfg_attr(
-    any(feature = "eha0", feature = "async"),
-    feature(type_alias_impl_trait)
+    any(feature = "eha0a", feature = "async"),
+    feature(async_fn_in_trait),
+    allow(incomplete_features), // async_fn_in_trait
 )]
-#![deny(unsafe_code)]
+#![forbid(unsafe_code)]
 #![warn(missing_docs)]
 
 #[cfg(feature = "async")]
@@ -293,37 +294,48 @@ impl Sn {
     }
 }
 
-impl From<Sn> for u8 {
-    #[inline]
-    fn from(s: Sn) -> Self {
-        s as u8
-    }
-}
-
-impl From<Sn> for usize {
-    #[inline]
-    fn from(s: Sn) -> Self {
-        usize::from(u8::from(s))
-    }
-}
-
-impl TryFrom<u8> for Sn {
-    type Error = u8;
-
-    fn try_from(val: u8) -> Result<Sn, u8> {
-        match val {
-            0 => Ok(Sn::Sn0),
-            1 => Ok(Sn::Sn1),
-            2 => Ok(Sn::Sn2),
-            3 => Ok(Sn::Sn3),
-            4 => Ok(Sn::Sn4),
-            5 => Ok(Sn::Sn5),
-            6 => Ok(Sn::Sn6),
-            7 => Ok(Sn::Sn7),
-            x => Err(x),
+macro_rules! sn_conversion_for {
+    ($ty:ident) => {
+        impl From<Sn> for $ty {
+            #[inline]
+            fn from(s: Sn) -> Self {
+                s as $ty
+            }
         }
-    }
+
+        impl TryFrom<$ty> for Sn {
+            type Error = $ty;
+
+            #[inline]
+            fn try_from(val: $ty) -> Result<Sn, $ty> {
+                match val {
+                    0 => Ok(Sn::Sn0),
+                    1 => Ok(Sn::Sn1),
+                    2 => Ok(Sn::Sn2),
+                    3 => Ok(Sn::Sn3),
+                    4 => Ok(Sn::Sn4),
+                    5 => Ok(Sn::Sn5),
+                    6 => Ok(Sn::Sn6),
+                    7 => Ok(Sn::Sn7),
+                    x => Err(x),
+                }
+            }
+        }
+    };
 }
+
+sn_conversion_for!(u8);
+sn_conversion_for!(u16);
+sn_conversion_for!(u32);
+sn_conversion_for!(u64);
+sn_conversion_for!(u128);
+sn_conversion_for!(usize);
+sn_conversion_for!(i8);
+sn_conversion_for!(i16);
+sn_conversion_for!(i32);
+sn_conversion_for!(i64);
+sn_conversion_for!(i128);
+sn_conversion_for!(isize);
 
 /// Array of all sockets.
 ///

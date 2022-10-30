@@ -12,8 +12,8 @@
 use crate::spi::{vdm_header, AccessMode};
 use eh1::spi::{SpiBusRead, SpiBusWrite};
 
-#[cfg(feature = "eha0")]
-use eha0::spi::{SpiBusRead as AioSpiBusRead, SpiBusWrite as AioSpiBusWrite};
+#[cfg(feature = "eha0a")]
+use eha0a::spi::{SpiBusRead as AioSpiBusRead, SpiBusWrite as AioSpiBusWrite};
 
 /// W5500 blocking variable data length implementation.
 #[derive(Debug)]
@@ -90,45 +90,35 @@ where
     }
 }
 
-#[cfg(feature = "eha0")]
-#[allow(unsafe_code)]
+#[cfg(feature = "eha0a")]
 impl<SPI, E> crate::aio::Registers for W5500<SPI>
 where
-    SPI: eha0::spi::SpiDevice<Error = E>,
+    SPI: eha0a::spi::SpiDevice<Error = E>,
 
-    <SPI as eha0::spi::SpiDevice>::Bus:
-        eha0::spi::SpiBusRead<Error = E> + eha0::spi::SpiBusWrite<Error = E>,
+    <SPI as eha0a::spi::SpiDevice>::Bus:
+        eha0a::spi::SpiBusRead<Error = E> + eha0a::spi::SpiBusWrite<Error = E>,
 {
     /// SPI IO error type.
     type Error = E;
 
-    type ReadFuture<'a> = impl core::future::Future<Output = Result<(), Self::Error>> + 'a where Self: 'a;
-
     /// Read from the W5500 asynchronously.
-    fn read<'a>(&'a mut self, address: u16, block: u8, data: &'a mut [u8]) -> Self::ReadFuture<'a> {
-        async move {
-            let header = vdm_header(address, block, AccessMode::Read);
-            eha0::spi::SpiDevice::transaction(&mut self.spi, move |bus| async move {
-                let bus = unsafe { &mut *bus };
-                bus.write(&header).await?;
-                bus.read(data).await
-            })
-            .await
-        }
+    async fn read(&mut self, address: u16, block: u8, data: &mut [u8]) -> Result<(), Self::Error> {
+        let header = vdm_header(address, block, AccessMode::Read);
+        eha0a::spi::transaction!(&mut self.spi, move |bus| async move {
+            bus.write(&header).await?;
+            bus.read(data).await
+        })
+        .await
     }
 
-    type WriteFuture<'a> = impl core::future::Future<Output = Result<(), Self::Error>> + 'a where Self: 'a;
-
     /// Write to the W5500 asynchronously.
-    fn write<'a>(&'a mut self, address: u16, block: u8, data: &'a [u8]) -> Self::WriteFuture<'a> {
-        async move {
-            let header = vdm_header(address, block, AccessMode::Write);
-            eha0::spi::SpiDevice::transaction(&mut self.spi, move |bus| async move {
-                let bus = unsafe { &mut *bus };
-                bus.write(&header).await?;
-                bus.write(data).await
-            })
-            .await
-        }
+    async fn write(&mut self, address: u16, block: u8, data: &[u8]) -> Result<(), Self::Error> {
+        let header = vdm_header(address, block, AccessMode::Write);
+
+        eha0a::spi::transaction!(&mut self.spi, move |bus| async move {
+            bus.write(&header).await?;
+            bus.write(data).await
+        })
+        .await
     }
 }

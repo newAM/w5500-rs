@@ -16,7 +16,7 @@ async = ["w5500-ll/async"]
 defmt = ["w5500-ll/defmt", "dep:defmt"]
 eh0 = ["w5500-ll/eh0"]
 eh1 = ["w5500-ll/eh1"]
-eha0 = ["w5500-ll/eha0"]
+eha0a = ["w5500-ll/eha0a"]
 std = ["w5500-ll/std"]
 
 [dependencies]

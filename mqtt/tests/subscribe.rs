@@ -53,13 +53,13 @@ fn subscribe_fragment() {
     for split_at in 0..buf.len() {
         let (a, b) = buf.split_at(split_at);
 
-        fixture.server.write_all(&a);
+        fixture.server.write_all(a);
         let result = fixture.client_process();
         assert!(
             matches!(result, Ok(Event::None)),
             "Unexpected result: {result:?}"
         );
-        fixture.server.write_all(&b);
+        fixture.server.write_all(b);
         fixture.client_expect_publish(TOPIC, b"fragment");
     }
 }
@@ -83,7 +83,7 @@ fn unsubscribe() {
     };
     let mut buf = bytes::BytesMut::new();
     unsuback.write(&mut buf).unwrap();
-    fixture.server.write_all(&mut buf);
+    fixture.server.write_all(&buf);
 
     let result = fixture.client_process();
     assert!(
