@@ -5,7 +5,7 @@ use crate::{
 use core::cmp::min;
 use w5500_ll::{
     net::{Ipv4Addr, SocketAddrV4},
-    Protocol, Registers, Sn, SocketCommand, SocketMode, SocketStatus,
+    Protocol, Registers, Sn, SocketCommand, SocketMode, SocketStatus, TxPtrs,
 };
 
 /// W5500 UDP Header.
@@ -813,15 +813,14 @@ pub trait Udp: Registers {
     where
         Self: Sized,
     {
-        let sn_tx_fsr: u16 = self.sn_tx_fsr(sn)?;
-        let sn_tx_wr: u16 = self.sn_tx_wr(sn)?;
+        let tx_ptrs: TxPtrs = self.sn_tx_ptrs(sn)?;
 
         Ok(UdpWriter {
             w5500: self,
             sn,
-            head_ptr: sn_tx_wr,
-            tail_ptr: sn_tx_wr.wrapping_add(sn_tx_fsr),
-            ptr: sn_tx_wr,
+            head_ptr: tx_ptrs.wr,
+            tail_ptr: tx_ptrs.wr.wrapping_add(tx_ptrs.fsr),
+            ptr: tx_ptrs.wr,
         })
     }
 }

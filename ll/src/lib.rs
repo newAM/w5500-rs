@@ -401,6 +401,30 @@ pub const SOCKETS: [Sn; 8] = [
     Sn::Sn7,
 ];
 
+/// TX socket buffer pointers.
+///
+/// Returned by [`Registers::sn_tx_ptrs`] and [`aio::Registers::sn_tx_ptrs`].
+#[derive(PartialEq, Eq, PartialOrd, Ord, Copy, Clone, Debug, Hash)]
+#[cfg_attr(feature = "defmt", derive(defmt::Format))]
+pub struct TxPtrs {
+    /// Free size.
+    pub fsr: u16,
+    /// Write pointer.
+    pub wr: u16,
+}
+
+/// RX socket buffer pointers.
+///
+/// Returned by [`Registers::sn_rx_ptrs`] and [`aio::Registers::sn_rx_ptrs`].
+#[derive(PartialEq, Eq, PartialOrd, Ord, Copy, Clone, Debug, Hash)]
+#[cfg_attr(feature = "defmt", derive(defmt::Format))]
+pub struct RxPtrs {
+    /// Recieved size.
+    pub rsr: u16,
+    /// Read pointer.
+    pub rd: u16,
+}
+
 /// W5500 register setters and getters.
 ///
 /// * All register getters are simply the name of the register.
@@ -1840,11 +1864,8 @@ pub trait Registers {
 
     /// Get the socket destination IPv4 and port.
     ///
-    /// This is a compound which performs [`Registers::sn_dipr`] and
-    /// [`Registers::sn_dport`] together.
-    ///
-    /// The `sn_dipr` and `sn_dport` registers are contiguous in memory, which
-    /// allows this function to do one read transfer to read both registers.
+    /// This is equivalent to [`Registers::sn_dipr`] and [`Registers::sn_dport`]
+    /// in a single read transaction.
     ///
     /// # Example
     ///
@@ -1873,11 +1894,8 @@ pub trait Registers {
 
     /// Set the socket destination IPv4 and port.
     ///
-    /// This is a compound operation which performs
-    /// [`Registers::set_sn_dipr`] and [`Registers::set_sn_dport`] together.
-    ///
-    /// The `sn_dipr` and `sn_dport` registers are contiguous in memory, which
-    /// allows this function to do one write transfer to write both registers.
+    /// This is equivalent to [`Registers::set_sn_dipr`] and
+    /// [`Registers::set_sn_dport`] in a single writer transaction.
     ///
     /// # Example
     ///
@@ -2358,6 +2376,19 @@ pub trait Registers {
         self.write(SnReg::TX_WR0.addr(), sn.block(), &ptr.to_be_bytes())
     }
 
+    /// Get the socket TX free size and write pointer
+    ///
+    /// This is equivalent to [`Registers::sn_tx_fsr`] and
+    /// [`Registers::sn_tx_wr`] in a single read transaction.
+    fn sn_tx_ptrs(&mut self, sn: Sn) -> Result<TxPtrs, Self::Error> {
+        let mut buf: [u8; 6] = [0; 6];
+        self.read(SnReg::TX_FSR0.addr(), sn.block(), &mut buf)?;
+        Ok(TxPtrs {
+            fsr: u16::from_be_bytes(buf[..2].try_into().unwrap()),
+            wr: u16::from_be_bytes(buf[4..].try_into().unwrap()),
+        })
+    }
+
     /// Get the socket received data size.
     ///
     /// This register indicates the data size received and saved in the socket
@@ -2454,6 +2485,19 @@ pub trait Registers {
         let mut reg: [u8; 2] = [0; 2];
         self.read(SnReg::RX_WR0.addr(), sn.block(), &mut reg)?;
         Ok(u16::from_be_bytes(reg))
+    }
+
+    /// Get the socket RX recieved size size and write pointer
+    ///
+    /// This is equivalent to [`Registers::sn_rx_rsr`] and
+    /// [`Registers::sn_rx_rd`] in a single read transaction.
+    fn sn_rx_ptrs(&mut self, sn: Sn) -> Result<RxPtrs, Self::Error> {
+        let mut buf: [u8; 4] = [0; 4];
+        self.read(SnReg::RX_RSR0.addr(), sn.block(), &mut buf)?;
+        Ok(RxPtrs {
+            rsr: u16::from_be_bytes(buf[..2].try_into().unwrap()),
+            rd: u16::from_be_bytes(buf[2..].try_into().unwrap()),
+        })
     }
 
     /// Get the socket interrupt mask.
