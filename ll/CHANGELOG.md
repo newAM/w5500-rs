@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added support for `embedded-hal-async` version `0.1.0-alpha.3` with the `eha0a` feature.
 - Added an `aio` module with async traits.
 - Added `From<Sn>` for all primitive signed and unsigned integers.
+- Added `TryFrom<_> for Sn` for all primitive signed and unsigned integers.
 
 ### Changed
 - Changed the `embedded-hal` version `0.2` feature name to `eh0`.

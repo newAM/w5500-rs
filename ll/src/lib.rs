@@ -294,7 +294,7 @@ impl Sn {
     }
 }
 
-macro_rules! from_sn_for {
+macro_rules! sn_conversion_for {
     ($ty:ident) => {
         impl From<Sn> for $ty {
             #[inline]
@@ -302,39 +302,40 @@ macro_rules! from_sn_for {
                 s as $ty
             }
         }
+
+        impl TryFrom<$ty> for Sn {
+            type Error = $ty;
+
+            #[inline]
+            fn try_from(val: $ty) -> Result<Sn, $ty> {
+                match val {
+                    0 => Ok(Sn::Sn0),
+                    1 => Ok(Sn::Sn1),
+                    2 => Ok(Sn::Sn2),
+                    3 => Ok(Sn::Sn3),
+                    4 => Ok(Sn::Sn4),
+                    5 => Ok(Sn::Sn5),
+                    6 => Ok(Sn::Sn6),
+                    7 => Ok(Sn::Sn7),
+                    x => Err(x),
+                }
+            }
+        }
     };
 }
 
-from_sn_for!(u8);
-from_sn_for!(u16);
-from_sn_for!(u32);
-from_sn_for!(u64);
-from_sn_for!(u128);
-from_sn_for!(usize);
-from_sn_for!(i8);
-from_sn_for!(i16);
-from_sn_for!(i32);
-from_sn_for!(i64);
-from_sn_for!(i128);
-from_sn_for!(isize);
-
-impl TryFrom<u8> for Sn {
-    type Error = u8;
-
-    fn try_from(val: u8) -> Result<Sn, u8> {
-        match val {
-            0 => Ok(Sn::Sn0),
-            1 => Ok(Sn::Sn1),
-            2 => Ok(Sn::Sn2),
-            3 => Ok(Sn::Sn3),
-            4 => Ok(Sn::Sn4),
-            5 => Ok(Sn::Sn5),
-            6 => Ok(Sn::Sn6),
-            7 => Ok(Sn::Sn7),
-            x => Err(x),
-        }
-    }
-}
+sn_conversion_for!(u8);
+sn_conversion_for!(u16);
+sn_conversion_for!(u32);
+sn_conversion_for!(u64);
+sn_conversion_for!(u128);
+sn_conversion_for!(usize);
+sn_conversion_for!(i8);
+sn_conversion_for!(i16);
+sn_conversion_for!(i32);
+sn_conversion_for!(i64);
+sn_conversion_for!(i128);
+sn_conversion_for!(isize);
 
 /// Array of all sockets.
 ///
