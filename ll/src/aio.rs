@@ -1,7 +1,7 @@
 //! Asynchronous W5500 traits.
 use crate::{
-    BufferSize, Eui48Addr, Interrupt, Ipv4Addr, Mode, PhyCfg, Reg, Sn, SnReg, SocketAddrV4,
-    SocketCommand, SocketInterrupt, SocketInterruptMask, SocketMode, SocketStatus,
+    BufferSize, Eui48Addr, Interrupt, Ipv4Addr, Mode, PhyCfg, Reg, RxPtrs, Sn, SnReg, SocketAddrV4,
+    SocketCommand, SocketInterrupt, SocketInterruptMask, SocketMode, SocketStatus, TxPtrs,
     COMMON_BLOCK_OFFSET,
 };
 
@@ -1604,11 +1604,8 @@ pub trait Registers {
 
     /// Get the socket destination IPv4 and port.
     ///
-    /// This is a compound which performs [`Registers::sn_dipr`] and
-    /// [`Registers::sn_dport`] together.
-    ///
-    /// The `sn_dipr` and `sn_dport` registers are contiguous in memory, which
-    /// allows this function to do one read transfer to read both registers.
+    /// This is equivalent to [`Registers::sn_dipr`] and [`Registers::sn_dport`]
+    /// in a single read transaction.
     ///
     /// # Example
     ///
@@ -1639,11 +1636,8 @@ pub trait Registers {
 
     /// Set the socket destination IPv4 and port.
     ///
-    /// This is a compound operation which performs
-    /// [`Registers::set_sn_dipr`] and [`Registers::set_sn_dport`] together.
-    ///
-    /// The `sn_dipr` and `sn_dport` registers are contiguous in memory, which
-    /// allows this function to do one write transfer to write both registers.
+    /// This is equivalent to [`Registers::set_sn_dipr`] and
+    /// [`Registers::set_sn_dport`] in a single writer transaction.
     ///
     /// # Example
     ///
@@ -2162,6 +2156,20 @@ pub trait Registers {
             .await
     }
 
+    /// Get the socket TX free size and write pointer
+    ///
+    /// This is equivalent to [`Registers::sn_tx_fsr`] and
+    /// [`Registers::sn_tx_wr`] in a single read transaction.
+    async fn sn_tx_ptrs(&mut self, sn: Sn) -> Result<TxPtrs, Self::Error> {
+        let mut buf: [u8; 6] = [0; 6];
+        self.read(SnReg::TX_FSR0.addr(), sn.block(), &mut buf)
+            .await?;
+        Ok(TxPtrs {
+            fsr: u16::from_be_bytes(buf[..2].try_into().unwrap()),
+            wr: u16::from_be_bytes(buf[4..].try_into().unwrap()),
+        })
+    }
+
     /// Get the socket received data size.
     ///
     /// This register indicates the data size received and saved in the socket
@@ -2268,6 +2276,20 @@ pub trait Registers {
         self.read(SnReg::RX_WR0.addr(), sn.block(), &mut reg)
             .await?;
         Ok::<u16, Self::Error>(u16::from_be_bytes(reg))
+    }
+
+    /// Get the socket RX recieved size size and write pointer
+    ///
+    /// This is equivalent to [`Registers::sn_rx_rsr`] and
+    /// [`Registers::sn_rx_rd`] in a single read transaction.
+    async fn sn_rx_ptrs(&mut self, sn: Sn) -> Result<RxPtrs, Self::Error> {
+        let mut buf: [u8; 4] = [0; 4];
+        self.read(SnReg::RX_RSR0.addr(), sn.block(), &mut buf)
+            .await?;
+        Ok(RxPtrs {
+            rsr: u16::from_be_bytes(buf[..2].try_into().unwrap()),
+            rd: u16::from_be_bytes(buf[2..].try_into().unwrap()),
+        })
     }
 
     /// Get the socket interrupt mask.
