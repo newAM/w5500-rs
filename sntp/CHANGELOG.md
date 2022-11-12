@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Changed the name of the `embedded-hal` feature to `eh0`.
-- Removed used of `chrono` functions deprecated in chrono version `0.4.23`.
+- Removed used of functions deprecated in chrono version `0.4.23`.
 
 ## [0.2.0] - 2022-05-21
 ### Added
