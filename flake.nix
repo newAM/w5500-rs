@@ -45,7 +45,7 @@
         });
 
         # https://rust-lang.github.io/rustup-components-history/x86_64-unknown-linux-gnu.html
-        craneLibNightly = (crane.mkLib pkgs).overrideToolchain (pkgs.rust-bin.nightly."2022-10-20".default.override {
+        craneLibNightly = (crane.mkLib pkgs).overrideToolchain (pkgs.rust-bin.nightly."2022-11-12".default.override {
           inherit targets;
         });
 
