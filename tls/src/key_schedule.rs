@@ -28,10 +28,10 @@ use sha2::{
 #[cfg(feature = "std")]
 fn print_nss_key_log(label: &str, client_random: &[u8; 32], secret: &[u8]) {
     {
-        print!("{} ", label);
-        client_random.iter().for_each(|b| print!("{:02x}", b));
+        print!("{label} ");
+        client_random.iter().for_each(|b| print!("{b:02x}"));
         print!(" ");
-        secret.iter().for_each(|b| print!("{:02x}", b));
+        secret.iter().for_each(|b| print!("{b:02x}"));
         println!();
     }
 }

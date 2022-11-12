@@ -40,7 +40,7 @@
 //! * `eh1`: Enables the [`eh1`] module which contains
 //!   implementations of the [`Registers`] trait
 //!   using the `embedded-hal` version 1 traits.
-//! * `eha0`: **Nightly only.**
+//! * `eha0a`: **Nightly only.**
 //!   Implements the [`aio::Registers`] trait for types in the [`eh1`] module
 //!   using the `embedded-hal-async` alpha traits.
 //! * `std`: Enables conversion between [`std::net`] and [`w5500_ll::net`] types.
@@ -58,10 +58,11 @@
 #![cfg_attr(docsrs, feature(doc_cfg), feature(doc_auto_cfg))]
 #![cfg_attr(not(feature = "std"), no_std)]
 #![cfg_attr(
-    any(feature = "eha0", feature = "async"),
-    feature(type_alias_impl_trait)
+    any(feature = "eha0a", feature = "async"),
+    feature(async_fn_in_trait),
+    allow(incomplete_features), // async_fn_in_trait
 )]
-#![deny(unsafe_code)]
+#![forbid(unsafe_code)]
 #![warn(missing_docs)]
 
 #[cfg(feature = "async")]
@@ -293,37 +294,48 @@ impl Sn {
     }
 }
 
-impl From<Sn> for u8 {
-    #[inline]
-    fn from(s: Sn) -> Self {
-        s as u8
-    }
-}
-
-impl From<Sn> for usize {
-    #[inline]
-    fn from(s: Sn) -> Self {
-        usize::from(u8::from(s))
-    }
-}
-
-impl TryFrom<u8> for Sn {
-    type Error = u8;
-
-    fn try_from(val: u8) -> Result<Sn, u8> {
-        match val {
-            0 => Ok(Sn::Sn0),
-            1 => Ok(Sn::Sn1),
-            2 => Ok(Sn::Sn2),
-            3 => Ok(Sn::Sn3),
-            4 => Ok(Sn::Sn4),
-            5 => Ok(Sn::Sn5),
-            6 => Ok(Sn::Sn6),
-            7 => Ok(Sn::Sn7),
-            x => Err(x),
+macro_rules! sn_conversion_for {
+    ($ty:ident) => {
+        impl From<Sn> for $ty {
+            #[inline]
+            fn from(s: Sn) -> Self {
+                s as $ty
+            }
         }
-    }
+
+        impl TryFrom<$ty> for Sn {
+            type Error = $ty;
+
+            #[inline]
+            fn try_from(val: $ty) -> Result<Sn, $ty> {
+                match val {
+                    0 => Ok(Sn::Sn0),
+                    1 => Ok(Sn::Sn1),
+                    2 => Ok(Sn::Sn2),
+                    3 => Ok(Sn::Sn3),
+                    4 => Ok(Sn::Sn4),
+                    5 => Ok(Sn::Sn5),
+                    6 => Ok(Sn::Sn6),
+                    7 => Ok(Sn::Sn7),
+                    x => Err(x),
+                }
+            }
+        }
+    };
 }
+
+sn_conversion_for!(u8);
+sn_conversion_for!(u16);
+sn_conversion_for!(u32);
+sn_conversion_for!(u64);
+sn_conversion_for!(u128);
+sn_conversion_for!(usize);
+sn_conversion_for!(i8);
+sn_conversion_for!(i16);
+sn_conversion_for!(i32);
+sn_conversion_for!(i64);
+sn_conversion_for!(i128);
+sn_conversion_for!(isize);
 
 /// Array of all sockets.
 ///
@@ -388,6 +400,30 @@ pub const SOCKETS: [Sn; 8] = [
     Sn::Sn6,
     Sn::Sn7,
 ];
+
+/// TX socket buffer pointers.
+///
+/// Returned by [`Registers::sn_tx_ptrs`] and [`aio::Registers::sn_tx_ptrs`].
+#[derive(PartialEq, Eq, PartialOrd, Ord, Copy, Clone, Debug, Hash)]
+#[cfg_attr(feature = "defmt", derive(defmt::Format))]
+pub struct TxPtrs {
+    /// Free size.
+    pub fsr: u16,
+    /// Write pointer.
+    pub wr: u16,
+}
+
+/// RX socket buffer pointers.
+///
+/// Returned by [`Registers::sn_rx_ptrs`] and [`aio::Registers::sn_rx_ptrs`].
+#[derive(PartialEq, Eq, PartialOrd, Ord, Copy, Clone, Debug, Hash)]
+#[cfg_attr(feature = "defmt", derive(defmt::Format))]
+pub struct RxPtrs {
+    /// Recieved size.
+    pub rsr: u16,
+    /// Read pointer.
+    pub rd: u16,
+}
 
 /// W5500 register setters and getters.
 ///
@@ -1828,11 +1864,8 @@ pub trait Registers {
 
     /// Get the socket destination IPv4 and port.
     ///
-    /// This is a compound which performs [`Registers::sn_dipr`] and
-    /// [`Registers::sn_dport`] together.
-    ///
-    /// The `sn_dipr` and `sn_dport` registers are contiguous in memory, which
-    /// allows this function to do one read transfer to read both registers.
+    /// This is equivalent to [`Registers::sn_dipr`] and [`Registers::sn_dport`]
+    /// in a single read transaction.
     ///
     /// # Example
     ///
@@ -1861,11 +1894,8 @@ pub trait Registers {
 
     /// Set the socket destination IPv4 and port.
     ///
-    /// This is a compound operation which performs
-    /// [`Registers::set_sn_dipr`] and [`Registers::set_sn_dport`] together.
-    ///
-    /// The `sn_dipr` and `sn_dport` registers are contiguous in memory, which
-    /// allows this function to do one write transfer to write both registers.
+    /// This is equivalent to [`Registers::set_sn_dipr`] and
+    /// [`Registers::set_sn_dport`] in a single writer transaction.
     ///
     /// # Example
     ///
@@ -2346,6 +2376,19 @@ pub trait Registers {
         self.write(SnReg::TX_WR0.addr(), sn.block(), &ptr.to_be_bytes())
     }
 
+    /// Get the socket TX free size and write pointer
+    ///
+    /// This is equivalent to [`Registers::sn_tx_fsr`] and
+    /// [`Registers::sn_tx_wr`] in a single read transaction.
+    fn sn_tx_ptrs(&mut self, sn: Sn) -> Result<TxPtrs, Self::Error> {
+        let mut buf: [u8; 6] = [0; 6];
+        self.read(SnReg::TX_FSR0.addr(), sn.block(), &mut buf)?;
+        Ok(TxPtrs {
+            fsr: u16::from_be_bytes(buf[..2].try_into().unwrap()),
+            wr: u16::from_be_bytes(buf[4..].try_into().unwrap()),
+        })
+    }
+
     /// Get the socket received data size.
     ///
     /// This register indicates the data size received and saved in the socket
@@ -2442,6 +2485,19 @@ pub trait Registers {
         let mut reg: [u8; 2] = [0; 2];
         self.read(SnReg::RX_WR0.addr(), sn.block(), &mut reg)?;
         Ok(u16::from_be_bytes(reg))
+    }
+
+    /// Get the socket RX recieved size size and write pointer
+    ///
+    /// This is equivalent to [`Registers::sn_rx_rsr`] and
+    /// [`Registers::sn_rx_rd`] in a single read transaction.
+    fn sn_rx_ptrs(&mut self, sn: Sn) -> Result<RxPtrs, Self::Error> {
+        let mut buf: [u8; 4] = [0; 4];
+        self.read(SnReg::RX_RSR0.addr(), sn.block(), &mut buf)?;
+        Ok(RxPtrs {
+            rsr: u16::from_be_bytes(buf[..2].try_into().unwrap()),
+            rd: u16::from_be_bytes(buf[2..].try_into().unwrap()),
+        })
     }
 
     /// Get the socket interrupt mask.

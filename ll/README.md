@@ -35,7 +35,7 @@ All features are disabled by default.
 * `eh1`: Enables the [`eh1`] module which contains
   implementations of the [`Registers`] trait
   using the `embedded-hal` version 1 traits.
-* `eha0`: **Nightly only.**
+* `eha0a`: **Nightly only.**
   Implements the [`aio::Registers`] trait for types in the [`eh1`] module
   using the `embedded-hal-async` alpha traits.
 * `std`: Enables conversion between [`std::net`] and [`w5500_ll::net`] types.

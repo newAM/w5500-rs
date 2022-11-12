@@ -14,17 +14,18 @@ homepage = "https://github.com/newAM/w5500-rs"
 [features]
 std = []
 async = []
-eha0 = ["async", "dep:eha0", "dep:eh1"]
+eha0a = ["async", "dep:eha0a", "dep:eh1"]
 eh1 = ["dep:eh1"]
 
 [dependencies]
 defmt = { version = "0.3", optional = true }
 eh0 = { package = "embedded-hal", version = "0.2.7", optional = true }
 eh1 = { package = "embedded-hal", version = "=1.0.0-alpha.9", optional = true }
-eha0 = { package = "embedded-hal-async", version = "=0.1.0-alpha.2", optional = true }
+eha0a = { package = "embedded-hal-async", version = "=0.1.0-alpha.3", optional = true }
 
 [dev-dependencies]
 ehm0 = { package = "embedded-hal-mock", version = "0.8" }
+tokio = { version = "1.21.2", features = ["rt", "macros"] }
 
 [dev-dependencies.ehm1]
 package = "embedded-hal-mock"
