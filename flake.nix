@@ -77,7 +77,7 @@
         ];
         nightlyFeatures = [
           "async"
-          "eha0"
+          "eha0a"
         ];
 
         filterNoStdFeatures = lib.filter (m: !(lib.elem m noStdFeatures));
