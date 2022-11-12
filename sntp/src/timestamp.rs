@@ -57,7 +57,8 @@ impl Timestamp {
 
 #[cfg(feature = "chrono")]
 fn origin_chrono() -> chrono::NaiveDateTime {
-    chrono::NaiveDate::from_ymd(1900, 1, 1).and_hms(0, 0, 0)
+    // TODO: constify when chrono 0.5.0 is available
+    unwrap!(unwrap!(chrono::NaiveDate::from_ymd_opt(1900, 1, 1)).and_hms_opt(0, 0, 0))
 }
 
 /// Returned upon a failed conversion to or from [`Timestamp`].
