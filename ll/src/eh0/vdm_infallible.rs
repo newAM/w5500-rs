@@ -61,6 +61,7 @@ where
     /// let mut w5500: W5500<_, _> = W5500::new(spi, pin);
     /// ```
     #[inline]
+    #[allow(clippy::unnecessary_safety_doc)]
     pub fn new(spi: SPI, cs: CS) -> Self {
         W5500 { spi, cs }
     }

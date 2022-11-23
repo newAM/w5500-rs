@@ -384,9 +384,9 @@ impl<'hn, 'psk, 'b, const N: usize> Client<'hn, 'psk, 'b, N> {
     ///   an infallible software RNG.
     /// * `monotonic_secs` Monotonically increasing (never decreasing) seconds
     ///   since an epoch (typically system boot).
-    pub fn process<'w, W5500: Registers, R: RngCore + CryptoRng>(
+    pub fn process<W5500: Registers, R: RngCore + CryptoRng>(
         &mut self,
-        w5500: &'w mut W5500,
+        w5500: &mut W5500,
         rng: &mut R,
         monotonic_secs: u32,
     ) -> Result<Event, Error> {
