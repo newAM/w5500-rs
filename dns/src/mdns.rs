@@ -96,9 +96,9 @@ impl Client {
     ///
     /// * [`Error::Other`]
     /// * [`Error::OutOfMemory`]
-    pub fn a_question<'a, W5500: Udp>(
+    pub fn a_question<W5500: Udp>(
         &mut self,
-        w5500: &'a mut W5500,
+        w5500: &mut W5500,
         hostname: &Hostname,
     ) -> Result<(), Error<W5500::Error>> {
         self.query(w5500)?.question(Qtype::A, hostname)?.send()?;
@@ -116,9 +116,9 @@ impl Client {
     ///
     /// * [`Error::Other`]
     /// * [`Error::OutOfMemory`]
-    pub fn ptr_question<'a, W5500: Udp>(
+    pub fn ptr_question<W5500: Udp>(
         &mut self,
-        w5500: &'a mut W5500,
+        w5500: &mut W5500,
         hostname: &Hostname,
     ) -> Result<(), Error<W5500::Error>> {
         self.query(w5500)?.question(Qtype::PTR, hostname)?.send()?;
