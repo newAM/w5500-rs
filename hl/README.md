@@ -23,9 +23,11 @@ structures utilizing whatever Mutex is available for your platform / RTOS.
 
 All features are disabled by default.
 
+* `async`: Passthrough to [`w5500-ll`].
 * `defmt`: Passthrough to [`w5500-ll`].
 * `eh0`: Passthrough to [`w5500-ll`].
 * `eh1`: Passthrough to [`w5500-ll`].
+* `eha0`: Passthrough to [`w5500-ll`].
 * `std`: Passthrough to [`w5500-ll`].
 
 ## Examples

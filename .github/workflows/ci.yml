@@ -79,7 +79,11 @@ jobs:
       - run: cargo build --target ${{ matrix.target }} -p w5500-mqtt --features w5500-tls
       - run: cargo build --target ${{ matrix.target }} -p w5500-ll   --features async
         if: ${{ matrix.toolchain == 'nightly' }}
+      - run: cargo build --target ${{ matrix.target }} -p w5500-hl   --features async
+        if: ${{ matrix.toolchain == 'nightly' }}
       - run: cargo build --target ${{ matrix.target }} -p w5500-ll   --features eha0a
+        if: ${{ matrix.toolchain == 'nightly' }}
+      - run: cargo build --target ${{ matrix.target }} -p w5500-hl   --features eha0a
         if: ${{ matrix.toolchain == 'nightly' }}
       - run: cargo build --target ${{ matrix.target }} -p w5500-tls  --features p256-cm4
         if: ${{ matrix.target == 'thumbv7em-none-eabi' }}

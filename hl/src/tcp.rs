@@ -122,6 +122,37 @@ impl<'a, W5500: Registers> Read<W5500::Error> for TcpReader<'a, W5500> {
     }
 }
 
+#[cfg(feature = "async")]
+impl<W5500: w5500_ll::aio::Registers + 'static> crate::io::AsyncRead<W5500::Error>
+    for TcpReader<'static, W5500>
+{
+    async fn read(&mut self, buf: &mut [u8]) -> Result<u16, W5500::Error> {
+        let read_size: u16 = min(self.remain(), buf.len().try_into().unwrap_or(u16::MAX));
+        if read_size != 0 {
+            self.w5500
+                .sn_rx_buf(self.sn, self.ptr, &mut buf[..usize::from(read_size)])
+                .await?;
+            self.ptr = self.ptr.wrapping_add(read_size);
+
+            Ok::<u16, W5500::Error>(read_size)
+        } else {
+            Ok(0)
+        }
+    }
+
+    async fn read_exact(&mut self, buf: &mut [u8]) -> Result<(), Error<W5500::Error>> {
+        let buf_len: u16 = buf.len().try_into().unwrap_or(u16::MAX);
+        let write_size: u16 = min(self.remain(), buf_len);
+        if write_size != buf_len {
+            Err(Error::OutOfMemory)
+        } else {
+            self.w5500.set_sn_tx_buf(self.sn, self.ptr, buf).await?;
+            self.ptr = self.ptr.wrapping_add(write_size);
+            Ok(())
+        }
+    }
+}
+
 /// Streaming writer for a UDP socket buffer.
 ///
 /// This implements the [`Seek`] traits.
@@ -219,6 +250,37 @@ impl<'w, W5500: Registers> Write<W5500::Error> for TcpWriter<'w, W5500> {
         self.w5500.set_sn_tx_wr(self.sn, self.ptr)?;
         self.w5500.set_sn_cr(self.sn, SocketCommand::Send)?;
         Ok(())
+    }
+}
+
+#[cfg(feature = "async")]
+impl<W5500: w5500_ll::aio::Registers + 'static> crate::io::AsyncWrite<W5500::Error>
+    for TcpWriter<'static, W5500>
+{
+    async fn write(&mut self, buf: &[u8]) -> Result<u16, W5500::Error> {
+        let write_size: u16 = min(self.remain(), buf.len().try_into().unwrap_or(u16::MAX));
+        if write_size != 0 {
+            self.w5500
+                .set_sn_tx_buf(self.sn, self.ptr, &buf[..usize::from(write_size)])
+                .await?;
+            self.ptr = self.ptr.wrapping_add(write_size);
+
+            Ok(write_size)
+        } else {
+            Ok(0)
+        }
+    }
+
+    async fn write_all(&mut self, buf: &[u8]) -> Result<(), Error<W5500::Error>> {
+        let buf_len: u16 = buf.len().try_into().unwrap_or(u16::MAX);
+        let write_size: u16 = min(self.remain(), buf_len);
+        if write_size != buf_len {
+            Err(Error::OutOfMemory)
+        } else {
+            self.w5500.set_sn_tx_buf(self.sn, self.ptr, buf).await?;
+            self.ptr = self.ptr.wrapping_add(write_size);
+            Ok(())
+        }
     }
 }
 

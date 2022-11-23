@@ -128,6 +128,13 @@ pub trait Read<E> {
     fn done(self) -> Result<(), E>;
 }
 
+/// Socket asynchronous reader trait.
+#[cfg(feature = "async")]
+pub trait AsyncRead<E> {
+    async fn read(&mut self, buf: &mut [u8]) -> Result<u16, E>;
+    async fn read_exact(&mut self, buf: &mut [u8]) -> Result<(), Error<E>>;
+}
+
 /// Socket writer trait.
 pub trait Write<E> {
     /// Write data to the socket buffer, and return the number of bytes written.
@@ -156,6 +163,13 @@ pub trait Write<E> {
     /// [`write_all`]: Self::write_all
     /// [`write`]: Self::write
     fn send(self) -> Result<(), E>;
+}
+
+/// Socket asynchronous writer trait.
+#[cfg(feature = "async")]
+pub trait AsyncWrite<E> {
+    async fn write(&mut self, buf: &[u8]) -> Result<u16, E>;
+    async fn write_all(&mut self, buf: &[u8]) -> Result<(), Error<E>>;
 }
 
 #[cfg(test)]
