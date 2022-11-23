@@ -55,6 +55,7 @@ where
     /// # Ok::<(), hal::MockError>(())
     /// ```
     #[inline]
+    #[allow(clippy:unnecessary_safety_doc)]
     pub fn new(spi: SPI, cs: CS) -> Self {
         W5500 { spi, cs }
     }
