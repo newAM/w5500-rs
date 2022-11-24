@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Added support for `embedded-hal` version `1.0.0-alpha.9` with the `eh1` feature.
-- Added support for `embedded-hal-async` version `0.1.0-alpha.3` with the `eha0a` feature.
+- Added support for `embedded-hal-async` version `0.2.0-alpha.0` with the `eha0a` feature.
 - Added an `aio` module with async traits.
 - Added `sn_tx_ptrs` and `sn_rx_ptrs` to read socket buffer pointers in a single transaction.
 - Added `From<Sn>` for all primitive signed and unsigned integers.
