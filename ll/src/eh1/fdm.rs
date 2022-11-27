@@ -21,9 +21,9 @@ pub struct W5500<SPI> {
     spi: SPI,
 }
 
-impl<SPI, SpiError> W5500<SPI>
+impl<SPI> W5500<SPI>
 where
-    SPI: eh1::spi::SpiBus<u8, Error = SpiError>,
+    SPI: eh1::spi::SpiBus<u8>,
 {
     /// Creates a new `W5500` driver from a SPI bus.
     ///
@@ -59,12 +59,12 @@ where
     }
 }
 
-impl<SPI, SpiError> crate::Registers for W5500<SPI>
+impl<SPI> crate::Registers for W5500<SPI>
 where
-    SPI: eh1::spi::SpiBus<u8, Error = SpiError>,
+    SPI: eh1::spi::SpiBus<u8>,
 {
     /// SPI IO error type.
-    type Error = SpiError;
+    type Error = SPI::Error;
 
     /// Read from the W5500.
     #[allow(clippy::while_let_on_iterator)]
