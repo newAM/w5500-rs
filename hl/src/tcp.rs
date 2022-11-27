@@ -122,11 +122,11 @@ impl<'a, W5500: Registers> Read<W5500::Error> for TcpReader<'a, W5500> {
     }
 }
 
-/// Streaming writer for a UDP socket buffer.
+/// Streaming writer for a TCP socket buffer.
 ///
 /// This implements the [`Seek`] traits.
 ///
-/// Created with [`Udp::udp_writer`](crate::Udp::udp_writer).
+/// Created with [`Tcp::tcp_writer`](crate::Tcp::tcp_writer).
 ///
 /// # Example
 ///
