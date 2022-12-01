@@ -1,6 +1,6 @@
 use ftdi_embedded_hal::{
     libftd2xx::{self, Ft232h},
-    Delay, FtHal, InputPin, SpiDevice,
+    Delay, FtHal, SpiDevice,
 };
 use rand_core::{OsRng, RngCore};
 use std::{
@@ -39,18 +39,6 @@ const SNTP_SN: Sn = Sn::Sn4;
 const HOSTNAME: Hostname = Hostname::new_unwrapped("w5500-testsuite");
 const CLIENT_ID: ClientId = ClientId::new_unwrapped("w5500testsuite");
 
-pub fn new_w5500(ftdi: &FtHal<Ft232h>) -> (W5500<SpiDevice<Ft232h>>, InputPin<Ft232h>) {
-    let int = ftdi.adi7().unwrap();
-    let mut rst = ftdi.ad6().unwrap();
-    let spi = ftdi.spi_device(3).unwrap();
-
-    reset(&mut rst, &mut Delay::new()).unwrap();
-
-    let w5500 = W5500::new(spi);
-
-    (w5500, int)
-}
-
 pub struct Monotonic {
     start: Instant,
 }
@@ -77,7 +65,7 @@ fn dhcp_poll_bound(ta: &mut TestArgs) {
     let start: Instant = Instant::now();
     loop {
         ta.dhcp_client
-            .process(ta.w5500, ta.mono.monotonic_secs())
+            .process(&mut ta.w5500, ta.mono.monotonic_secs())
             .unwrap();
         if ta.dhcp_client.has_lease() {
             log::info!("DHCP has lease");
@@ -93,8 +81,8 @@ fn dhcp_poll_bound(ta: &mut TestArgs) {
 }
 
 struct TestArgs<'a> {
-    w5500: &'a mut W5500<SpiDevice<'a, Ft232h>>,
-    mono: &'a Monotonic,
+    w5500: W5500<&'a SpiDevice<Ft232h>>,
+    mono: Monotonic,
     dhcp_client: DhcpClient<'static>,
     mqtt_client: MqttClient<'static>,
 }
@@ -119,14 +107,14 @@ const TESTS: &[(fn(&mut TestArgs), &str)] = &[
 ];
 
 fn dhcp_bind(ta: &mut TestArgs) {
-    ta.dhcp_client.setup_socket(ta.w5500).unwrap();
+    ta.dhcp_client.setup_socket(&mut ta.w5500).unwrap();
     dhcp_poll_bound(ta);
 }
 
 fn dhcp_renew(ta: &mut TestArgs) {
     ta.dhcp_client
         .process(
-            ta.w5500,
+            &mut ta.w5500,
             ta.mono.monotonic_secs() + ta.dhcp_client.t1().unwrap() + 1,
         )
         .unwrap();
@@ -137,7 +125,7 @@ fn dhcp_renew(ta: &mut TestArgs) {
 fn dhcp_rebind(ta: &mut TestArgs) {
     ta.dhcp_client
         .process(
-            ta.w5500,
+            &mut ta.w5500,
             ta.mono.monotonic_secs() + ta.dhcp_client.t2().unwrap() + 1,
         )
         .unwrap();
@@ -148,7 +136,7 @@ fn dhcp_rebind(ta: &mut TestArgs) {
 fn dhcp_lease_expire(ta: &mut TestArgs) {
     ta.dhcp_client
         .process(
-            ta.w5500,
+            &mut ta.w5500,
             ta.mono.monotonic_secs() + ta.dhcp_client.lease_time().unwrap() + 1,
         )
         .unwrap();
@@ -162,7 +150,7 @@ fn mqtt_connect(ta: &mut TestArgs) {
     let start: Instant = Instant::now();
     while !matches!(
         ta.mqtt_client
-            .process(ta.w5500, ta.mono.monotonic_secs())
+            .process(&mut ta.w5500, ta.mono.monotonic_secs())
             .unwrap(),
         MqttEvent::None
     ) {
@@ -181,7 +169,9 @@ fn mqtt_disconnect(ta: &mut TestArgs) {
 
     let start: Instant = Instant::now();
     loop {
-        let event = ta.mqtt_client.process(ta.w5500, ta.mono.monotonic_secs());
+        let event = ta
+            .mqtt_client
+            .process(&mut ta.w5500, ta.mono.monotonic_secs());
 
         match event {
             Err(MqttError::Disconnect) => break,
@@ -208,7 +198,7 @@ fn dns_query(ta: &mut TestArgs) {
     );
 
     const DOCSRS: Hostname = Hostname::new_unwrapped("docs.rs");
-    let id: u16 = dns_client.a_question(ta.w5500, &DOCSRS).unwrap();
+    let id: u16 = dns_client.a_question(&mut ta.w5500, &DOCSRS).unwrap();
 
     let start: Instant = Instant::now();
     while ta.w5500.sn_rx_rsr(DNS_SN).unwrap() == 0 {
@@ -218,7 +208,7 @@ fn dns_query(ta: &mut TestArgs) {
         }
     }
     let mut buf: [u8; 256] = [0; 256];
-    let mut response = dns_client.response(ta.w5500, &mut buf, id).unwrap();
+    let mut response = dns_client.response(&mut ta.w5500, &mut buf, id).unwrap();
     while let Some(rr) = response.next_rr().unwrap() {
         println!("name={:?}", rr.name);
         println!("qtype={:?}", rr.qtype);
@@ -231,12 +221,12 @@ fn dns_query(ta: &mut TestArgs) {
 
 fn sntp(ta: &mut TestArgs) {
     let sntp_client: SntpClient = SntpClient::new(SNTP_SN, 123, SNTP_SERVER);
-    sntp_client.setup_socket(ta.w5500).unwrap();
+    sntp_client.setup_socket(&mut ta.w5500).unwrap();
 
     // possible future use
     // let transmit_timestamp: Timestamp = chrono::offset::Utc::now().naive_utc().try_into().unwrap();
 
-    sntp_client.request(ta.w5500).unwrap();
+    sntp_client.request(&mut ta.w5500).unwrap();
 
     let start: Instant = Instant::now();
     while ta.w5500.sn_rx_rsr(SNTP_SN).unwrap() == 0 {
@@ -246,7 +236,7 @@ fn sntp(ta: &mut TestArgs) {
         }
     }
 
-    let reply: w5500_sntp::Reply = sntp_client.on_recv_interrupt(ta.w5500).unwrap();
+    let reply: w5500_sntp::Reply = sntp_client.on_recv_interrupt(&mut ta.w5500).unwrap();
 
     fn ndt(timestamp: Timestamp) -> chrono::NaiveDateTime {
         chrono::NaiveDateTime::try_from(timestamp).unwrap()
@@ -311,7 +301,7 @@ fn tls_handshake(ta: &mut TestArgs) {
 
     let start: Instant = Instant::now();
     loop {
-        let event = tls_client.process(ta.w5500, &mut OsRng, ta.mono.monotonic_secs());
+        let event = tls_client.process(&mut ta.w5500, &mut OsRng, ta.mono.monotonic_secs());
 
         match event {
             Ok(TlsEvent::CallAfter(_)) => (),
@@ -342,7 +332,13 @@ fn main() {
     // create the W5500 structure
     let device: Ft232h = libftd2xx::Ftdi::new().unwrap().try_into().unwrap();
     let ftdi: FtHal<Ft232h> = FtHal::init_freq(device, 1_000_000).unwrap();
-    let (mut w5500, _int) = new_w5500(&ftdi);
+    let _int = ftdi.adi7().unwrap();
+    let mut rst = ftdi.ad6().unwrap();
+    let spi = ftdi.spi_device(3).unwrap();
+
+    reset(&mut rst, &mut Delay::new()).unwrap();
+
+    let mut w5500 = W5500::new(&spi);
 
     // sanity check
     assert_eq!(w5500.version().unwrap(), VERSION);
@@ -357,8 +353,8 @@ fn main() {
 
     let mono: Monotonic = Monotonic::default();
     let mut args: TestArgs = TestArgs {
-        w5500: &mut w5500,
-        mono: &mono,
+        w5500,
+        mono,
         dhcp_client: DhcpClient::new(DHCP_SN, dhcp_seed, MAC_ADDRESS, HOSTNAME),
         mqtt_client: MqttClient::new(MQTT_SN, MQTT_SRC_PORT, MQTT_SERVER),
     };
