@@ -241,12 +241,12 @@ impl Fixture {
 
             match event {
                 Event::Publish(reader) => break reader,
-                e => log::info!("Unexpected event {:?}", e),
+                e => log::info!("Unexpected event {e:?}"),
             }
 
             let elapsed: Duration = start.elapsed();
             if elapsed > TIMEOUT {
-                panic!("Expected Publish event got nothing after {:?}", elapsed);
+                panic!("Expected Publish event got nothing after {elapsed:?}");
             }
         };
 
