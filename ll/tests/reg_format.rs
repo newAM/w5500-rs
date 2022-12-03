@@ -19,7 +19,7 @@ fn sn_ir_all() {
     let snir: SocketInterrupt = u8::MAX.into();
 
     assert_eq!(
-        format!("{:#}", snir),
+        format!("{snir:#}"),
         r#"SocketInterrupt {
     con_raised: true,
     discon_raised: true,
@@ -35,7 +35,7 @@ fn sn_ir_partial() {
     let snir: SocketInterrupt = SocketInterrupt::DISCON_MASK.into();
 
     assert_eq!(
-        format!("{:#}", snir),
+        format!("{snir:#}"),
         r#"SocketInterrupt {
     con_raised: false,
     discon_raised: true,

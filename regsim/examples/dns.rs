@@ -133,13 +133,13 @@ fn main() {
     assert_eq!(questions, 1);
 
     let answer_rrs = u16::from_be_bytes([next(), next()]);
-    println!("Answer RRs: {}", answer_rrs);
+    println!("Answer RRs: {answer_rrs}");
 
     let authority_rrs = u16::from_be_bytes([next(), next()]);
-    println!("Authority RRs: {}", authority_rrs);
+    println!("Authority RRs: {authority_rrs}");
 
     let aditional_rrs = u16::from_be_bytes([next(), next()]);
-    println!("Additional RRs: {}", aditional_rrs);
+    println!("Additional RRs: {aditional_rrs}");
 
     // first segment
     assert_eq!(next(), 4); // len
@@ -175,7 +175,7 @@ fn main() {
 
     // time to live
     let ttl = u32::from_be_bytes([next(), next(), next(), next()]);
-    println!("Time to live: {}s", ttl);
+    println!("Time to live: {ttl}s");
 
     // this is bad to assume IPv4
     let resp_len = u16::from_be_bytes([next(), next()]);
@@ -183,5 +183,5 @@ fn main() {
 
     let docs_rs_ip: Ipv4Addr = Ipv4Addr::new(next(), next(), next(), next());
 
-    println!("docs.rs IP address: {}", docs_rs_ip);
+    println!("docs.rs IP address: {docs_rs_ip}");
 }

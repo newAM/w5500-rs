@@ -513,8 +513,7 @@ impl W5500 {
 
         debug_assert!(
             size <= socket.regs.txbuf_size.size_in_bytes(),
-            "[{:?}] Send data size exceeds buffer size",
-            sn
+            "[{sn:?}] Send data size exceeds buffer size",
         );
 
         let mut local_tx_buf: Vec<u8> = Vec::with_capacity(size);

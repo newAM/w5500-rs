@@ -54,7 +54,7 @@ fn main() {
         .expect("Failed to open a listener");
 
     // TODO: check that the socket was successful before printing this
-    println!("Serving HTML on 127.0.0.1:{}", HTTP_PORT);
+    println!("Serving HTML on 127.0.0.1:{HTTP_PORT}");
 
     // wait for the RECV interrupt, indicating there is data to read
     loop {
@@ -95,7 +95,7 @@ fn main() {
         // handle partial data by waiting for more data from the client
         Ok(httparse::Status::Partial) => todo!("Implement handling for partial HTTP data"),
         Err(e) => {
-            println!("Error parsing HTTP data, closing socket: {:?}", e);
+            println!("Error parsing HTTP data, closing socket: {e:?}");
             w5500.close(HTTP_SOCKET).expect("Failed to close socket");
         }
     }

@@ -15,7 +15,7 @@ struct Server {
 
 impl Server {
     pub fn new(addr: SocketAddrV4, client_port: u16) -> Self {
-        let addr: String = format!("{}", addr);
+        let addr: String = format!("{addr}");
         Self {
             socket: UdpSocket::bind(addr).expect("Unable to bind UDP socket"),
             client_port,
