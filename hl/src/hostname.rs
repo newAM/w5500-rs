@@ -39,11 +39,7 @@ impl<'a> Hostname<'a> {
         // for the refined non-const version see TryFrom<&str> below.
 
         const fn is_valid_char(byte: u8) -> bool {
-            (byte >= b'a' && byte <= b'z')
-                || (byte >= b'A' && byte <= b'Z')
-                || (byte >= b'0' && byte <= b'9')
-                || byte == b'-'
-                || byte == b'.'
+            byte.is_ascii_alphanumeric() || byte == b'-' || byte == b'.'
         }
 
         if hostname.is_empty() || hostname.len() > 253 {
@@ -201,11 +197,7 @@ impl<'a> TryFrom<&'a str> for Hostname<'a> {
 
     fn try_from(hostname: &'a str) -> Result<Self, Self::Error> {
         fn is_valid_char(byte: u8) -> bool {
-            (b'a'..=b'z').contains(&byte)
-                || (b'A'..=b'Z').contains(&byte)
-                || (b'0'..=b'9').contains(&byte)
-                || byte == b'-'
-                || byte == b'.'
+            byte.is_ascii_alphanumeric() || byte == b'-' || byte == b'.'
         }
 
         if hostname.is_empty()
