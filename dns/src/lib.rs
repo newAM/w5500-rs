@@ -127,7 +127,7 @@ pub struct ServiceData {
 }
 
 /// Decoded rdata.
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Default)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
 pub enum RData {
     /// Decoded rdata for A records.
@@ -135,13 +135,8 @@ pub enum RData {
     /// Decoded rdata for SVR records.
     SVR(ServiceData),
     /// Record type's rdata is unsupported.
+    #[default]
     Unsupported,
-}
-
-impl Default for RData {
-    fn default() -> Self {
-        RData::Unsupported
-    }
 }
 
 /// DNS server resource records.
