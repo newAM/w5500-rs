@@ -5,7 +5,7 @@
 /// This is used with the [`sn_sr`] method.
 ///
 /// [`sn_sr`]: crate::Registers::sn_sr
-#[derive(Copy, Clone, Eq, PartialEq, Debug, PartialOrd, Ord, Hash)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug, PartialOrd, Ord, Hash, Default)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
 #[repr(u8)]
 pub enum SocketStatus {
@@ -17,6 +17,7 @@ pub enum SocketStatus {
     ///
     /// [`Disconnect`]: SocketCommand::Disconnect
     /// [`Close`]: SocketCommand::Close
+    #[default]
     Closed = 0x00,
     /// The socket is opened in TCP mode.
     ///
@@ -160,12 +161,6 @@ impl TryFrom<u8> for SocketStatus {
             x if x == SocketStatus::Macraw as u8 => Ok(SocketStatus::Macraw),
             _ => Err(val),
         }
-    }
-}
-
-impl Default for SocketStatus {
-    fn default() -> Self {
-        SocketStatus::Closed
     }
 }
 
@@ -508,11 +503,12 @@ impl Default for OperationMode {
 ///
 /// [`PhyCfg::lnk`]: crate::PhyCfg::lnk
 /// [`phycfgr`]: crate::Registers::phycfgr
-#[derive(Copy, Clone, Eq, PartialEq, Debug, PartialOrd, Ord, Hash)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug, PartialOrd, Ord, Hash, Default)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
 #[repr(u8)]
 pub enum LinkStatus {
     /// PHY link down.
+    #[default]
     Down = 0,
     /// PHY link up.
     Up = 1,
@@ -531,11 +527,6 @@ impl From<LinkStatus> for u8 {
         val as u8
     }
 }
-impl Default for LinkStatus {
-    fn default() -> Self {
-        LinkStatus::Down
-    }
-}
 
 /// PHY speed status.
 ///
@@ -543,11 +534,12 @@ impl Default for LinkStatus {
 ///
 /// [`PhyCfg::spd`]: crate::PhyCfg::spd
 /// [`phycfgr`]: crate::Registers::phycfgr
-#[derive(Copy, Clone, Eq, PartialEq, Debug, PartialOrd, Ord, Hash)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug, PartialOrd, Ord, Hash, Default)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
 #[repr(u8)]
 pub enum SpeedStatus {
     /// 10 Mbps.
+    #[default]
     Mbps10 = 0,
     /// 100 Mbps.
     Mbps100 = 1,
@@ -566,11 +558,6 @@ impl From<SpeedStatus> for u8 {
         val as u8
     }
 }
-impl Default for SpeedStatus {
-    fn default() -> Self {
-        SpeedStatus::Mbps10
-    }
-}
 
 /// PHY duplex status.
 ///
@@ -578,11 +565,12 @@ impl Default for SpeedStatus {
 ///
 /// [`PhyCfg::dpx`]: crate::PhyCfg::dpx
 /// [`phycfgr`]: crate::Registers::phycfgr
-#[derive(Copy, Clone, Eq, PartialEq, Debug, PartialOrd, Ord, Hash)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug, PartialOrd, Ord, Hash, Default)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
 #[repr(u8)]
 pub enum DuplexStatus {
-    /// Half duplex
+    /// Half duplex.
+    #[default]
     Half = 0,
     /// Full duplex.
     Full = 1,
@@ -599,11 +587,6 @@ impl From<bool> for DuplexStatus {
 impl From<DuplexStatus> for u8 {
     fn from(val: DuplexStatus) -> u8 {
         val as u8
-    }
-}
-impl Default for DuplexStatus {
-    fn default() -> Self {
-        DuplexStatus::Half
     }
 }
 
