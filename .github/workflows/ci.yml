@@ -5,150 +5,26 @@ on:
     tags:
       - '**'
   pull_request:
-  schedule:
-    - cron: "13 3 * * *"
+  workflow_dispatch:
 
 name: CI
 
 jobs:
-  build:
-    name: Build
+  check:
     runs-on: ubuntu-latest
-    env: {"RUSTFLAGS": "-D warnings"}
-    strategy:
-      matrix:
-        toolchain:
-          - "stable"
-          - "nightly"
     steps:
       - uses: actions/checkout@v3
-      - uses: dtolnay/rust-toolchain@master
+      - uses: cachix/install-nix-action@v17
+      - uses: cachix/cachix-action@v10
         with:
-          toolchain: ${{ matrix.toolchain }}
-      - run: cargo build
-      - run: cargo build --all-features
-        if: ${{ matrix.toolchain == 'nightly' }}
-      - run: cargo build -p testsuite
-
-  build_no_std:
-    name: Build no_std
-    runs-on: ubuntu-latest
-    env: {"RUSTFLAGS": "-D warnings"}
-    strategy:
-      matrix:
-        toolchain:
-          - "stable"
-          - "nightly"
-        target:
-          - "thumbv6m-none-eabi"
-          - "thumbv7em-none-eabi"
-    steps:
-      - uses: actions/checkout@v3
-      - uses: dtolnay/rust-toolchain@master
-        with:
-          target: ${{ matrix.target }}
-          toolchain: ${{ matrix.toolchain }}
-      - run: cargo build --target ${{ matrix.target }} -p w5500-ll
-      - run: cargo build --target ${{ matrix.target }} -p w5500-hl
-      - run: cargo build --target ${{ matrix.target }} -p w5500-dhcp
-      - run: cargo build --target ${{ matrix.target }} -p w5500-dns
-      - run: cargo build --target ${{ matrix.target }} -p w5500-mqtt
-      - run: cargo build --target ${{ matrix.target }} -p w5500-sntp
-      - run: cargo build --target ${{ matrix.target }} -p w5500-tls
-      - run: cargo build --target ${{ matrix.target }} -p w5500-ll   --features defmt
-      - run: cargo build --target ${{ matrix.target }} -p w5500-hl   --features defmt
-      - run: cargo build --target ${{ matrix.target }} -p w5500-dhcp --features defmt
-      - run: cargo build --target ${{ matrix.target }} -p w5500-dns  --features defmt
-      - run: cargo build --target ${{ matrix.target }} -p w5500-mqtt --features defmt
-      - run: cargo build --target ${{ matrix.target }} -p w5500-tls  --features defmt
-      - run: cargo build --target ${{ matrix.target }} -p w5500-ll   --features eh0,eh1
-      - run: cargo build --target ${{ matrix.target }} -p w5500-hl   --features eh0,eh1
-      - run: cargo build --target ${{ matrix.target }} -p w5500-dhcp --features eh0,eh1
-      - run: cargo build --target ${{ matrix.target }} -p w5500-dns  --features eh0,eh1
-      - run: cargo build --target ${{ matrix.target }} -p w5500-mqtt --features eh0,eh1
-      - run: cargo build --target ${{ matrix.target }} -p w5500-sntp --features eh0,eh1
-      - run: cargo build --target ${{ matrix.target }} -p w5500-tls  --features eh0,eh1
-      - run: cargo build --target ${{ matrix.target }} -p w5500-dhcp --features log
-      - run: cargo build --target ${{ matrix.target }} -p w5500-dns  --features log
-      - run: cargo build --target ${{ matrix.target }} -p w5500-mqtt --features log
-      - run: cargo build --target ${{ matrix.target }} -p w5500-sntp --features log
-      - run: cargo build --target ${{ matrix.target }} -p w5500-tls  --features log
-      - run: cargo build --target ${{ matrix.target }} -p w5500-sntp --features time
-      - run: cargo build --target ${{ matrix.target }} -p w5500-sntp --features chrono
-      - run: cargo build --target ${{ matrix.target }} -p w5500-sntp --features num-rational
-      - run: cargo build --target ${{ matrix.target }} -p w5500-mqtt --features w5500-tls
-      - run: cargo build --target ${{ matrix.target }} -p w5500-ll   --features async
-        if: ${{ matrix.toolchain == 'nightly' }}
-      - run: cargo build --target ${{ matrix.target }} -p w5500-ll   --features eha0a
-        if: ${{ matrix.toolchain == 'nightly' }}
-      - run: cargo build --target ${{ matrix.target }} -p w5500-tls  --features p256-cm4
-        if: ${{ matrix.target == 'thumbv7em-none-eabi' }}
-      - run: cargo build --target ${{ matrix.target }} -p w5500-mqtt --features w5500-tls,p256-cm4
-        if: ${{ matrix.target == 'thumbv7em-none-eabi' }}
-
-  test:
-    name: Test
-    runs-on: ubuntu-latest
-    env: {"RUSTFLAGS": "-D warnings"}
-    steps:
-      - uses: actions/checkout@v3
-      - uses: dtolnay/rust-toolchain@nightly
-      - run: cargo test-all
-
-  clippy:
-    name: Clippy
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: dtolnay/rust-toolchain@nightly
-        with:
-          components: clippy
-      - run: cargo clippy --all-features --all-targets -- --deny warnings
-
-  format:
-    name: Format
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: dtolnay/rust-toolchain@nightly
-        with:
-          components: rustfmt
-      - run: cargo +nightly fmt -- --check
-
-  rustdoc:
-    name: rustdoc
-    runs-on: ubuntu-latest
-    env: {"RUSTDOCFLAGS": "-D warnings --cfg docsrs"}
-    steps:
-      - uses: actions/checkout@v3
-      - uses: dtolnay/rust-toolchain@nightly
-      - name: rustdoc
-        run: |
-          cd dhcp
-          cargo +nightly rustdoc --all-features
-          cd ../dns
-          cargo +nightly rustdoc --all-features
-          cd ../hl
-          cargo +nightly rustdoc --all-features
-          cd ../ll
-          cargo +nightly rustdoc --all-features
-          cd ../mqtt
-          cargo +nightly rustdoc --all-features
-          cd ../regsim
-          cargo +nightly rustdoc --all-features
-          cd ../sntp
-          cargo +nightly rustdoc --all-features
+          name: newam
+          authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
+      - run: nix flake check -L
 
   release-ll:
     name: w5500-ll crates.io release
     if: startsWith(github.ref, 'refs/tags/ll/v')
-    needs:
-      - build
-      - build_no_std
-      - test
-      - clippy
-      - format
-      - rustdoc
+    needs: [ "check" ]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -163,13 +39,7 @@ jobs:
   release-hl:
     name: w5500-hl crates.io release
     if: startsWith(github.ref, 'refs/tags/hl/v')
-    needs:
-      - build
-      - build_no_std
-      - test
-      - clippy
-      - format
-      - rustdoc
+    needs: [ "check" ]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -184,13 +54,7 @@ jobs:
   release-dhcp:
     name: w5500-dhcp crates.io release
     if: startsWith(github.ref, 'refs/tags/dhcp/v')
-    needs:
-      - build
-      - build_no_std
-      - test
-      - clippy
-      - format
-      - rustdoc
+    needs: [ "check" ]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -205,13 +69,7 @@ jobs:
   release-regsim:
     name: w5500-regsim crates.io release
     if: startsWith(github.ref, 'refs/tags/regsim/v')
-    needs:
-      - build
-      - build_no_std
-      - test
-      - clippy
-      - format
-      - rustdoc
+    needs: [ "check" ]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -226,13 +84,7 @@ jobs:
   release-dns:
     name: w5500-dns crates.io release
     if: startsWith(github.ref, 'refs/tags/dns/v')
-    needs:
-      - build
-      - build_no_std
-      - test
-      - clippy
-      - format
-      - rustdoc
+    needs: [ "check" ]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -247,13 +99,7 @@ jobs:
   release-mqtt:
     name: w5500-mqtt crates.io release
     if: startsWith(github.ref, 'refs/tags/mqtt/v')
-    needs:
-      - build
-      - build_no_std
-      - test
-      - clippy
-      - format
-      - rustdoc
+    needs: [ "check" ]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -268,13 +114,7 @@ jobs:
   release-sntp:
     name: w5500-sntp crates.io release
     if: startsWith(github.ref, 'refs/tags/sntp/v')
-    needs:
-      - build
-      - build_no_std
-      - test
-      - clippy
-      - format
-      - rustdoc
+    needs: [ "check" ]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -289,13 +129,7 @@ jobs:
   release-tls:
     name: w5500-tls crates.io release
     if: startsWith(github.ref, 'refs/tags/tls/v')
-    needs:
-      - build
-      - build_no_std
-      - test
-      - clippy
-      - format
-      - rustdoc
+    needs: [ "check" ]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
