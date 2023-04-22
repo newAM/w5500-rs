@@ -92,7 +92,9 @@ jobs:
     env: {"RUSTFLAGS": "-D warnings"}
     steps:
       - uses: actions/checkout@v3
-      - uses: dtolnay/rust-toolchain@nightly
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: nightly-2023-04-10 # TODO temporary to workaround ICE
       - run: cargo test-all
 
   clippy:
@@ -100,9 +102,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: dtolnay/rust-toolchain@nightly
+      - uses: dtolnay/rust-toolchain@master
         with:
           components: clippy
+          toolchain: nightly-2023-04-10 # TODO temporary to workaround ICE
       - run: cargo clippy --all-features --all-targets -- --deny warnings
 
   format:
