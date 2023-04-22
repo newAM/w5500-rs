@@ -10,10 +10,7 @@
 //! [`Registers`]: crate::Registers
 
 use crate::spi::{vdm_header, AccessMode};
-use eh1::spi::{ErrorType, SpiBusRead, SpiBusWrite};
-
-#[cfg(feature = "eha0a")]
-use eha0a::spi::{SpiBusRead as AioSpiBusRead, SpiBusWrite as AioSpiBusWrite};
+use eh1::spi::ErrorType;
 
 /// W5500 blocking variable data length implementation.
 #[derive(Debug)]
@@ -64,7 +61,7 @@ where
 impl<SPI> crate::Registers for W5500<SPI>
 where
     SPI: eh1::spi::SpiDevice,
-    <SPI as eh1::spi::SpiDevice>::Bus: eh1::spi::SpiBusRead + eh1::spi::SpiBusWrite,
+    // <SPI as eh1::spi::SpiDevice>::Bus: eh1::spi::SpiBusRead + eh1::spi::SpiBusWrite,
 {
     /// SPI IO error type.
     type Error = SPI::Error;
@@ -78,10 +75,11 @@ where
         data: &mut [u8],
     ) -> Result<(), <SPI as ErrorType>::Error> {
         let header = vdm_header(address, block, AccessMode::Read);
-        self.spi.transaction(|bus| {
-            bus.write(&header)?;
-            bus.read(data)
-        })
+        let mut ops = [
+            eh1::spi::Operation::Write(&header),
+            eh1::spi::Operation::Read(data),
+        ];
+        self.spi.transaction(&mut ops)
     }
 
     /// Write to the W5500.
@@ -93,10 +91,11 @@ where
         data: &[u8],
     ) -> Result<(), <SPI as ErrorType>::Error> {
         let header = vdm_header(address, block, AccessMode::Write);
-        self.spi.transaction(|bus| {
-            bus.write(&header)?;
-            bus.write(data)
-        })
+        let mut ops = [
+            eh1::spi::Operation::Write(&header),
+            eh1::spi::Operation::Write(data),
+        ];
+        self.spi.transaction(&mut ops)
     }
 }
 
@@ -104,7 +103,6 @@ where
 impl<SPI> crate::aio::Registers for W5500<SPI>
 where
     SPI: eha0a::spi::SpiDevice,
-    <SPI as eha0a::spi::SpiDevice>::Bus: eha0a::spi::SpiBusRead + eha0a::spi::SpiBusWrite,
 {
     /// SPI IO error type.
     type Error = SPI::Error;
@@ -117,11 +115,11 @@ where
         data: &mut [u8],
     ) -> Result<(), <SPI as ErrorType>::Error> {
         let header = vdm_header(address, block, AccessMode::Read);
-        eha0a::spi::transaction!(&mut self.spi, move |bus| async move {
-            bus.write(&header).await?;
-            bus.read(data).await
-        })
-        .await
+        let mut ops = [
+            eh1::spi::Operation::Write(&header),
+            eh1::spi::Operation::Read(data),
+        ];
+        self.spi.transaction(&mut ops).await
     }
 
     /// Write to the W5500 asynchronously.
@@ -132,11 +130,10 @@ where
         data: &[u8],
     ) -> Result<(), <SPI as ErrorType>::Error> {
         let header = vdm_header(address, block, AccessMode::Write);
-
-        eha0a::spi::transaction!(&mut self.spi, move |bus| async move {
-            bus.write(&header).await?;
-            bus.write(data).await
-        })
-        .await
+        let mut ops = [
+            eh1::spi::Operation::Write(&header),
+            eh1::spi::Operation::Write(data),
+        ];
+        self.spi.transaction(&mut ops).await
     }
 }

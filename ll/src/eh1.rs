@@ -12,16 +12,6 @@ pub use eha0a as embedded_hal_async;
 pub mod fdm;
 pub mod vdm;
 
-/// Error type for [`reset`].
-#[derive(Debug)]
-#[cfg_attr(feature = "defmt", derive(defmt::Format))]
-pub enum ResetError<Pin, Delay> {
-    /// GPIO pin error
-    Pin(Pin),
-    /// Delay error
-    Delay(Delay),
-}
-
 /// Reset the W5500 using the reset pin.
 ///
 /// This function performs the following sequence:
@@ -41,19 +31,16 @@ pub enum ResetError<Pin, Delay> {
 /// #    hal::pin::Transaction::set(hal::pin::State::High),
 /// # ]);
 /// w5500_ll::eh1::reset(&mut reset_pin, &mut delay)?;
-/// # Ok::<(), w5500_ll::eh1::ResetError<_, _>>(())
+/// # Ok::<(), hal::MockError>(())
 /// ```
-pub fn reset<P, D, PinError, DelayError>(
-    pin: &mut P,
-    delay: &mut D,
-) -> Result<(), ResetError<PinError, DelayError>>
+pub fn reset<P, D, E>(pin: &mut P, delay: &mut D) -> Result<(), E>
 where
-    P: eh1::digital::OutputPin<Error = PinError>,
-    D: eh1::delay::DelayUs<Error = DelayError>,
+    P: eh1::digital::OutputPin<Error = E>,
+    D: eh1::delay::DelayUs,
 {
-    pin.set_low().map_err(ResetError::Pin)?;
-    delay.delay_ms(1).map_err(ResetError::Delay)?;
-    pin.set_high().map_err(ResetError::Pin)?;
-    delay.delay_ms(2).map_err(ResetError::Delay)?;
+    pin.set_low()?;
+    delay.delay_ms(1);
+    pin.set_high()?;
+    delay.delay_ms(2);
     Ok(())
 }
