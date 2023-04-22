@@ -103,10 +103,10 @@ pub trait Registers {
     /// # Ok(()) }
     /// ```
     async fn gar(&mut self) -> Result<Ipv4Addr, Self::Error> {
-        let mut gar = Ipv4Addr::UNSPECIFIED;
-        self.read(Reg::GAR0.addr(), COMMON_BLOCK_OFFSET, &mut gar.octets)
+        let mut gar: [u8; 4] = [0; 4];
+        self.read(Reg::GAR0.addr(), COMMON_BLOCK_OFFSET, &mut gar)
             .await?;
-        Ok::<Ipv4Addr, Self::Error>(gar)
+        Ok::<Ipv4Addr, Self::Error>(gar.into())
     }
 
     /// Set the gateway IP address.
@@ -129,7 +129,7 @@ pub trait Registers {
     /// # Ok(()) }
     /// ```
     async fn set_gar(&mut self, gar: &Ipv4Addr) -> Result<(), Self::Error> {
-        self.write(Reg::GAR0.addr(), COMMON_BLOCK_OFFSET, &gar.octets)
+        self.write(Reg::GAR0.addr(), COMMON_BLOCK_OFFSET, &gar.octets())
             .await
     }
 
@@ -154,10 +154,10 @@ pub trait Registers {
     /// # Ok(()) }
     /// ```
     async fn subr(&mut self) -> Result<Ipv4Addr, Self::Error> {
-        let mut subr = Ipv4Addr::UNSPECIFIED;
-        self.read(Reg::SUBR0.addr(), COMMON_BLOCK_OFFSET, &mut subr.octets)
+        let mut subr: [u8; 4] = [0; 4];
+        self.read(Reg::SUBR0.addr(), COMMON_BLOCK_OFFSET, &mut subr)
             .await?;
-        Ok::<Ipv4Addr, Self::Error>(subr)
+        Ok::<Ipv4Addr, Self::Error>(subr.into())
     }
 
     /// Set the subnet mask.
@@ -180,7 +180,7 @@ pub trait Registers {
     /// # Ok(()) }
     /// ```
     async fn set_subr(&mut self, subr: &Ipv4Addr) -> Result<(), Self::Error> {
-        self.write(Reg::SUBR0.addr(), COMMON_BLOCK_OFFSET, &subr.octets)
+        self.write(Reg::SUBR0.addr(), COMMON_BLOCK_OFFSET, &subr.octets())
             .await
     }
 
@@ -258,10 +258,10 @@ pub trait Registers {
     /// # Ok(()) }
     /// ```
     async fn sipr(&mut self) -> Result<Ipv4Addr, Self::Error> {
-        let mut sipr = Ipv4Addr::UNSPECIFIED;
-        self.read(Reg::SIPR0.addr(), COMMON_BLOCK_OFFSET, &mut sipr.octets)
+        let mut sipr: [u8; 4] = [0; 4];
+        self.read(Reg::SIPR0.addr(), COMMON_BLOCK_OFFSET, &mut sipr)
             .await?;
-        Ok::<Ipv4Addr, Self::Error>(sipr)
+        Ok::<Ipv4Addr, Self::Error>(sipr.into())
     }
 
     /// Set the source (client) IP address.
@@ -284,7 +284,7 @@ pub trait Registers {
     /// # Ok(()) }
     /// ```
     async fn set_sipr(&mut self, sipr: &Ipv4Addr) -> Result<(), Self::Error> {
-        self.write(Reg::SIPR0.addr(), COMMON_BLOCK_OFFSET, &sipr.octets)
+        self.write(Reg::SIPR0.addr(), COMMON_BLOCK_OFFSET, &sipr.octets())
             .await
     }
 
@@ -1006,10 +1006,10 @@ pub trait Registers {
     /// # Ok(()) }
     /// ```
     async fn uipr(&mut self) -> Result<Ipv4Addr, Self::Error> {
-        let mut uipr = Ipv4Addr::UNSPECIFIED;
-        self.read(Reg::UIPR0.addr(), COMMON_BLOCK_OFFSET, &mut uipr.octets)
+        let mut uipr: [u8; 4] = [0; 4];
+        self.read(Reg::UIPR0.addr(), COMMON_BLOCK_OFFSET, &mut uipr)
             .await?;
-        Ok::<Ipv4Addr, Self::Error>(uipr)
+        Ok::<Ipv4Addr, Self::Error>(uipr.into())
     }
 
     /// Get the unreachable port.
@@ -1502,10 +1502,10 @@ pub trait Registers {
     /// # Ok(()) }
     /// ```
     async fn sn_dipr(&mut self, sn: Sn) -> Result<Ipv4Addr, Self::Error> {
-        let mut dipr: Ipv4Addr = Ipv4Addr::UNSPECIFIED;
-        self.read(SnReg::DIPR0.addr(), sn.block(), &mut dipr.octets)
+        let mut dipr: [u8; 4] = [0; 4];
+        self.read(SnReg::DIPR0.addr(), sn.block(), &mut dipr)
             .await?;
-        Ok::<Ipv4Addr, Self::Error>(dipr)
+        Ok::<Ipv4Addr, Self::Error>(dipr.into())
     }
 
     /// Set the socket destination IP address.
@@ -1532,7 +1532,7 @@ pub trait Registers {
     /// # Ok(()) }
     /// ```
     async fn set_sn_dipr(&mut self, sn: Sn, dipr: &Ipv4Addr) -> Result<(), Self::Error> {
-        self.write(SnReg::DIPR0.addr(), sn.block(), &dipr.octets)
+        self.write(SnReg::DIPR0.addr(), sn.block(), &dipr.octets())
             .await
     }
 
@@ -1618,11 +1618,16 @@ pub trait Registers {
     /// #   ehm1::spi::Transaction::read_vec(vec![0, 0, 0, 0, 0, 0]),
     /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
-    /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, net::SocketAddrV4, Sn};
+    /// use w5500_ll::{
+    ///     aio::Registers,
+    ///     eh1::vdm::W5500,
+    ///     net::{Ipv4Addr, SocketAddrV4},
+    ///     Sn,
+    /// };
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let addr = w5500.sn_dest(Sn::Sn0).await?;
-    /// assert_eq!(addr, SocketAddrV4::default());
+    /// assert_eq!(addr, SocketAddrV4::new(Ipv4Addr::new(0, 0, 0, 0), 0));
     /// # Ok(()) }
     /// ```
     async fn sn_dest(&mut self, sn: Sn) -> Result<SocketAddrV4, Self::Error> {
@@ -1664,10 +1669,10 @@ pub trait Registers {
     /// ```
     async fn set_sn_dest(&mut self, sn: Sn, addr: &SocketAddrV4) -> Result<(), Self::Error> {
         let buf: [u8; 6] = [
-            addr.ip().octets[0],
-            addr.ip().octets[1],
-            addr.ip().octets[2],
-            addr.ip().octets[3],
+            addr.ip().octets()[0],
+            addr.ip().octets()[1],
+            addr.ip().octets()[2],
+            addr.ip().octets()[3],
             (addr.port() >> 8) as u8,
             addr.port() as u8,
         ];

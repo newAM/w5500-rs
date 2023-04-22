@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Added `#[must_use]` to functions in `w5500_ll::net`.
+- Added support for `core::net` types with the `ip_in_core` feature.
 - Added support for `embedded-hal` version `1.0.0-alpha.10` with the `eh1` feature.
 - Added support for `embedded-hal-async` version `0.2.0-alpha.0` with the `eha0a` feature.
 - Added an `aio` module with async traits.
@@ -17,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Changed the `embedded-hal` version `0.2` feature name to `eh0`.
 - Renamed the `blocking` module to `eh0`.
 - Moved the `reset` function into the `eh0` and `eh1` modules.
+- Replaced public `octets` member on `net::Ipv4Addr` with an `octets()` method.
 
 ## [0.10.4] - 2022-07-14
 ### Added

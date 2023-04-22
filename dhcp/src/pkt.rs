@@ -211,7 +211,7 @@ impl<'a, W: Registers> PktSer<'a, W> {
     /// respond to ARP requests.
     fn set_ciaddr(&mut self, addr: &Ipv4Addr) -> Result<(), Error<W::Error>> {
         self.writer.seek(SeekFrom::Start(12))?;
-        self.writer.write_all(&addr.octets)
+        self.writer.write_all(&addr.octets())
     }
 
     /// 'your' (client) IP address;
@@ -219,20 +219,20 @@ impl<'a, W: Registers> PktSer<'a, W> {
     /// know its own address (ciaddr was 0).
     fn set_yiaddr(&mut self, addr: &Ipv4Addr) -> Result<(), Error<W::Error>> {
         self.writer.seek(SeekFrom::Start(16))?;
-        self.writer.write_all(&addr.octets)
+        self.writer.write_all(&addr.octets())
     }
 
     /// Set the IP address of next server to use in bootstrap;
     /// returned in DHCPOFFER, DHCPACK by server.
     fn set_siaddr(&mut self, addr: &Ipv4Addr) -> Result<(), Error<W::Error>> {
         self.writer.seek(SeekFrom::Start(20))?;
-        self.writer.write_all(&addr.octets)
+        self.writer.write_all(&addr.octets())
     }
 
     /// Relay agent IP address, used in booting via a relay agent.
     fn set_giaddr(&mut self, addr: &Ipv4Addr) -> Result<(), Error<W::Error>> {
         self.writer.seek(SeekFrom::Start(24))?;
-        self.writer.write_all(&addr.octets)
+        self.writer.write_all(&addr.octets())
     }
 
     /// Set the hardware address
@@ -307,7 +307,7 @@ impl<'a, W: Registers> PktSer<'a, W> {
 
     fn set_option_requested_ip(&mut self, ip: &Ipv4Addr) -> Result<(), Error<W::Error>> {
         self.writer.write_all(&[Options::RequestedIp.into(), 4])?;
-        self.writer.write_all(&ip.octets)
+        self.writer.write_all(&ip.octets())
     }
 
     fn set_option_end(&mut self) -> Result<(), Error<W::Error>> {

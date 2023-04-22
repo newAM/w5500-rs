@@ -43,6 +43,8 @@
 //! * `eha0a`: **Nightly only.**
 //!   Implements the [`aio::Registers`] trait for types in the [`eh1`] module
 //!   using the `embedded-hal-async` alpha traits.
+//! * `ip_in_core`: **Nightly only.**
+//!   Use `core::net` types for `Ipv4Addr` and `SocketAddrV4`.
 //! * `std`: Enables conversion between [`std::net`] and [`w5500_ll::net`] types.
 //!   This is for testing purposes only, the `std` flag will not work on
 //!   embedded systems because it uses the standard library.
@@ -62,6 +64,7 @@
     feature(async_fn_in_trait),
     allow(incomplete_features), // async_fn_in_trait
 )]
+#![cfg_attr(feature = "ip_in_core", feature(ip_in_core))]
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]
 
@@ -520,9 +523,9 @@ pub trait Registers {
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn gar(&mut self) -> Result<Ipv4Addr, Self::Error> {
-        let mut gar = Ipv4Addr::UNSPECIFIED;
-        self.read(Reg::GAR0.addr(), COMMON_BLOCK_OFFSET, &mut gar.octets)?;
-        Ok(gar)
+        let mut gar: [u8; 4] = [0; 4];
+        self.read(Reg::GAR0.addr(), COMMON_BLOCK_OFFSET, &mut gar)?;
+        Ok(gar.into())
     }
 
     /// Set the gateway IP address.
@@ -543,7 +546,7 @@ pub trait Registers {
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn set_gar(&mut self, gar: &Ipv4Addr) -> Result<(), Self::Error> {
-        self.write(Reg::GAR0.addr(), COMMON_BLOCK_OFFSET, &gar.octets)
+        self.write(Reg::GAR0.addr(), COMMON_BLOCK_OFFSET, &gar.octets())
     }
 
     /// Get the subnet mask.
@@ -565,9 +568,9 @@ pub trait Registers {
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn subr(&mut self) -> Result<Ipv4Addr, Self::Error> {
-        let mut subr = Ipv4Addr::UNSPECIFIED;
-        self.read(Reg::SUBR0.addr(), COMMON_BLOCK_OFFSET, &mut subr.octets)?;
-        Ok(subr)
+        let mut subr: [u8; 4] = [0; 4];
+        self.read(Reg::SUBR0.addr(), COMMON_BLOCK_OFFSET, &mut subr)?;
+        Ok(subr.into())
     }
 
     /// Set the subnet mask.
@@ -588,7 +591,7 @@ pub trait Registers {
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn set_subr(&mut self, subr: &Ipv4Addr) -> Result<(), Self::Error> {
-        self.write(Reg::SUBR0.addr(), COMMON_BLOCK_OFFSET, &subr.octets)
+        self.write(Reg::SUBR0.addr(), COMMON_BLOCK_OFFSET, &subr.octets())
     }
 
     /// Get the source hardware address.
@@ -655,9 +658,9 @@ pub trait Registers {
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn sipr(&mut self) -> Result<Ipv4Addr, Self::Error> {
-        let mut sipr = Ipv4Addr::UNSPECIFIED;
-        self.read(Reg::SIPR0.addr(), COMMON_BLOCK_OFFSET, &mut sipr.octets)?;
-        Ok(sipr)
+        let mut sipr: [u8; 4] = [0; 4];
+        self.read(Reg::SIPR0.addr(), COMMON_BLOCK_OFFSET, &mut sipr)?;
+        Ok(sipr.into())
     }
 
     /// Set the source (client) IP address.
@@ -678,7 +681,7 @@ pub trait Registers {
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn set_sipr(&mut self, sipr: &Ipv4Addr) -> Result<(), Self::Error> {
-        self.write(Reg::SIPR0.addr(), COMMON_BLOCK_OFFSET, &sipr.octets)
+        self.write(Reg::SIPR0.addr(), COMMON_BLOCK_OFFSET, &sipr.octets())
     }
 
     /// Get the interrupt low level time.
@@ -1326,9 +1329,9 @@ pub trait Registers {
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn uipr(&mut self) -> Result<Ipv4Addr, Self::Error> {
-        let mut uipr = Ipv4Addr::UNSPECIFIED;
-        self.read(Reg::UIPR0.addr(), COMMON_BLOCK_OFFSET, &mut uipr.octets)?;
-        Ok(uipr)
+        let mut uipr: [u8; 4] = [0; 4];
+        self.read(Reg::UIPR0.addr(), COMMON_BLOCK_OFFSET, &mut uipr)?;
+        Ok(uipr.into())
     }
 
     /// Get the unreachable port.
@@ -1774,9 +1777,9 @@ pub trait Registers {
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn sn_dipr(&mut self, sn: Sn) -> Result<Ipv4Addr, Self::Error> {
-        let mut dipr: Ipv4Addr = Ipv4Addr::UNSPECIFIED;
-        self.read(SnReg::DIPR0.addr(), sn.block(), &mut dipr.octets)?;
-        Ok(dipr)
+        let mut dipr: [u8; 4] = [0; 4];
+        self.read(SnReg::DIPR0.addr(), sn.block(), &mut dipr)?;
+        Ok(dipr.into())
     }
 
     /// Set the socket destination IP address.
@@ -1799,7 +1802,7 @@ pub trait Registers {
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn set_sn_dipr(&mut self, sn: Sn, dipr: &Ipv4Addr) -> Result<(), Self::Error> {
-        self.write(SnReg::DIPR0.addr(), sn.block(), &dipr.octets)
+        self.write(SnReg::DIPR0.addr(), sn.block(), &dipr.octets())
     }
 
     /// Get the socket destination port.
@@ -1876,11 +1879,15 @@ pub trait Registers {
     /// #   ehm1::spi::Transaction::read_vec(vec![0, 0, 0, 0, 0, 0]),
     /// #   ehm1::spi::Transaction::transaction_end(),
     /// # ]);
-    /// use w5500_ll::{eh1::vdm::W5500, net::SocketAddrV4, Registers, Sn};
+    /// use w5500_ll::{
+    ///     eh1::vdm::W5500,
+    ///     net::{Ipv4Addr, SocketAddrV4},
+    ///     Registers, Sn,
+    /// };
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let addr = w5500.sn_dest(Sn::Sn0)?;
-    /// assert_eq!(addr, SocketAddrV4::default());
+    /// assert_eq!(addr, SocketAddrV4::new(Ipv4Addr::new(0, 0, 0, 0), 0));
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn sn_dest(&mut self, sn: Sn) -> Result<SocketAddrV4, Self::Error> {
@@ -1919,10 +1926,10 @@ pub trait Registers {
     /// ```
     fn set_sn_dest(&mut self, sn: Sn, addr: &SocketAddrV4) -> Result<(), Self::Error> {
         let buf: [u8; 6] = [
-            addr.ip().octets[0],
-            addr.ip().octets[1],
-            addr.ip().octets[2],
-            addr.ip().octets[3],
+            addr.ip().octets()[0],
+            addr.ip().octets()[1],
+            addr.ip().octets()[2],
+            addr.ip().octets()[3],
             (addr.port() >> 8) as u8,
             addr.port() as u8,
         ];

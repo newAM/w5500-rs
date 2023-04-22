@@ -205,7 +205,7 @@ fn end_to_end() {
         .set_hops(0)
         .set_xid(msg.xid())
         .set_flags(Flags::default().set_broadcast())
-        .set_chaddr(&Ipv4Addr::LOCALHOST.octets)
+        .set_chaddr(&Ipv4Addr::LOCALHOST.octets())
         .set_yiaddr(YIADDR)
         .opts_mut()
         .insert(DhcpOption::MessageType(MessageType::Offer));
@@ -225,7 +225,7 @@ fn end_to_end() {
         .set_hops(0)
         .set_xid(msg.xid())
         .set_flags(Flags::default().set_broadcast())
-        .set_chaddr(&Ipv4Addr::LOCALHOST.octets)
+        .set_chaddr(&Ipv4Addr::LOCALHOST.octets())
         .set_yiaddr([1, 2, 3, 4])
         .opts_mut()
         .insert(DhcpOption::MessageType(MessageType::Ack));

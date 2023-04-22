@@ -64,7 +64,7 @@ impl Registers for MockW5500 {
             // reading the UDP header
             assert_eq!(buf.len(), UDP_HEADER_LEN);
 
-            buf[..4].copy_from_slice(&self.header.origin.ip().octets);
+            buf[..4].copy_from_slice(&self.header.origin.ip().octets());
             buf[4..6].copy_from_slice(&self.header.origin.port().to_be_bytes());
             buf[6..8].copy_from_slice(&self.header.len.to_be_bytes());
         } else {
