@@ -11,6 +11,7 @@
 //! All features are disabled by default.
 //!
 //! * `async`: **Nightly only.** Implement asynchronous traits.
+//! * `ip_in_core`: **Nightly only.** Use `core::net` networking types.
 //!
 //! # Notes
 //!
@@ -263,6 +264,7 @@ impl SocketRegs {
     };
 
     pub fn dest(&self) -> std::net::SocketAddrV4 {
+        #[cfg_attr(feature = "ip_in_core", allow(clippy::useless_conversion))]
         SocketAddrV4::new(self.dipr.into(), self.dport)
     }
 }
@@ -391,6 +393,7 @@ impl W5500 {
                 self.sim_set_sn_sr(sn, SocketStatus::Init);
             }
             Ok(Protocol::Udp) => {
+                #[cfg_attr(feature = "ip_in_core", allow(clippy::useless_conversion))]
                 let local = SocketAddrV4::new(sipr.into(), socket.regs.port);
                 log::info!("[{sn:?}] binding UDP socket to {local}");
 
@@ -685,24 +688,24 @@ impl W5500 {
 
         let ret: u8 = match decoded {
             Ok(Reg::MR) => self.regs.mr,
-            Ok(Reg::GAR0) => self.regs.gar.octets[0],
-            Ok(Reg::GAR1) => self.regs.gar.octets[1],
-            Ok(Reg::GAR2) => self.regs.gar.octets[2],
-            Ok(Reg::GAR3) => self.regs.gar.octets[3],
-            Ok(Reg::SUBR0) => self.regs.subr.octets[0],
-            Ok(Reg::SUBR1) => self.regs.subr.octets[1],
-            Ok(Reg::SUBR2) => self.regs.subr.octets[2],
-            Ok(Reg::SUBR3) => self.regs.subr.octets[3],
+            Ok(Reg::GAR0) => self.regs.gar.octets()[0],
+            Ok(Reg::GAR1) => self.regs.gar.octets()[1],
+            Ok(Reg::GAR2) => self.regs.gar.octets()[2],
+            Ok(Reg::GAR3) => self.regs.gar.octets()[3],
+            Ok(Reg::SUBR0) => self.regs.subr.octets()[0],
+            Ok(Reg::SUBR1) => self.regs.subr.octets()[1],
+            Ok(Reg::SUBR2) => self.regs.subr.octets()[2],
+            Ok(Reg::SUBR3) => self.regs.subr.octets()[3],
             Ok(Reg::SHAR0) => self.regs.shar.octets[0],
             Ok(Reg::SHAR1) => self.regs.shar.octets[1],
             Ok(Reg::SHAR2) => self.regs.shar.octets[2],
             Ok(Reg::SHAR3) => self.regs.shar.octets[3],
             Ok(Reg::SHAR4) => self.regs.shar.octets[4],
             Ok(Reg::SHAR5) => self.regs.shar.octets[5],
-            Ok(Reg::SIPR0) => self.regs.sipr.octets[0],
-            Ok(Reg::SIPR1) => self.regs.sipr.octets[1],
-            Ok(Reg::SIPR2) => self.regs.sipr.octets[2],
-            Ok(Reg::SIPR3) => self.regs.sipr.octets[3],
+            Ok(Reg::SIPR0) => self.regs.sipr.octets()[0],
+            Ok(Reg::SIPR1) => self.regs.sipr.octets()[1],
+            Ok(Reg::SIPR2) => self.regs.sipr.octets()[2],
+            Ok(Reg::SIPR3) => self.regs.sipr.octets()[3],
             Ok(Reg::INTLEVEL0) => self.regs.intlevel.to_be_bytes()[0],
             Ok(Reg::INTLEVEL1) => self.regs.intlevel.to_be_bytes()[1],
             Ok(Reg::IR) => self.regs.ir,
@@ -724,10 +727,10 @@ impl W5500 {
             Ok(Reg::PSID1) => self.regs.psid.to_be_bytes()[1],
             Ok(Reg::PMRU0) => self.regs.pmru.to_be_bytes()[0],
             Ok(Reg::PMRU1) => self.regs.pmru.to_be_bytes()[1],
-            Ok(Reg::UIPR0) => self.regs.uipr.octets[0],
-            Ok(Reg::UIPR1) => self.regs.uipr.octets[1],
-            Ok(Reg::UIPR2) => self.regs.uipr.octets[2],
-            Ok(Reg::UIPR3) => self.regs.uipr.octets[3],
+            Ok(Reg::UIPR0) => self.regs.uipr.octets()[0],
+            Ok(Reg::UIPR1) => self.regs.uipr.octets()[1],
+            Ok(Reg::UIPR2) => self.regs.uipr.octets()[2],
+            Ok(Reg::UIPR3) => self.regs.uipr.octets()[3],
             Ok(Reg::UPORTR0) => self.regs.uportr.to_be_bytes()[0],
             Ok(Reg::UPORTR1) => self.regs.uportr.to_be_bytes()[1],
             Ok(Reg::PHYCFGR) => self.regs.phycfgr,
@@ -767,24 +770,60 @@ impl W5500 {
                     log::warn!("[W] [COM] MR force ARP bit unimplemented");
                 }
             }
-            Ok(Reg::GAR0) => self.regs.gar.octets[0] = byte,
-            Ok(Reg::GAR1) => self.regs.gar.octets[1] = byte,
-            Ok(Reg::GAR2) => self.regs.gar.octets[2] = byte,
-            Ok(Reg::GAR3) => self.regs.gar.octets[3] = byte,
-            Ok(Reg::SUBR0) => self.regs.subr.octets[0] = byte,
-            Ok(Reg::SUBR1) => self.regs.subr.octets[1] = byte,
-            Ok(Reg::SUBR2) => self.regs.subr.octets[2] = byte,
-            Ok(Reg::SUBR3) => self.regs.subr.octets[3] = byte,
+            Ok(Reg::GAR0) => {
+                let [_, b, c, d] = self.regs.gar.octets();
+                self.regs.gar = Ipv4Addr::new(byte, b, c, d);
+            }
+            Ok(Reg::GAR1) => {
+                let [a, _, c, d] = self.regs.gar.octets();
+                self.regs.gar = Ipv4Addr::new(a, byte, c, d);
+            }
+            Ok(Reg::GAR2) => {
+                let [a, b, _, d] = self.regs.gar.octets();
+                self.regs.gar = Ipv4Addr::new(a, b, byte, d);
+            }
+            Ok(Reg::GAR3) => {
+                let [a, b, c, _] = self.regs.gar.octets();
+                self.regs.gar = Ipv4Addr::new(a, b, c, byte);
+            }
+            Ok(Reg::SUBR0) => {
+                let [_, b, c, d] = self.regs.subr.octets();
+                self.regs.subr = Ipv4Addr::new(byte, b, c, d);
+            }
+            Ok(Reg::SUBR1) => {
+                let [a, _, c, d] = self.regs.subr.octets();
+                self.regs.subr = Ipv4Addr::new(a, byte, c, d);
+            }
+            Ok(Reg::SUBR2) => {
+                let [a, b, _, d] = self.regs.subr.octets();
+                self.regs.subr = Ipv4Addr::new(a, b, byte, d);
+            }
+            Ok(Reg::SUBR3) => {
+                let [a, b, c, _] = self.regs.subr.octets();
+                self.regs.subr = Ipv4Addr::new(a, b, c, byte);
+            }
             Ok(Reg::SHAR0) => self.regs.shar.octets[0] = byte,
             Ok(Reg::SHAR1) => self.regs.shar.octets[1] = byte,
             Ok(Reg::SHAR2) => self.regs.shar.octets[2] = byte,
             Ok(Reg::SHAR3) => self.regs.shar.octets[3] = byte,
             Ok(Reg::SHAR4) => self.regs.shar.octets[4] = byte,
             Ok(Reg::SHAR5) => self.regs.shar.octets[5] = byte,
-            Ok(Reg::SIPR0) => self.regs.sipr.octets[0] = byte,
-            Ok(Reg::SIPR1) => self.regs.sipr.octets[1] = byte,
-            Ok(Reg::SIPR2) => self.regs.sipr.octets[2] = byte,
-            Ok(Reg::SIPR3) => self.regs.sipr.octets[3] = byte,
+            Ok(Reg::SIPR0) => {
+                let [_, b, c, d] = self.regs.sipr.octets();
+                self.regs.sipr = Ipv4Addr::new(byte, b, c, d);
+            }
+            Ok(Reg::SIPR1) => {
+                let [a, _, c, d] = self.regs.sipr.octets();
+                self.regs.sipr = Ipv4Addr::new(a, byte, c, d);
+            }
+            Ok(Reg::SIPR2) => {
+                let [a, b, _, d] = self.regs.sipr.octets();
+                self.regs.sipr = Ipv4Addr::new(a, b, byte, d);
+            }
+            Ok(Reg::SIPR3) => {
+                let [a, b, c, _] = self.regs.sipr.octets();
+                self.regs.sipr = Ipv4Addr::new(a, b, c, byte);
+            }
             Ok(Reg::INTLEVEL0) => {
                 self.regs.intlevel &= 0x00FF;
                 self.regs.intlevel |= u16::from(byte) << 8;
@@ -874,10 +913,10 @@ impl W5500 {
             Ok(SnReg::DHAR3) => socket.regs.dhar.octets[3],
             Ok(SnReg::DHAR4) => socket.regs.dhar.octets[4],
             Ok(SnReg::DHAR5) => socket.regs.dhar.octets[5],
-            Ok(SnReg::DIPR0) => socket.regs.dipr.octets[0],
-            Ok(SnReg::DIPR1) => socket.regs.dipr.octets[1],
-            Ok(SnReg::DIPR2) => socket.regs.dipr.octets[2],
-            Ok(SnReg::DIPR3) => socket.regs.dipr.octets[3],
+            Ok(SnReg::DIPR0) => socket.regs.dipr.octets()[0],
+            Ok(SnReg::DIPR1) => socket.regs.dipr.octets()[1],
+            Ok(SnReg::DIPR2) => socket.regs.dipr.octets()[2],
+            Ok(SnReg::DIPR3) => socket.regs.dipr.octets()[3],
             Ok(SnReg::DPORT0) => socket.regs.dport.to_be_bytes()[0],
             Ok(SnReg::DPORT1) => socket.regs.dport.to_be_bytes()[1],
             Ok(SnReg::MSSR0) => socket.regs.mssr.to_be_bytes()[0],
@@ -982,10 +1021,22 @@ impl W5500 {
             Ok(SnReg::DHAR3) => socket.regs.dhar.octets[3] = byte,
             Ok(SnReg::DHAR4) => socket.regs.dhar.octets[4] = byte,
             Ok(SnReg::DHAR5) => socket.regs.dhar.octets[5] = byte,
-            Ok(SnReg::DIPR0) => socket.regs.dipr.octets[0] = byte,
-            Ok(SnReg::DIPR1) => socket.regs.dipr.octets[1] = byte,
-            Ok(SnReg::DIPR2) => socket.regs.dipr.octets[2] = byte,
-            Ok(SnReg::DIPR3) => socket.regs.dipr.octets[3] = byte,
+            Ok(SnReg::DIPR0) => {
+                let [_, b, c, d] = socket.regs.dipr.octets();
+                socket.regs.dipr = Ipv4Addr::new(byte, b, c, d);
+            }
+            Ok(SnReg::DIPR1) => {
+                let [a, _, c, d] = socket.regs.dipr.octets();
+                socket.regs.dipr = Ipv4Addr::new(a, byte, c, d);
+            }
+            Ok(SnReg::DIPR2) => {
+                let [a, b, _, d] = socket.regs.dipr.octets();
+                socket.regs.dipr = Ipv4Addr::new(a, b, byte, d);
+            }
+            Ok(SnReg::DIPR3) => {
+                let [a, b, c, _] = socket.regs.dipr.octets();
+                socket.regs.dipr = Ipv4Addr::new(a, b, c, byte);
+            }
             Ok(SnReg::DPORT0) => {
                 socket.regs.dport &= 0x00FF;
                 socket.regs.dport |= u16::from(byte) << 8;

@@ -38,6 +38,8 @@ All features are disabled by default.
 * `eha0a`: **Nightly only.**
   Implements the [`aio::Registers`] trait for types in the [`eh1`] module
   using the `embedded-hal-async` alpha traits.
+* `ip_in_core`: **Nightly only.**
+  Use `core::net` types for `Ipv4Addr` and `SocketAddrV4`.
 * `std`: Enables conversion between [`std::net`] and [`w5500_ll::net`] types.
   This is for testing purposes only, the `std` flag will not work on
   embedded systems because it uses the standard library.

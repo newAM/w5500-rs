@@ -12,9 +12,10 @@ categories = ["embedded", "hardware-support", "no-std"]
 homepage = "https://github.com/newAM/w5500-rs"
 
 [features]
+defmt = ["w5500-hl/defmt", "dep:defmt", "heapless/defmt-impl"]
 eh0 = ["w5500-hl/eh0"]
 eh1 = ["w5500-hl/eh1"]
-defmt = ["w5500-hl/defmt", "dep:defmt", "heapless/defmt-impl"]
+ip_in_core = ["w5500-hl/ip_in_core"]
 std = ["w5500-hl/std"]
 
 [dependencies]
@@ -30,7 +31,7 @@ sha2 = { version = "0.10", default-features = false }
 subtle = { version = "2", default-features = false }
 
 # optional
-defmt = { version = "0.3", optional = true }
+defmt = { version = "0.3.4", optional = true }
 log = { version = "0.4", optional = true }
 p256-cm4 = { version = "0.3", optional = true }
 

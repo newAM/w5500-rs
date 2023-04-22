@@ -9,15 +9,20 @@
 //! [`std::net`]: https://doc.rust-lang.org/std/net/index.html
 //! [RFC 2832]: https://github.com/rust-lang/rfcs/pull/2832
 
+#[cfg(feature = "ip_in_core")]
+pub use core::net::{Ipv4Addr, SocketAddrV4};
+
 /// Ipv4Addr address struct.
 ///
 /// Can be instantiated with [`Ipv4Addr::new`].
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Debug, Hash, Default)]
+#[cfg(not(feature = "ip_in_core"))]
 pub struct Ipv4Addr {
     /// Octets of the [`Ipv4Addr`] address.
-    pub octets: [u8; 4],
+    octets: [u8; 4],
 }
 
+#[cfg(not(feature = "ip_in_core"))]
 impl Ipv4Addr {
     /// Creates a new IPv4 address from four eight-bit octets.
     ///
@@ -31,6 +36,7 @@ impl Ipv4Addr {
     /// let addr = Ipv4Addr::new(127, 0, 0, 1);
     /// ```
     #[allow(clippy::many_single_char_names)]
+    #[must_use]
     pub const fn new(a: u8, b: u8, c: u8, d: u8) -> Ipv4Addr {
         Ipv4Addr {
             octets: [a, b, c, d],
@@ -73,6 +79,22 @@ impl Ipv4Addr {
     /// ```
     pub const BROADCAST: Self = Ipv4Addr::new(255, 255, 255, 255);
 
+    /// Returns the four eight-bit integers that make up this address.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use w5500_ll::net::Ipv4Addr;
+    ///
+    /// let addr = Ipv4Addr::new(127, 0, 0, 1);
+    /// assert_eq!(addr.octets(), [127, 0, 0, 1]);
+    /// ```
+    #[must_use]
+    #[inline]
+    pub const fn octets(&self) -> [u8; 4] {
+        self.octets
+    }
+
     /// Returns [`true`] for the special 'unspecified' address (0.0.0.0).
     ///
     /// This property is defined in _UNIX Network Programming, Second Edition_,
@@ -88,6 +110,7 @@ impl Ipv4Addr {
     /// assert_eq!(Ipv4Addr::new(0, 0, 0, 0).is_unspecified(), true);
     /// assert_eq!(Ipv4Addr::new(45, 22, 13, 197).is_unspecified(), false);
     /// ```
+    #[must_use]
     pub const fn is_unspecified(&self) -> bool {
         self.octets[0] == 0 && self.octets[1] == 0 && self.octets[2] == 0 && self.octets[3] == 0
     }
@@ -106,6 +129,7 @@ impl Ipv4Addr {
     /// assert_eq!(Ipv4Addr::new(127, 0, 0, 1).is_loopback(), true);
     /// assert_eq!(Ipv4Addr::new(45, 22, 13, 197).is_loopback(), false);
     /// ```
+    #[must_use]
     pub const fn is_loopback(&self) -> bool {
         self.octets[0] == 127
     }
@@ -134,6 +158,7 @@ impl Ipv4Addr {
     /// assert_eq!(Ipv4Addr::new(192, 169, 0, 2).is_private(), false);
     /// ```
     #[allow(clippy::manual_range_contains)]
+    #[must_use]
     pub const fn is_private(&self) -> bool {
         match self.octets {
             [10, ..] => true,
@@ -158,6 +183,7 @@ impl Ipv4Addr {
     /// assert_eq!(Ipv4Addr::new(169, 254, 10, 65).is_link_local(), true);
     /// assert_eq!(Ipv4Addr::new(16, 89, 10, 65).is_link_local(), false);
     /// ```
+    #[must_use]
     pub const fn is_link_local(&self) -> bool {
         matches!(self.octets, [169, 254, ..])
     }
@@ -178,6 +204,7 @@ impl Ipv4Addr {
     /// assert_eq!(Ipv4Addr::new(236, 168, 10, 65).is_multicast(), true);
     /// assert_eq!(Ipv4Addr::new(172, 16, 10, 65).is_multicast(), false);
     /// ```
+    #[must_use]
     pub const fn is_multicast(&self) -> bool {
         self.octets[0] >= 224 && self.octets[0] <= 239
     }
@@ -196,6 +223,7 @@ impl Ipv4Addr {
     /// assert_eq!(Ipv4Addr::new(255, 255, 255, 255).is_broadcast(), true);
     /// assert_eq!(Ipv4Addr::new(236, 168, 10, 65).is_broadcast(), false);
     /// ```
+    #[must_use]
     pub const fn is_broadcast(&self) -> bool {
         u32::from_be_bytes(self.octets) == u32::from_be_bytes(Self::BROADCAST.octets)
     }
@@ -221,6 +249,7 @@ impl Ipv4Addr {
     /// assert_eq!(Ipv4Addr::new(193, 34, 17, 19).is_documentation(), false);
     /// ```
     #[allow(clippy::match_like_matches_macro)]
+    #[must_use]
     pub const fn is_documentation(&self) -> bool {
         match self.octets {
             [192, 0, 2, _] => true,
@@ -231,6 +260,7 @@ impl Ipv4Addr {
     }
 }
 
+#[cfg(not(feature = "ip_in_core"))]
 impl ::core::fmt::Display for Ipv4Addr {
     /// String formatter for [`Ipv4Addr`] addresses.
     fn fmt(&self, fmt: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
@@ -242,6 +272,7 @@ impl ::core::fmt::Display for Ipv4Addr {
     }
 }
 
+#[cfg(not(feature = "ip_in_core"))]
 impl From<[u8; 4]> for Ipv4Addr {
     /// Creates an `Ipv4Addr` from a four element byte array.
     ///
@@ -258,7 +289,7 @@ impl From<[u8; 4]> for Ipv4Addr {
     }
 }
 
-#[cfg(feature = "defmt")]
+#[cfg(all(feature = "defmt", not(feature = "ip_in_core")))]
 impl defmt::Format for Ipv4Addr {
     fn format(&self, fmt: defmt::Formatter) {
         defmt::write!(
@@ -272,7 +303,7 @@ impl defmt::Format for Ipv4Addr {
     }
 }
 
-#[cfg(feature = "std")]
+#[cfg(all(feature = "std", not(feature = "ip_in_core")))]
 impl From<std::net::Ipv4Addr> for Ipv4Addr {
     fn from(ip: std::net::Ipv4Addr) -> Self {
         Ipv4Addr::new(
@@ -284,7 +315,7 @@ impl From<std::net::Ipv4Addr> for Ipv4Addr {
     }
 }
 
-#[cfg(feature = "std")]
+#[cfg(all(feature = "std", not(feature = "ip_in_core")))]
 impl From<&std::net::Ipv4Addr> for Ipv4Addr {
     fn from(ip: &std::net::Ipv4Addr) -> Self {
         Ipv4Addr::new(
@@ -296,28 +327,28 @@ impl From<&std::net::Ipv4Addr> for Ipv4Addr {
     }
 }
 
-#[cfg(feature = "std")]
+#[cfg(all(feature = "std", not(feature = "ip_in_core")))]
 impl From<Ipv4Addr> for std::net::Ipv4Addr {
     fn from(ip: Ipv4Addr) -> Self {
         std::net::Ipv4Addr::new(ip.octets[0], ip.octets[1], ip.octets[2], ip.octets[3])
     }
 }
 
-#[cfg(feature = "std")]
+#[cfg(all(feature = "std", not(feature = "ip_in_core")))]
 impl From<&Ipv4Addr> for std::net::Ipv4Addr {
     fn from(ip: &Ipv4Addr) -> Self {
         std::net::Ipv4Addr::new(ip.octets[0], ip.octets[1], ip.octets[2], ip.octets[3])
     }
 }
 
-#[cfg(feature = "std")]
+#[cfg(all(feature = "std", not(feature = "ip_in_core")))]
 impl From<Ipv4Addr> for std::net::IpAddr {
     fn from(ip: Ipv4Addr) -> Self {
         std::net::IpAddr::V4(ip.into())
     }
 }
 
-#[cfg(feature = "std")]
+#[cfg(all(feature = "std", not(feature = "ip_in_core")))]
 impl From<&Ipv4Addr> for std::net::IpAddr {
     fn from(ip: &Ipv4Addr) -> Self {
         std::net::IpAddr::V4(ip.into())
@@ -443,11 +474,13 @@ impl From<[u8; 6]> for Eui48Addr {
 /// [`IPv4` address]: Ipv4Addr
 /// [`std::net::SocketAddrV4`]: https://doc.rust-lang.org/std/net/struct.SocketAddrV4.html
 #[derive(Debug, PartialEq, Eq, Clone, Copy, PartialOrd, Ord, Hash, Default)]
+#[cfg(not(feature = "ip_in_core"))]
 pub struct SocketAddrV4 {
     ip: Ipv4Addr,
     port: u16,
 }
 
+#[cfg(not(feature = "ip_in_core"))]
 impl SocketAddrV4 {
     /// Creates a new socket address from an [`IPv4` address] and a port number.
     ///
@@ -460,6 +493,7 @@ impl SocketAddrV4 {
     ///
     /// let addr = SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), 8080);
     /// ```
+    #[must_use]
     pub const fn new(ip: Ipv4Addr, port: u16) -> SocketAddrV4 {
         SocketAddrV4 { ip, port }
     }
@@ -474,6 +508,7 @@ impl SocketAddrV4 {
     /// let addr = SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), 8080);
     /// assert_eq!(addr.ip(), &Ipv4Addr::new(127, 0, 0, 1));
     /// ```
+    #[must_use]
     pub const fn ip(&self) -> &Ipv4Addr {
         &self.ip
     }
@@ -503,6 +538,7 @@ impl SocketAddrV4 {
     /// let addr = SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), 8080);
     /// assert_eq!(addr.port(), 8080);
     /// ```
+    #[must_use]
     pub const fn port(&self) -> u16 {
         self.port
     }
@@ -523,6 +559,7 @@ impl SocketAddrV4 {
     }
 }
 
+#[cfg(not(feature = "ip_in_core"))]
 impl ::core::fmt::Display for SocketAddrV4 {
     /// String formatter for [`SocketAddrV4`] addresses.
     fn fmt(&self, fmt: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
@@ -530,49 +567,49 @@ impl ::core::fmt::Display for SocketAddrV4 {
     }
 }
 
-#[cfg(feature = "defmt")]
+#[cfg(all(feature = "defmt", not(feature = "ip_in_core")))]
 impl defmt::Format for SocketAddrV4 {
     fn format(&self, fmt: defmt::Formatter) {
         defmt::write!(fmt, "{:?}:{}", self.ip(), self.port())
     }
 }
 
-#[cfg(feature = "std")]
+#[cfg(all(feature = "std", not(feature = "ip_in_core")))]
 impl From<std::net::SocketAddrV4> for SocketAddrV4 {
     fn from(addr: std::net::SocketAddrV4) -> Self {
         SocketAddrV4::new(addr.ip().into(), addr.port())
     }
 }
 
-#[cfg(feature = "std")]
+#[cfg(all(feature = "std", not(feature = "ip_in_core")))]
 impl From<&std::net::SocketAddrV4> for SocketAddrV4 {
     fn from(addr: &std::net::SocketAddrV4) -> Self {
         SocketAddrV4::new(addr.ip().into(), addr.port())
     }
 }
 
-#[cfg(feature = "std")]
+#[cfg(all(feature = "std", not(feature = "ip_in_core")))]
 impl From<SocketAddrV4> for std::net::SocketAddrV4 {
     fn from(addr: SocketAddrV4) -> Self {
         std::net::SocketAddrV4::new(addr.ip().into(), addr.port)
     }
 }
 
-#[cfg(feature = "std")]
+#[cfg(all(feature = "std", not(feature = "ip_in_core")))]
 impl From<&SocketAddrV4> for std::net::SocketAddrV4 {
     fn from(addr: &SocketAddrV4) -> Self {
         std::net::SocketAddrV4::new(addr.ip().into(), addr.port)
     }
 }
 
-#[cfg(feature = "std")]
+#[cfg(all(feature = "std", not(feature = "ip_in_core")))]
 impl From<&SocketAddrV4> for std::net::SocketAddr {
     fn from(addr: &SocketAddrV4) -> Self {
         std::net::SocketAddr::V4(addr.into())
     }
 }
 
-#[cfg(feature = "std")]
+#[cfg(all(feature = "std", not(feature = "ip_in_core")))]
 impl From<SocketAddrV4> for std::net::SocketAddr {
     fn from(addr: SocketAddrV4) -> Self {
         std::net::SocketAddr::V4(addr.into())

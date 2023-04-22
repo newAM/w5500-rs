@@ -15,10 +15,11 @@ homepage = "https://github.com/newAM/w5500-rs"
 defmt = ["w5500-ll/defmt", "dep:defmt"]
 eh0 = ["w5500-ll/eh0"]
 eh1 = ["w5500-ll/eh1"]
+ip_in_core = ["w5500-ll/ip_in_core"]
 std = ["w5500-ll/std"]
 
 [dependencies]
-defmt = { version = "0.3", optional = true }
+defmt = { version = "0.3.4", optional = true }
 w5500-ll = { path = "../ll", version = "0.10" }
 
 [dev-dependencies]

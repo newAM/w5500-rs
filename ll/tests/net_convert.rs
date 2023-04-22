@@ -1,12 +1,12 @@
-#[cfg(feature = "std")]
+#[cfg(all(feature = "std", not(feature = "ip_in_core")))]
 const STD_IPV4: std::net::Ipv4Addr = std::net::Ipv4Addr::new(1, 2, 3, 4);
-#[cfg(feature = "std")]
+#[cfg(all(feature = "std", not(feature = "ip_in_core")))]
 const STD_IP: std::net::IpAddr = std::net::IpAddr::V4(STD_IPV4);
-#[cfg(feature = "std")]
+#[cfg(all(feature = "std", not(feature = "ip_in_core")))]
 const W5500_IPV4: w5500_ll::net::Ipv4Addr = w5500_ll::net::Ipv4Addr::new(1, 2, 3, 4);
 
 #[test]
-#[cfg(feature = "std")]
+#[cfg(all(feature = "std", not(feature = "ip_in_core")))]
 fn ip() {
     assert_eq!(w5500_ll::net::Ipv4Addr::from(STD_IPV4), W5500_IPV4);
     assert_eq!(std::net::Ipv4Addr::from(W5500_IPV4), STD_IPV4);
@@ -18,7 +18,7 @@ fn ip() {
 }
 
 #[test]
-#[cfg(feature = "std")]
+#[cfg(all(feature = "std", not(feature = "ip_in_core")))]
 fn socket() {
     let std_sv4: std::net::SocketAddrV4 = std::net::SocketAddrV4::new(STD_IPV4, 1234u16);
     let std_s: std::net::SocketAddr = std::net::SocketAddr::V4(std_sv4);

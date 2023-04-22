@@ -85,6 +85,20 @@ jobs:
         if: ${{ matrix.target == 'thumbv7em-none-eabi' }}
       - run: cargo build --target ${{ matrix.target }} -p w5500-mqtt --features w5500-tls,p256-cm4
         if: ${{ matrix.target == 'thumbv7em-none-eabi' }}
+      - run: cargo build --target ${{ matrix.target }} -p w5500-ll   --features ip_in_core
+        if: ${{ matrix.toolchain == 'nightly' }}
+      - run: cargo build --target ${{ matrix.target }} -p w5500-ll   --features ip_in_core,defmt
+        if: ${{ matrix.toolchain == 'nightly' }}
+      - run: cargo build --target ${{ matrix.target }} -p w5500-hl   --features ip_in_core
+        if: ${{ matrix.toolchain == 'nightly' }}
+      - run: cargo build --target ${{ matrix.target }} -p w5500-dhcp --features ip_in_core
+        if: ${{ matrix.toolchain == 'nightly' }}
+      - run: cargo build --target ${{ matrix.target }} -p w5500-dns  --features ip_in_core
+        if: ${{ matrix.toolchain == 'nightly' }}
+      - run: cargo build --target ${{ matrix.target }} -p w5500-mqtt --features ip_in_core
+        if: ${{ matrix.toolchain == 'nightly' }}
+      - run: cargo build --target ${{ matrix.target }} -p w5500-tls  --features ip_in_core
+        if: ${{ matrix.toolchain == 'nightly' }}
 
   test:
     name: Test

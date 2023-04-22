@@ -12,13 +12,15 @@ categories = ["embedded", "hardware-support", "no-std"]
 homepage = "https://github.com/newAM/w5500-rs"
 
 [features]
-std = []
 async = []
-eha0a = ["async", "dep:eha0a", "dep:eh1"]
+defmt = ["dep:defmt"]
 eh1 = ["dep:eh1"]
+eha0a = ["async", "dep:eha0a", "dep:eh1"]
+ip_in_core = ["defmt?/ip_in_core"]
+std = []
 
 [dependencies]
-defmt = { version = "0.3", optional = true }
+defmt = { version = "0.3.4", optional = true }
 eh0 = { package = "embedded-hal", version = "0.2.7", optional = true }
 eh1 = { package = "embedded-hal", version = "=1.0.0-alpha.10", optional = true }
 eha0a = { package = "embedded-hal-async", version = "=0.2.0-alpha.1", optional = true }
