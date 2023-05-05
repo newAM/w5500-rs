@@ -18,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Changed the `embedded-hal` version `0.2` feature name to `eh0`.
 - Renamed the `blocking` module to `eh0`.
-- Moved the `reset` function into the `eh0` and `eh1` modules.
+- Moved the `reset` function and `spi::MODE` constant into the `eh0` and `eh1` modules.
 - Replaced public `octets` member on `net::Ipv4Addr` with an `octets()` method.
 
 ## [0.10.4] - 2022-07-14

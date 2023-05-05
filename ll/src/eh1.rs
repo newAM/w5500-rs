@@ -44,3 +44,11 @@ where
     delay.delay_ms(2);
     Ok(())
 }
+
+/// Recommended W5500 SPI mode.
+///
+/// The W5500 may operate in SPI mode 0 or SPI mode 3.
+pub const MODE: eh1::spi::Mode = eh1::spi::Mode {
+    polarity: eh1::spi::Polarity::IdleLow,
+    phase: eh1::spi::Phase::CaptureOnFirstTransition,
+};
