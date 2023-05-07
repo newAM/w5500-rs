@@ -310,6 +310,11 @@ impl<'a, W: Registers> PktSer<'a, W> {
         self.writer.write_all(&ip.octets())
     }
 
+    fn set_option_server_id(&mut self, ip: &Ipv4Addr) -> Result<(), Error<W::Error>> {
+        self.writer.write_all(&[Options::ServerId.into(), 4])?;
+        self.writer.write_all(&ip.octets())
+    }
+
     fn set_option_end(&mut self) -> Result<(), Error<W::Error>> {
         self.writer.write_all(&[Options::End.into()])
     }
@@ -335,6 +340,7 @@ impl<'a, W: Registers> PktSer<'a, W> {
         mac: &Eui48Addr,
         ip: &Ipv4Addr,
         hostname: Hostname,
+        server: &Ipv4Addr,
         xid: u32,
     ) -> Result<UdpWriter<'a, W>, Error<W::Error>> {
         self.prepare_message(mac, xid)?;
@@ -343,6 +349,7 @@ impl<'a, W: Registers> PktSer<'a, W> {
         self.set_option_hostname(hostname)?;
         self.set_option_parameter_request()?;
         self.set_option_requested_ip(ip)?;
+        self.set_option_server_id(server)?;
         self.set_option_end()?;
         Ok(self.writer)
     }
@@ -369,11 +376,12 @@ pub fn send_dhcp_request<W: Registers>(
     mac: &Eui48Addr,
     ip: &Ipv4Addr,
     hostname: Hostname,
+    server: &Ipv4Addr,
     xid: u32,
 ) -> Result<(), Error<W::Error>> {
     let writer: UdpWriter<W> = w5500.udp_writer(sn)?;
     PktSer::from(writer)
-        .dhcp_request(mac, ip, hostname, xid)?
+        .dhcp_request(mac, ip, hostname, server, xid)?
         .send()?;
     Ok(())
 }
@@ -429,6 +437,14 @@ impl<'a, W: Registers> PktDe<'a, W> {
     /// know its own address (ciaddr was 0).
     pub fn yiaddr(&mut self) -> Result<Ipv4Addr, Error<W::Error>> {
         self.reader.seek(SeekFrom::Start(16))?;
+        let mut buf: [u8; 4] = [0; 4];
+        self.reader.read_exact(&mut buf)?;
+        Ok(buf.into())
+    }
+
+    /// (next) server IP address
+    pub fn siaddr(&mut self) -> Result<Ipv4Addr, Error<W::Error>> {
+        self.reader.seek(SeekFrom::Start(20))?;
         let mut buf: [u8; 4] = [0; 4];
         self.reader.read_exact(&mut buf)?;
         Ok(buf.into())

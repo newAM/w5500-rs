@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Changed the name of the `embedded-hal` feature to `eh0`.
 
+### Fixed
+- Fixed compatibility with dnsmasq by adding a server identifier (option 54) to the REQUEST.
+
 ## [0.4.2] - 2022-07-14
 ### Fixed
 - Fixed compilation with the `"defmt"` feature.
