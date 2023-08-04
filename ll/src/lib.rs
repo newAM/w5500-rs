@@ -13,17 +13,18 @@
 //! Reading the VERSIONR register (a constant value).
 //!
 //! ```
-//! # let spi = ehm1::spi::Mock::new(&[
-//! #   ehm1::spi::Transaction::transaction_start(),
-//! #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x39, 0x00]),
-//! #   ehm1::spi::Transaction::read(0x04),
-//! #   ehm1::spi::Transaction::transaction_end(),
+//! # let spi = ehm::eh1::spi::Mock::new(&[
+//! #   ehm::eh1::spi::Transaction::transaction_start(),
+//! #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x39, 0x00]),
+//! #   ehm::eh1::spi::Transaction::read(0x04),
+//! #   ehm::eh1::spi::Transaction::transaction_end(),
 //! # ]);
 //! use w5500_ll::{eh1::vdm::W5500, Registers};
 //!
 //! let mut w5500 = W5500::new(spi);
 //! let version: u8 = w5500.version()?;
 //! assert_eq!(version, 0x04);
+//! # w5500.free().done();
 //! # Ok::<(), eh1::spi::ErrorKind>(())
 //! ```
 //!
@@ -110,18 +111,19 @@ const SOCKET_RX_OFFSET: u8 = 0x03;
 /// # Example
 ///
 /// ```
-/// # use ehm1 as hal;
-/// # let spi = ehm1::spi::Mock::new(&[
-/// #   ehm1::spi::Transaction::transaction_start(),
-/// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x39, 0x00]),
-/// #   ehm1::spi::Transaction::read(0x04),
-/// #   ehm1::spi::Transaction::transaction_end(),
+/// # use ehm::eh1 as hal;
+/// # let spi = ehm::eh1::spi::Mock::new(&[
+/// #   ehm::eh1::spi::Transaction::transaction_start(),
+/// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x39, 0x00]),
+/// #   ehm::eh1::spi::Transaction::read(0x04),
+/// #   ehm::eh1::spi::Transaction::transaction_end(),
 /// # ]);
 /// use w5500_ll::{eh1::vdm::W5500, Registers, VERSION};
 ///
 /// let mut w5500 = W5500::new(spi);
 /// let version: u8 = w5500.version()?;
 /// assert_eq!(version, VERSION);
+/// # w5500.free().done();
 /// # Ok::<(), eh1::spi::ErrorKind>(())
 /// ```
 pub const VERSION: u8 = 0x04;
@@ -241,11 +243,11 @@ impl Sn {
     /// As an argument of [`set_simr`]:
     ///
     /// ```
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x18, 0x04]),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x0A]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x18, 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x0A]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{
     ///     eh1::vdm::W5500,
@@ -257,6 +259,7 @@ impl Sn {
     /// // enable socket 1 and socket 3 interrupts
     /// const SOCKET_INTERRUPT_MASK: u8 = Sn1.bitmask() | Sn3.bitmask();
     /// w5500.set_simr(SOCKET_INTERRUPT_MASK)?;
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     ///
@@ -272,11 +275,11 @@ impl Sn {
     /// Check all sockets for a pending interrupt.
     ///
     /// ```
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x17, 0x00]),
-    /// #   ehm1::spi::Transaction::read(0),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x17, 0x00]),
+    /// #   ehm::eh1::spi::Transaction::read(0),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{eh1::vdm::W5500, Registers, Sn, SocketCommand};
     ///
@@ -289,6 +292,7 @@ impl Sn {
     ///         // handle socket interrupt
     ///     }
     /// }
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     #[inline]
@@ -350,40 +354,40 @@ sn_conversion_for!(isize);
 ///
 /// ```
 /// # use w5500_ll::Sn::*;
-/// # use ehm1 as hal;
-/// # let spi = ehm1::spi::Mock::new(&[
-/// #   ehm1::spi::Transaction::transaction_start(),
-/// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x01, (Sn0.block() << 3) | 0x04]),
-/// #   ehm1::spi::Transaction::write_vec(vec![SocketCommand::Close.into()]),
-/// #   ehm1::spi::Transaction::transaction_end(),
-/// #   ehm1::spi::Transaction::transaction_start(),
-/// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x01, (Sn1.block() << 3) | 0x04]),
-/// #   ehm1::spi::Transaction::write_vec(vec![SocketCommand::Close.into()]),
-/// #   ehm1::spi::Transaction::transaction_end(),
-/// #   ehm1::spi::Transaction::transaction_start(),
-/// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x01, (Sn2.block() << 3) | 0x04]),
-/// #   ehm1::spi::Transaction::write_vec(vec![SocketCommand::Close.into()]),
-/// #   ehm1::spi::Transaction::transaction_end(),
-/// #   ehm1::spi::Transaction::transaction_start(),
-/// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x01, (Sn3.block() << 3) | 0x04]),
-/// #   ehm1::spi::Transaction::write_vec(vec![SocketCommand::Close.into()]),
-/// #   ehm1::spi::Transaction::transaction_end(),
-/// #   ehm1::spi::Transaction::transaction_start(),
-/// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x01, (Sn4.block() << 3) | 0x04]),
-/// #   ehm1::spi::Transaction::write_vec(vec![SocketCommand::Close.into()]),
-/// #   ehm1::spi::Transaction::transaction_end(),
-/// #   ehm1::spi::Transaction::transaction_start(),
-/// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x01, (Sn5.block() << 3) | 0x04]),
-/// #   ehm1::spi::Transaction::write_vec(vec![SocketCommand::Close.into()]),
-/// #   ehm1::spi::Transaction::transaction_end(),
-/// #   ehm1::spi::Transaction::transaction_start(),
-/// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x01, (Sn6.block() << 3) | 0x04]),
-/// #   ehm1::spi::Transaction::write_vec(vec![SocketCommand::Close.into()]),
-/// #   ehm1::spi::Transaction::transaction_end(),
-/// #   ehm1::spi::Transaction::transaction_start(),
-/// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x01, (Sn7.block() << 3) | 0x04]),
-/// #   ehm1::spi::Transaction::write_vec(vec![SocketCommand::Close.into()]),
-/// #   ehm1::spi::Transaction::transaction_end(),
+/// # use ehm::eh1 as hal;
+/// # let spi = ehm::eh1::spi::Mock::new(&[
+/// #   ehm::eh1::spi::Transaction::transaction_start(),
+/// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x01, (Sn0.block() << 3) | 0x04]),
+/// #   ehm::eh1::spi::Transaction::write_vec(vec![SocketCommand::Close.into()]),
+/// #   ehm::eh1::spi::Transaction::transaction_end(),
+/// #   ehm::eh1::spi::Transaction::transaction_start(),
+/// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x01, (Sn1.block() << 3) | 0x04]),
+/// #   ehm::eh1::spi::Transaction::write_vec(vec![SocketCommand::Close.into()]),
+/// #   ehm::eh1::spi::Transaction::transaction_end(),
+/// #   ehm::eh1::spi::Transaction::transaction_start(),
+/// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x01, (Sn2.block() << 3) | 0x04]),
+/// #   ehm::eh1::spi::Transaction::write_vec(vec![SocketCommand::Close.into()]),
+/// #   ehm::eh1::spi::Transaction::transaction_end(),
+/// #   ehm::eh1::spi::Transaction::transaction_start(),
+/// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x01, (Sn3.block() << 3) | 0x04]),
+/// #   ehm::eh1::spi::Transaction::write_vec(vec![SocketCommand::Close.into()]),
+/// #   ehm::eh1::spi::Transaction::transaction_end(),
+/// #   ehm::eh1::spi::Transaction::transaction_start(),
+/// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x01, (Sn4.block() << 3) | 0x04]),
+/// #   ehm::eh1::spi::Transaction::write_vec(vec![SocketCommand::Close.into()]),
+/// #   ehm::eh1::spi::Transaction::transaction_end(),
+/// #   ehm::eh1::spi::Transaction::transaction_start(),
+/// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x01, (Sn5.block() << 3) | 0x04]),
+/// #   ehm::eh1::spi::Transaction::write_vec(vec![SocketCommand::Close.into()]),
+/// #   ehm::eh1::spi::Transaction::transaction_end(),
+/// #   ehm::eh1::spi::Transaction::transaction_start(),
+/// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x01, (Sn6.block() << 3) | 0x04]),
+/// #   ehm::eh1::spi::Transaction::write_vec(vec![SocketCommand::Close.into()]),
+/// #   ehm::eh1::spi::Transaction::transaction_end(),
+/// #   ehm::eh1::spi::Transaction::transaction_start(),
+/// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x01, (Sn7.block() << 3) | 0x04]),
+/// #   ehm::eh1::spi::Transaction::write_vec(vec![SocketCommand::Close.into()]),
+/// #   ehm::eh1::spi::Transaction::transaction_end(),
 /// # ]);
 /// use w5500_ll::{eh1::vdm::W5500, Registers, SocketCommand, SOCKETS};
 ///
@@ -391,6 +395,7 @@ sn_conversion_for!(isize);
 /// for socket in SOCKETS.iter() {
 ///     w5500.set_sn_cr(*socket, SocketCommand::Close)?;
 /// }
+/// # w5500.free().done();
 /// # Ok::<(), eh1::spi::ErrorKind>(())
 /// ```
 pub const SOCKETS: [Sn; 8] = [
@@ -463,17 +468,18 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x00, 0x00]),
-    /// #   ehm1::spi::Transaction::read(0),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x00, 0x00]),
+    /// #   ehm::eh1::spi::Transaction::read(0),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{eh1::vdm::W5500, Mode, Registers};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let mode: Mode = w5500.mr()?;
     /// assert_eq!(mode, Mode::default());
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn mr(&mut self) -> Result<Mode, Self::Error> {
@@ -487,17 +493,18 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x00, 0x04]),
-    /// #   ehm1::spi::Transaction::write(w5500_ll::Mode::WOL_MASK),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x00, 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write(w5500_ll::Mode::WOL_MASK),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{eh1::vdm::W5500, Mode, Registers};
     ///
     /// const MODE: Mode = Mode::DEFAULT.enable_wol();
     /// let mut w5500 = W5500::new(spi);
     /// w5500.set_mr(MODE)?;
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn set_mr(&mut self, mode: Mode) -> Result<(), Self::Error> {
@@ -509,17 +516,18 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x01, 0x00]),
-    /// #   ehm1::spi::Transaction::read_vec(vec![0, 0, 0, 0]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x01, 0x00]),
+    /// #   ehm::eh1::spi::Transaction::read_vec(vec![0, 0, 0, 0]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{eh1::vdm::W5500, net::Ipv4Addr, Registers};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let gar = w5500.gar()?;
     /// assert_eq!(gar, Ipv4Addr::UNSPECIFIED);
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn gar(&mut self) -> Result<Ipv4Addr, Self::Error> {
@@ -533,16 +541,17 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x01, 0x04]),
-    /// #   ehm1::spi::Transaction::write_vec(vec![192, 168, 0, 1]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x01, 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![192, 168, 0, 1]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{eh1::vdm::W5500, net::Ipv4Addr, Registers};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// w5500.set_gar(&Ipv4Addr::new(192, 168, 0, 1))?;
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn set_gar(&mut self, gar: &Ipv4Addr) -> Result<(), Self::Error> {
@@ -554,17 +563,18 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x05, 0x00]),
-    /// #   ehm1::spi::Transaction::read_vec(vec![0, 0, 0, 0]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x05, 0x00]),
+    /// #   ehm::eh1::spi::Transaction::read_vec(vec![0, 0, 0, 0]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{eh1::vdm::W5500, net::Ipv4Addr, Registers};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let subr = w5500.subr()?;
     /// assert_eq!(subr, Ipv4Addr::UNSPECIFIED);
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn subr(&mut self) -> Result<Ipv4Addr, Self::Error> {
@@ -578,16 +588,17 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x05, 0x04]),
-    /// #   ehm1::spi::Transaction::write_vec(vec![255, 255, 255, 0]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x05, 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![255, 255, 255, 0]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{eh1::vdm::W5500, net::Ipv4Addr, Registers};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// w5500.set_subr(&Ipv4Addr::new(255, 255, 255, 0))?;
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn set_subr(&mut self, subr: &Ipv4Addr) -> Result<(), Self::Error> {
@@ -599,17 +610,18 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x09, 0x00]),
-    /// #   ehm1::spi::Transaction::read_vec(vec![0, 0, 0, 0, 0, 0]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x09, 0x00]),
+    /// #   ehm::eh1::spi::Transaction::read_vec(vec![0, 0, 0, 0, 0, 0]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{eh1::vdm::W5500, net::Eui48Addr, Registers};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let shar = w5500.shar()?;
     /// assert_eq!(shar, Eui48Addr::UNSPECIFIED);
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn shar(&mut self) -> Result<Eui48Addr, Self::Error> {
@@ -623,16 +635,17 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x09, 0x04]),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x12, 0x34, 0, 0, 0, 0]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x09, 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x12, 0x34, 0, 0, 0, 0]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{eh1::vdm::W5500, net::Eui48Addr, Registers};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// w5500.set_shar(&Eui48Addr::new(0x12, 0x34, 0x00, 0x00, 0x00, 0x00))?;
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn set_shar(&mut self, shar: &Eui48Addr) -> Result<(), Self::Error> {
@@ -644,17 +657,18 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x0F, 0x00]),
-    /// #   ehm1::spi::Transaction::read_vec(vec![0, 0, 0, 0]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x0F, 0x00]),
+    /// #   ehm::eh1::spi::Transaction::read_vec(vec![0, 0, 0, 0]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{eh1::vdm::W5500, net::Ipv4Addr, Registers};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let sipr = w5500.sipr()?;
     /// assert_eq!(sipr, Ipv4Addr::UNSPECIFIED);
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn sipr(&mut self) -> Result<Ipv4Addr, Self::Error> {
@@ -668,16 +682,17 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x0F, 0x04]),
-    /// #   ehm1::spi::Transaction::write_vec(vec![192, 168, 0, 150]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x0F, 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![192, 168, 0, 150]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{eh1::vdm::W5500, net::Ipv4Addr, Registers};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// w5500.set_sipr(&Ipv4Addr::new(192, 168, 0, 150))?;
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn set_sipr(&mut self, sipr: &Ipv4Addr) -> Result<(), Self::Error> {
@@ -703,17 +718,18 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x13, 0x00]),
-    /// #   ehm1::spi::Transaction::read_vec(vec![0, 0]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x13, 0x00]),
+    /// #   ehm::eh1::spi::Transaction::read_vec(vec![0, 0]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{eh1::vdm::W5500, Registers};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let intlevel: u16 = w5500.intlevel()?;
     /// assert_eq!(intlevel, 0x00);
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn intlevel(&mut self) -> Result<u16, Self::Error> {
@@ -729,16 +745,17 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x13, 0x04]),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x12, 0x34]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x13, 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x12, 0x34]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{eh1::vdm::W5500, Registers};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// w5500.set_intlevel(0x1234)?;
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn set_intlevel(&mut self, intlevel: u16) -> Result<(), Self::Error> {
@@ -756,17 +773,18 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x15, 0x00]),
-    /// #   ehm1::spi::Transaction::read(0),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x15, 0x00]),
+    /// #   ehm::eh1::spi::Transaction::read(0),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{eh1::vdm::W5500, Interrupt, Registers};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let ir: Interrupt = w5500.ir()?;
     /// assert_eq!(ir, Interrupt::default());
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn ir(&mut self) -> Result<Interrupt, Self::Error> {
@@ -782,21 +800,22 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x15, 0x00]),
-    /// #   ehm1::spi::Transaction::read(0),
-    /// #   ehm1::spi::Transaction::transaction_end(),
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x15, 0x04]),
-    /// #   ehm1::spi::Transaction::write(0),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x15, 0x00]),
+    /// #   ehm::eh1::spi::Transaction::read(0),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x15, 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write(0),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{eh1::vdm::W5500, Interrupt, Registers};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let ir: Interrupt = w5500.ir()?;
     /// w5500.set_ir(ir)?;
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn set_ir(&mut self, interrupt: Interrupt) -> Result<(), Self::Error> {
@@ -810,17 +829,18 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x16, 0x00]),
-    /// #   ehm1::spi::Transaction::read(0),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x16, 0x00]),
+    /// #   ehm::eh1::spi::Transaction::read(0),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{eh1::vdm::W5500, Interrupt, Registers};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let imr: Interrupt = w5500.imr()?;
     /// assert_eq!(imr, Interrupt::default());
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn imr(&mut self) -> Result<Interrupt, Self::Error> {
@@ -841,11 +861,11 @@ pub trait Registers {
     ///
     /// ```
     /// use w5500_ll::{eh1::vdm::W5500, Interrupt, Registers};
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x16, 0x04]),
-    /// #   ehm1::spi::Transaction::write_vec(vec![Interrupt::MP_MASK]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x16, 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![Interrupt::MP_MASK]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     ///
     /// // enable the magic packet interrupt
@@ -853,6 +873,7 @@ pub trait Registers {
     ///
     /// let mut w5500 = W5500::new(spi);
     /// w5500.set_imr(IMR)?;
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn set_imr(&mut self, mask: Interrupt) -> Result<(), Self::Error> {
@@ -869,11 +890,11 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x17, 0x00]),
-    /// #   ehm1::spi::Transaction::read(0),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x17, 0x00]),
+    /// #   ehm::eh1::spi::Transaction::read(0),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{eh1::vdm::W5500, Registers, SOCKETS};
     ///
@@ -886,6 +907,7 @@ pub trait Registers {
     ///         w5500.set_sn_ir(*socket, sn_ir)?;
     ///     }
     /// }
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     ///
@@ -907,16 +929,17 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x18, 0x00]),
-    /// #   ehm1::spi::Transaction::read(0),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x18, 0x00]),
+    /// #   ehm::eh1::spi::Transaction::read(0),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{eh1::vdm::W5500, Registers};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let simr: u8 = w5500.simr()?;
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn simr(&mut self) -> Result<u8, Self::Error> {
@@ -932,17 +955,18 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x18, 0x04]),
-    /// #   ehm1::spi::Transaction::write(0xFF),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x18, 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write(0xFF),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{eh1::vdm::W5500, Registers};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// // enable all socket interrupts
     /// w5500.set_simr(0xFF)?;
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn set_simr(&mut self, simr: u8) -> Result<(), Self::Error> {
@@ -964,17 +988,18 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x19, 0x00]),
-    /// #   ehm1::spi::Transaction::read_vec(vec![0x07, 0xD0]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x19, 0x00]),
+    /// #   ehm::eh1::spi::Transaction::read_vec(vec![0x07, 0xD0]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{eh1::vdm::W5500, Registers};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let rtr: u16 = w5500.rtr()?;
     /// assert_eq!(rtr, 0x07D0);
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn rtr(&mut self) -> Result<u16, Self::Error> {
@@ -990,16 +1015,17 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x19, 0x04]),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x12, 0x34]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x19, 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x12, 0x34]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{eh1::vdm::W5500, Registers};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// w5500.set_rtr(0x1234)?;
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn set_rtr(&mut self, rtr: u16) -> Result<(), Self::Error> {
@@ -1018,16 +1044,17 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x1B, 0x00]),
-    /// #   ehm1::spi::Transaction::read(0x08),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x1B, 0x00]),
+    /// #   ehm::eh1::spi::Transaction::read(0x08),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{eh1::vdm::W5500, Registers};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let rcr: u8 = w5500.rcr()?;
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn rcr(&mut self) -> Result<u8, Self::Error> {
@@ -1043,16 +1070,17 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x1B, 0x04]),
-    /// #   ehm1::spi::Transaction::write(0x0A),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x1B, 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write(0x0A),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{eh1::vdm::W5500, Registers};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// w5500.set_rcr(0x0A)?;
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn set_rcr(&mut self, rcr: u8) -> Result<(), Self::Error> {
@@ -1069,16 +1097,17 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x1C, 0x00]),
-    /// #   ehm1::spi::Transaction::read(0x08),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x1C, 0x00]),
+    /// #   ehm::eh1::spi::Transaction::read(0x08),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{eh1::vdm::W5500, Registers};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let ptimer: u8 = w5500.ptimer()?;
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn ptimer(&mut self) -> Result<u8, Self::Error> {
@@ -1094,16 +1123,17 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x1C, 0x04]),
-    /// #   ehm1::spi::Transaction::write(0xC8),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x1C, 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write(0xC8),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{eh1::vdm::W5500, Registers};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// w5500.set_ptimer(200)?;
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn set_ptimer(&mut self, ptimer: u8) -> Result<(), Self::Error> {
@@ -1118,16 +1148,17 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x1D, 0x00]),
-    /// #   ehm1::spi::Transaction::read(0x08),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x1D, 0x00]),
+    /// #   ehm::eh1::spi::Transaction::read(0x08),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{eh1::vdm::W5500, Registers};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let pmagic: u8 = w5500.pmagic()?;
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn pmagic(&mut self) -> Result<u8, Self::Error> {
@@ -1143,16 +1174,17 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x1D, 0x04]),
-    /// #   ehm1::spi::Transaction::write(0x01),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x1D, 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write(0x01),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{eh1::vdm::W5500, Registers};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// w5500.set_pmagic(0x01)?;
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn set_pmagic(&mut self, pmagic: u8) -> Result<(), Self::Error> {
@@ -1164,17 +1196,18 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x1E, 0x00]),
-    /// #   ehm1::spi::Transaction::read_vec(vec![0, 0, 0, 0, 0, 0]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x1E, 0x00]),
+    /// #   ehm::eh1::spi::Transaction::read_vec(vec![0, 0, 0, 0, 0, 0]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{eh1::vdm::W5500, net::Eui48Addr, Registers};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let phar = w5500.phar()?;
     /// assert_eq!(phar, Eui48Addr::UNSPECIFIED);
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn phar(&mut self) -> Result<Eui48Addr, Self::Error> {
@@ -1188,16 +1221,17 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x1E, 0x04]),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x12, 0x34, 0, 0, 0, 0]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x1E, 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x12, 0x34, 0, 0, 0, 0]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{eh1::vdm::W5500, net::Eui48Addr, Registers};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// w5500.set_phar(&Eui48Addr::new(0x12, 0x34, 0x00, 0x00, 0x00, 0x00))?;
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn set_phar(&mut self, phar: &Eui48Addr) -> Result<(), Self::Error> {
@@ -1212,17 +1246,18 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x24, 0x00]),
-    /// #   ehm1::spi::Transaction::read_vec(vec![0, 0]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x24, 0x00]),
+    /// #   ehm::eh1::spi::Transaction::read_vec(vec![0, 0]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{eh1::vdm::W5500, Registers};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let psid: u16 = w5500.psid()?;
     /// assert_eq!(psid, 0x0000);
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn psid(&mut self) -> Result<u16, Self::Error> {
@@ -1238,16 +1273,17 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x24, 0x04]),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x12, 0x34]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x24, 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x12, 0x34]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{eh1::vdm::W5500, Registers};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// w5500.set_psid(0x1234)?;
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn set_psid(&mut self, psid: u16) -> Result<(), Self::Error> {
@@ -1261,17 +1297,18 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x26, 0x00]),
-    /// #   ehm1::spi::Transaction::read_vec(vec![0, 0]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x26, 0x00]),
+    /// #   ehm::eh1::spi::Transaction::read_vec(vec![0, 0]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{eh1::vdm::W5500, Registers};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let pmru: u16 = w5500.pmru()?;
     /// assert_eq!(pmru, 0x0000);
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn pmru(&mut self) -> Result<u16, Self::Error> {
@@ -1287,16 +1324,17 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x26, 0x04]),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x12, 0x34]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x26, 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x12, 0x34]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{eh1::vdm::W5500, Registers};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// w5500.set_pmru(0x1234)?;
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn set_pmru(&mut self, pmru: u16) -> Result<(), Self::Error> {
@@ -1315,17 +1353,18 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x28, 0x00]),
-    /// #   ehm1::spi::Transaction::read_vec(vec![0, 0, 0, 0]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x28, 0x00]),
+    /// #   ehm::eh1::spi::Transaction::read_vec(vec![0, 0, 0, 0]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{eh1::vdm::W5500, net::Ipv4Addr, Registers};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let uipr = w5500.uipr()?;
     /// assert_eq!(uipr, Ipv4Addr::UNSPECIFIED);
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn uipr(&mut self) -> Result<Ipv4Addr, Self::Error> {
@@ -1341,16 +1380,17 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x2C, 0x00]),
-    /// #   ehm1::spi::Transaction::read_vec(vec![0, 0]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x2C, 0x00]),
+    /// #   ehm::eh1::spi::Transaction::read_vec(vec![0, 0]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{eh1::vdm::W5500, Registers};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let uportr = w5500.uportr()?;
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn uportr(&mut self) -> Result<u16, Self::Error> {
@@ -1364,17 +1404,18 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x2E, 0x00]),
-    /// #   ehm1::spi::Transaction::read(0b10111000),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x2E, 0x00]),
+    /// #   ehm::eh1::spi::Transaction::read(0b10111000),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{eh1::vdm::W5500, PhyCfg, Registers};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let phy_cfg: PhyCfg = w5500.phycfgr()?;
     /// assert_eq!(phy_cfg, PhyCfg::default());
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn phycfgr(&mut self) -> Result<PhyCfg, Self::Error> {
@@ -1388,17 +1429,18 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x2E, 0x04]),
-    /// #   ehm1::spi::Transaction::write(0b11111000),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x2E, 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write(0b11111000),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{eh1::vdm::W5500, OperationMode, PhyCfg, Registers};
     ///
     /// const PHY_CFG: PhyCfg = PhyCfg::DEFAULT.set_opmdc(OperationMode::Auto);
     /// let mut w5500 = W5500::new(spi);
     /// w5500.set_phycfgr(PHY_CFG)?;
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn set_phycfgr(&mut self, phycfg: PhyCfg) -> Result<(), Self::Error> {
@@ -1415,17 +1457,18 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x39, 0x00]),
-    /// #   ehm1::spi::Transaction::read(0x04),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x39, 0x00]),
+    /// #   ehm::eh1::spi::Transaction::read(0x04),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{eh1::vdm::W5500, Registers};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let version = w5500.version()?;
     /// assert_eq!(version, 0x04);
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn version(&mut self) -> Result<u8, Self::Error> {
@@ -1439,17 +1482,18 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x00, 0x08]),
-    /// #   ehm1::spi::Transaction::read(0),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x00, 0x08]),
+    /// #   ehm::eh1::spi::Transaction::read(0),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{eh1::vdm::W5500, Registers, Sn, SocketMode};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let socket_mode = w5500.sn_mr(Sn::Sn0)?;
     /// assert_eq!(socket_mode, SocketMode::default());
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn sn_mr(&mut self, sn: Sn) -> Result<SocketMode, Self::Error> {
@@ -1463,17 +1507,18 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x00, 0x08 | 0x04]),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x01]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x00, 0x08 | 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x01]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{eh1::vdm::W5500, Protocol, Registers, Sn, SocketMode};
     ///
     /// const SOCKET_MODE: SocketMode = SocketMode::DEFAULT.set_protocol(Protocol::Tcp);
     /// let mut w5500 = W5500::new(spi);
     /// w5500.set_sn_mr(Sn::Sn0, SOCKET_MODE)?;
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn set_sn_mr(&mut self, sn: Sn, mode: SocketMode) -> Result<(), Self::Error> {
@@ -1488,25 +1533,26 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x01, 0x08 | 0x04]),
-    /// #   ehm1::spi::Transaction::write(0x01),
-    /// #   ehm1::spi::Transaction::transaction_end(),
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x01, 0x08]),
-    /// #   ehm1::spi::Transaction::read(1),
-    /// #   ehm1::spi::Transaction::transaction_end(),
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x01, 0x08]),
-    /// #   ehm1::spi::Transaction::read(0),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x01, 0x08 | 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write(0x01),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x01, 0x08]),
+    /// #   ehm::eh1::spi::Transaction::read(1),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x01, 0x08]),
+    /// #   ehm::eh1::spi::Transaction::read(0),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{eh1::vdm::W5500, Registers, Sn, SocketCommand};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// w5500.set_sn_cr(Sn::Sn0, SocketCommand::Open)?;
     /// while w5500.sn_cr(Sn::Sn0)? != SocketCommand::Accepted.into() {}
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn sn_cr(&mut self, sn: Sn) -> Result<u8, Self::Error> {
@@ -1520,16 +1566,17 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x01, 0x08 | 0x04]),
-    /// #   ehm1::spi::Transaction::write(0x01),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x01, 0x08 | 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write(0x01),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{eh1::vdm::W5500, Registers, Sn, SocketCommand};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// w5500.set_sn_cr(Sn::Sn0, SocketCommand::Open)?;
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn set_sn_cr(&mut self, sn: Sn, cmd: SocketCommand) -> Result<(), Self::Error> {
@@ -1541,16 +1588,17 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x02, 0x08]),
-    /// #   ehm1::spi::Transaction::read(0),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x02, 0x08]),
+    /// #   ehm::eh1::spi::Transaction::read(0),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{eh1::vdm::W5500, Registers, Sn};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let socket_interrupts = w5500.sn_ir(Sn::Sn0)?;
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn sn_ir(&mut self, sn: Sn) -> Result<SocketInterrupt, Self::Error> {
@@ -1568,37 +1616,39 @@ pub trait Registers {
     /// Clearing all raised interrupts.
     ///
     /// ```
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x02, 0x08]),
-    /// #   ehm1::spi::Transaction::read(0),
-    /// #   ehm1::spi::Transaction::transaction_end(),
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x02, 0x08 | 0x04]),
-    /// #   ehm1::spi::Transaction::write(0),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x02, 0x08]),
+    /// #   ehm::eh1::spi::Transaction::read(0),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x02, 0x08 | 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write(0),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{eh1::vdm::W5500, Registers, Sn, SocketInterrupt};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let socket_interrupts: SocketInterrupt = w5500.sn_ir(Sn::Sn0)?;
     /// w5500.set_sn_ir(Sn::Sn0, socket_interrupts)?;
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     ///
     /// Clearing only the SENDOK interrupt.
     ///
     /// ```
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x02, 0x08 | 0x04]),
-    /// #   ehm1::spi::Transaction::write(SocketInterrupt::SENDOK_MASK),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x02, 0x08 | 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write(SocketInterrupt::SENDOK_MASK),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{eh1::vdm::W5500, Registers, Sn, SocketInterrupt};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// w5500.set_sn_ir(Sn::Sn0, SocketInterrupt::SENDOK_MASK)?;
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn set_sn_ir<T: Into<u8>>(&mut self, sn: Sn, sn_ir: T) -> Result<(), Self::Error> {
@@ -1623,17 +1673,18 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x03, 0x08]),
-    /// #   ehm1::spi::Transaction::read(0),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x03, 0x08]),
+    /// #   ehm::eh1::spi::Transaction::read(0),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{eh1::vdm::W5500, Registers, Sn, SocketStatus};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let sn_sr = w5500.sn_sr(Sn::Sn0)?;
     /// assert_eq!(sn_sr, Ok(SocketStatus::Closed));
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     ///
@@ -1653,16 +1704,17 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x04, 0x08]),
-    /// #   ehm1::spi::Transaction::read_vec(vec![0, 0]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x04, 0x08]),
+    /// #   ehm::eh1::spi::Transaction::read_vec(vec![0, 0]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{eh1::vdm::W5500, Registers, Sn, SocketMode};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let socket_port: u16 = w5500.sn_port(Sn::Sn0)?;
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn sn_port(&mut self, sn: Sn) -> Result<u16, Self::Error> {
@@ -1678,16 +1730,17 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x04, 0x08 | 0x04]),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 68]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x04, 0x08 | 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 68]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{eh1::vdm::W5500, Registers, Sn};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// w5500.set_sn_port(Sn::Sn0, 68)?;
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn set_sn_port(&mut self, sn: Sn, port: u16) -> Result<(), Self::Error> {
@@ -1703,16 +1756,17 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x06, 0x08]),
-    /// #   ehm1::spi::Transaction::read_vec(vec![0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x06, 0x08]),
+    /// #   ehm::eh1::spi::Transaction::read_vec(vec![0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{eh1::vdm::W5500, Registers, Sn};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let dhar = w5500.sn_dhar(Sn::Sn0)?;
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn sn_dhar(&mut self, sn: Sn) -> Result<Eui48Addr, Self::Error> {
@@ -1728,17 +1782,18 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x06, 0x08 | 0x04]),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x12, 0x34, 0x00, 0x00, 0x00, 0x00]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x06, 0x08 | 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x12, 0x34, 0x00, 0x00, 0x00, 0x00]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{eh1::vdm::W5500, net::Eui48Addr, Registers, Sn};
     ///
     /// let dhar = Eui48Addr::new(0x12, 0x34, 0x00, 0x00, 0x00, 0x00);
     /// let mut w5500 = W5500::new(spi);
     /// w5500.set_sn_dhar(Sn::Sn0, &dhar)?;
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn set_sn_dhar(&mut self, sn: Sn, dhar: &Eui48Addr) -> Result<(), Self::Error> {
@@ -1763,17 +1818,18 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x0C, 0x08]),
-    /// #   ehm1::spi::Transaction::read_vec(vec![0, 0, 0, 0]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x0C, 0x08]),
+    /// #   ehm::eh1::spi::Transaction::read_vec(vec![0, 0, 0, 0]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{eh1::vdm::W5500, net::Ipv4Addr, Registers, Sn};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let dipr = w5500.sn_dipr(Sn::Sn0)?;
     /// assert_eq!(dipr, Ipv4Addr::UNSPECIFIED);
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn sn_dipr(&mut self, sn: Sn) -> Result<Ipv4Addr, Self::Error> {
@@ -1789,16 +1845,17 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x0C, 0x08 | 0x04]),
-    /// #   ehm1::spi::Transaction::write_vec(vec![192, 168, 0, 11]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x0C, 0x08 | 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![192, 168, 0, 11]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{eh1::vdm::W5500, net::Ipv4Addr, Registers, Sn};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// w5500.set_sn_dipr(Sn::Sn0, &Ipv4Addr::new(192, 168, 0, 11))?;
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn set_sn_dipr(&mut self, sn: Sn, dipr: &Ipv4Addr) -> Result<(), Self::Error> {
@@ -1824,16 +1881,17 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x10, 0x08]),
-    /// #   ehm1::spi::Transaction::read_vec(vec![0, 0]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x10, 0x08]),
+    /// #   ehm::eh1::spi::Transaction::read_vec(vec![0, 0]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{eh1::vdm::W5500, Registers, Sn, SocketMode};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let socket_destination_port: u16 = w5500.sn_dport(Sn::Sn0)?;
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn sn_dport(&mut self, sn: Sn) -> Result<u16, Self::Error> {
@@ -1849,16 +1907,17 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x10, 0x08 | 0x04]),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 67]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x10, 0x08 | 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 67]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{eh1::vdm::W5500, Registers, Sn};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// w5500.set_sn_dport(Sn::Sn0, 67)?;
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn set_sn_dport(&mut self, sn: Sn, port: u16) -> Result<(), Self::Error> {
@@ -1873,11 +1932,11 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x0C, 0x08]),
-    /// #   ehm1::spi::Transaction::read_vec(vec![0, 0, 0, 0, 0, 0]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x0C, 0x08]),
+    /// #   ehm::eh1::spi::Transaction::read_vec(vec![0, 0, 0, 0, 0, 0]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{
     ///     eh1::vdm::W5500,
@@ -1888,6 +1947,7 @@ pub trait Registers {
     /// let mut w5500 = W5500::new(spi);
     /// let addr = w5500.sn_dest(Sn::Sn0)?;
     /// assert_eq!(addr, SocketAddrV4::new(Ipv4Addr::new(0, 0, 0, 0), 0));
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn sn_dest(&mut self, sn: Sn) -> Result<SocketAddrV4, Self::Error> {
@@ -1907,11 +1967,11 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x0C, 0x08 | 0x04]),
-    /// #   ehm1::spi::Transaction::write_vec(vec![192, 168, 0, 11, 0, 67]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x0C, 0x08 | 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![192, 168, 0, 11, 0, 67]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{
     ///     eh1::vdm::W5500,
@@ -1922,6 +1982,7 @@ pub trait Registers {
     /// let addr: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::new(192, 168, 0, 11), 67);
     /// let mut w5500 = W5500::new(spi);
     /// w5500.set_sn_dest(Sn::Sn0, &addr)?;
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn set_sn_dest(&mut self, sn: Sn, addr: &SocketAddrV4) -> Result<(), Self::Error> {
@@ -1973,16 +2034,17 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x12, 0x08]),
-    /// #   ehm1::spi::Transaction::read_vec(vec![0x00, 0x00]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x12, 0x08]),
+    /// #   ehm::eh1::spi::Transaction::read_vec(vec![0x00, 0x00]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{eh1::vdm::W5500, Registers, Sn};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let sn__mssr: u16 = w5500.sn_mssr(Sn::Sn0)?;
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn sn_mssr(&mut self, sn: Sn) -> Result<u16, Self::Error> {
@@ -1998,16 +2060,17 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x12, 0x08 | 0x04]),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x05, 0xB4]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x12, 0x08 | 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x05, 0xB4]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{eh1::vdm::W5500, Registers, Sn};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// w5500.set_sn_mssr(Sn::Sn0, 1460)?;
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn set_sn_mssr(&mut self, sn: Sn, mssr: u16) -> Result<(), Self::Error> {
@@ -2027,16 +2090,17 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x15, 0x08]),
-    /// #   ehm1::spi::Transaction::read(0),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x15, 0x08]),
+    /// #   ehm::eh1::spi::Transaction::read(0),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{eh1::vdm::W5500, Registers, Sn};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let tos: u8 = w5500.sn_tos(Sn::Sn0)?;
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn sn_tos(&mut self, sn: Sn) -> Result<u8, Self::Error> {
@@ -2052,16 +2116,17 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x15, 0x08 | 0x04]),
-    /// #   ehm1::spi::Transaction::write(0x01),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x15, 0x08 | 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write(0x01),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{eh1::vdm::W5500, Registers, Sn};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// w5500.set_sn_tos(Sn::Sn0, 1)?;
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn set_sn_tos(&mut self, sn: Sn, tos: u8) -> Result<(), Self::Error> {
@@ -2078,16 +2143,17 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x16, 0x08]),
-    /// #   ehm1::spi::Transaction::read(0x80),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x16, 0x08]),
+    /// #   ehm::eh1::spi::Transaction::read(0x80),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{eh1::vdm::W5500, Registers, Sn};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let ttl: u8 = w5500.sn_ttl(Sn::Sn0)?;
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn sn_ttl(&mut self, sn: Sn) -> Result<u8, Self::Error> {
@@ -2103,16 +2169,17 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x16, 0x08 | 0x04]),
-    /// #   ehm1::spi::Transaction::write(0x80),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x16, 0x08 | 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write(0x80),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{eh1::vdm::W5500, Registers, Sn};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// w5500.set_sn_ttl(Sn::Sn0, 0x80)?;
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn set_sn_ttl(&mut self, sn: Sn, ttl: u8) -> Result<(), Self::Error> {
@@ -2141,17 +2208,18 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x1E, 0x08]),
-    /// #   ehm1::spi::Transaction::read(0x02),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x1E, 0x08]),
+    /// #   ehm::eh1::spi::Transaction::read(0x02),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{eh1::vdm::W5500, BufferSize, Registers, Sn};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let sn_rxbuf_size = w5500.sn_rxbuf_size(Sn::Sn0)?;
     /// assert_eq!(sn_rxbuf_size, Ok(BufferSize::KB2));
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     ///
@@ -2170,16 +2238,17 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x1E, 0x08 | 0x04]),
-    /// #   ehm1::spi::Transaction::write(1),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x1E, 0x08 | 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write(1),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{eh1::vdm::W5500, BufferSize, Registers, Sn};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// w5500.set_sn_rxbuf_size(Sn::Sn0, BufferSize::KB1)?;
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn set_sn_rxbuf_size(&mut self, sn: Sn, size: BufferSize) -> Result<(), Self::Error> {
@@ -2208,17 +2277,18 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x1F, 0x08]),
-    /// #   ehm1::spi::Transaction::read(0x02),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x1F, 0x08]),
+    /// #   ehm::eh1::spi::Transaction::read(0x02),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{eh1::vdm::W5500, BufferSize, Registers, Sn};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let sn_txbuf_size = w5500.sn_txbuf_size(Sn::Sn0)?;
     /// assert_eq!(sn_txbuf_size, Ok(BufferSize::KB2));
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     ///
@@ -2237,16 +2307,17 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x1F, 0x08 | 0x04]),
-    /// #   ehm1::spi::Transaction::write(1),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x1F, 0x08 | 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write(1),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{eh1::vdm::W5500, BufferSize, Registers, Sn};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// w5500.set_sn_txbuf_size(Sn::Sn0, BufferSize::KB1)?;
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn set_sn_txbuf_size(&mut self, sn: Sn, size: BufferSize) -> Result<(), Self::Error> {
@@ -2280,16 +2351,17 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x20, 0x08]),
-    /// #   ehm1::spi::Transaction::read_vec(vec![0x08, 0x00]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x20, 0x08]),
+    /// #   ehm::eh1::spi::Transaction::read_vec(vec![0x08, 0x00]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{eh1::vdm::W5500, Registers, Sn, SocketMode};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let sn_tx_fsr: u16 = w5500.sn_tx_fsr(Sn::Sn0)?;
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn sn_tx_fsr(&mut self, sn: Sn) -> Result<u16, Self::Error> {
@@ -2320,16 +2392,17 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x22, 0x08]),
-    /// #   ehm1::spi::Transaction::read_vec(vec![0, 0]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x22, 0x08]),
+    /// #   ehm::eh1::spi::Transaction::read_vec(vec![0, 0]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{eh1::vdm::W5500, Registers, Sn, SocketMode};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let sn_tx_rd: u16 = w5500.sn_tx_rd(Sn::Sn0)?;
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn sn_tx_rd(&mut self, sn: Sn) -> Result<u16, Self::Error> {
@@ -2356,16 +2429,17 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x24, 0x08]),
-    /// #   ehm1::spi::Transaction::read_vec(vec![0, 0]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x24, 0x08]),
+    /// #   ehm::eh1::spi::Transaction::read_vec(vec![0, 0]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{eh1::vdm::W5500, Registers, Sn};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let sn_tx_wr: u16 = w5500.sn_tx_wr(Sn::Sn0)?;
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn sn_tx_wr(&mut self, sn: Sn) -> Result<u16, Self::Error> {
@@ -2407,16 +2481,17 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x26, 0x08]),
-    /// #   ehm1::spi::Transaction::read_vec(vec![0, 0]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x26, 0x08]),
+    /// #   ehm::eh1::spi::Transaction::read_vec(vec![0, 0]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{eh1::vdm::W5500, Registers, Sn};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let sn_rx_rsr: u16 = w5500.sn_rx_rsr(Sn::Sn0)?;
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn sn_rx_rsr(&mut self, sn: Sn) -> Result<u16, Self::Error> {
@@ -2442,16 +2517,17 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x28, 0x08]),
-    /// #   ehm1::spi::Transaction::read_vec(vec![0, 0]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x28, 0x08]),
+    /// #   ehm::eh1::spi::Transaction::read_vec(vec![0, 0]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{eh1::vdm::W5500, Registers, Sn};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let sn_rx_rd: u16 = w5500.sn_rx_rd(Sn::Sn0)?;
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn sn_rx_rd(&mut self, sn: Sn) -> Result<u16, Self::Error> {
@@ -2476,16 +2552,17 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x2A, 0x08]),
-    /// #   ehm1::spi::Transaction::read_vec(vec![0, 0]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x2A, 0x08]),
+    /// #   ehm::eh1::spi::Transaction::read_vec(vec![0, 0]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{eh1::vdm::W5500, Registers, Sn};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let sn_rx_wr: u16 = w5500.sn_rx_wr(Sn::Sn0)?;
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn sn_rx_wr(&mut self, sn: Sn) -> Result<u16, Self::Error> {
@@ -2512,17 +2589,18 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x2C, 0x08]),
-    /// #   ehm1::spi::Transaction::read(0xFF),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x2C, 0x08]),
+    /// #   ehm::eh1::spi::Transaction::read(0xFF),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{eh1::vdm::W5500, Registers, Sn, SocketInterruptMask};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let sn_imr: SocketInterruptMask = w5500.sn_imr(Sn::Sn0)?;
     /// assert_eq!(sn_imr, SocketInterruptMask::default());
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn sn_imr(&mut self, sn: Sn) -> Result<SocketInterruptMask, Self::Error> {
@@ -2536,16 +2614,17 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x2C, 0x08 | 0x04]),
-    /// #   ehm1::spi::Transaction::write(0xE0),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x2C, 0x08 | 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write(0xE0),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{eh1::vdm::W5500, Registers, Sn, SocketInterruptMask};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// w5500.set_sn_imr(Sn::Sn0, SocketInterruptMask::ALL_MASKED)?;
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn set_sn_imr(&mut self, sn: Sn, mask: SocketInterruptMask) -> Result<(), Self::Error> {
@@ -2559,17 +2638,18 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x2D, 0x08]),
-    /// #   ehm1::spi::Transaction::read_vec(vec![0x40, 0x00]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x2D, 0x08]),
+    /// #   ehm::eh1::spi::Transaction::read_vec(vec![0x40, 0x00]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{eh1::vdm::W5500, Registers, Sn};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let frag: u16 = w5500.sn_frag(Sn::Sn0)?;
     /// assert_eq!(frag, 0x4000);
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn sn_frag(&mut self, sn: Sn) -> Result<u16, Self::Error> {
@@ -2585,16 +2665,17 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x2D, 0x08 | 0x04]),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x00]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x2D, 0x08 | 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x00]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{eh1::vdm::W5500, Registers, Sn};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// w5500.set_sn_frag(Sn::Sn0, 0)?;
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn set_sn_frag(&mut self, sn: Sn, frag: u16) -> Result<(), Self::Error> {
@@ -2624,16 +2705,17 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x2F, 0x08]),
-    /// #   ehm1::spi::Transaction::read(0),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x2F, 0x08]),
+    /// #   ehm::eh1::spi::Transaction::read(0),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{eh1::vdm::W5500, Registers, Sn};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let sn_kpalvtr: u8 = w5500.sn_kpalvtr(Sn::Sn0)?;
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn sn_kpalvtr(&mut self, sn: Sn) -> Result<u8, Self::Error> {
@@ -2649,17 +2731,18 @@ pub trait Registers {
     /// # Example
     ///
     /// ```
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x2F, 0x08 | 0x04]),
-    /// #   ehm1::spi::Transaction::write(0x0A),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x2F, 0x08 | 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write(0x0A),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{eh1::vdm::W5500, Registers, Sn};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// // 50s keep alive timer
     /// w5500.set_sn_kpalvtr(Sn::Sn0, 10)?;
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn set_sn_kpalvtr(&mut self, sn: Sn, kpalvtr: u8) -> Result<(), Self::Error> {
@@ -2673,32 +2756,32 @@ pub trait Registers {
     /// ```
     /// use core::cmp::min;
     /// use w5500_ll::{eh1::vdm::W5500, Registers, Sn, SocketCommand};
-    /// # let spi = ehm1::spi::Mock::new(&[
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
     /// #   // sn_tx_fsr
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, w5500_ll::SnReg::TX_FSR0.addr() as u8, 0x08]),
-    /// #   ehm1::spi::Transaction::read_vec(vec![0x08, 0x00]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, w5500_ll::SnReg::TX_FSR0.addr() as u8, 0x08]),
+    /// #   ehm::eh1::spi::Transaction::read_vec(vec![0x08, 0x00]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// #   // sn_tx_write
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, w5500_ll::SnReg::TX_WR0.addr() as u8, 0x08]),
-    /// #   ehm1::spi::Transaction::read_vec(vec![0, 0]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, w5500_ll::SnReg::TX_WR0.addr() as u8, 0x08]),
+    /// #   ehm::eh1::spi::Transaction::read_vec(vec![0, 0]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// #   // set_sn_tx_buf
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x00, (Sn::Sn0.tx_block() as u8) << 3 | 0x04]),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x12, 0x34, 0x56, 0x78, 0x9A]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x00, (Sn::Sn0.tx_block() as u8) << 3 | 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x12, 0x34, 0x56, 0x78, 0x9A]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// #   // set_sn_tx_wr
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x24, 0x08 | 0x04]),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 5]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x24, 0x08 | 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 5]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// #   // set_sn_cr
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x01, 0x08 | 0x04]),
-    /// #   ehm1::spi::Transaction::write_vec(vec![SocketCommand::Send.into()]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x01, 0x08 | 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![SocketCommand::Send.into()]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// # let mut w5500 = W5500::new(spi);
     ///
@@ -2720,6 +2803,7 @@ pub trait Registers {
     /// w5500.set_sn_tx_buf(THE_SOCKET, ptr, &buf[..usize::from(tx_bytes)])?;
     /// w5500.set_sn_tx_wr(THE_SOCKET, ptr.wrapping_add(tx_bytes))?;
     /// w5500.set_sn_cr(THE_SOCKET, SocketCommand::Send)?;
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn set_sn_tx_buf(&mut self, sn: Sn, ptr: u16, buf: &[u8]) -> Result<(), Self::Error> {
@@ -2736,15 +2820,16 @@ pub trait Registers {
     /// ```
     /// use core::cmp::min;
     /// use w5500_ll::{eh1::vdm::W5500, Registers, Sn, SocketCommand};
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x00, (Sn::Sn0.tx_block() as u8) << 3]),
-    /// #   ehm1::spi::Transaction::read(0),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x00, (Sn::Sn0.tx_block() as u8) << 3]),
+    /// #   ehm::eh1::spi::Transaction::read(0),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// # let mut w5500 = W5500::new(spi);
     /// let mut buf: [u8; 1] = [0];
     /// w5500.sn_tx_buf(Sn::Sn0, 0, &mut buf)?;
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn sn_tx_buf(&mut self, sn: Sn, ptr: u16, buf: &mut [u8]) -> Result<(), Self::Error> {
@@ -2758,27 +2843,27 @@ pub trait Registers {
     /// ```
     /// use core::cmp::min;
     /// use w5500_ll::{eh1::vdm::W5500, Registers, Sn, SocketCommand};
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, w5500_ll::SnReg::RX_RSR0.addr() as u8, 0x08]),
-    /// #   ehm1::spi::Transaction::read_vec(vec![0, 4]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, w5500_ll::SnReg::RX_RD0.addr() as u8, 0x08]),
-    /// #   ehm1::spi::Transaction::read_vec(vec![0, 0]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x00, (Sn::Sn0.rx_block() as u8) << 3]),
-    /// #   ehm1::spi::Transaction::read_vec(vec![0, 0, 0, 0]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, w5500_ll::SnReg::RX_RD0.addr() as u8, 0x08 | 0x04]),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0, 4]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, w5500_ll::SnReg::CR.addr() as u8, 0x08 | 0x04]),
-    /// #   ehm1::spi::Transaction::write(SocketCommand::Recv.into()),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, w5500_ll::SnReg::RX_RSR0.addr() as u8, 0x08]),
+    /// #   ehm::eh1::spi::Transaction::read_vec(vec![0, 4]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, w5500_ll::SnReg::RX_RD0.addr() as u8, 0x08]),
+    /// #   ehm::eh1::spi::Transaction::read_vec(vec![0, 0]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x00, (Sn::Sn0.rx_block() as u8) << 3]),
+    /// #   ehm::eh1::spi::Transaction::read_vec(vec![0, 0, 0, 0]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, w5500_ll::SnReg::RX_RD0.addr() as u8, 0x08 | 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0, 4]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, w5500_ll::SnReg::CR.addr() as u8, 0x08 | 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write(SocketCommand::Recv.into()),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// # let mut w5500 = W5500::new(spi);
     ///
@@ -2801,6 +2886,7 @@ pub trait Registers {
     /// w5500.sn_rx_buf(THE_SOCKET, ptr, &mut buf[..usize::from(rx_bytes)])?;
     /// w5500.set_sn_rx_rd(THE_SOCKET, ptr.wrapping_add(rx_bytes))?;
     /// w5500.set_sn_cr(THE_SOCKET, SocketCommand::Recv)?;
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn sn_rx_buf(&mut self, sn: Sn, ptr: u16, buf: &mut [u8]) -> Result<(), Self::Error> {
@@ -2817,15 +2903,16 @@ pub trait Registers {
     /// ```
     /// use core::cmp::min;
     /// use w5500_ll::{eh1::vdm::W5500, Registers, Sn, SocketCommand};
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x00, (Sn::Sn0.rx_block() as u8) << 3 | 0x04]),
-    /// #   ehm1::spi::Transaction::write(0),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x00, (Sn::Sn0.rx_block() as u8) << 3 | 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write(0),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// # let mut w5500 = W5500::new(spi);
     /// let buf: [u8; 1] = [0];
     /// w5500.set_sn_rx_buf(Sn::Sn0, 0, &buf)?;
+    /// # w5500.free().done();
     /// # Ok::<(), eh1::spi::ErrorKind>(())
     /// ```
     fn set_sn_rx_buf(&mut self, sn: Sn, ptr: u16, buf: &[u8]) -> Result<(), Self::Error> {

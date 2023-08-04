@@ -24,13 +24,14 @@ pub mod vdm;
 /// # Example
 ///
 /// ```
-/// # use ehm1 as hal;
-/// # let mut delay = hal::delay::MockNoop::new();
+/// # use ehm::eh1 as hal;
+/// # let mut delay = hal::delay::NoopDelay::new();
 /// # let mut reset_pin = hal::pin::Mock::new(&[
 /// #    hal::pin::Transaction::set(hal::pin::State::Low),
 /// #    hal::pin::Transaction::set(hal::pin::State::High),
 /// # ]);
 /// w5500_ll::eh1::reset(&mut reset_pin, &mut delay)?;
+/// # reset_pin.done();
 /// # Ok::<(), hal::MockError>(())
 /// ```
 pub fn reset<P, D, E>(pin: &mut P, delay: &mut D) -> Result<(), E>

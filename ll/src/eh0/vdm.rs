@@ -48,7 +48,7 @@ where
     /// # Example
     ///
     /// ```
-    /// # use ehm0 as hal;
+    /// # use ehm::eh0 as hal;
     /// # let spi = hal::spi::Mock::new(&[]);
     /// # let mut pin = hal::pin::Mock::new(&[
     /// #    hal::pin::Transaction::set(hal::pin::State::High),
@@ -58,6 +58,8 @@ where
     ///
     /// pin.set_high()?;
     /// let mut w5500: W5500<_, _> = W5500::new(spi, pin);
+    /// # let (mut spi, mut pin) = w5500.free();
+    /// # spi.done(); pin.done();
     /// # Ok::<(), hal::MockError>(())
     /// ```
     #[inline]
@@ -71,13 +73,14 @@ where
     /// # Example
     ///
     /// ```
-    /// # use ehm0 as hal;
+    /// # use ehm::eh0 as hal;
     /// # let spi = hal::spi::Mock::new(&[]);
     /// # let pin = hal::pin::Mock::new(&[]);
     /// use w5500_ll::eh0::vdm::W5500;
     ///
     /// let mut w5500 = W5500::new(spi, pin);
-    /// let (spi, pin) = w5500.free();
+    /// let (mut spi, mut pin) = w5500.free();
+    /// # spi.done(); pin.done();
     /// ```
     #[inline]
     pub fn free(self) -> (SPI, CS) {

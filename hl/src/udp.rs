@@ -51,7 +51,7 @@ impl UdpHeader {
 /// # Example
 ///
 /// ```no_run
-/// # use embedded_hal_mock as h;
+/// # use ehm::eh1 as h;
 /// # let mut w5500 = w5500_ll::eh1::vdm::W5500::new(h::spi::Mock::new(&[]));
 /// use w5500_hl::{
 ///     io::Read,
@@ -134,7 +134,7 @@ impl<'w, W5500: Registers> Read<W5500::Error> for UdpReader<'w, W5500> {
 /// # Example
 ///
 /// ```no_run
-/// # use embedded_hal_mock as h;
+/// # use ehm::eh1 as h;
 /// # let mut w5500 = w5500_ll::eh1::vdm::W5500::new(h::spi::Mock::new(&[]));
 /// use w5500_hl::{
 ///     io::Write,
@@ -246,7 +246,7 @@ impl<'a, W: Registers> UdpReader<'a, W> {
     /// # Example
     ///
     /// ```no_run
-    /// # let mut w5500 = w5500_ll::eh1::vdm::W5500::new(embedded_hal_mock::spi::Mock::new(&[]));
+    /// # let mut w5500 = w5500_ll::eh1::vdm::W5500::new(ehm::eh1::spi::Mock::new(&[]));
     /// use w5500_hl::{
     ///     ll::{Registers, Sn::Sn0},
     ///     net::{Ipv4Addr, SocketAddrV4},
@@ -312,7 +312,7 @@ pub trait Udp: Registers {
     /// Bind the first socket to port 8080.
     ///
     /// ```no_run
-    /// # let mut w5500 = w5500_ll::eh1::vdm::W5500::new(embedded_hal_mock::spi::Mock::new(&[]));
+    /// # let mut w5500 = w5500_ll::eh1::vdm::W5500::new(ehm::eh1::spi::Mock::new(&[]));
     /// use w5500_hl::ll::{Registers, Sn::Sn0};
     /// use w5500_hl::Udp;
     ///
@@ -372,7 +372,7 @@ pub trait Udp: Registers {
     /// # Example
     ///
     /// ```no_run
-    /// # let mut w5500 = w5500_ll::eh1::vdm::W5500::new(embedded_hal_mock::spi::Mock::new(&[]));
+    /// # let mut w5500 = w5500_ll::eh1::vdm::W5500::new(ehm::eh1::spi::Mock::new(&[]));
     /// use w5500_hl::{
     ///     block,
     ///     ll::{Registers, Sn::Sn0},
@@ -452,7 +452,7 @@ pub trait Udp: Registers {
     /// # Example
     ///
     /// ```no_run
-    /// # let mut w5500 = w5500_ll::eh1::vdm::W5500::new(embedded_hal_mock::spi::Mock::new(&[]));
+    /// # let mut w5500 = w5500_ll::eh1::vdm::W5500::new(ehm::eh1::spi::Mock::new(&[]));
     /// use w5500_hl::{
     ///     block,
     ///     ll::{Registers, Sn::Sn0},
@@ -530,7 +530,7 @@ pub trait Udp: Registers {
     /// # Example
     ///
     /// ```no_run
-    /// # let mut w5500 = w5500_ll::eh1::vdm::W5500::new(embedded_hal_mock::spi::Mock::new(&[]));
+    /// # let mut w5500 = w5500_ll::eh1::vdm::W5500::new(ehm::eh1::spi::Mock::new(&[]));
     /// use w5500_hl::{
     ///     block,
     ///     ll::{Registers, Sn::Sn0},
@@ -581,7 +581,7 @@ pub trait Udp: Registers {
     /// # Example
     ///
     /// ```no_run
-    /// # let mut w5500 = w5500_ll::eh1::vdm::W5500::new(embedded_hal_mock::spi::Mock::new(&[]));
+    /// # let mut w5500 = w5500_ll::eh1::vdm::W5500::new(ehm::eh1::spi::Mock::new(&[]));
     /// use w5500_hl::{
     ///     ll::{Registers, Sn::Sn0},
     ///     net::{Ipv4Addr, SocketAddrV4},
@@ -621,7 +621,7 @@ pub trait Udp: Registers {
     /// # Example
     ///
     /// ```no_run
-    /// # let mut w5500 = w5500_ll::eh1::vdm::W5500::new(embedded_hal_mock::spi::Mock::new(&[]));
+    /// # let mut w5500 = w5500_ll::eh1::vdm::W5500::new(ehm::eh1::spi::Mock::new(&[]));
     /// use w5500_hl::{
     ///     ll::{Registers, Sn::Sn0},
     ///     net::{Ipv4Addr, SocketAddrV4},
@@ -661,7 +661,7 @@ pub trait Udp: Registers {
     /// # Example
     ///
     /// ```no_run
-    /// # let mut w5500 = w5500_ll::eh1::vdm::W5500::new(embedded_hal_mock::spi::Mock::new(&[]));
+    /// # let mut w5500 = w5500_ll::eh1::vdm::W5500::new(ehm::eh1::spi::Mock::new(&[]));
     /// use w5500_hl::{
     ///     ll::{Registers, Sn::Sn0},
     ///     net::{Ipv4Addr, SocketAddrV4},
@@ -712,7 +712,7 @@ pub trait Udp: Registers {
     /// # Example
     ///
     /// ```no_run
-    /// # let mut w5500 = w5500_ll::eh1::vdm::W5500::new(embedded_hal_mock::spi::Mock::new(&[]));
+    /// # let mut w5500 = w5500_ll::eh1::vdm::W5500::new(ehm::eh1::spi::Mock::new(&[]));
     /// use w5500_hl::{
     ///     ll::{Registers, Sn::Sn0},
     ///     net::{Ipv4Addr, SocketAddrV4},

@@ -16,7 +16,7 @@ use w5500_ll::{
 /// # Example
 ///
 /// ```no_run
-/// # use embedded_hal_mock as h;
+/// # use ehm::eh1 as h;
 /// # let mut w5500 = w5500_ll::eh1::vdm::W5500::new(h::spi::Mock::new(&[]));
 /// use w5500_hl::{
 ///     io::Read,
@@ -131,7 +131,7 @@ impl<'a, W5500: Registers> Read<W5500::Error> for TcpReader<'a, W5500> {
 /// # Example
 ///
 /// ```no_run
-/// # use embedded_hal_mock as h;
+/// # use ehm::eh1 as h;
 /// # let mut w5500 = w5500_ll::eh1::vdm::W5500::new(h::spi::Mock::new(&[]));
 /// use w5500_hl::{
 ///     io::Write,
@@ -256,7 +256,7 @@ pub trait Tcp: Registers {
     /// # Example
     ///
     /// ```no_run
-    /// # let mut w5500 = w5500_ll::eh1::vdm::W5500::new(embedded_hal_mock::spi::Mock::new(&[]));
+    /// # let mut w5500 = w5500_ll::eh1::vdm::W5500::new(ehm::eh1::spi::Mock::new(&[]));
     /// use w5500_hl::{
     ///     ll::{Registers, Sn, SocketInterrupt},
     ///     net::{Ipv4Addr, SocketAddrV4},
@@ -335,7 +335,7 @@ pub trait Tcp: Registers {
     /// Create an HTTP server.
     ///
     /// ```no_run
-    /// # let mut w5500 = w5500_ll::eh1::vdm::W5500::new(embedded_hal_mock::spi::Mock::new(&[]));
+    /// # let mut w5500 = w5500_ll::eh1::vdm::W5500::new(ehm::eh1::spi::Mock::new(&[]));
     /// use w5500_hl::{
     ///     ll::{Registers, Sn, SocketInterrupt},
     ///     net::{Ipv4Addr, SocketAddrV4},
@@ -412,7 +412,7 @@ pub trait Tcp: Registers {
     /// Send a MQTT CONNECT packet and read a CONNACK.
     ///
     /// ```no_run
-    /// # let mut w5500 = w5500_ll::eh1::vdm::W5500::new(embedded_hal_mock::spi::Mock::new(&[]));
+    /// # let mut w5500 = w5500_ll::eh1::vdm::W5500::new(ehm::eh1::spi::Mock::new(&[]));
     /// use w5500_hl::{
     ///     ll::{Registers, Sn, SocketInterrupt},
     ///     net::{Ipv4Addr, SocketAddrV4},
@@ -473,7 +473,7 @@ pub trait Tcp: Registers {
     /// Send a MQTT CONNECT packet.
     ///
     /// ```no_run
-    /// # let mut w5500 = w5500_ll::eh1::vdm::W5500::new(embedded_hal_mock::spi::Mock::new(&[]));
+    /// # let mut w5500 = w5500_ll::eh1::vdm::W5500::new(ehm::eh1::spi::Mock::new(&[]));
     /// use w5500_hl::{
     ///     ll::{Registers, Sn, SocketInterrupt},
     ///     net::{Ipv4Addr, SocketAddrV4},
@@ -533,7 +533,7 @@ pub trait Tcp: Registers {
     /// Connect and disconnect from a MQTT server.
     ///
     /// ```no_run
-    /// # let mut w5500 = w5500_ll::eh1::vdm::W5500::new(embedded_hal_mock::spi::Mock::new(&[]));
+    /// # let mut w5500 = w5500_ll::eh1::vdm::W5500::new(ehm::eh1::spi::Mock::new(&[]));
     /// use w5500_hl::{
     ///     ll::{Registers, Sn, SocketInterrupt},
     ///     net::{Ipv4Addr, SocketAddrV4},

@@ -29,11 +29,12 @@ where
     /// # Example
     ///
     /// ```
-    /// # use ehm1 as hal;
+    /// # use ehm::eh1 as hal;
     /// # let spi = hal::spi::Mock::new(&[]);
     /// use w5500_ll::eh1::vdm::W5500;
     ///
     /// let mut w5500: W5500<_> = W5500::new(spi);
+    /// # w5500.free().done();
     /// ```
     #[inline]
     pub fn new(spi: SPI) -> Self {
@@ -45,12 +46,13 @@ where
     /// # Example
     ///
     /// ```
-    /// # use ehm1 as hal;
+    /// # use ehm::eh1 as hal;
     /// # let spi = hal::spi::Mock::new(&[]);
     /// use w5500_ll::eh1::vdm::W5500;
     ///
     /// let mut w5500 = W5500::new(spi);
-    /// let spi = w5500.free();
+    /// let mut spi = w5500.free();
+    /// # spi.done();
     /// ```
     #[inline]
     pub fn free(self) -> SPI {
@@ -61,7 +63,6 @@ where
 impl<SPI> crate::Registers for W5500<SPI>
 where
     SPI: eh1::spi::SpiDevice,
-    // <SPI as eh1::spi::SpiDevice>::Bus: eh1::spi::SpiBusRead + eh1::spi::SpiBusWrite,
 {
     /// SPI IO error type.
     type Error = SPI::Error;
