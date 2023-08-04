@@ -32,7 +32,7 @@
 //! UDP sockets
 //!
 //! ```no_run
-//! # use embedded_hal_mock as h;
+//! # use ehm::eh1 as h;
 //! # let mut w5500 = w5500_ll::eh1::vdm::W5500::new(h::spi::Mock::new(&[]));
 //! use w5500_hl::ll::{
 //!     net::{Ipv4Addr, SocketAddrV4},
@@ -54,7 +54,7 @@
 //! TCP streams (client)
 //!
 //! ```no_run
-//! # use embedded_hal_mock as h;
+//! # use ehm::eh1 as h;
 //! # let mut w5500 = w5500_ll::eh1::vdm::W5500::new(h::spi::Mock::new(&[]));
 //! use w5500_hl::ll::{
 //!     net::{Ipv4Addr, SocketAddrV4},
@@ -74,7 +74,7 @@
 //! TCP listeners (server)
 //!
 //! ```no_run
-//! # use embedded_hal_mock as h;
+//! # use ehm::eh1 as h;
 //! # let mut w5500 = w5500_ll::eh1::vdm::W5500::new(h::spi::Mock::new(&[]));
 //! use w5500_hl::ll::{
 //!     net::{Ipv4Addr, SocketAddrV4},
@@ -197,7 +197,7 @@ pub trait Common: Registers {
     /// # Example
     ///
     /// ```no_run
-    /// # let mut w5500 = w5500_ll::eh1::vdm::W5500::new(embedded_hal_mock::spi::Mock::new(&[]));
+    /// # let mut w5500 = w5500_ll::eh1::vdm::W5500::new(ehm::eh1::spi::Mock::new(&[]));
     /// use w5500_hl::ll::{Registers, Sn::Sn0};
     /// use w5500_hl::{Common, Udp};
     ///
@@ -219,7 +219,7 @@ pub trait Common: Registers {
     /// # Example
     ///
     /// ```no_run
-    /// # let mut w5500 = w5500_ll::eh1::vdm::W5500::new(embedded_hal_mock::spi::Mock::new(&[]));
+    /// # let mut w5500 = w5500_ll::eh1::vdm::W5500::new(ehm::eh1::spi::Mock::new(&[]));
     /// use w5500_hl::ll::{Registers, Sn::Sn0};
     /// use w5500_hl::Common;
     ///
@@ -238,7 +238,7 @@ pub trait Common: Registers {
     /// # Example
     ///
     /// ```no_run
-    /// # let mut w5500 = w5500_ll::eh1::vdm::W5500::new(embedded_hal_mock::spi::Mock::new(&[]));
+    /// # let mut w5500 = w5500_ll::eh1::vdm::W5500::new(ehm::eh1::spi::Mock::new(&[]));
     /// use w5500_hl::ll::{Registers, Sn::Sn0};
     /// use w5500_hl::{Common, Udp};
     ///
@@ -277,7 +277,7 @@ pub trait Common: Registers {
     /// # Example
     ///
     /// ```no_run
-    /// # let mut w5500 = w5500_ll::eh1::vdm::W5500::new(embedded_hal_mock::spi::Mock::new(&[]));
+    /// # let mut w5500 = w5500_ll::eh1::vdm::W5500::new(ehm::eh1::spi::Mock::new(&[]));
     /// use w5500_hl::ll::{Registers, Sn::Sn0};
     /// use w5500_hl::{Common, Udp};
     ///
@@ -325,7 +325,7 @@ pub trait Common: Registers {
     /// # Example
     ///
     /// ```no_run
-    /// # let mut w5500 = w5500_ll::eh1::vdm::W5500::new(embedded_hal_mock::spi::Mock::new(&[]));
+    /// # let mut w5500 = w5500_ll::eh1::vdm::W5500::new(ehm::eh1::spi::Mock::new(&[]));
     /// use w5500_hl::ll::{Registers, Sn::Sn0};
     /// use w5500_hl::{Common, Udp};
     ///

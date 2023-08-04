@@ -37,18 +37,18 @@ pub trait Registers {
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x00, 0x00]),
-    /// #   ehm1::spi::Transaction::read(0),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x00, 0x00]),
+    /// #   ehm::eh1::spi::Transaction::read(0),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Mode};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let mode: Mode = w5500.mr().await?;
     /// assert_eq!(mode, Mode::default());
-    /// # Ok(()) }
+    /// # w5500.free().done(); Ok(()) }
     /// ```
     async fn mr(&mut self) -> Result<Mode, Self::Error> {
         let mut reg: [u8; 1] = [0];
@@ -64,18 +64,18 @@ pub trait Registers {
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x00, 0x04]),
-    /// #   ehm1::spi::Transaction::write(w5500_ll::Mode::WOL_MASK),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x00, 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write(w5500_ll::Mode::WOL_MASK),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Mode};
     ///
     /// const MODE: Mode = Mode::DEFAULT.enable_wol();
     /// let mut w5500 = W5500::new(spi);
     /// w5500.set_mr(MODE).await?;
-    /// # Ok(()) }
+    /// # w5500.free().done(); Ok(()) }
     /// ```
     async fn set_mr(&mut self, mode: Mode) -> Result<(), Self::Error> {
         self.write(Reg::MR.addr(), COMMON_BLOCK_OFFSET, &[mode.into()])
@@ -89,18 +89,18 @@ pub trait Registers {
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x01, 0x00]),
-    /// #   ehm1::spi::Transaction::read_vec(vec![0, 0, 0, 0]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x01, 0x00]),
+    /// #   ehm::eh1::spi::Transaction::read_vec(vec![0, 0, 0, 0]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, net::Ipv4Addr};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let gar = w5500.gar().await?;
     /// assert_eq!(gar, Ipv4Addr::UNSPECIFIED);
-    /// # Ok(()) }
+    /// # w5500.free().done(); Ok(()) }
     /// ```
     async fn gar(&mut self) -> Result<Ipv4Addr, Self::Error> {
         let mut gar: [u8; 4] = [0; 4];
@@ -116,17 +116,17 @@ pub trait Registers {
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x01, 0x04]),
-    /// #   ehm1::spi::Transaction::write_vec(vec![192, 168, 0, 1]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x01, 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![192, 168, 0, 1]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, net::Ipv4Addr};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// w5500.set_gar(&Ipv4Addr::new(192, 168, 0, 1)).await?;
-    /// # Ok(()) }
+    /// # w5500.free().done(); Ok(()) }
     /// ```
     async fn set_gar(&mut self, gar: &Ipv4Addr) -> Result<(), Self::Error> {
         self.write(Reg::GAR0.addr(), COMMON_BLOCK_OFFSET, &gar.octets())
@@ -140,18 +140,18 @@ pub trait Registers {
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x05, 0x00]),
-    /// #   ehm1::spi::Transaction::read_vec(vec![0, 0, 0, 0]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x05, 0x00]),
+    /// #   ehm::eh1::spi::Transaction::read_vec(vec![0, 0, 0, 0]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, net::Ipv4Addr};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let subr = w5500.subr().await?;
     /// assert_eq!(subr, Ipv4Addr::UNSPECIFIED);
-    /// # Ok(()) }
+    /// # w5500.free().done(); Ok(()) }
     /// ```
     async fn subr(&mut self) -> Result<Ipv4Addr, Self::Error> {
         let mut subr: [u8; 4] = [0; 4];
@@ -167,17 +167,17 @@ pub trait Registers {
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x05, 0x04]),
-    /// #   ehm1::spi::Transaction::write_vec(vec![255, 255, 255, 0]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x05, 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![255, 255, 255, 0]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, net::Ipv4Addr};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// w5500.set_subr(&Ipv4Addr::new(255, 255, 255, 0)).await?;
-    /// # Ok(()) }
+    /// # w5500.free().done(); Ok(()) }
     /// ```
     async fn set_subr(&mut self, subr: &Ipv4Addr) -> Result<(), Self::Error> {
         self.write(Reg::SUBR0.addr(), COMMON_BLOCK_OFFSET, &subr.octets())
@@ -191,18 +191,18 @@ pub trait Registers {
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x09, 0x00]),
-    /// #   ehm1::spi::Transaction::read_vec(vec![0, 0, 0, 0, 0, 0]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x09, 0x00]),
+    /// #   ehm::eh1::spi::Transaction::read_vec(vec![0, 0, 0, 0, 0, 0]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, net::Eui48Addr};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let shar = w5500.shar().await?;
     /// assert_eq!(shar, Eui48Addr::UNSPECIFIED);
-    /// # Ok(()) }
+    /// # w5500.free().done(); Ok(()) }
     /// ```
     async fn shar(&mut self) -> Result<Eui48Addr, Self::Error> {
         let mut shar = Eui48Addr::UNSPECIFIED;
@@ -218,11 +218,11 @@ pub trait Registers {
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x09, 0x04]),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x12, 0x34, 0, 0, 0, 0]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x09, 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x12, 0x34, 0, 0, 0, 0]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, net::Eui48Addr};
     ///
@@ -230,7 +230,7 @@ pub trait Registers {
     /// w5500
     ///     .set_shar(&Eui48Addr::new(0x12, 0x34, 0x00, 0x00, 0x00, 0x00))
     ///     .await?;
-    /// # Ok(()) }
+    /// # w5500.free().done(); Ok(()) }
     /// ```
     async fn set_shar(&mut self, shar: &Eui48Addr) -> Result<(), Self::Error> {
         self.write(Reg::SHAR0.addr(), COMMON_BLOCK_OFFSET, &shar.octets)
@@ -244,18 +244,18 @@ pub trait Registers {
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x0F, 0x00]),
-    /// #   ehm1::spi::Transaction::read_vec(vec![0, 0, 0, 0]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x0F, 0x00]),
+    /// #   ehm::eh1::spi::Transaction::read_vec(vec![0, 0, 0, 0]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, net::Ipv4Addr};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let sipr = w5500.sipr().await?;
     /// assert_eq!(sipr, Ipv4Addr::UNSPECIFIED);
-    /// # Ok(()) }
+    /// # w5500.free().done(); Ok(()) }
     /// ```
     async fn sipr(&mut self) -> Result<Ipv4Addr, Self::Error> {
         let mut sipr: [u8; 4] = [0; 4];
@@ -271,17 +271,17 @@ pub trait Registers {
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x0F, 0x04]),
-    /// #   ehm1::spi::Transaction::write_vec(vec![192, 168, 0, 150]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x0F, 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![192, 168, 0, 150]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, net::Ipv4Addr};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// w5500.set_sipr(&Ipv4Addr::new(192, 168, 0, 150)).await?;
-    /// # Ok(()) }
+    /// # w5500.free().done(); Ok(()) }
     /// ```
     async fn set_sipr(&mut self, sipr: &Ipv4Addr) -> Result<(), Self::Error> {
         self.write(Reg::SIPR0.addr(), COMMON_BLOCK_OFFSET, &sipr.octets())
@@ -309,18 +309,18 @@ pub trait Registers {
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x13, 0x00]),
-    /// #   ehm1::spi::Transaction::read_vec(vec![0, 0]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x13, 0x00]),
+    /// #   ehm::eh1::spi::Transaction::read_vec(vec![0, 0]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let intlevel: u16 = w5500.intlevel().await?;
     /// assert_eq!(intlevel, 0x00);
-    /// # Ok(()) }
+    /// # w5500.free().done(); Ok(()) }
     /// ```
     async fn intlevel(&mut self) -> Result<u16, Self::Error> {
         let mut buf: [u8; 2] = [0; 2];
@@ -338,17 +338,17 @@ pub trait Registers {
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x13, 0x04]),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x12, 0x34]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x13, 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x12, 0x34]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// w5500.set_intlevel(0x1234).await?;
-    /// # Ok(()) }
+    /// # w5500.free().done(); Ok(()) }
     /// ```
     async fn set_intlevel(&mut self, intlevel: u16) -> Result<(), Self::Error> {
         self.write(
@@ -368,18 +368,18 @@ pub trait Registers {
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x15, 0x00]),
-    /// #   ehm1::spi::Transaction::read(0),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x15, 0x00]),
+    /// #   ehm::eh1::spi::Transaction::read(0),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Interrupt};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let ir: Interrupt = w5500.ir().await?;
     /// assert_eq!(ir, Interrupt::default());
-    /// # Ok(()) }
+    /// # w5500.free().done(); Ok(()) }
     /// ```
     async fn ir(&mut self) -> Result<Interrupt, Self::Error> {
         let mut reg: [u8; 1] = [0];
@@ -397,22 +397,22 @@ pub trait Registers {
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x15, 0x00]),
-    /// #   ehm1::spi::Transaction::read(0),
-    /// #   ehm1::spi::Transaction::transaction_end(),
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x15, 0x04]),
-    /// #   ehm1::spi::Transaction::write(0),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x15, 0x00]),
+    /// #   ehm::eh1::spi::Transaction::read(0),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x15, 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write(0),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Interrupt};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let ir: Interrupt = w5500.ir().await?;
     /// w5500.set_ir(ir).await?;
-    /// # Ok(()) }
+    /// # w5500.free().done(); Ok(()) }
     /// ```
     async fn set_ir(&mut self, interrupt: Interrupt) -> Result<(), Self::Error> {
         self.write(Reg::IR.addr(), COMMON_BLOCK_OFFSET, &[interrupt.into()])
@@ -428,18 +428,18 @@ pub trait Registers {
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x16, 0x00]),
-    /// #   ehm1::spi::Transaction::read(0),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x16, 0x00]),
+    /// #   ehm::eh1::spi::Transaction::read(0),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Interrupt};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let imr: Interrupt = w5500.imr().await?;
     /// assert_eq!(imr, Interrupt::default());
-    /// # Ok(()) }
+    /// # w5500.free().done(); Ok(()) }
     /// ```
     async fn imr(&mut self) -> Result<Interrupt, Self::Error> {
         let mut reg: [u8; 1] = [0];
@@ -462,11 +462,11 @@ pub trait Registers {
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Interrupt};
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x16, 0x04]),
-    /// #   ehm1::spi::Transaction::write_vec(vec![Interrupt::MP_MASK]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x16, 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![Interrupt::MP_MASK]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     ///
     /// // enable the magic packet interrupt
@@ -474,7 +474,7 @@ pub trait Registers {
     ///
     /// let mut w5500 = W5500::new(spi);
     /// w5500.set_imr(IMR).await?;
-    /// # Ok(()) }
+    /// # w5500.free().done(); Ok(()) }
     /// ```
     async fn set_imr(&mut self, mask: Interrupt) -> Result<(), Self::Error> {
         self.write(Reg::IMR.addr(), COMMON_BLOCK_OFFSET, &[mask.into()])
@@ -493,11 +493,11 @@ pub trait Registers {
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x17, 0x00]),
-    /// #   ehm1::spi::Transaction::read(0),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x17, 0x00]),
+    /// #   ehm::eh1::spi::Transaction::read(0),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, SOCKETS};
     ///
@@ -510,7 +510,7 @@ pub trait Registers {
     ///         w5500.set_sn_ir(*socket, sn_ir.into()).await?;
     ///     }
     /// }
-    /// # Ok(()) }
+    /// # w5500.free().done(); Ok(()) }
     /// ```
     ///
     /// [`sn_ir`]: Registers::sn_ir
@@ -534,17 +534,17 @@ pub trait Registers {
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x18, 0x00]),
-    /// #   ehm1::spi::Transaction::read(0),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x18, 0x00]),
+    /// #   ehm::eh1::spi::Transaction::read(0),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let simr: u8 = w5500.simr().await?;
-    /// # Ok(()) }
+    /// # w5500.free().done(); Ok(()) }
     /// ```
     async fn simr(&mut self) -> Result<u8, Self::Error> {
         let mut reg: [u8; 1] = [0];
@@ -562,18 +562,18 @@ pub trait Registers {
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x18, 0x04]),
-    /// #   ehm1::spi::Transaction::write(0xFF),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x18, 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write(0xFF),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// // enable all socket interrupts
     /// w5500.set_simr(0xFF).await?;
-    /// # Ok(()) }
+    /// # w5500.free().done(); Ok(()) }
     /// ```
     async fn set_simr(&mut self, simr: u8) -> Result<(), Self::Error> {
         self.write(Reg::SIMR.addr(), COMMON_BLOCK_OFFSET, &[simr])
@@ -597,18 +597,18 @@ pub trait Registers {
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x19, 0x00]),
-    /// #   ehm1::spi::Transaction::read_vec(vec![0x07, 0xD0]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x19, 0x00]),
+    /// #   ehm::eh1::spi::Transaction::read_vec(vec![0x07, 0xD0]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let rtr: u16 = w5500.rtr().await?;
     /// assert_eq!(rtr, 0x07D0);
-    /// # Ok(()) }
+    /// # w5500.free().done(); Ok(()) }
     /// ```
     async fn rtr(&mut self) -> Result<u16, Self::Error> {
         let mut buf: [u8; 2] = [0; 2];
@@ -626,17 +626,17 @@ pub trait Registers {
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x19, 0x04]),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x12, 0x34]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x19, 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x12, 0x34]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// w5500.set_rtr(0x1234).await?;
-    /// # Ok(()) }
+    /// # w5500.free().done(); Ok(()) }
     /// ```
     async fn set_rtr(&mut self, rtr: u16) -> Result<(), Self::Error> {
         self.write(Reg::RTR0.addr(), COMMON_BLOCK_OFFSET, &rtr.to_be_bytes())
@@ -657,17 +657,17 @@ pub trait Registers {
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x1B, 0x00]),
-    /// #   ehm1::spi::Transaction::read(0x08),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x1B, 0x00]),
+    /// #   ehm::eh1::spi::Transaction::read(0x08),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let rcr: u8 = w5500.rcr().await?;
-    /// # Ok(()) }
+    /// # w5500.free().done(); Ok(()) }
     /// ```
     async fn rcr(&mut self) -> Result<u8, Self::Error> {
         let mut reg: [u8; 1] = [0];
@@ -685,17 +685,17 @@ pub trait Registers {
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x1B, 0x04]),
-    /// #   ehm1::spi::Transaction::write(0x0A),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x1B, 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write(0x0A),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// w5500.set_rcr(0x0A).await?;
-    /// # Ok(()) }
+    /// # w5500.free().done(); Ok(()) }
     /// ```
     async fn set_rcr(&mut self, rcr: u8) -> Result<(), Self::Error> {
         self.write(Reg::RCR.addr(), COMMON_BLOCK_OFFSET, &[rcr])
@@ -714,17 +714,17 @@ pub trait Registers {
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x1C, 0x00]),
-    /// #   ehm1::spi::Transaction::read(0x08),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x1C, 0x00]),
+    /// #   ehm::eh1::spi::Transaction::read(0x08),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let ptimer: u8 = w5500.ptimer().await?;
-    /// # Ok(()) }
+    /// # w5500.free().done(); Ok(()) }
     /// ```
     async fn ptimer(&mut self) -> Result<u8, Self::Error> {
         let mut reg: [u8; 1] = [0];
@@ -742,17 +742,17 @@ pub trait Registers {
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x1C, 0x04]),
-    /// #   ehm1::spi::Transaction::write(0xC8),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x1C, 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write(0xC8),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// w5500.set_ptimer(200).await?;
-    /// # Ok(()) }
+    /// # w5500.free().done(); Ok(()) }
     /// ```
     async fn set_ptimer(&mut self, ptimer: u8) -> Result<(), Self::Error> {
         self.write(Reg::PTIMER.addr(), COMMON_BLOCK_OFFSET, &[ptimer])
@@ -769,17 +769,17 @@ pub trait Registers {
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x1D, 0x00]),
-    /// #   ehm1::spi::Transaction::read(0x08),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x1D, 0x00]),
+    /// #   ehm::eh1::spi::Transaction::read(0x08),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let pmagic: u8 = w5500.pmagic().await?;
-    /// # Ok(()) }
+    /// # w5500.free().done(); Ok(()) }
     /// ```
     async fn pmagic(&mut self) -> Result<u8, Self::Error> {
         let mut reg: [u8; 1] = [0];
@@ -797,17 +797,17 @@ pub trait Registers {
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x1D, 0x04]),
-    /// #   ehm1::spi::Transaction::write(0x01),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x1D, 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write(0x01),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// w5500.set_pmagic(0x01).await?;
-    /// # Ok(()) }
+    /// # w5500.free().done(); Ok(()) }
     /// ```
     async fn set_pmagic(&mut self, pmagic: u8) -> Result<(), Self::Error> {
         self.write(Reg::PMAGIC.addr(), COMMON_BLOCK_OFFSET, &[pmagic])
@@ -821,18 +821,18 @@ pub trait Registers {
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x1E, 0x00]),
-    /// #   ehm1::spi::Transaction::read_vec(vec![0, 0, 0, 0, 0, 0]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x1E, 0x00]),
+    /// #   ehm::eh1::spi::Transaction::read_vec(vec![0, 0, 0, 0, 0, 0]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, net::Eui48Addr};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let phar = w5500.phar().await?;
     /// assert_eq!(phar, Eui48Addr::UNSPECIFIED);
-    /// # Ok(()) }
+    /// # w5500.free().done(); Ok(()) }
     /// ```
     async fn phar(&mut self) -> Result<Eui48Addr, Self::Error> {
         let mut phar = Eui48Addr::UNSPECIFIED;
@@ -848,11 +848,11 @@ pub trait Registers {
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x1E, 0x04]),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x12, 0x34, 0, 0, 0, 0]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x1E, 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x12, 0x34, 0, 0, 0, 0]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, net::Eui48Addr};
     ///
@@ -860,7 +860,7 @@ pub trait Registers {
     /// w5500
     ///     .set_phar(&Eui48Addr::new(0x12, 0x34, 0x00, 0x00, 0x00, 0x00))
     ///     .await?;
-    /// # Ok(()) }
+    /// # w5500.free().done(); Ok(()) }
     /// ```
     async fn set_phar(&mut self, phar: &Eui48Addr) -> Result<(), Self::Error> {
         self.write(Reg::PHAR0.addr(), COMMON_BLOCK_OFFSET, &phar.octets)
@@ -877,18 +877,18 @@ pub trait Registers {
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x24, 0x00]),
-    /// #   ehm1::spi::Transaction::read_vec(vec![0, 0]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x24, 0x00]),
+    /// #   ehm::eh1::spi::Transaction::read_vec(vec![0, 0]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let psid: u16 = w5500.psid().await?;
     /// assert_eq!(psid, 0x0000);
-    /// # Ok(()) }
+    /// # w5500.free().done(); Ok(()) }
     /// ```
     async fn psid(&mut self) -> Result<u16, Self::Error> {
         let mut buf: [u8; 2] = [0; 2];
@@ -906,17 +906,17 @@ pub trait Registers {
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x24, 0x04]),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x12, 0x34]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x24, 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x12, 0x34]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// w5500.set_psid(0x1234).await?;
-    /// # Ok(()) }
+    /// # w5500.free().done(); Ok(()) }
     /// ```
     async fn set_psid(&mut self, psid: u16) -> Result<(), Self::Error> {
         self.write(Reg::PSID0.addr(), COMMON_BLOCK_OFFSET, &psid.to_be_bytes())
@@ -932,18 +932,18 @@ pub trait Registers {
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x26, 0x00]),
-    /// #   ehm1::spi::Transaction::read_vec(vec![0, 0]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x26, 0x00]),
+    /// #   ehm::eh1::spi::Transaction::read_vec(vec![0, 0]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let pmru: u16 = w5500.pmru().await?;
     /// assert_eq!(pmru, 0x0000);
-    /// # Ok(()) }
+    /// # w5500.free().done(); Ok(()) }
     /// ```
     async fn pmru(&mut self) -> Result<u16, Self::Error> {
         let mut buf: [u8; 2] = [0; 2];
@@ -961,17 +961,17 @@ pub trait Registers {
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x26, 0x04]),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x12, 0x34]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x26, 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x12, 0x34]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// w5500.set_pmru(0x1234).await?;
-    /// # Ok(()) }
+    /// # w5500.free().done(); Ok(()) }
     /// ```
     async fn set_pmru(&mut self, pmru: u16) -> Result<(), Self::Error> {
         self.write(Reg::PMRU0.addr(), COMMON_BLOCK_OFFSET, &pmru.to_be_bytes())
@@ -992,18 +992,18 @@ pub trait Registers {
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x28, 0x00]),
-    /// #   ehm1::spi::Transaction::read_vec(vec![0, 0, 0, 0]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x28, 0x00]),
+    /// #   ehm::eh1::spi::Transaction::read_vec(vec![0, 0, 0, 0]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, net::Ipv4Addr};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let uipr = w5500.uipr().await?;
     /// assert_eq!(uipr, Ipv4Addr::UNSPECIFIED);
-    /// # Ok(()) }
+    /// # w5500.free().done(); Ok(()) }
     /// ```
     async fn uipr(&mut self) -> Result<Ipv4Addr, Self::Error> {
         let mut uipr: [u8; 4] = [0; 4];
@@ -1021,17 +1021,17 @@ pub trait Registers {
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x2C, 0x00]),
-    /// #   ehm1::spi::Transaction::read_vec(vec![0, 0]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x2C, 0x00]),
+    /// #   ehm::eh1::spi::Transaction::read_vec(vec![0, 0]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let uportr = w5500.uportr().await?;
-    /// # Ok(()) }
+    /// # w5500.free().done(); Ok(()) }
     /// ```
     async fn uportr(&mut self) -> Result<u16, Self::Error> {
         let mut buf: [u8; 2] = [0; 2];
@@ -1047,18 +1047,18 @@ pub trait Registers {
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x2E, 0x00]),
-    /// #   ehm1::spi::Transaction::read(0b10111000),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x2E, 0x00]),
+    /// #   ehm::eh1::spi::Transaction::read(0b10111000),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, PhyCfg};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let phy_cfg: PhyCfg = w5500.phycfgr().await?;
     /// assert_eq!(phy_cfg, PhyCfg::default());
-    /// # Ok(()) }
+    /// # w5500.free().done(); Ok(()) }
     /// ```
     async fn phycfgr(&mut self) -> Result<PhyCfg, Self::Error> {
         let mut reg: [u8; 1] = [0];
@@ -1074,18 +1074,18 @@ pub trait Registers {
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x2E, 0x04]),
-    /// #   ehm1::spi::Transaction::write(0b11111000),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x2E, 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write(0b11111000),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, OperationMode, PhyCfg};
     ///
     /// const PHY_CFG: PhyCfg = PhyCfg::DEFAULT.set_opmdc(OperationMode::Auto);
     /// let mut w5500 = W5500::new(spi);
     /// w5500.set_phycfgr(PHY_CFG).await?;
-    /// # Ok(()) }
+    /// # w5500.free().done(); Ok(()) }
     /// ```
     async fn set_phycfgr(&mut self, phycfg: PhyCfg) -> Result<(), Self::Error> {
         self.write(Reg::PHYCFGR.addr(), COMMON_BLOCK_OFFSET, &[phycfg.into()])
@@ -1104,18 +1104,18 @@ pub trait Registers {
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x39, 0x00]),
-    /// #   ehm1::spi::Transaction::read(0x04),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x39, 0x00]),
+    /// #   ehm::eh1::spi::Transaction::read(0x04),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let version = w5500.version().await?;
     /// assert_eq!(version, 0x04);
-    /// # Ok(()) }
+    /// # w5500.free().done(); Ok(()) }
     /// ```
     async fn version(&mut self) -> Result<u8, Self::Error> {
         let mut reg: [u8; 1] = [0];
@@ -1131,18 +1131,18 @@ pub trait Registers {
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x00, 0x08]),
-    /// #   ehm1::spi::Transaction::read(0),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x00, 0x08]),
+    /// #   ehm::eh1::spi::Transaction::read(0),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn, SocketMode};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let socket_mode = w5500.sn_mr(Sn::Sn0).await?;
     /// assert_eq!(socket_mode, SocketMode::default());
-    /// # Ok(()) }
+    /// # w5500.free().done(); Ok(()) }
     /// ```
     async fn sn_mr(&mut self, sn: Sn) -> Result<SocketMode, Self::Error> {
         let mut reg: [u8; 1] = [0];
@@ -1157,18 +1157,18 @@ pub trait Registers {
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x00, 0x08 | 0x04]),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x01]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x00, 0x08 | 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x01]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Protocol, Sn, SocketMode};
     ///
     /// const SOCKET_MODE: SocketMode = SocketMode::DEFAULT.set_protocol(Protocol::Tcp);
     /// let mut w5500 = W5500::new(spi);
     /// w5500.set_sn_mr(Sn::Sn0, SOCKET_MODE).await?;
-    /// # Ok(()) }
+    /// # w5500.free().done(); Ok(()) }
     /// ```
     async fn set_sn_mr(&mut self, sn: Sn, mode: SocketMode) -> Result<(), Self::Error> {
         self.write(SnReg::MR.addr(), sn.block(), &[mode.into()])
@@ -1185,26 +1185,26 @@ pub trait Registers {
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x01, 0x08 | 0x04]),
-    /// #   ehm1::spi::Transaction::write(0x01),
-    /// #   ehm1::spi::Transaction::transaction_end(),
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x01, 0x08]),
-    /// #   ehm1::spi::Transaction::read(1),
-    /// #   ehm1::spi::Transaction::transaction_end(),
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x01, 0x08]),
-    /// #   ehm1::spi::Transaction::read(0),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x01, 0x08 | 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write(0x01),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x01, 0x08]),
+    /// #   ehm::eh1::spi::Transaction::read(1),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x01, 0x08]),
+    /// #   ehm::eh1::spi::Transaction::read(0),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn, SocketCommand};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// w5500.set_sn_cr(Sn::Sn0, SocketCommand::Open).await?;
     /// while w5500.sn_cr(Sn::Sn0).await? != SocketCommand::Accepted.into() {}
-    /// # Ok(()) }
+    /// # w5500.free().done(); Ok(()) }
     /// ```
     async fn sn_cr(&mut self, sn: Sn) -> Result<u8, Self::Error> {
         let mut reg: [u8; 1] = [0];
@@ -1219,17 +1219,17 @@ pub trait Registers {
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x01, 0x08 | 0x04]),
-    /// #   ehm1::spi::Transaction::write(0x01),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x01, 0x08 | 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write(0x01),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn, SocketCommand};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// w5500.set_sn_cr(Sn::Sn0, SocketCommand::Open).await?;
-    /// # Ok(()) }
+    /// # w5500.free().done(); Ok(()) }
     /// ```
     async fn set_sn_cr(&mut self, sn: Sn, cmd: SocketCommand) -> Result<(), Self::Error> {
         self.write(SnReg::CR.addr(), sn.block(), &[cmd.into()])
@@ -1243,17 +1243,17 @@ pub trait Registers {
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x02, 0x08]),
-    /// #   ehm1::spi::Transaction::read(0),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x02, 0x08]),
+    /// #   ehm::eh1::spi::Transaction::read(0),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let socket_interrupts = w5500.sn_ir(Sn::Sn0).await?;
-    /// # Ok(()) }
+    /// # w5500.free().done(); Ok(()) }
     /// ```
     async fn sn_ir(&mut self, sn: Sn) -> Result<SocketInterrupt, Self::Error> {
         let mut reg: [u8; 1] = [0];
@@ -1272,22 +1272,22 @@ pub trait Registers {
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x02, 0x08]),
-    /// #   ehm1::spi::Transaction::read(0),
-    /// #   ehm1::spi::Transaction::transaction_end(),
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x02, 0x08 | 0x04]),
-    /// #   ehm1::spi::Transaction::write(0),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x02, 0x08]),
+    /// #   ehm::eh1::spi::Transaction::read(0),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x02, 0x08 | 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write(0),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn, SocketInterrupt};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let socket_interrupts: SocketInterrupt = w5500.sn_ir(Sn::Sn0).await?;
     /// w5500.set_sn_ir(Sn::Sn0, socket_interrupts.into()).await?;
-    /// # Ok(()) }
+    /// # w5500.free().done(); Ok(()) }
     /// ```
     ///
     /// Clearing only the SENDOK interrupt.
@@ -1295,11 +1295,11 @@ pub trait Registers {
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x02, 0x08 | 0x04]),
-    /// #   ehm1::spi::Transaction::write(SocketInterrupt::SENDOK_MASK),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x02, 0x08 | 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write(SocketInterrupt::SENDOK_MASK),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn, SocketInterrupt};
     ///
@@ -1307,7 +1307,7 @@ pub trait Registers {
     /// w5500
     ///     .set_sn_ir(Sn::Sn0, SocketInterrupt::SENDOK_MASK)
     ///     .await?;
-    /// # Ok(()) }
+    /// # w5500.free().done(); Ok(()) }
     /// ```
     async fn set_sn_ir(&mut self, sn: Sn, sn_ir: u8) -> Result<(), Self::Error> {
         // todo: not consistent with synchronous version
@@ -1335,18 +1335,18 @@ pub trait Registers {
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x03, 0x08]),
-    /// #   ehm1::spi::Transaction::read(0),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x03, 0x08]),
+    /// #   ehm::eh1::spi::Transaction::read(0),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn, SocketStatus};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let sn_sr = w5500.sn_sr(Sn::Sn0).await?;
     /// assert_eq!(sn_sr, Ok(SocketStatus::Closed));
-    /// # Ok(()) }
+    /// # w5500.free().done(); Ok(()) }
     /// ```
     ///
     /// [`Ok`]: https://doc.rust-lang.org/core/result/enum.Result.html#variant.Ok
@@ -1367,17 +1367,17 @@ pub trait Registers {
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x04, 0x08]),
-    /// #   ehm1::spi::Transaction::read_vec(vec![0, 0]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x04, 0x08]),
+    /// #   ehm::eh1::spi::Transaction::read_vec(vec![0, 0]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn, SocketMode};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let socket_port: u16 = w5500.sn_port(Sn::Sn0).await?;
-    /// # Ok(()) }
+    /// # w5500.free().done(); Ok(()) }
     /// ```
     async fn sn_port(&mut self, sn: Sn) -> Result<u16, Self::Error> {
         let mut reg: [u8; 2] = [0; 2];
@@ -1394,17 +1394,17 @@ pub trait Registers {
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x04, 0x08 | 0x04]),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 68]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x04, 0x08 | 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 68]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// w5500.set_sn_port(Sn::Sn0, 68).await?;
-    /// # Ok(()) }
+    /// # w5500.free().done(); Ok(()) }
     /// ```
     async fn set_sn_port(&mut self, sn: Sn, port: u16) -> Result<(), Self::Error> {
         self.write(SnReg::PORT0.addr(), sn.block(), &u16::to_be_bytes(port))
@@ -1422,17 +1422,17 @@ pub trait Registers {
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x06, 0x08]),
-    /// #   ehm1::spi::Transaction::read_vec(vec![0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x06, 0x08]),
+    /// #   ehm::eh1::spi::Transaction::read_vec(vec![0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let dhar = w5500.sn_dhar(Sn::Sn0).await?;
-    /// # Ok(()) }
+    /// # w5500.free().done(); Ok(()) }
     /// ```
     async fn sn_dhar(&mut self, sn: Sn) -> Result<Eui48Addr, Self::Error> {
         let mut dhar: Eui48Addr = Eui48Addr::UNSPECIFIED;
@@ -1450,18 +1450,18 @@ pub trait Registers {
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x06, 0x08 | 0x04]),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x12, 0x34, 0x00, 0x00, 0x00, 0x00]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x06, 0x08 | 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x12, 0x34, 0x00, 0x00, 0x00, 0x00]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, net::Eui48Addr, Sn};
     ///
     /// let dhar = Eui48Addr::new(0x12, 0x34, 0x00, 0x00, 0x00, 0x00);
     /// let mut w5500 = W5500::new(spi);
     /// w5500.set_sn_dhar(Sn::Sn0, &dhar).await?;
-    /// # Ok(()) }
+    /// # w5500.free().done(); Ok(()) }
     /// ```
     async fn set_sn_dhar(&mut self, sn: Sn, dhar: &Eui48Addr) -> Result<(), Self::Error> {
         self.write(SnReg::DHAR0.addr(), sn.block(), &dhar.octets)
@@ -1488,18 +1488,18 @@ pub trait Registers {
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x0C, 0x08]),
-    /// #   ehm1::spi::Transaction::read_vec(vec![0, 0, 0, 0]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x0C, 0x08]),
+    /// #   ehm::eh1::spi::Transaction::read_vec(vec![0, 0, 0, 0]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, net::Ipv4Addr, Sn};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let dipr = w5500.sn_dipr(Sn::Sn0).await?;
     /// assert_eq!(dipr, Ipv4Addr::UNSPECIFIED);
-    /// # Ok(()) }
+    /// # w5500.free().done(); Ok(()) }
     /// ```
     async fn sn_dipr(&mut self, sn: Sn) -> Result<Ipv4Addr, Self::Error> {
         let mut dipr: [u8; 4] = [0; 4];
@@ -1517,11 +1517,11 @@ pub trait Registers {
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x0C, 0x08 | 0x04]),
-    /// #   ehm1::spi::Transaction::write_vec(vec![192, 168, 0, 11]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x0C, 0x08 | 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![192, 168, 0, 11]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, net::Ipv4Addr, Sn};
     ///
@@ -1529,7 +1529,7 @@ pub trait Registers {
     /// w5500
     ///     .set_sn_dipr(Sn::Sn0, &Ipv4Addr::new(192, 168, 0, 11))
     ///     .await?;
-    /// # Ok(()) }
+    /// # w5500.free().done(); Ok(()) }
     /// ```
     async fn set_sn_dipr(&mut self, sn: Sn, dipr: &Ipv4Addr) -> Result<(), Self::Error> {
         self.write(SnReg::DIPR0.addr(), sn.block(), &dipr.octets())
@@ -1557,17 +1557,17 @@ pub trait Registers {
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x10, 0x08]),
-    /// #   ehm1::spi::Transaction::read_vec(vec![0, 0]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x10, 0x08]),
+    /// #   ehm::eh1::spi::Transaction::read_vec(vec![0, 0]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn, SocketMode};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let socket_destination_port: u16 = w5500.sn_dport(Sn::Sn0).await?;
-    /// # Ok(()) }
+    /// # w5500.free().done(); Ok(()) }
     /// ```
     async fn sn_dport(&mut self, sn: Sn) -> Result<u16, Self::Error> {
         let mut reg: [u8; 2] = [0; 2];
@@ -1585,17 +1585,17 @@ pub trait Registers {
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x10, 0x08 | 0x04]),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 67]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x10, 0x08 | 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 67]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// w5500.set_sn_dport(Sn::Sn0, 67).await?;
-    /// # Ok(()) }
+    /// # w5500.free().done(); Ok(()) }
     /// ```
     async fn set_sn_dport(&mut self, sn: Sn, port: u16) -> Result<(), Self::Error> {
         self.write(SnReg::DPORT0.addr(), sn.block(), &u16::to_be_bytes(port))
@@ -1612,11 +1612,11 @@ pub trait Registers {
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x0C, 0x08]),
-    /// #   ehm1::spi::Transaction::read_vec(vec![0, 0, 0, 0, 0, 0]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x0C, 0x08]),
+    /// #   ehm::eh1::spi::Transaction::read_vec(vec![0, 0, 0, 0, 0, 0]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{
     ///     aio::Registers,
@@ -1628,7 +1628,7 @@ pub trait Registers {
     /// let mut w5500 = W5500::new(spi);
     /// let addr = w5500.sn_dest(Sn::Sn0).await?;
     /// assert_eq!(addr, SocketAddrV4::new(Ipv4Addr::new(0, 0, 0, 0), 0));
-    /// # Ok(()) }
+    /// # w5500.free().done(); Ok(()) }
     /// ```
     async fn sn_dest(&mut self, sn: Sn) -> Result<SocketAddrV4, Self::Error> {
         let mut buf: [u8; 6] = [0; 6];
@@ -1649,11 +1649,11 @@ pub trait Registers {
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x0C, 0x08 | 0x04]),
-    /// #   ehm1::spi::Transaction::write_vec(vec![192, 168, 0, 11, 0, 67]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x0C, 0x08 | 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![192, 168, 0, 11, 0, 67]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{
     ///     aio::Registers,
@@ -1665,7 +1665,7 @@ pub trait Registers {
     /// let addr: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::new(192, 168, 0, 11), 67);
     /// let mut w5500 = W5500::new(spi);
     /// w5500.set_sn_dest(Sn::Sn0, &addr).await?;
-    /// # Ok(()) }
+    /// # w5500.free().done(); Ok(()) }
     /// ```
     async fn set_sn_dest(&mut self, sn: Sn, addr: &SocketAddrV4) -> Result<(), Self::Error> {
         let buf: [u8; 6] = [
@@ -1718,17 +1718,17 @@ pub trait Registers {
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x12, 0x08]),
-    /// #   ehm1::spi::Transaction::read_vec(vec![0x00, 0x00]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x12, 0x08]),
+    /// #   ehm::eh1::spi::Transaction::read_vec(vec![0x00, 0x00]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let sn__mssr: u16 = w5500.sn_mssr(Sn::Sn0).await?;
-    /// # Ok(()) }
+    /// # w5500.free().done(); Ok(()) }
     /// ```
     async fn sn_mssr(&mut self, sn: Sn) -> Result<u16, Self::Error> {
         let mut reg: [u8; 2] = [0; 2];
@@ -1745,17 +1745,17 @@ pub trait Registers {
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x12, 0x08 | 0x04]),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x05, 0xB4]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x12, 0x08 | 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x05, 0xB4]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// w5500.set_sn_mssr(Sn::Sn0, 1460).await?;
-    /// # Ok(()) }
+    /// # w5500.free().done(); Ok(()) }
     /// ```
     async fn set_sn_mssr(&mut self, sn: Sn, mssr: u16) -> Result<(), Self::Error> {
         self.write(SnReg::MSSR0.addr(), sn.block(), &u16::to_be_bytes(mssr))
@@ -1777,17 +1777,17 @@ pub trait Registers {
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x15, 0x08]),
-    /// #   ehm1::spi::Transaction::read(0),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x15, 0x08]),
+    /// #   ehm::eh1::spi::Transaction::read(0),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let tos: u8 = w5500.sn_tos(Sn::Sn0).await?;
-    /// # Ok(()) }
+    /// # w5500.free().done(); Ok(()) }
     /// ```
     async fn sn_tos(&mut self, sn: Sn) -> Result<u8, Self::Error> {
         let mut reg: [u8; 1] = [0];
@@ -1804,17 +1804,17 @@ pub trait Registers {
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x15, 0x08 | 0x04]),
-    /// #   ehm1::spi::Transaction::write(0x01),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x15, 0x08 | 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write(0x01),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// w5500.set_sn_tos(Sn::Sn0, 1).await?;
-    /// # Ok(()) }
+    /// # w5500.free().done(); Ok(()) }
     /// ```
     async fn set_sn_tos(&mut self, sn: Sn, tos: u8) -> Result<(), Self::Error> {
         self.write(SnReg::TOS.addr(), sn.block(), &[tos]).await
@@ -1832,17 +1832,17 @@ pub trait Registers {
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x16, 0x08]),
-    /// #   ehm1::spi::Transaction::read(0x80),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x16, 0x08]),
+    /// #   ehm::eh1::spi::Transaction::read(0x80),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let ttl: u8 = w5500.sn_ttl(Sn::Sn0).await?;
-    /// # Ok(()) }
+    /// # w5500.free().done(); Ok(()) }
     /// ```
     async fn sn_ttl(&mut self, sn: Sn) -> Result<u8, Self::Error> {
         let mut reg: [u8; 1] = [0];
@@ -1859,17 +1859,17 @@ pub trait Registers {
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x16, 0x08 | 0x04]),
-    /// #   ehm1::spi::Transaction::write(0x80),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x16, 0x08 | 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write(0x80),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// w5500.set_sn_ttl(Sn::Sn0, 0x80).await?;
-    /// # Ok(()) }
+    /// # w5500.free().done(); Ok(()) }
     /// ```
     async fn set_sn_ttl(&mut self, sn: Sn, ttl: u8) -> Result<(), Self::Error> {
         self.write(SnReg::TTL.addr(), sn.block(), &[ttl]).await
@@ -1899,18 +1899,18 @@ pub trait Registers {
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x1E, 0x08]),
-    /// #   ehm1::spi::Transaction::read(0x02),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x1E, 0x08]),
+    /// #   ehm::eh1::spi::Transaction::read(0x02),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, BufferSize, Sn};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let sn_rxbuf_size = w5500.sn_rxbuf_size(Sn::Sn0).await?;
     /// assert_eq!(sn_rxbuf_size, Ok(BufferSize::KB2));
-    /// # Ok(()) }
+    /// # w5500.free().done(); Ok(()) }
     /// ```
     ///
     /// [`Ok`]: https://doc.rust-lang.org/core/result/enum.Result.html#variant.Ok
@@ -1931,17 +1931,17 @@ pub trait Registers {
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x1E, 0x08 | 0x04]),
-    /// #   ehm1::spi::Transaction::write(1),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x1E, 0x08 | 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write(1),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, BufferSize, Sn};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// w5500.set_sn_rxbuf_size(Sn::Sn0, BufferSize::KB1).await?;
-    /// # Ok(()) }
+    /// # w5500.free().done(); Ok(()) }
     /// ```
     async fn set_sn_rxbuf_size(&mut self, sn: Sn, size: BufferSize) -> Result<(), Self::Error> {
         self.write(SnReg::RXBUF_SIZE.addr(), sn.block(), &[size.into()])
@@ -1972,18 +1972,18 @@ pub trait Registers {
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x1F, 0x08]),
-    /// #   ehm1::spi::Transaction::read(0x02),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x1F, 0x08]),
+    /// #   ehm::eh1::spi::Transaction::read(0x02),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, BufferSize, Sn};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let sn_txbuf_size = w5500.sn_txbuf_size(Sn::Sn0).await?;
     /// assert_eq!(sn_txbuf_size, Ok(BufferSize::KB2));
-    /// # Ok(()) }
+    /// # w5500.free().done(); Ok(()) }
     /// ```
     ///
     /// [`Ok`]: https://doc.rust-lang.org/core/result/enum.Result.html#variant.Ok
@@ -2004,17 +2004,17 @@ pub trait Registers {
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x1F, 0x08 | 0x04]),
-    /// #   ehm1::spi::Transaction::write(1),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x1F, 0x08 | 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write(1),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, BufferSize, Sn};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// w5500.set_sn_txbuf_size(Sn::Sn0, BufferSize::KB1).await?;
-    /// # Ok(()) }
+    /// # w5500.free().done(); Ok(()) }
     /// ```
     async fn set_sn_txbuf_size(&mut self, sn: Sn, size: BufferSize) -> Result<(), Self::Error> {
         self.write(SnReg::TXBUF_SIZE.addr(), sn.block(), &[size.into()])
@@ -2050,17 +2050,17 @@ pub trait Registers {
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x20, 0x08]),
-    /// #   ehm1::spi::Transaction::read_vec(vec![0x08, 0x00]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x20, 0x08]),
+    /// #   ehm::eh1::spi::Transaction::read_vec(vec![0x08, 0x00]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn, SocketMode};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let sn_tx_fsr: u16 = w5500.sn_tx_fsr(Sn::Sn0).await?;
-    /// # Ok(()) }
+    /// # w5500.free().done(); Ok(()) }
     /// ```
     async fn sn_tx_fsr(&mut self, sn: Sn) -> Result<u16, Self::Error> {
         let mut reg: [u8; 2] = [0; 2];
@@ -2093,17 +2093,17 @@ pub trait Registers {
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x22, 0x08]),
-    /// #   ehm1::spi::Transaction::read_vec(vec![0, 0]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x22, 0x08]),
+    /// #   ehm::eh1::spi::Transaction::read_vec(vec![0, 0]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn, SocketMode};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let sn_tx_rd: u16 = w5500.sn_tx_rd(Sn::Sn0).await?;
-    /// # Ok(()) }
+    /// # w5500.free().done(); Ok(()) }
     /// ```
     async fn sn_tx_rd(&mut self, sn: Sn) -> Result<u16, Self::Error> {
         let mut reg: [u8; 2] = [0; 2];
@@ -2132,17 +2132,17 @@ pub trait Registers {
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x24, 0x08]),
-    /// #   ehm1::spi::Transaction::read_vec(vec![0, 0]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x24, 0x08]),
+    /// #   ehm::eh1::spi::Transaction::read_vec(vec![0, 0]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let sn_tx_wr: u16 = w5500.sn_tx_wr(Sn::Sn0).await?;
-    /// # Ok(()) }
+    /// # w5500.free().done(); Ok(()) }
     /// ```
     async fn sn_tx_wr(&mut self, sn: Sn) -> Result<u16, Self::Error> {
         let mut reg: [u8; 2] = [0; 2];
@@ -2188,17 +2188,17 @@ pub trait Registers {
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x26, 0x08]),
-    /// #   ehm1::spi::Transaction::read_vec(vec![0, 0]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x26, 0x08]),
+    /// #   ehm::eh1::spi::Transaction::read_vec(vec![0, 0]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let sn_rx_rsr: u16 = w5500.sn_rx_rsr(Sn::Sn0).await?;
-    /// # Ok(()) }
+    /// # w5500.free().done(); Ok(()) }
     /// ```
     async fn sn_rx_rsr(&mut self, sn: Sn) -> Result<u16, Self::Error> {
         let mut reg: [u8; 2] = [0; 2];
@@ -2226,17 +2226,17 @@ pub trait Registers {
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x28, 0x08]),
-    /// #   ehm1::spi::Transaction::read_vec(vec![0, 0]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x28, 0x08]),
+    /// #   ehm::eh1::spi::Transaction::read_vec(vec![0, 0]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let sn_rx_rd: u16 = w5500.sn_rx_rd(Sn::Sn0).await?;
-    /// # Ok(()) }
+    /// # w5500.free().done(); Ok(()) }
     /// ```
     async fn sn_rx_rd(&mut self, sn: Sn) -> Result<u16, Self::Error> {
         let mut reg: [u8; 2] = [0; 2];
@@ -2264,17 +2264,17 @@ pub trait Registers {
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x2A, 0x08]),
-    /// #   ehm1::spi::Transaction::read_vec(vec![0, 0]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x2A, 0x08]),
+    /// #   ehm::eh1::spi::Transaction::read_vec(vec![0, 0]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let sn_rx_wr: u16 = w5500.sn_rx_wr(Sn::Sn0).await?;
-    /// # Ok(()) }
+    /// # w5500.free().done(); Ok(()) }
     /// ```
     async fn sn_rx_wr(&mut self, sn: Sn) -> Result<u16, Self::Error> {
         let mut reg: [u8; 2] = [0; 2];
@@ -2304,18 +2304,18 @@ pub trait Registers {
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x2C, 0x08]),
-    /// #   ehm1::spi::Transaction::read(0xFF),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x2C, 0x08]),
+    /// #   ehm::eh1::spi::Transaction::read(0xFF),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn, SocketInterruptMask};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let sn_imr: SocketInterruptMask = w5500.sn_imr(Sn::Sn0).await?;
     /// assert_eq!(sn_imr, SocketInterruptMask::default());
-    /// # Ok(()) }
+    /// # w5500.free().done(); Ok(()) }
     /// ```
     async fn sn_imr(&mut self, sn: Sn) -> Result<SocketInterruptMask, Self::Error> {
         let mut reg: [u8; 1] = [0];
@@ -2330,11 +2330,11 @@ pub trait Registers {
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x2C, 0x08 | 0x04]),
-    /// #   ehm1::spi::Transaction::write(0xE0),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x2C, 0x08 | 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write(0xE0),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn, SocketInterruptMask};
     ///
@@ -2342,7 +2342,7 @@ pub trait Registers {
     /// w5500
     ///     .set_sn_imr(Sn::Sn0, SocketInterruptMask::ALL_MASKED)
     ///     .await?;
-    /// # Ok(()) }
+    /// # w5500.free().done(); Ok(()) }
     /// ```
     async fn set_sn_imr(&mut self, sn: Sn, mask: SocketInterruptMask) -> Result<(), Self::Error> {
         self.write(SnReg::IMR.addr(), sn.block(), &[mask.into()])
@@ -2358,18 +2358,18 @@ pub trait Registers {
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x2D, 0x08]),
-    /// #   ehm1::spi::Transaction::read_vec(vec![0x40, 0x00]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x2D, 0x08]),
+    /// #   ehm::eh1::spi::Transaction::read_vec(vec![0x40, 0x00]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let frag: u16 = w5500.sn_frag(Sn::Sn0).await?;
     /// assert_eq!(frag, 0x4000);
-    /// # Ok(()) }
+    /// # w5500.free().done(); Ok(()) }
     /// ```
     async fn sn_frag(&mut self, sn: Sn) -> Result<u16, Self::Error> {
         let mut buf: [u8; 2] = [0; 2];
@@ -2386,17 +2386,17 @@ pub trait Registers {
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x2D, 0x08 | 0x04]),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x00]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x2D, 0x08 | 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x00]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// w5500.set_sn_frag(Sn::Sn0, 0).await?;
-    /// # Ok(()) }
+    /// # w5500.free().done(); Ok(()) }
     /// ```
     async fn set_sn_frag(&mut self, sn: Sn, frag: u16) -> Result<(), Self::Error> {
         self.write(SnReg::FRAG0.addr(), sn.block(), &u16::to_be_bytes(frag))
@@ -2428,17 +2428,17 @@ pub trait Registers {
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x2F, 0x08]),
-    /// #   ehm1::spi::Transaction::read(0),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x2F, 0x08]),
+    /// #   ehm::eh1::spi::Transaction::read(0),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let sn_kpalvtr: u8 = w5500.sn_kpalvtr(Sn::Sn0).await?;
-    /// # Ok(()) }
+    /// # w5500.free().done(); Ok(()) }
     /// ```
     async fn sn_kpalvtr(&mut self, sn: Sn) -> Result<u8, Self::Error> {
         let mut buf: [u8; 1] = [0];
@@ -2456,18 +2456,18 @@ pub trait Registers {
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x2F, 0x08 | 0x04]),
-    /// #   ehm1::spi::Transaction::write(0x0A),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x2F, 0x08 | 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write(0x0A),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// // 50s keep alive timer
     /// w5500.set_sn_kpalvtr(Sn::Sn0, 10).await?;
-    /// # Ok(()) }
+    /// # w5500.free().done(); Ok(()) }
     /// ```
     async fn set_sn_kpalvtr(&mut self, sn: Sn, kpalvtr: u8) -> Result<(), Self::Error> {
         self.write(SnReg::KPALVTR.addr(), sn.block(), &[kpalvtr])
@@ -2483,32 +2483,32 @@ pub trait Registers {
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// use core::cmp::min;
     /// use w5500_ll::{eh1::vdm::W5500, aio::Registers, Sn, SocketCommand};
-    /// # let spi = ehm1::spi::Mock::new(&[
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
     /// #   // sn_tx_fsr
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, w5500_ll::SnReg::TX_FSR0.addr() as u8, 0x08]),
-    /// #   ehm1::spi::Transaction::read_vec(vec![0x08, 0x00]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, w5500_ll::SnReg::TX_FSR0.addr() as u8, 0x08]),
+    /// #   ehm::eh1::spi::Transaction::read_vec(vec![0x08, 0x00]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// #   // sn_tx_write
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, w5500_ll::SnReg::TX_WR0.addr() as u8, 0x08]),
-    /// #   ehm1::spi::Transaction::read_vec(vec![0, 0]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, w5500_ll::SnReg::TX_WR0.addr() as u8, 0x08]),
+    /// #   ehm::eh1::spi::Transaction::read_vec(vec![0, 0]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// #   // set_sn_tx_buf
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x00, (Sn::Sn0.tx_block() as u8) << 3 | 0x04]),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x12, 0x34, 0x56, 0x78, 0x9A]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x00, (Sn::Sn0.tx_block() as u8) << 3 | 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x12, 0x34, 0x56, 0x78, 0x9A]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// #   // set_sn_tx_wr
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x24, 0x08 | 0x04]),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 5]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x24, 0x08 | 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 5]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// #   // set_sn_cr
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x01, 0x08 | 0x04]),
-    /// #   ehm1::spi::Transaction::write_vec(vec![SocketCommand::Send.into()]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x01, 0x08 | 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![SocketCommand::Send.into()]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// # let mut w5500 = W5500::new(spi);
     ///
@@ -2530,7 +2530,7 @@ pub trait Registers {
     /// w5500.set_sn_tx_buf(THE_SOCKET, ptr, &buf[..usize::from(tx_bytes)]).await?;
     /// w5500.set_sn_tx_wr(THE_SOCKET, ptr.wrapping_add(tx_bytes)).await?;
     /// w5500.set_sn_cr(THE_SOCKET, SocketCommand::Send).await?;
-    /// # Ok(()) }
+    /// # w5500.free().done(); Ok(()) }
     /// ```
     async fn set_sn_tx_buf(&mut self, sn: Sn, ptr: u16, buf: &[u8]) -> Result<(), Self::Error> {
         self.write(ptr, sn.tx_block(), buf).await
@@ -2548,16 +2548,16 @@ pub trait Registers {
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// use core::cmp::min;
     /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn, SocketCommand};
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x00, (Sn::Sn0.tx_block() as u8) << 3]),
-    /// #   ehm1::spi::Transaction::read(0),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x00, (Sn::Sn0.tx_block() as u8) << 3]),
+    /// #   ehm::eh1::spi::Transaction::read(0),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// # let mut w5500 = W5500::new(spi);
     /// let mut buf: [u8; 1] = [0];
     /// w5500.sn_tx_buf(Sn::Sn0, 0, &mut buf).await?;
-    /// # Ok(()) }
+    /// # w5500.free().done(); Ok(()) }
     /// ```
     async fn sn_tx_buf(&mut self, sn: Sn, ptr: u16, buf: &mut [u8]) -> Result<(), Self::Error> {
         self.read(ptr, sn.tx_block(), buf).await
@@ -2572,27 +2572,27 @@ pub trait Registers {
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// use core::cmp::min;
     /// use w5500_ll::{eh1::vdm::W5500, aio::Registers, Sn, SocketCommand};
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, w5500_ll::SnReg::RX_RSR0.addr() as u8, 0x08]),
-    /// #   ehm1::spi::Transaction::read_vec(vec![0, 4]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, w5500_ll::SnReg::RX_RD0.addr() as u8, 0x08]),
-    /// #   ehm1::spi::Transaction::read_vec(vec![0, 0]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x00, (Sn::Sn0.rx_block() as u8) << 3]),
-    /// #   ehm1::spi::Transaction::read_vec(vec![0, 0, 0, 0]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, w5500_ll::SnReg::RX_RD0.addr() as u8, 0x08 | 0x04]),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0, 4]),
-    /// #   ehm1::spi::Transaction::transaction_end(),
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, w5500_ll::SnReg::CR.addr() as u8, 0x08 | 0x04]),
-    /// #   ehm1::spi::Transaction::write(SocketCommand::Recv.into()),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, w5500_ll::SnReg::RX_RSR0.addr() as u8, 0x08]),
+    /// #   ehm::eh1::spi::Transaction::read_vec(vec![0, 4]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, w5500_ll::SnReg::RX_RD0.addr() as u8, 0x08]),
+    /// #   ehm::eh1::spi::Transaction::read_vec(vec![0, 0]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x00, (Sn::Sn0.rx_block() as u8) << 3]),
+    /// #   ehm::eh1::spi::Transaction::read_vec(vec![0, 0, 0, 0]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, w5500_ll::SnReg::RX_RD0.addr() as u8, 0x08 | 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0, 4]),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, w5500_ll::SnReg::CR.addr() as u8, 0x08 | 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write(SocketCommand::Recv.into()),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// # let mut w5500 = W5500::new(spi);
     ///
@@ -2615,7 +2615,7 @@ pub trait Registers {
     /// w5500.sn_rx_buf(THE_SOCKET, ptr, &mut buf[..usize::from(rx_bytes)]).await?;
     /// w5500.set_sn_rx_rd(THE_SOCKET, ptr.wrapping_add(rx_bytes)).await?;
     /// w5500.set_sn_cr(THE_SOCKET, SocketCommand::Recv).await?;
-    /// # Ok(()) }
+    /// # w5500.free().done(); Ok(()) }
     /// ```
     async fn sn_rx_buf(&mut self, sn: Sn, ptr: u16, buf: &mut [u8]) -> Result<(), Self::Error> {
         self.read(ptr, sn.rx_block(), buf).await
@@ -2633,16 +2633,16 @@ pub trait Registers {
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
     /// use core::cmp::min;
     /// use w5500_ll::{eh1::vdm::W5500, aio::Registers, Sn, SocketCommand};
-    /// # let spi = ehm1::spi::Mock::new(&[
-    /// #   ehm1::spi::Transaction::transaction_start(),
-    /// #   ehm1::spi::Transaction::write_vec(vec![0x00, 0x00, (Sn::Sn0.rx_block() as u8) << 3 | 0x04]),
-    /// #   ehm1::spi::Transaction::write(0),
-    /// #   ehm1::spi::Transaction::transaction_end(),
+    /// # let spi = ehm::eh1::spi::Mock::new(&[
+    /// #   ehm::eh1::spi::Transaction::transaction_start(),
+    /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x00, (Sn::Sn0.rx_block() as u8) << 3 | 0x04]),
+    /// #   ehm::eh1::spi::Transaction::write(0),
+    /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// # let mut w5500 = W5500::new(spi);
     /// let buf: [u8; 1] = [0];
     /// w5500.set_sn_rx_buf(Sn::Sn0, 0, &buf).await?;
-    /// # Ok(()) }
+    /// # w5500.free().done(); Ok(()) }
     /// ```
     async fn set_sn_rx_buf(&mut self, sn: Sn, ptr: u16, buf: &[u8]) -> Result<(), Self::Error> {
         self.write(ptr, sn.rx_block(), buf).await

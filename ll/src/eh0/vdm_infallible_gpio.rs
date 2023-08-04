@@ -38,7 +38,7 @@ where
     /// # Example
     ///
     /// ```
-    /// # use ehm0 as hal;
+    /// # use ehm::eh0 as hal;
     /// # let spi = hal::spi::Mock::new(&[]);
     /// # struct Pin {};
     /// # impl eh0::digital::v2::OutputPin for Pin {
@@ -52,6 +52,8 @@ where
     ///
     /// pin.set_high().unwrap();
     /// let mut w5500: W5500<_, _> = W5500::new(spi, pin);
+    /// # let (mut spi, pin) = w5500.free();
+    /// # spi.done();
     /// # Ok::<(), hal::MockError>(())
     /// ```
     #[inline]
@@ -65,7 +67,7 @@ where
     /// # Example
     ///
     /// ```
-    /// # use ehm0 as hal;
+    /// # use ehm::eh0 as hal;
     /// # let spi = hal::spi::Mock::new(&[]);
     /// # struct Pin {};
     /// # impl eh0::digital::v2::OutputPin for Pin {
@@ -77,7 +79,8 @@ where
     /// use w5500_ll::eh0::vdm_infallible_gpio::W5500;
     ///
     /// let mut w5500 = W5500::new(spi, pin);
-    /// let (spi, pin) = w5500.free();
+    /// let (mut spi, pin) = w5500.free();
+    /// # spi.done();
     /// ```
     #[inline]
     pub fn free(self) -> (SPI, CS) {

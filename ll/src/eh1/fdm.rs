@@ -30,11 +30,12 @@ where
     /// # Example
     ///
     /// ```
-    /// # use ehm1 as hal;
+    /// # use ehm::eh1 as hal;
     /// # let spi = hal::spi::Mock::new(&[]);
     /// use w5500_ll::eh1::fdm::W5500;
     ///
     /// let mut w5500: W5500<_> = W5500::new(spi);
+    /// # w5500.free().done();
     /// ```
     #[inline]
     pub fn new(spi: SPI) -> Self {
@@ -46,12 +47,13 @@ where
     /// # Example
     ///
     /// ```
-    /// # use ehm1 as hal;
+    /// # use ehm::eh1 as hal;
     /// # let spi = hal::spi::Mock::new(&[]);
     /// use w5500_ll::eh1::fdm::W5500;
     ///
     /// let w5500: W5500<_> = W5500::new(spi);
-    /// let spi = w5500.free();
+    /// let mut spi = w5500.free();
+    /// # spi.done();
     /// ```
     #[inline]
     pub fn free(self) -> SPI {
