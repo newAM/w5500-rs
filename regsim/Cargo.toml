@@ -1,6 +1,6 @@
 [package]
 name = "w5500-regsim"
-version = "0.1.0-alpha.8"
+version = "0.1.0-alpha.9"
 authors = ["Alex Martens <alex@thinglab.org>"]
 edition = "2021"
 repository = "https://github.com/newAM/w5500-rs"
@@ -17,7 +17,7 @@ ip_in_core = ["w5500-ll/ip_in_core"]
 
 [dependencies]
 log = "0.4"
-w5500-ll = { path = "../ll", version = "0.10", features = ["std"] }
+w5500-ll = { path = "../ll", version = "0.11.0", features = ["std"] }
 
 [dev-dependencies]
 trust-dns-client = "0.22"

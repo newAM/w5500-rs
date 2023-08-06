@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.1.0-alpha.9] - 2023-08-06
 ### Added
 - Added `#[derive(Debug, PartialEq)]` for `W5500`.
 - Added `W5500.set_corpus_file` to record register reads to a file for fuzzing.
@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Change the `Register::Error` type from `std::io::Error` to `std::io::ErrorKind`.
+- Updated `w5500-ll` dependency from `0.10.0` to `0.11.0`.
 
 ### Fixed
 - Fixed `Sn_RX_RSR` changing value between reading byte 0 and byte 1.
@@ -75,7 +76,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.0-alpha.1] - 2021-01-31
 - Initial release
 
-[Unreleased]: https://github.com/newAM/w5500-rs/compare/regsim%2Fv0.1.0-alpha.8...HEAD
+[Unreleased]: https://github.com/newAM/w5500-rs/compare/regsim%2Fv0.1.0-alpha.9...HEAD
+[0.1.0-alpha.9]: https://github.com/newAM/w5500-rs/compare/regsim%2Fv0.1.0-alpha.8...regsim%2Fv0.1.0-alpha.9
 [0.1.0-alpha.8]: https://github.com/newAM/w5500-rs/compare/regsim%2Fv0.1.0-alpha.7...regsim%2Fv0.1.0-alpha.8
 [0.1.0-alpha.7]: https://github.com/newAM/w5500-rs/compare/regsim%2Fv0.1.0-alpha.6...regsim%2Fv0.1.0-alpha.7
 [0.1.0-alpha.6]: https://github.com/newAM/w5500-rs/compare/regsim%2Fv0.1.0-alpha.5...regsim%2Fv0.1.0-alpha.6

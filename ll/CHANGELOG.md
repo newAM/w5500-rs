@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.11.0] - 2023-08-06
 ### Added
 - Added `#[must_use]` to functions in `w5500_ll::net`.
 - Added support for `core::net` types with the `ip_in_core` feature.
@@ -175,7 +175,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.0] - 2021-01-02
 - Initial release
 
-[Unreleased]: https://github.com/newAM/w5500-rs/compare/ll%2Fv0.10.4...HEAD
+[Unreleased]: https://github.com/newAM/w5500-rs/compare/ll%2Fv0.11.0...HEAD
+[0.11.0]: https://github.com/newAM/w5500-rs/compare/ll%2Fv0.10.4...ll%2Fv0.11.0
 [0.10.4]: https://github.com/newAM/w5500-rs/compare/ll%2Fv0.10.3...ll%2Fv0.10.4
 [0.10.3]: https://github.com/newAM/w5500-rs/compare/ll%2Fv0.10.2...ll%2Fv0.10.3
 [0.10.2]: https://github.com/newAM/w5500-rs/compare/ll%2Fv0.10.1...ll%2Fv0.10.2
