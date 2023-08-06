@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Fixed `Sn_RX_RSR` changing value between reading byte 0 and byte 1.
-- Fixed a panic condition that occured when socket buffer pointers wrapped.
+- Fixed a panic condition that occurred when socket buffer pointers wrapped.
 
 ## [0.1.0-alpha.8] - 2022-04-10
 ### Added
