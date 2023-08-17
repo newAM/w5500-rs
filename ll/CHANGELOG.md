@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Changed
+- Updated the `embedded-hal` from `1.0.0-alpha.11` to `1.0.0-rc.1`.
+- Updated the `embedded-hal-async` from `0.2.0-alpha.2` to `1.0.0-rc.1`.
+
 ## [0.11.0] - 2023-08-06
 ### Added
 - Added `#[must_use]` to functions in `w5500_ll::net`.

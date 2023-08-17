@@ -23,13 +23,13 @@ defmt = { version = "0.3.4", optional = true }
 w5500-ll = { path = "../ll", version = "0.11.0" }
 
 [dev-dependencies]
-embedded-hal = "=1.0.0-alpha.11"
+embedded-hal = "=1.0.0-rc.1"
 w5500-ll = { path = "../ll", version = "0.11.0", features = ["eh1", "defmt"] }
 
 [dev-dependencies.ehm]
 package = "embedded-hal-mock"
 git = "https://github.com/newAM/embedded-hal-mock"
-branch = "eh1-alpha.11"
+branch = "eh1-rc.1"
 features = ["embedded-hal-async", "eh0", "eh1"]
 
 [package.metadata.docs.rs]
