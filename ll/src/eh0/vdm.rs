@@ -96,6 +96,7 @@ where
         self.cs.set_low().map_err(Error::Pin)?;
         let result = f(&mut self.spi);
         self.cs.set_high().map_err(Error::Pin)?;
+        self.cs.set_high().map_err(Error::Pin)?;
         result
     }
 }
