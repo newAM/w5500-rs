@@ -95,6 +95,7 @@ where
         self.cs.set_low().unwrap();
         let result = f(&mut self.spi);
         self.cs.set_high().unwrap();
+        self.cs.set_high().unwrap();
         result
     }
 }

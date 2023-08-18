@@ -116,6 +116,7 @@ where
         self.cs.set_low().unwrap();
         self.spi.write(&header).unwrap();
         self.spi.transfer(data).unwrap();
+        self.cs.set_high().unwrap();
         self.cs.set_high()
     }
 
@@ -126,6 +127,7 @@ where
         self.cs.set_low().unwrap();
         self.spi.write(&header).unwrap();
         self.spi.write(data).unwrap();
+        self.cs.set_high().unwrap();
         self.cs.set_high()
     }
 }
