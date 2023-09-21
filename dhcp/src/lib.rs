@@ -129,8 +129,8 @@ pub struct Client<'a> {
     lease: u32,
     /// Time that the lease was obtained.
     lease_monotonic_secs: u32,
-    /// Last DHCP server
-    server: Option<Ipv4Addr>,
+    /// DHCP server identifier option
+    server_id_option: Option<Ipv4Addr>,
     /// Last XID
     xid: u32,
     /// XID generator
@@ -186,7 +186,7 @@ impl<'a> Client<'a> {
             t2: 0,
             lease: 0,
             lease_monotonic_secs: 0,
-            server: None,
+            server_id_option: None,
             xid: rand.next_u32(),
             rand,
             mac,
@@ -425,7 +425,7 @@ impl<'a> Client<'a> {
             match self.state {
                 State::Selecting => {
                     self.ip = pkt.yiaddr()?;
-                    self.server = Some(pkt.siaddr()?);
+                    self.server_id_option = pkt.dhcp_server()?;
                     pkt.done()?;
                     self.request(w5500)?;
                     self.set_state_with_timeout(State::Requesting, monotonic_secs);
@@ -600,7 +600,7 @@ impl<'a> Client<'a> {
             &self.mac,
             &self.ip,
             self.hostname,
-            self.server.as_ref().unwrap(),
+            self.server_id_option.as_ref(),
             self.xid,
         )?;
         Ok(())

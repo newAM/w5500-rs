@@ -340,7 +340,7 @@ impl<'a, W: Registers> PktSer<'a, W> {
         mac: &Eui48Addr,
         ip: &Ipv4Addr,
         hostname: Hostname,
-        server: &Ipv4Addr,
+        server_id_option: Option<&Ipv4Addr>,
         xid: u32,
     ) -> Result<UdpWriter<'a, W>, Error<W::Error>> {
         self.prepare_message(mac, xid)?;
@@ -349,7 +349,9 @@ impl<'a, W: Registers> PktSer<'a, W> {
         self.set_option_hostname(hostname)?;
         self.set_option_parameter_request()?;
         self.set_option_requested_ip(ip)?;
-        self.set_option_server_id(server)?;
+        if let Some(server_id) = server_id_option {
+            self.set_option_server_id(server_id)?;
+        }
         self.set_option_end()?;
         Ok(self.writer)
     }
@@ -376,12 +378,12 @@ pub fn send_dhcp_request<W: Registers>(
     mac: &Eui48Addr,
     ip: &Ipv4Addr,
     hostname: Hostname,
-    server: &Ipv4Addr,
+    server_id_option: Option<&Ipv4Addr>,
     xid: u32,
 ) -> Result<(), Error<W::Error>> {
     let writer: UdpWriter<W> = w5500.udp_writer(sn)?;
     PktSer::from(writer)
-        .dhcp_request(mac, ip, hostname, server, xid)?
+        .dhcp_request(mac, ip, hostname, server_id_option, xid)?
         .send()?;
     Ok(())
 }
@@ -437,14 +439,6 @@ impl<'a, W: Registers> PktDe<'a, W> {
     /// know its own address (ciaddr was 0).
     pub fn yiaddr(&mut self) -> Result<Ipv4Addr, Error<W::Error>> {
         self.reader.seek(SeekFrom::Start(16))?;
-        let mut buf: [u8; 4] = [0; 4];
-        self.reader.read_exact(&mut buf)?;
-        Ok(buf.into())
-    }
-
-    /// (next) server IP address
-    pub fn siaddr(&mut self) -> Result<Ipv4Addr, Error<W::Error>> {
-        self.reader.seek(SeekFrom::Start(20))?;
         let mut buf: [u8; 4] = [0; 4];
         self.reader.read_exact(&mut buf)?;
         Ok(buf.into())
