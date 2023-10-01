@@ -115,7 +115,7 @@ fn check_recv_request(msg: &Message, xid: u32, mac_with_hardware_type: Vec<u8>) 
             OptionCode::DomainNameServer,
             OptionCode::Renewal,
             OptionCode::Rebinding,
-            OptionCode::NTPServers,
+            OptionCode::NtpServers,
         ])
     );
     assert_eq!(
@@ -249,7 +249,7 @@ fn end_to_end() {
     ]));
     offer
         .opts_mut()
-        .insert(DhcpOption::NTPServers(vec![NTP.into()]));
+        .insert(DhcpOption::NtpServers(vec![NTP.into()]));
     const LEASE_TIME: u32 = 666;
     const T2: u32 = 555;
     const T1: u32 = 444;
