@@ -4,10 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.12.0] - 2023-10-02
 ### Changed
-- Updated the `embedded-hal` from `1.0.0-alpha.11` to `1.0.0-rc.1`.
-- Updated the `embedded-hal-async` from `0.2.0-alpha.2` to `1.0.0-rc.1`.
+- Updated `embedded-hal` from `1.0.0-alpha.11` to `1.0.0-rc.1`.
+- Updated `embedded-hal-async` from `0.2.0-alpha.2` to `1.0.0-rc.1`.
 
 ## [0.11.0] - 2023-08-06
 ### Added
@@ -180,7 +180,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.0] - 2021-01-02
 - Initial release
 
-[Unreleased]: https://github.com/newAM/w5500-rs/compare/ll%2Fv0.11.0...HEAD
+[Unreleased]: https://github.com/newAM/w5500-rs/compare/ll%2Fv0.12.0...HEAD
+[0.12.0]: https://github.com/newAM/w5500-rs/compare/ll%2Fv0.11.0...ll%2Fv0.12.0
 [0.11.0]: https://github.com/newAM/w5500-rs/compare/ll%2Fv0.10.4...ll%2Fv0.11.0
 [0.10.4]: https://github.com/newAM/w5500-rs/compare/ll%2Fv0.10.3...ll%2Fv0.10.4
 [0.10.3]: https://github.com/newAM/w5500-rs/compare/ll%2Fv0.10.2...ll%2Fv0.10.3
