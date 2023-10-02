@@ -4,7 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.6.0] - 2023-10-02
+### Changed
+- Updated `embedded-hal` from `1.0.0-alpha.11` to `1.0.0-rc.1`.
+- Updated `embedded-hal-async` from `0.2.0-alpha.2` to `1.0.0-rc.1`.
+
 ### Fixed
 - Fixed server identifier in REQUEST message.
 
@@ -73,7 +77,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.0] - 2021-12-24
 - Initial release
 
-[Unreleased]: https://github.com/newAM/w5500-rs/compare/dhcp%2Fv0.5.0...HEAD
+[Unreleased]: https://github.com/newAM/w5500-rs/compare/dhcp%2Fv0.6.0...HEAD
+[0.6.0]: https://github.com/newAM/w5500-rs/compare/dhcp%2Fv0.5.0...dhcp%2Fv0.6.0
 [0.5.0]: https://github.com/newAM/w5500-rs/compare/dhcp%2Fv0.4.2...dhcp%2Fv0.5.0
 [0.4.2]: https://github.com/newAM/w5500-rs/compare/dhcp%2Fv0.4.1...dhcp%2Fv0.4.2
 [0.4.1]: https://github.com/newAM/w5500-rs/compare/dhcp%2Fv0.4.0...dhcp%2Fv0.4.1

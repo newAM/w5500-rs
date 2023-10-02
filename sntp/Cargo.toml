@@ -1,6 +1,6 @@
 [package]
 name = "w5500-sntp"
-version = "0.3.0"
+version = "0.4.0"
 authors = ["Alex Martens <alex@thinglab.org>"]
 edition = "2021"
 repository = "https://github.com/newAM/w5500-rs"
@@ -27,7 +27,7 @@ defmt = { version = "0.3.4", default-features = false, optional = true }
 log = { version = "0.4", default-features = false, optional = true }
 num-rational = { version = "0.4", default-features = false, optional = true }
 time = { version = "0.3", default-features = false, optional = true }
-w5500-hl = { path = "../hl", version = "0.10.0" }
+w5500-hl = { path = "../hl", version = "0.11.0" }
 
 [dev-dependencies]
 log = "0.4"

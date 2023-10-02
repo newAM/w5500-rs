@@ -17,7 +17,7 @@ ip_in_core = ["w5500-ll/ip_in_core"]
 
 [dependencies]
 log = "0.4"
-w5500-ll = { path = "../ll", version = "0.11.0", features = ["std"] }
+w5500-ll = { path = "../ll", version = "0.12.0", features = ["std"] }
 
 [dev-dependencies]
 trust-dns-client = "0.23"
