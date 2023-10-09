@@ -63,7 +63,7 @@
 #![cfg_attr(
     any(feature = "eha0a", feature = "async"),
     feature(async_fn_in_trait),
-    allow(incomplete_features), // async_fn_in_trait
+    allow(incomplete_features, async_fn_in_trait), // async_fn_in_trait
 )]
 #![cfg_attr(feature = "ip_in_core", feature(ip_in_core))]
 #![forbid(unsafe_code)]

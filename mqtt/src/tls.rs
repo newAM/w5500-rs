@@ -173,6 +173,8 @@ impl<'id, 'hn, 'psk, 'b, const N: usize> Client<'id, 'hn, 'psk, 'b, N> {
         rng: &mut R,
         monotonic_secs: u32,
     ) -> Result<Event<Infallible, TlsReader<'b, 'ptr>>, Error<W5500::Error>> {
+        // FIXME: what type is returned when it breaks?
+        #[allow(clippy::never_loop)]
         loop {
             match self.tls.process(w5500, rng, monotonic_secs) {
                 Err(TlsError::Server(alert)) => return Err(Error::ServerAlert(alert)),
