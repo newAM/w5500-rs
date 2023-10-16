@@ -60,11 +60,7 @@
 //! [`w5500_ll::net`]: https://docs.rs/w5500-ll/latest/w5500_ll/net/index.html
 #![cfg_attr(docsrs, feature(doc_cfg), feature(doc_auto_cfg))]
 #![cfg_attr(not(feature = "std"), no_std)]
-#![cfg_attr(
-    any(feature = "eha0a", feature = "async"),
-    feature(async_fn_in_trait),
-    allow(incomplete_features, async_fn_in_trait), // async_fn_in_trait
-)]
+#![cfg_attr(any(feature = "eha0a", feature = "async"), allow(async_fn_in_trait))]
 #![cfg_attr(feature = "ip_in_core", feature(ip_in_core))]
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]
