@@ -74,11 +74,6 @@
 //! [`w5500-hl`]: https://crates.io/crates/w5500-hl
 //! [`w5500_ll::Registers`]: https://docs.rs/w5500-ll/latest/w5500_ll/trait.Registers.html
 #![cfg_attr(docsrs, feature(doc_cfg), feature(doc_auto_cfg))]
-#![cfg_attr(
-    feature = "async",
-    feature(async_fn_in_trait),
-    allow(incomplete_features) // async_fn_in_trait
-)]
 
 use std::{
     fs::File,
