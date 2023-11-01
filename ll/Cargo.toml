@@ -27,12 +27,7 @@ eha0a = { package = "embedded-hal-async", version = "=1.0.0-rc.1", optional = tr
 
 [dev-dependencies]
 tokio = { version = "1.21.2", features = ["rt", "macros"] }
-
-[dev-dependencies.ehm]
-package = "embedded-hal-mock"
-git = "https://github.com/newAM/embedded-hal-mock"
-branch = "eh1-rc.1"
-features = ["embedded-hal-async", "eh0", "eh1"]
+ehm = { package = "embedded-hal-mock", version = "=0.10.0-rc.1", features = ["embedded-hal-async", "eh0", "eh1"] }
 
 [package.metadata.docs.rs]
 all-features = true
