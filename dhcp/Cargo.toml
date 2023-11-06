@@ -24,7 +24,7 @@ defmt = { version = "0.3.4", optional = true }
 log = { version = "0.4", optional = true }
 
 [dev-dependencies]
-dhcproto = "0.10"
+dhcproto = "0.11"
 rand_core = { version = "0.6", features = ["getrandom"] }
 stderrlog = "0.5"
 w5500-hl = { path = "../hl", features = ["std"] }
