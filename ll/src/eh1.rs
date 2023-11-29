@@ -37,12 +37,12 @@ pub mod vdm;
 pub fn reset<P, D, E>(pin: &mut P, delay: &mut D) -> Result<(), E>
 where
     P: eh1::digital::OutputPin<Error = E>,
-    D: eh1::delay::DelayUs,
+    D: eh1::delay::DelayNs,
 {
     pin.set_low()?;
-    delay.delay_ms(1);
+    delay.delay_us(1000);
     pin.set_high()?;
-    delay.delay_ms(2);
+    delay.delay_us(2000);
     Ok(())
 }
 
