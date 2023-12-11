@@ -6,7 +6,7 @@ publish = false
 edition = "2021"
 
 [dependencies]
-afl = "0.12"
+afl = "0.15"
 rand_core = "0.6"
 stderrlog = "0.5"
 w5500-fuzz.path = "../../fuzz"
