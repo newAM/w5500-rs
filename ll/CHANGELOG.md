@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Changed
-- Updated `embedded-hal` from `1.0.0-rc.11` to `1.0.0-rc.2`.
+- Updated `embedded-hal` from `1.0.0-rc.11` to `1.0.0-rc.3`.
 
 ## [0.12.0] - 2023-10-02
 ### Changed
