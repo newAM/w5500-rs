@@ -6,7 +6,7 @@ publish = false
 edition = "2021"
 
 [dependencies]
-ftdi-embedded-hal = { version = "0.19.0", features = ["libftd2xx", "libftd2xx-static"] }
+ftdi-embedded-hal = { version = "0.20.0", features = ["libftd2xx", "libftd2xx-static"] }
 log = "0.4"
 rand_core = { version = "0.6.3", features = ["getrandom"] }
 stderrlog = "0.5"
