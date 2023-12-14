@@ -12,10 +12,9 @@ categories = ["embedded", "hardware-support", "no-std"]
 homepage = "https://github.com/newAM/w5500-rs"
 
 [features]
-async = []
 defmt = ["dep:defmt"]
 eh1 = ["dep:eh1"]
-eha0a = ["async", "dep:eha0a", "dep:eh1"]
+eha0a = ["dep:eha0a", "dep:eh1"]
 ip_in_core = ["defmt?/ip_in_core"]
 std = []
 

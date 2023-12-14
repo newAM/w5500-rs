@@ -1216,7 +1216,6 @@ impl Registers for W5500 {
     }
 }
 
-#[cfg(feature = "async")]
 impl w5500_ll::aio::Registers for W5500 {
     type Error = std::io::ErrorKind;
 

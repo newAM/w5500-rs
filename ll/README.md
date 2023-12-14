@@ -26,8 +26,6 @@ assert_eq!(version, 0x04);
 
 All features are disabled by default.
 
-* `async`: **Nightly only.** Enables the asynchronous [`aio::Registers`]
-  trait.
 * `defmt`: Enable formatting most types with `defmt`.
 * `eh0`: Enables the [`eh0`] module which contains
   implementations of the [`Registers`] trait
@@ -35,7 +33,7 @@ All features are disabled by default.
 * `eh1`: Enables the [`eh1`] module which contains
   implementations of the [`Registers`] trait
   using the `embedded-hal` version 1 traits.
-* `eha0a`: **Nightly only.**
+* `eha0a`:
   Implements the [`aio::Registers`] trait for types in the [`eh1`] module
   using the `embedded-hal-async` alpha traits.
 * `ip_in_core`: **Nightly only.**
