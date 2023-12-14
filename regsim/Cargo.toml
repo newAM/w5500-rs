@@ -12,7 +12,6 @@ categories = ["embedded", "development-tools"]
 homepage = "https://github.com/newAM/w5500-rs"
 
 [features]
-async = ["w5500-ll/async"]
 ip_in_core = ["w5500-ll/ip_in_core"]
 
 [dependencies]

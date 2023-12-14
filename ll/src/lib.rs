@@ -32,8 +32,6 @@
 //!
 //! All features are disabled by default.
 //!
-//! * `async`: **Nightly only.** Enables the asynchronous [`aio::Registers`]
-//!   trait.
 //! * `defmt`: Enable formatting most types with `defmt`.
 //! * `eh0`: Enables the [`eh0`] module which contains
 //!   implementations of the [`Registers`] trait
@@ -41,7 +39,7 @@
 //! * `eh1`: Enables the [`eh1`] module which contains
 //!   implementations of the [`Registers`] trait
 //!   using the `embedded-hal` version 1 traits.
-//! * `eha0a`: **Nightly only.**
+//! * `eha0a`:
 //!   Implements the [`aio::Registers`] trait for types in the [`eh1`] module
 //!   using the `embedded-hal-async` alpha traits.
 //! * `ip_in_core`: **Nightly only.**
@@ -60,13 +58,12 @@
 //! [`w5500_ll::net`]: https://docs.rs/w5500-ll/latest/w5500_ll/net/index.html
 #![cfg_attr(docsrs, feature(doc_cfg), feature(doc_auto_cfg))]
 #![cfg_attr(not(feature = "std"), no_std)]
-#![cfg_attr(any(feature = "eha0a", feature = "async"), allow(async_fn_in_trait))]
 #![allow(stable_features)] // ip_in_core
 #![cfg_attr(feature = "ip_in_core", feature(ip_in_core))]
+#![allow(async_fn_in_trait)] // https://github.com/rust-embedded/embedded-hal/pull/515#issuecomment-1763525962
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]
 
-#[cfg(feature = "async")]
 pub mod aio;
 
 #[cfg(feature = "eh0")]

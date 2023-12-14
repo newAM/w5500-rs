@@ -8,8 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Updated `embedded-hal` from `1.0.0-rc.11` to `1.0.0-rc.3`.
 
-## Fixed
+### Fixed
 - Added a second chip-select deassert to meet minimum CS timings with `eh0`.
+
+### Removed
+- Removed the `async` feature, asynchronous implementations are enabled by default.
 
 ## [0.12.0] - 2023-10-02
 ### Changed
