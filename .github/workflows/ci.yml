@@ -18,7 +18,7 @@ jobs:
     strategy:
       matrix:
         toolchain:
-          - "stable"
+          - "beta"  # stable
           - "nightly"
     steps:
       - uses: actions/checkout@v4
@@ -37,7 +37,7 @@ jobs:
     strategy:
       matrix:
         toolchain:
-          - "stable"
+          - "beta"  # stable
           - "nightly"
         target:
           - "thumbv6m-none-eabi"
