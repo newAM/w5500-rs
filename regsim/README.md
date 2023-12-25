@@ -12,7 +12,6 @@ code, not all features of the W5500 will be fully simulated.
 
 All features are disabled by default.
 
-* `async`: **Nightly only.** Implement asynchronous traits.
 * `ip_in_core`: **Nightly only.** Use `core::net` networking types.
 
 ## Notes
