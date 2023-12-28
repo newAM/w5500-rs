@@ -39,9 +39,9 @@
 //! * `eh1`: Enables the [`eh1`] module which contains
 //!   implementations of the [`Registers`] trait
 //!   using the `embedded-hal` version 1 traits.
-//! * `eha0a`:
+//! * `eha1`:
 //!   Implements the [`aio::Registers`] trait for types in the [`eh1`] module
-//!   using the `embedded-hal-async` alpha traits.
+//!   using the `embedded-hal-async` traits.
 //! * `ip_in_core`: **Nightly only.**
 //!   Use `core::net` types for `Ipv4Addr` and `SocketAddrV4`.
 //! * `std`: Enables conversion between [`std::net`] and [`w5500_ll::net`] types.

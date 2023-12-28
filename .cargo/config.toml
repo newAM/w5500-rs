@@ -1,5 +1,5 @@
 [alias]
-test-all = "test --features chrono,eh0,eh1,eha0a,log,num-rational,std,time,w5500-tls"
+test-all = "test --features chrono,eh0,eh1,eha1,log,num-rational,std,time,w5500-tls"
 test-dhcp = "test -p w5500-dhcp --features log,std"
 test-ll = "test -p w5500-ll --all-features"
 test-hl = "test -p w5500-hl --all-features"
