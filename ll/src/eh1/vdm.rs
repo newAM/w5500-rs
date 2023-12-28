@@ -100,10 +100,10 @@ where
     }
 }
 
-#[cfg(feature = "eha0a")]
+#[cfg(feature = "eha1")]
 impl<SPI> crate::aio::Registers for W5500<SPI>
 where
-    SPI: eha0a::spi::SpiDevice,
+    SPI: eha1::spi::SpiDevice,
 {
     /// SPI IO error type.
     type Error = SPI::Error;

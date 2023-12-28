@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Changed
 - Updated `embedded-hal` from `1.0.0-rc.11` to `1.0.0-rc.3`.
+- Renamed the `eha0a` feature to `eha1`.
 
 ### Fixed
 - Added a second chip-select deassert to meet minimum CS timings with `eh0`.

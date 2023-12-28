@@ -14,7 +14,7 @@ homepage = "https://github.com/newAM/w5500-rs"
 [features]
 defmt = ["dep:defmt"]
 eh1 = ["dep:eh1"]
-eha0a = ["dep:eha0a", "dep:eh1"]
+eha1 = ["dep:eha1", "dep:eh1"]
 ip_in_core = ["defmt?/ip_in_core"]
 std = []
 
@@ -22,7 +22,7 @@ std = []
 defmt = { version = "0.3.4", optional = true }
 eh0 = { package = "embedded-hal", version = "0.2.7", optional = true }
 eh1 = { package = "embedded-hal", version = "=1.0.0-rc.3", optional = true }
-eha0a = { package = "embedded-hal-async", version = "=1.0.0-rc.3", optional = true }
+eha1 = { package = "embedded-hal-async", version = "=1.0.0-rc.3", optional = true }
 
 [dev-dependencies]
 tokio = { version = "1.21.2", features = ["rt", "macros"] }
