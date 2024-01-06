@@ -26,8 +26,6 @@ All features are disabled by default.
 * `defmt`: Passthrough to [`w5500-ll`].
 * `eh0`: Passthrough to [`w5500-ll`].
 * `eh1`: Passthrough to [`w5500-ll`].
-* `ip_in_core`: Passthrough to [`w5500-ll`].
-* `std`: Passthrough to [`w5500-ll`].
 
 ## Examples
 
@@ -84,7 +82,6 @@ w5500.tcp_listen(HTTP_SOCKET, HTTP_PORT)?;
 ```
 
 [`Registers`]: https://docs.rs/w5500-ll/latest/w5500_ll/trait.Registers.html
-[`std::net`]: https://doc.rust-lang.org/std/net/index.html
 [`Tcp`]: https://docs.rs/w5500-hl/latest/w5500_hl/trait.Tcp.html
 [`Udp`]: https://docs.rs/w5500-hl/latest/w5500_hl/trait.Udp.html
 [`w5500-ll`]: https://crates.io/crates/w5500-ll

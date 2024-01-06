@@ -13,11 +13,8 @@ All features are disabled by default.
 
 * `eh0`: Passthrough to [`w5500-hl`].
 * `eh1`: Passthrough to [`w5500-hl`].
-* `ip_in_core`: Passthrough to [`w5500-hl`].
-* `std`: Passthrough to [`w5500-hl`].
 * `defmt`: Enable logging with `defmt`. Also a passthrough to [`w5500-hl`].
 * `log`: Enable logging with `log`.
 
-[`std::net`]: https://doc.rust-lang.org/std/net/index.html
 [`w5500-hl`]: https://crates.io/crates/w5500-hl
 [Wiznet W5500]: https://www.wiznet.io/product-item/w5500/

@@ -15,8 +15,6 @@ homepage = "https://github.com/newAM/w5500-rs"
 defmt = ["w5500-hl/defmt", "dep:defmt", "heapless/defmt-03"]
 eh0 = ["w5500-hl/eh0"]
 eh1 = ["w5500-hl/eh1"]
-ip_in_core = ["w5500-hl/ip_in_core"]
-std = ["w5500-hl/std"]
 
 [dependencies]
 w5500-hl = { path = "../hl", version = "0.11.0" }
@@ -31,7 +29,7 @@ sha2 = { version = "0.10", default-features = false }
 subtle = { version = "2", default-features = false }
 
 # optional
-defmt = { version = "0.3.4", optional = true }
+defmt = { version = "0.3.4", optional = true, features = ["ip_in_core"] }
 log = { version = "0.4", optional = true }
 p256-cm4 = { version = "0.3", optional = true }
 

@@ -24,8 +24,6 @@
 //! * `defmt`: Passthrough to [`w5500-ll`].
 //! * `eh0`: Passthrough to [`w5500-ll`].
 //! * `eh1`: Passthrough to [`w5500-ll`].
-//! * `ip_in_core`: Passthrough to [`w5500-ll`].
-//! * `std`: Passthrough to [`w5500-ll`].
 //!
 //! # Examples
 //!
@@ -91,13 +89,12 @@
 //! ```
 //!
 //! [`Registers`]: https://docs.rs/w5500-ll/latest/w5500_ll/trait.Registers.html
-//! [`std::net`]: https://doc.rust-lang.org/std/net/index.html
 //! [`Tcp`]: https://docs.rs/w5500-hl/latest/w5500_hl/trait.Tcp.html
 //! [`Udp`]: https://docs.rs/w5500-hl/latest/w5500_hl/trait.Udp.html
 //! [`w5500-ll`]: https://crates.io/crates/w5500-ll
 //! [Wiznet W5500]: https://www.wiznet.io/product-item/w5500/
 #![cfg_attr(docsrs, feature(doc_cfg))]
-#![cfg_attr(all(not(feature = "std"), not(test)), no_std)]
+#![cfg_attr(not(test), no_std)]
 
 mod hostname;
 pub mod io;
