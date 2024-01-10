@@ -6,12 +6,6 @@
 //! This is a best-effort implementation to aid in development of application
 //! code, not all features of the W5500 will be fully simulated.
 //!
-//! # Feature Flags
-//!
-//! All features are disabled by default.
-//!
-//! * `ip_in_core`: **Nightly only.** Use `core::net` networking types.
-//!
 //! # Notes
 //!
 //! This is in an early alpha state, there are many todos throughout the code.
@@ -258,8 +252,7 @@ impl SocketRegs {
     };
 
     pub fn dest(&self) -> std::net::SocketAddrV4 {
-        #[cfg_attr(feature = "ip_in_core", allow(clippy::useless_conversion))]
-        SocketAddrV4::new(self.dipr.into(), self.dport)
+        SocketAddrV4::new(self.dipr, self.dport)
     }
 }
 
@@ -387,8 +380,7 @@ impl W5500 {
                 self.sim_set_sn_sr(sn, SocketStatus::Init);
             }
             Ok(Protocol::Udp) => {
-                #[cfg_attr(feature = "ip_in_core", allow(clippy::useless_conversion))]
-                let local = SocketAddrV4::new(sipr.into(), socket.regs.port);
+                let local = SocketAddrV4::new(sipr, socket.regs.port);
                 log::info!("[{sn:?}] binding UDP socket to {local}");
 
                 match UdpSocket::bind(local) {

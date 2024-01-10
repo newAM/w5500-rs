@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 - Removed the `async` feature, asynchronous implementations are enabled by default.
+- Removed the `ip_in_core` and `std` features.  `Ipv4Addr` and `SocketAddrV4` are now provided by `core::net`.
 
 ## [0.12.0] - 2023-10-02
 ### Changed

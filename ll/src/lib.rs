@@ -42,24 +42,15 @@
 //! * `eha1`:
 //!   Implements the [`aio::Registers`] trait for types in the [`eh1`] module
 //!   using the `embedded-hal-async` traits.
-//! * `ip_in_core`: **Nightly only.**
-//!   Use `core::net` types for `Ipv4Addr` and `SocketAddrV4`.
-//! * `std`: Enables conversion between [`std::net`] and [`w5500_ll::net`] types.
-//!   This is for testing purposes only, the `std` flag will not work on
-//!   embedded systems because it uses the standard library.
 //!
-//! [`std::net`]: https://doc.rust-lang.org/std/net/index.html
 //! [Wiznet W5500]: https://www.wiznet.io/product-item/w5500/
 //! [`aio::Registers`]: https://docs.rs/w5500-ll/latest/w5500_ll/aio/trait.Registers.html
 //! [`aio`]: https://docs.rs/w5500-ll/latest/w5500_ll/aio/index.html
 //! [`eh0`]: https://docs.rs/w5500-ll/latest/w5500_ll/eh0/index.html
 //! [`eh1`]: https://docs.rs/w5500-ll/latest/w5500_ll/eh1/index.html
 //! [`Registers`]: https://docs.rs/w5500-ll/latest/w5500_ll/trait.Registers.html
-//! [`w5500_ll::net`]: https://docs.rs/w5500-ll/latest/w5500_ll/net/index.html
 #![cfg_attr(docsrs, feature(doc_cfg), feature(doc_auto_cfg))]
-#![cfg_attr(not(feature = "std"), no_std)]
-#![allow(stable_features)] // ip_in_core
-#![cfg_attr(feature = "ip_in_core", feature(ip_in_core))]
+#![no_std]
 #![allow(async_fn_in_trait)] // https://github.com/rust-embedded/embedded-hal/pull/515#issuecomment-1763525962
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]

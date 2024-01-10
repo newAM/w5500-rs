@@ -42,8 +42,6 @@
 //!
 //! * `eh0`: Passthrough to [`w5500-hl`].
 //! * `eh1`: Passthrough to [`w5500-hl`].
-//! * `ip_in_core`: Passthrough to [`w5500-hl`].
-//! * `std`: Passthrough to [`w5500-hl`].
 //! * `defmt`: Enable logging with `defmt`. Also a passthrough to [`w5500-hl`].
 //! * `log`: Enable logging with `log`.
 //! * `p256-cm4`: Use [`p256-cm4`], a P256 implementation optimized for the
@@ -53,7 +51,7 @@
 //! [`p256-cm4`]: https://crates.io/crates/p256-cm4
 //! [Wiznet W5500]: https://www.wiznet.io/product-item/w5500/
 #![cfg_attr(docsrs, feature(doc_cfg), feature(doc_auto_cfg))]
-#![cfg_attr(all(not(feature = "std"), not(test)), no_std)]
+#![cfg_attr(not(test), no_std)]
 #![deny(unsafe_code)]
 #![warn(missing_docs)]
 
@@ -549,9 +547,6 @@ impl<'hn, 'psk, 'b, const N: usize> Client<'hn, 'psk, 'b, N> {
 
         let mut random: [u8; 32] = [0; 32];
         rng.fill_bytes(&mut random);
-
-        #[cfg(feature = "std")]
-        self.key_schedule.client_random.replace(random);
 
         let client_public_key = self.key_schedule.new_client_secret(rng);
 

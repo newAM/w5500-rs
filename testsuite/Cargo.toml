@@ -11,10 +11,10 @@ log = "0.4"
 rand_core = { version = "0.6.3", features = ["getrandom"] }
 stderrlog = "0.5"
 
-w5500-dhcp = { path = "../dhcp", features = ["std", "eh1", "log"] }
-w5500-dns = { path = "../dns", features = ["std", "eh1", "log"] }
-w5500-hl = { path = "../hl", features = ["std", "eh1"] }
-w5500-ll = { path = "../ll", features = ["std", "eh1"] }
-w5500-mqtt = { path = "../mqtt", features = ["std", "eh1", "log"] }
-w5500-sntp = { path = "../sntp", features = ["std", "eh1", "log", "chrono"] }
-w5500-tls = { path = "../tls", features = ["std", "eh1", "log"] }
+w5500-dhcp = { path = "../dhcp", features = ["eh1", "log"] }
+w5500-dns = { path = "../dns", features = ["eh1", "log"] }
+w5500-hl = { path = "../hl", features = ["eh1"] }
+w5500-ll = { path = "../ll", features = ["eh1"] }
+w5500-mqtt = { path = "../mqtt", features = ["eh1", "log"] }
+w5500-sntp = { path = "../sntp", features = ["eh1", "log", "chrono"] }
+w5500-tls = { path = "../tls", features = ["eh1", "log"] }
