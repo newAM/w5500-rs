@@ -135,7 +135,7 @@ fn main() {
         .expect("Failed to read CONNACK");
     let filled_buf = &buf[..rx_bytes.into()];
 
-    // check the recieved packet is a CONNACK
+    // check the received packet is a CONNACK
     assert_eq!(filled_buf[0], 2 << 4);
     // check that the connection code is ACCEPT
     assert_eq!(filled_buf[3], 0);

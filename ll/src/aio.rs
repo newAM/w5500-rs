@@ -2283,7 +2283,7 @@ pub trait Registers {
         Ok::<u16, Self::Error>(u16::from_be_bytes(reg))
     }
 
-    /// Get the socket RX recieved size size and write pointer
+    /// Get the socket RX received size size and write pointer
     ///
     /// This is equivalent to [`Registers::sn_rx_rsr`] and
     /// [`Registers::sn_rx_rd`] in a single read transaction.

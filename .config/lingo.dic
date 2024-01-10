@@ -9,6 +9,7 @@ ACK
 ADSL
 AEAD
 AES
+AFL
 ARP
 BearSSL
 bitmask
@@ -83,6 +84,7 @@ loopback
 Macraw
 MACRAW
 Mbps
+MDNS
 microcontroller
 mosquitto
 MQTT
@@ -110,6 +112,7 @@ PPPoE
 PSID
 PSK
 PTIMER
+PTR
 QoS
 RCR
 rdata
