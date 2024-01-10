@@ -21,12 +21,12 @@ std = []
 [dependencies]
 defmt = { version = "0.3.4", optional = true }
 eh0 = { package = "embedded-hal", version = "0.2.7", optional = true }
-eh1 = { package = "embedded-hal", version = "=1.0.0-rc.3", optional = true }
-eha1 = { package = "embedded-hal-async", version = "=1.0.0-rc.3", optional = true }
+eh1 = { package = "embedded-hal", version = "1", optional = true }
+eha1 = { package = "embedded-hal-async", version = "1", optional = true }
 
 [dev-dependencies]
 tokio = { version = "1.21.2", features = ["rt", "macros"] }
-ehm = { package = "embedded-hal-mock", version = "=0.10.0-rc.4", features = ["eh0", "eh1", "embedded-hal-async"] }
+ehm = { package = "embedded-hal-mock", git = "https://github.com/dbrgn/embedded-hal-mock.git", rev = "12ba261a69a96dc76c47e414236ffd45b6efa79b", features = ["eh0", "eh1", "embedded-hal-async"] }
 
 [package.metadata.docs.rs]
 all-features = true
