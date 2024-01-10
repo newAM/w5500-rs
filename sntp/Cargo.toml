@@ -21,7 +21,7 @@ time = ["dep:time"]
 
 [dependencies]
 chrono = { version = "0.4.32", default-features = false, optional = true }
-defmt = { version = "0.3.4", optional = true, features = ["ip_in_core"] }
+defmt = { version = "0.3.7", optional = true }
 log = { version = "0.4", default-features = false, optional = true }
 num-rational = { version = "0.4", default-features = false, optional = true }
 time = { version = "0.3", default-features = false, optional = true }
