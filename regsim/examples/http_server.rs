@@ -71,7 +71,8 @@ fn main() {
 
     // Read the HTTP request from the client
     // Safety: buf is only borrowed mutably in one location
-    let rx_bytes: u16 = w5500.tcp_read(HTTP_SOCKET, unsafe { &mut BUF }).unwrap();
+    let buf_ref: &mut [u8] = unsafe { &mut *core::ptr::addr_of_mut!(BUF) };
+    let rx_bytes: u16 = w5500.tcp_read(HTTP_SOCKET, buf_ref).unwrap();
     // Truncate the buffer to the number of bytes read
     // Safety: BUF is only borrowed mutably in one location
     let filled_buf: &[u8] = unsafe { &BUF[..rx_bytes.into()] };
