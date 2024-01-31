@@ -38,7 +38,7 @@ bytes = "1"
 log = "0.4"
 mqttbytes = "0.6"
 rand_core = { version = "0.6", features = ["getrandom"] }
-stderrlog = "0.5"
+stderrlog = "0.6"
 w5500-regsim.path = "../regsim"
 
 [package.metadata.docs.rs]

@@ -29,7 +29,7 @@ w5500-hl = { path = "../hl", version = "0.11.0" }
 
 [dev-dependencies]
 log = "0.4"
-stderrlog = "0.5"
+stderrlog = "0.6"
 w5500-regsim.path = "../regsim"
 
 [package.metadata.docs.rs]
