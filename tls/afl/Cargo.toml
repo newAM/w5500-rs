@@ -8,7 +8,7 @@ edition = "2021"
 [dependencies]
 afl = "0.15"
 rand_core = "0.6"
-stderrlog = "0.5"
+stderrlog = "0.6"
 w5500-fuzz.path = "../../fuzz"
 w5500-regsim.path = "../../regsim"
 w5500-tls = { path = "..", features = ["log"] }

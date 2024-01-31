@@ -9,7 +9,7 @@ edition = "2021"
 ftdi-embedded-hal = { version = "0.21.0", features = ["libftd2xx", "libftd2xx-static"] }
 log = "0.4"
 rand_core = { version = "0.6.3", features = ["getrandom"] }
-stderrlog = "0.5"
+stderrlog = "0.6"
 
 w5500-dhcp = { path = "../dhcp", features = ["eh1", "log"] }
 w5500-dns = { path = "../dns", features = ["eh1", "log"] }
