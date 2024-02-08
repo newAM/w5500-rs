@@ -87,10 +87,3 @@ impl TryFrom<u16> for ExtensionType {
         }
     }
 }
-
-#[derive(Debug)]
-#[cfg_attr(feature = "defmt", derive(defmt::Format))]
-pub struct Extension<'a> {
-    pub tipe: ExtensionType,
-    pub data: &'a [u8],
-}
