@@ -110,9 +110,9 @@ pub use w5500_ll as ll;
 
 use net::{Ipv4Addr, SocketAddrV4};
 
-fn port_is_unique<T: ?Sized, E>(w5500: &mut T, socket: Sn, port: u16) -> Result<bool, E>
+fn port_is_unique<T, E>(w5500: &mut T, socket: Sn, port: u16) -> Result<bool, E>
 where
-    T: Registers<Error = E>,
+    T: Registers<Error = E> + ?Sized,
 {
     const CLOSED_STATUS: [Result<SocketStatus, u8>; 3] = [
         Ok(SocketStatus::Closed),
