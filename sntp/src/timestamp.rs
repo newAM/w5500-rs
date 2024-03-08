@@ -71,11 +71,13 @@ impl TryFrom<chrono::naive::NaiveDateTime> for Timestamp {
     type Error = TimestampError;
 
     fn try_from(ndt: chrono::naive::NaiveDateTime) -> Result<Self, Self::Error> {
-        let elapsed: chrono::Duration = ndt.signed_duration_since(origin_chrono());
+        let elapsed: chrono::TimeDelta = ndt.signed_duration_since(origin_chrono());
         let secs: i64 = elapsed.num_seconds();
+        let secs_delta: chrono::TimeDelta =
+            chrono::TimeDelta::try_seconds(secs).ok_or(TimestampError(()))?;
         let nanos: u64 = elapsed
-            .checked_sub(&chrono::Duration::seconds(secs))
-            .unwrap_or_else(|| chrono::Duration::seconds(0))
+            .checked_sub(&secs_delta)
+            .unwrap_or_else(|| chrono::TimeDelta::try_seconds(0).unwrap())
             .num_nanoseconds()
             .unwrap_or(0)
             .try_into()
@@ -91,10 +93,12 @@ impl TryFrom<Timestamp> for chrono::naive::NaiveDateTime {
     type Error = TimestampError;
 
     fn try_from(timestamp: Timestamp) -> Result<Self, Self::Error> {
+        let secs_delta: chrono::TimeDelta =
+            chrono::TimeDelta::try_seconds(timestamp.secs()).ok_or(TimestampError(()))?;
         origin_chrono()
-            .checked_add_signed(chrono::Duration::seconds(timestamp.secs()))
+            .checked_add_signed(secs_delta)
             .ok_or(TimestampError(()))?
-            .checked_add_signed(chrono::Duration::nanoseconds(timestamp.nanos().into()))
+            .checked_add_signed(chrono::TimeDelta::nanoseconds(timestamp.nanos().into()))
             .ok_or(TimestampError(()))
     }
 }
