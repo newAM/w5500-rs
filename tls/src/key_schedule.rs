@@ -24,18 +24,6 @@ use sha2::{
     Digest, Sha256,
 };
 
-// https://firefox-source-docs.mozilla.org/security/nss/legacy/key_log_format/index.html
-#[cfg(feature = "std")]
-fn print_nss_key_log(label: &str, client_random: &[u8; 32], secret: &[u8]) {
-    {
-        print!("{label} ");
-        client_random.iter().for_each(|b| print!("{b:02x}"));
-        print!(" ");
-        secret.iter().for_each(|b| print!("{b:02x}"));
-        println!();
-    }
-}
-
 // pre-computed SHA256 with no data
 const EMPTY_HASH: [u8; 32] = [
     0xE3, 0xB0, 0xC4, 0x42, 0x98, 0xFC, 0x1C, 0x14, 0x9A, 0xFB, 0xF4, 0xC8, 0x99, 0x6F, 0xB9, 0x24,
@@ -152,12 +140,6 @@ pub struct KeySchedule {
 
     client_traffic_secret: Option<Hkdf<Sha256>>,
     server_traffic_secret: Option<Hkdf<Sha256>>,
-
-    // Only used for logging keys for use with wireshark
-    #[cfg(feature = "std")]
-    pub(crate) client_random: Option<[u8; 32]>,
-    #[cfg(feature = "std")]
-    traffic_secret_count: u64,
 }
 
 impl Default for KeySchedule {
@@ -176,10 +158,6 @@ impl Default for KeySchedule {
             secret,
             client_traffic_secret: None,
             server_traffic_secret: None,
-            #[cfg(feature = "std")]
-            client_random: None,
-            #[cfg(feature = "std")]
-            traffic_secret_count: 0,
         }
     }
 }
@@ -283,13 +261,6 @@ impl KeySchedule {
 
         self.read_record_sequence_number = 0;
         self.write_record_sequence_number = 0;
-
-        #[cfg(feature = "std")]
-        print_nss_key_log(
-            "CLIENT_EARLY_TRAFFIC_SECRET",
-            self.client_random.as_ref().unwrap(),
-            &client_secret,
-        );
     }
 
     pub fn initialize_handshake_secret(&mut self) {
@@ -311,20 +282,6 @@ impl KeySchedule {
 
         self.read_record_sequence_number = 0;
         self.write_record_sequence_number = 0;
-
-        #[cfg(feature = "std")]
-        print_nss_key_log(
-            "CLIENT_HANDSHAKE_TRAFFIC_SECRET",
-            self.client_random.as_ref().unwrap(),
-            &client_secret,
-        );
-
-        #[cfg(feature = "std")]
-        print_nss_key_log(
-            "SERVER_HANDSHAKE_TRAFFIC_SECRET",
-            self.client_random.as_ref().unwrap(),
-            &server_secret,
-        );
     }
 
     pub fn initialize_master_secret(&mut self) {
@@ -345,21 +302,6 @@ impl KeySchedule {
 
         self.read_record_sequence_number = 0;
         self.write_record_sequence_number = 0;
-
-        #[cfg(feature = "std")]
-        {
-            print_nss_key_log(
-                &format!("CLIENT_TRAFFIC_SECRET_{}", self.traffic_secret_count),
-                self.client_random.as_ref().unwrap(),
-                &client_secret,
-            );
-            print_nss_key_log(
-                &format!("SERVER_TRAFFIC_SECRET_{}", self.traffic_secret_count),
-                self.client_random.as_ref().unwrap(),
-                &server_secret,
-            );
-            self.traffic_secret_count += 1;
-        }
     }
 
     /// Update traffic secrets.
@@ -391,21 +333,6 @@ impl KeySchedule {
 
         self.read_record_sequence_number = 0;
         self.write_record_sequence_number = 0;
-
-        #[cfg(feature = "std")]
-        {
-            print_nss_key_log(
-                &format!("CLIENT_TRAFFIC_SECRET_{}", self.traffic_secret_count),
-                self.client_random.as_ref().unwrap(),
-                &client_secret,
-            );
-            print_nss_key_log(
-                &format!("SERVER_TRAFFIC_SECRET_{}", self.traffic_secret_count),
-                self.client_random.as_ref().unwrap(),
-                &server_secret,
-            );
-            self.traffic_secret_count += 1;
-        }
     }
 
     pub fn server_traffic_secret_exists(&self) -> bool {
