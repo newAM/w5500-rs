@@ -23,7 +23,7 @@
 //! [`w5500-hl`]: https://crates.io/crates/w5500-hl
 //! [Wiznet W5500]: https://www.wiznet.io/product-item/w5500/
 #![cfg_attr(docsrs, feature(doc_cfg), feature(doc_auto_cfg))]
-#![cfg_attr(all(not(feature = "std"), not(test)), no_std)]
+#![cfg_attr(not(test), no_std)]
 #![deny(unsafe_code)]
 #![warn(missing_docs)]
 
