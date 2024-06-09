@@ -50,8 +50,8 @@ where
     /// ```
     /// # use ehm::eh0 as hal;
     /// # let spi = hal::spi::Mock::new(&[]);
-    /// # let mut pin = hal::pin::Mock::new(&[
-    /// #    hal::pin::Transaction::set(hal::pin::State::High),
+    /// # let mut pin = hal::digital::Mock::new(&[
+    /// #    hal::digital::Transaction::set(hal::digital::State::High),
     /// # ]);
     /// use eh0::digital::v2::OutputPin;
     /// use w5500_ll::eh0::vdm::W5500;
@@ -75,7 +75,7 @@ where
     /// ```
     /// # use ehm::eh0 as hal;
     /// # let spi = hal::spi::Mock::new(&[]);
-    /// # let pin = hal::pin::Mock::new(&[]);
+    /// # let pin = hal::digital::Mock::new(&[]);
     /// use w5500_ll::eh0::vdm::W5500;
     ///
     /// let mut w5500 = W5500::new(spi, pin);

@@ -25,9 +25,9 @@ pub mod vdm_infallible_gpio;
 /// ```
 /// # use ehm::eh0 as hal;
 /// # let mut delay = hal::delay::NoopDelay::new();
-/// # let mut reset_pin = hal::pin::Mock::new(&[
-/// #    hal::pin::Transaction::set(hal::pin::State::Low),
-/// #    hal::pin::Transaction::set(hal::pin::State::High),
+/// # let mut reset_pin = hal::digital::Mock::new(&[
+/// #    hal::digital::Transaction::set(hal::digital::State::Low),
+/// #    hal::digital::Transaction::set(hal::digital::State::High),
 /// # ]);
 /// w5500_ll::eh0::reset(&mut reset_pin, &mut delay)?;
 /// # reset_pin.done();
