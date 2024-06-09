@@ -23,7 +23,7 @@ w5500-ll = { path = "../ll", version = "0.13.0" }
 [dev-dependencies]
 embedded-hal = "1"
 w5500-ll = { path = "../ll", version = "0.13.0", features = ["eh1", "defmt"] }
-ehm = { package = "embedded-hal-mock", version = "0.10.0", features = ["eh0", "eh1", "embedded-hal-async"] }
+ehm = { package = "embedded-hal-mock", version = "0.11.1", features = ["eh0", "eh1", "embedded-hal-async"] }
 
 [package.metadata.docs.rs]
 all-features = true
