@@ -5,6 +5,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Changed
+- Updated `w5500-hl` dependency from `0.11.0` to `0.12.0`.
+
 ### Removed
 - Removed the `ip_in_core` and `std` features.  `Ipv4Addr` and `SocketAddrV4` are now provided by `core::net`.
 
@@ -12,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Updated `embedded-hal` from `1.0.0-alpha.11` to `1.0.0-rc.1`.
 - Updated `embedded-hal-async` from `0.2.0-alpha.2` to `1.0.0-rc.1`.
+- Updated `w5500-hl` dependency from `0.10.0` to `0.11.0`.
 
 ## [0.3.0] - 2023-08-06
 ### Added

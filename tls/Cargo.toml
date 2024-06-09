@@ -17,7 +17,7 @@ eh0 = ["w5500-hl/eh0"]
 eh1 = ["w5500-hl/eh1"]
 
 [dependencies]
-w5500-hl = { path = "../hl", version = "0.11.0" }
+w5500-hl = { path = "../hl", version = "0.12.0" }
 
 cfg-if = "1"
 heapless = { version = "0.8", default-features = false }
