@@ -4,10 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.1.0] - 2024-06-09
 ### Removed
 - Removed the `ip_in_core` feature, `Ipv4Addr` and `SocketAddrV4` are now provided by `core::net`.
 - Removed the `async` feature, asynchronous implementations are enabled by default.
+
+## Changed
+- Updated `w5500-ll` dependency from `0.11.0` to `0.13.0`.
 
 ## [0.1.0-alpha.9] - 2023-08-06
 ### Added
@@ -81,7 +84,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.0-alpha.1] - 2021-01-31
 - Initial release
 
-[Unreleased]: https://github.com/newAM/w5500-rs/compare/regsim%2Fv0.1.0-alpha.9...HEAD
+[Unreleased]: https://github.com/newAM/w5500-rs/compare/regsim%2Fv0.1.0...HEAD
+[0.1.0]: https://github.com/newAM/w5500-rs/compare/regsim%2Fv0.1.0-alpha.9...regsim%2Fv0.1.0
 [0.1.0-alpha.9]: https://github.com/newAM/w5500-rs/compare/regsim%2Fv0.1.0-alpha.8...regsim%2Fv0.1.0-alpha.9
 [0.1.0-alpha.8]: https://github.com/newAM/w5500-rs/compare/regsim%2Fv0.1.0-alpha.7...regsim%2Fv0.1.0-alpha.8
 [0.1.0-alpha.7]: https://github.com/newAM/w5500-rs/compare/regsim%2Fv0.1.0-alpha.6...regsim%2Fv0.1.0-alpha.7
