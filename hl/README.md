@@ -85,4 +85,4 @@ w5500.tcp_listen(HTTP_SOCKET, HTTP_PORT)?;
 [`Tcp`]: https://docs.rs/w5500-hl/latest/w5500_hl/trait.Tcp.html
 [`Udp`]: https://docs.rs/w5500-hl/latest/w5500_hl/trait.Udp.html
 [`w5500-ll`]: https://crates.io/crates/w5500-ll
-[Wiznet W5500]: https://www.wiznet.io/product-item/w5500/
+[Wiznet W5500]: https://docs.wiznet.io/Product/iEthernet/W5500/overview

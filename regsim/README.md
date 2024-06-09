@@ -64,7 +64,7 @@ This is in an early alpha state, there are many todos throughout the code.
 
 Believe it or not that is not simply a list of all registers.
 
-[Wiznet W5500]: https://www.wiznet.io/product-item/w5500/
+[Wiznet W5500]: https://docs.wiznet.io/Product/iEthernet/W5500/overview
 [`std::net`]: https://doc.rust-lang.org/std/net/index.html
 [`w5500-hl`]: https://crates.io/crates/w5500-hl
 [`w5500_ll::Registers`]: https://docs.rs/w5500-ll/latest/w5500_ll/trait.Registers.html

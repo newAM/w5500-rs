@@ -53,4 +53,4 @@ All features are disabled by default.
 
 [`w5500-hl`]: https://crates.io/crates/w5500-hl
 [`w5500-tls`]: https://crates.io/crates/w5500-tls
-[Wiznet W5500]: https://www.wiznet.io/product-item/w5500/
+[Wiznet W5500]: https://docs.wiznet.io/Product/iEthernet/W5500/overview
