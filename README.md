@@ -22,7 +22,7 @@ Embedded rust support for the [Wiznet W5500] SPI internet offload chip.
 | [`w5500-sntp`]   | [![crates.io](https://img.shields.io/crates/v/w5500-sntp.svg)](https://crates.io/crates/w5500-sntp)     | [![Documentation](https://docs.rs/w5500-sntp/badge.svg)](https://docs.rs/w5500-sntp)     |
 | [`w5500-tls`]    | [![crates.io](https://img.shields.io/crates/v/w5500-tls.svg)](https://crates.io/crates/w5500-tls)       | [![Documentation](https://docs.rs/w5500-tls/badge.svg)](https://docs.rs/w5500-tls)       |
 
-[Wiznet W5500]: https://www.wiznet.io/product-item/w5500/
+[Wiznet W5500]: https://docs.wiznet.io/Product/iEthernet/W5500/overview
 [`w5500-dhcp`]: https://github.com/newAM/w5500-rs/tree/main/dhcp
 [`w5500-dns`]: https://github.com/newAM/w5500-rs/tree/main/dns
 [`w5500-hl`]: https://github.com/newAM/w5500-rs/tree/main/hl

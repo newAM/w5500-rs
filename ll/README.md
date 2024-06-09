@@ -37,7 +37,7 @@ All features are disabled by default.
   Implements the [`aio::Registers`] trait for types in the [`eh1`] module
   using the `embedded-hal-async` traits.
 
-[Wiznet W5500]: https://www.wiznet.io/product-item/w5500/
+[Wiznet W5500]: https://docs.wiznet.io/Product/iEthernet/W5500/overview
 [`aio::Registers`]: https://docs.rs/w5500-ll/latest/w5500_ll/aio/trait.Registers.html
 [`aio`]: https://docs.rs/w5500-ll/latest/w5500_ll/aio/index.html
 [`eh0`]: https://docs.rs/w5500-ll/latest/w5500_ll/eh0/index.html
