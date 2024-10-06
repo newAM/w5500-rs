@@ -79,8 +79,8 @@ pub mod tls;
 pub use w5500_tls;
 
 pub use client_id::ClientId;
-use connect::send_connect;
 pub use connect::ConnectReasonCode;
+use connect::{send_connect, LoginCredentials};
 use hl::{
     io::{Read, Seek, Write},
     ll::{net::SocketAddrV4, Registers, Sn, SocketInterrupt, SocketInterruptMask},
@@ -325,6 +325,8 @@ pub struct Client<'a> {
     state_timeout: StateTimeout,
     /// Packet ID for subscribing
     pkt_id: u16,
+    /// Login credentials
+    credentials: Option<LoginCredentials<'a>>,
 }
 
 impl<'a> Client<'a> {
@@ -364,6 +366,7 @@ impl<'a> Client<'a> {
             },
             client_id: None,
             pkt_id: 1,
+            credentials: None,
         }
     }
 
@@ -397,6 +400,11 @@ impl<'a> Client<'a> {
     /// [`process`]: Self::process
     pub fn set_client_id(&mut self, client_id: ClientId<'a>) {
         self.client_id = Some(client_id)
+    }
+
+    /// Set the MQTT login credentials.
+    pub fn set_credentials(&mut self, username: &'a str, password: &'a str) {
+        self.credentials = Some(LoginCredentials::new(username, password));
     }
 
     fn next_pkt_id(&mut self) -> u16 {
@@ -687,7 +695,8 @@ impl<'a> Client<'a> {
             .size_in_bytes() as u16;
 
         let writer: TcpWriter<W5500> = w5500.tcp_writer(self.sn)?;
-        send_connect(writer, &self.client_id, rx_max).map_err(Error::map_w5500)?;
+        send_connect(writer, &self.client_id, &self.credentials, rx_max)
+            .map_err(Error::map_w5500)?;
         Ok(self
             .state_timeout
             .set_state_with_timeout(State::WaitConAck, monotonic_secs))

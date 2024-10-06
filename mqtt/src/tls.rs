@@ -54,7 +54,7 @@
 //! [`w5500-tls`]: https://github.com/newAM/w5500-rs/blob/main/tls/README.md
 
 use crate::{
-    connect::send_connect,
+    connect::{send_connect, LoginCredentials},
     hl::{
         ll::{net::SocketAddrV4, Registers, Sn},
         Error as HlError, Hostname,
@@ -88,16 +88,18 @@ fn map_tls_writer_err<E>(e: w5500_tls::Error) -> Error<E> {
 ///
 /// The methods are nearly identical to [`crate::Client`], see [`crate::Client`]
 /// for additional documentation and examples.
-pub struct Client<'id, 'hn, 'psk, 'b, const N: usize> {
+pub struct Client<'id, 'hn, 'psk, 'b, 'cred, const N: usize> {
     tls: TlsClient<'hn, 'psk, 'b, N>,
     client_id: Option<ClientId<'id>>,
     /// State and Timeout tracker
     state_timeout: StateTimeout,
     /// Packet ID for subscribing
     pkt_id: u16,
+    /// Login credentials
+    credentials: Option<LoginCredentials<'cred>>,
 }
 
-impl<'id, 'hn, 'psk, 'b, const N: usize> Client<'id, 'hn, 'psk, 'b, N> {
+impl<'id, 'hn, 'psk, 'b, 'cred, const N: usize> Client<'id, 'hn, 'psk, 'b, 'cred, N> {
     /// Create a new MQTT client.
     ///
     /// # Arguments
@@ -151,14 +153,19 @@ impl<'id, 'hn, 'psk, 'b, const N: usize> Client<'id, 'hn, 'psk, 'b, N> {
                 timeout: None,
             },
             client_id: None,
-
             pkt_id: 1,
+            credentials: None,
         }
     }
 
     /// Set the MQTT client ID.
     pub fn set_client_id(&mut self, client_id: ClientId<'id>) {
         self.client_id = Some(client_id)
+    }
+
+    /// Set the MQTT login credentials.
+    pub fn set_credentials(&mut self, username: &'cred str, password: &'cred str) {
+        self.credentials = Some(LoginCredentials::new(username, password));
     }
 
     fn next_pkt_id(&mut self) -> u16 {
@@ -280,7 +287,8 @@ impl<'id, 'hn, 'psk, 'b, const N: usize> Client<'id, 'hn, 'psk, 'b, N> {
 
         let rx_max: u16 = (N as u16) - TLS_OVERHEAD;
         let writer: TlsWriter<W5500> = self.tls.writer(w5500).map_err(map_tls_writer_err)?;
-        send_connect(writer, &self.client_id, rx_max).map_err(Error::map_w5500)?;
+        send_connect(writer, &self.client_id, &self.credentials, rx_max)
+            .map_err(Error::map_w5500)?;
         Ok(self
             .state_timeout
             .set_state_with_timeout(State::WaitConAck, monotonic_secs))
