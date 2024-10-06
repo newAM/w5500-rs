@@ -86,21 +86,54 @@ impl TryFrom<u8> for ConnectReasonCode {
     }
 }
 
+#[repr(u8)]
+enum ConnectionFlags {
+    CleanStart = 0x02,
+    Password = 0x40,
+    Username = 0x80,
+}
+
+#[derive(Debug)]
+pub struct LoginCredentials<'a> {
+    username: &'a str,
+    password: &'a str,
+}
+
+impl<'a> LoginCredentials<'a> {
+    pub fn new(username: &'a str, password: &'a str) -> Self {
+        Self { username, password }
+    }
+}
+
 pub fn send_connect<E, Writer: Write<E>>(
     mut writer: Writer,
     client_id: &Option<ClientId>,
+    login_credentials: &Option<LoginCredentials>,
     rx_max: u16,
 ) -> Result<(), HlError<E>> {
     const KEEP_ALIVE: u16 = 15 * 60;
 
-    let client_id_len: u8 = client_id.map(|id| id.len()).unwrap_or(0);
+    let mut flags: u8 = ConnectionFlags::CleanStart as u8;
+
+    let client_id = client_id.as_ref();
+    let client_id_len = client_id.map_or(0, ClientId::len);
+
+    let mut suffix_len: u8 = client_id_len;
+
+    if let Some(login_credentials) = login_credentials {
+        flags += ConnectionFlags::Username as u8;
+        flags += ConnectionFlags::Password as u8;
+
+        suffix_len += payload_len(login_credentials.username);
+        suffix_len += payload_len(login_credentials.password);
+    }
 
     #[rustfmt::skip]
     writer.write_all(&[
         // control packet type
         (CtrlPkt::CONNECT as u8) << 4,
         // remaining length
-        18 + client_id_len,
+        18 + suffix_len,
         // protocol name length
         0, 4,
         // protocol name
@@ -108,12 +141,12 @@ pub fn send_connect<E, Writer: Write<E>>(
         // protocol version
         5,
         // flags, clean start is set
-        0b00000010,
+        flags,
         // keepalive
         (KEEP_ALIVE >> 8) as u8, KEEP_ALIVE as u8,
         // properties length
         5,
-        // recieve maximum property
+        // receive maximum property
         (Properties::MaxPktSize as u8), 0, 0, (rx_max >> 8) as u8, rx_max as u8,
         // client ID length
         0, client_id_len,
@@ -121,6 +154,28 @@ pub fn send_connect<E, Writer: Write<E>>(
     if let Some(client_id) = client_id {
         writer.write_all(client_id.as_bytes())?;
     }
+
+    if let Some(login_credentials) = login_credentials {
+        let LoginCredentials { username, password } = login_credentials;
+        writer.write_all(str_len_msb_lsb(username).as_slice())?;
+        writer.write_all(username.as_bytes())?;
+        writer.write_all(str_len_msb_lsb(password).as_slice())?;
+        writer.write_all(password.as_bytes())?;
+    }
+
     writer.send()?;
     Ok(())
+}
+
+fn payload_len(s: &str) -> u8 {
+    // str len + 2 bytes for str len prefix
+    (s.len() + 2) as u8
+}
+
+fn str_len_msb_lsb(s: &str) -> [u8; 2] {
+    let len: u16 = s.len() as u16;
+    let msb: u8 = (len >> 8) as u8;
+    let lsb: u8 = len as u8;
+
+    [msb, lsb]
 }
