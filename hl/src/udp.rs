@@ -83,7 +83,7 @@ pub struct UdpReader<'w, W5500> {
     header: UdpHeader,
 }
 
-impl<'w, W5500> Seek for UdpReader<'w, W5500> {
+impl<W5500> Seek for UdpReader<'_, W5500> {
     fn seek<E>(&mut self, pos: SeekFrom) -> Result<(), Error<E>> {
         self.inner.seek(pos)
     }
@@ -105,7 +105,7 @@ impl<'w, W5500> Seek for UdpReader<'w, W5500> {
     }
 }
 
-impl<'w, W5500: Registers> Read<W5500::Error> for UdpReader<'w, W5500> {
+impl<W5500: Registers> Read<W5500::Error> for UdpReader<'_, W5500> {
     fn read(&mut self, buf: &mut [u8]) -> Result<u16, W5500::Error> {
         self.inner.read(buf)
     }
@@ -170,7 +170,7 @@ pub struct UdpWriter<'w, W5500> {
     pub(crate) ptr: u16,
 }
 
-impl<'w, W5500> Seek for UdpWriter<'w, W5500> {
+impl<W5500> Seek for UdpWriter<'_, W5500> {
     fn seek<E>(&mut self, pos: SeekFrom) -> Result<(), Error<E>> {
         self.ptr = pos.new_ptr(self.ptr, self.head_ptr, self.tail_ptr)?;
         Ok(())
@@ -193,7 +193,7 @@ impl<'w, W5500> Seek for UdpWriter<'w, W5500> {
     }
 }
 
-impl<'w, W5500: Registers> Write<W5500::Error> for UdpWriter<'w, W5500> {
+impl<W5500: Registers> Write<W5500::Error> for UdpWriter<'_, W5500> {
     fn write(&mut self, buf: &[u8]) -> Result<u16, W5500::Error> {
         let write_size: u16 = min(self.remain(), buf.len().try_into().unwrap_or(u16::MAX));
         if write_size != 0 {
@@ -226,7 +226,7 @@ impl<'w, W5500: Registers> Write<W5500::Error> for UdpWriter<'w, W5500> {
     }
 }
 
-impl<'w, W5500: Registers> UdpWriter<'w, W5500> {
+impl<W5500: Registers> UdpWriter<'_, W5500> {
     /// Send all data previously written with [`UdpWriter::write`] and
     /// [`UdpWriter::write_all`] to the given address.
     ///
@@ -240,7 +240,7 @@ impl<'w, W5500: Registers> UdpWriter<'w, W5500> {
     }
 }
 
-impl<'a, W: Registers> UdpReader<'a, W> {
+impl<W: Registers> UdpReader<'_, W> {
     /// Get the UDP header.
     ///
     /// # Example

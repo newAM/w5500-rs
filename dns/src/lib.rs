@@ -276,7 +276,7 @@ pub struct Response<'a, W5500: Udp> {
     rr_idx: u16,
 }
 
-impl<'a, W5500: Udp> Response<'a, W5500> {
+impl<W5500: Udp> Response<'_, W5500> {
     /// Response code from the server.
     ///
     /// This will return `Err(u8)` if the server uses a reserved value.
@@ -381,7 +381,7 @@ struct Query<'a, W5500: Udp> {
     header: Header,
 }
 
-impl<'a, W5500: Udp> Query<'a, W5500> {
+impl<W5500: Udp> Query<'_, W5500> {
     /// Add a question to the query.
     ///
     /// # References

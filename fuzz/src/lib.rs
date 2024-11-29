@@ -23,13 +23,13 @@ impl<'a> From<&'a [u8]> for W5500<'a> {
     }
 }
 
-impl<'a> W5500<'a> {
+impl W5500<'_> {
     pub fn set_socket_status(&mut self, socket_status: SocketStatus) {
         self.socket_status = socket_status
     }
 }
 
-impl<'a> Registers for W5500<'a> {
+impl Registers for W5500<'_> {
     type Error = ();
 
     #[inline]

@@ -418,7 +418,7 @@ impl<'a, W: Registers> From<UdpReader<'a, W>> for PktDe<'a, W> {
     }
 }
 
-impl<'a, W: Registers> PktDe<'a, W> {
+impl<W: Registers> PktDe<'_, W> {
     #[allow(clippy::wrong_self_convention)]
     pub fn is_bootreply(&mut self) -> Result<bool, Error<W::Error>> {
         self.reader.seek(SeekFrom::Start(0))?;
