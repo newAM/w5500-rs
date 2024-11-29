@@ -494,7 +494,7 @@ struct ClientHelloWriter<'a> {
     key_schedule: &'a mut KeySchedule,
 }
 
-impl<'a> ClientHelloWriter<'a> {
+impl ClientHelloWriter<'_> {
     pub fn copy_from_slice(&mut self, src: &[u8]) {
         self.copy_from_slice_no_hash(src);
         self.key_schedule.update_transcript_hash(src);

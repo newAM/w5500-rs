@@ -66,7 +66,7 @@ pub struct TcpReader<'w, W5500> {
     pub(crate) ptr: u16,
 }
 
-impl<'w, W5500> Seek for TcpReader<'w, W5500> {
+impl<W5500> Seek for TcpReader<'_, W5500> {
     fn seek<E>(&mut self, pos: SeekFrom) -> Result<(), Error<E>> {
         self.ptr = pos.new_ptr(self.ptr, self.head_ptr, self.tail_ptr)?;
         Ok(())
@@ -89,7 +89,7 @@ impl<'w, W5500> Seek for TcpReader<'w, W5500> {
     }
 }
 
-impl<'a, W5500: Registers> Read<W5500::Error> for TcpReader<'a, W5500> {
+impl<W5500: Registers> Read<W5500::Error> for TcpReader<'_, W5500> {
     fn read(&mut self, buf: &mut [u8]) -> Result<u16, W5500::Error> {
         let read_size: u16 = min(self.remain(), buf.len().try_into().unwrap_or(u16::MAX));
         if read_size != 0 {
@@ -166,7 +166,7 @@ pub struct TcpWriter<'w, W5500> {
     pub(crate) ptr: u16,
 }
 
-impl<'w, W5500> Seek for TcpWriter<'w, W5500> {
+impl<W5500> Seek for TcpWriter<'_, W5500> {
     fn seek<E>(&mut self, pos: SeekFrom) -> Result<(), Error<E>> {
         self.ptr = pos.new_ptr(self.ptr, self.head_ptr, self.tail_ptr)?;
         Ok(())
@@ -189,7 +189,7 @@ impl<'w, W5500> Seek for TcpWriter<'w, W5500> {
     }
 }
 
-impl<'w, W5500: Registers> Write<W5500::Error> for TcpWriter<'w, W5500> {
+impl<W5500: Registers> Write<W5500::Error> for TcpWriter<'_, W5500> {
     fn write(&mut self, buf: &[u8]) -> Result<u16, W5500::Error> {
         let write_size: u16 = min(self.remain(), buf.len().try_into().unwrap_or(u16::MAX));
         if write_size != 0 {
