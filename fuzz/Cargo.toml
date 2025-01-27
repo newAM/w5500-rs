@@ -6,5 +6,5 @@ publish = false
 edition = "2021"
 
 [dependencies]
-rand_core = "0.6"
+rand_core = "0.9"
 w5500-ll.path = "../ll"
