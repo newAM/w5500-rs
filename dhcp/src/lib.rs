@@ -78,7 +78,7 @@ pub enum State {
 /// # Example
 ///
 /// ```no_run
-/// use rand_core::RngCore;
+/// use rand_core::TryRngCore;
 /// use w5500_dhcp::{
 ///     ll::{net::Eui48Addr, Sn},
 ///     Client, Hostname,
@@ -97,7 +97,7 @@ pub enum State {
 ///
 /// this_is_where_you_setup_the_w5500_int_pin_for_a_falling_edge_trigger();
 ///
-/// let seed: u64 = rng.next_u64();
+/// let seed: u64 = rng.try_next_u64().unwrap();
 ///
 /// let mut dhcp: Client = Client::new(DHCP_SN, seed, MAC_ADDRESS, HOSTNAME);
 ///
@@ -156,7 +156,7 @@ impl<'a> Client<'a> {
     /// # Example
     ///
     /// ```
-    /// use rand_core::RngCore;
+    /// use rand_core::TryRngCore;
     /// use w5500_dhcp::{
     ///     ll::{net::Eui48Addr, Sn},
     ///     Client, Hostname,
@@ -167,7 +167,7 @@ impl<'a> Client<'a> {
     /// // locally administered MAC address
     /// const MAC_ADDRESS: Eui48Addr = Eui48Addr::new(0x02, 0x00, 0x11, 0x22, 0x33, 0x44);
     /// const HOSTNAME: Hostname = Hostname::new_unwrapped("example");
-    /// let seed: u64 = rng.next_u64();
+    /// let seed: u64 = rng.try_next_u64().unwrap();
     ///
     /// let dhcp: Client = Client::new(DHCP_SN, seed, MAC_ADDRESS, HOSTNAME);
     /// ```
@@ -206,7 +206,7 @@ impl<'a> Client<'a> {
     /// Set a 10 second timeout.
     ///
     /// ```
-    /// use rand_core::RngCore;
+    /// use rand_core::TryRngCore;
     /// use w5500_dhcp::{
     ///     ll::{net::Eui48Addr, Sn},
     ///     Client, Hostname,
@@ -216,7 +216,7 @@ impl<'a> Client<'a> {
     /// const HOSTNAME: Hostname = Hostname::new_unwrapped("example");
     /// let mut dhcp: Client = Client::new(
     ///     Sn::Sn0,
-    ///     rng.next_u64(),
+    ///     rng.try_next_u64().unwrap(),
     ///     Eui48Addr::new(0x02, 0x00, 0x11, 0x22, 0x33, 0x44),
     ///     HOSTNAME,
     /// );
@@ -231,7 +231,7 @@ impl<'a> Client<'a> {
     /// # Example
     ///
     /// ```
-    /// use rand_core::RngCore;
+    /// use rand_core::TryRngCore;
     /// use w5500_dhcp::{
     ///     ll::{net::Eui48Addr, Sn},
     ///     Client, Hostname,
@@ -241,7 +241,7 @@ impl<'a> Client<'a> {
     /// const HOSTNAME: Hostname = Hostname::new_unwrapped("example");
     /// let dhcp: Client = Client::new(
     ///     Sn::Sn0,
-    ///     rng.next_u64(),
+    ///     rng.try_next_u64().unwrap(),
     ///     Eui48Addr::new(0x02, 0x00, 0x11, 0x22, 0x33, 0x44),
     ///     HOSTNAME,
     /// );
