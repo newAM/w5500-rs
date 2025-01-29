@@ -108,12 +108,6 @@ impl rand_core::RngCore for NotRng {
     fn fill_bytes(&mut self, dest: &mut [u8]) {
         dest.iter_mut().for_each(|b| *b = self.next_byte());
     }
-
-    #[inline]
-    fn try_fill_bytes(&mut self, dest: &mut [u8]) -> Result<(), rand_core::Error> {
-        dest.iter_mut().for_each(|b| *b = self.next_byte());
-        Ok(())
-    }
 }
 
 impl rand_core::CryptoRng for NotRng {}

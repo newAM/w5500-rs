@@ -4,7 +4,7 @@
 //!
 //! **Note:** This will communicate with external network services.
 
-use rand_core::{OsRng, RngCore};
+use rand_core::{OsRng, TryRngCore};
 use std::time::{Duration, Instant};
 use w5500_dns::{
     hl::{Error, Udp},
@@ -34,7 +34,9 @@ fn main() {
         .udp_bind(DNS_SOCKET, DNS_SOURCE_PORT)
         .expect("failed to bind");
 
-    let random_number: u64 = OsRng.next_u64();
+    let random_number: u64 = OsRng
+        .try_next_u64()
+        .expect("Failed to generate random number");
 
     let mut dns_client: Client = Client::new(
         Sn::Sn3,
