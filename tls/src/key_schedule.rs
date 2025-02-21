@@ -8,20 +8,20 @@
 //! [RFC 5869]: https://datatracker.ietf.org/doc/html/rfc5869
 
 use crate::{
-    crypto::p256::{EphemeralSecret, PublicKey, SharedSecret},
     AlertDescription,
+    crypto::p256::{EphemeralSecret, PublicKey, SharedSecret},
 };
 use core::mem::size_of;
 use hkdf::Hkdf;
 use hmac::Mac;
 use rand_core::{CryptoRng, RngCore};
 use sha2::{
-    digest::{
-        crypto_common::generic_array::{ArrayLength, GenericArray},
-        typenum::{Unsigned, U12, U32},
-        OutputSizeUser,
-    },
     Digest, Sha256,
+    digest::{
+        OutputSizeUser,
+        crypto_common::generic_array::{ArrayLength, GenericArray},
+        typenum::{U12, U32, Unsigned},
+    },
 };
 
 // pre-computed SHA256 with no data

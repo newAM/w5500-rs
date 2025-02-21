@@ -77,9 +77,9 @@ use std::{
 pub use w5500_ll::{self, Registers};
 
 use w5500_ll::{
+    BufferSize, Mode, Protocol, Reg, SOCKETS, Sn, SnReg, SocketCommand, SocketInterrupt,
+    SocketMode, SocketStatus, VERSION,
     net::{Eui48Addr, Ipv4Addr},
-    BufferSize, Mode, Protocol, Reg, Sn, SnReg, SocketCommand, SocketInterrupt, SocketMode,
-    SocketStatus, SOCKETS, VERSION,
 };
 
 // Socket spacing between blocks.

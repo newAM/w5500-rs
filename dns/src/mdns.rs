@@ -2,14 +2,14 @@
 
 use crate::header::{Header, Qr};
 use crate::ll::{
-    net::{Eui48Addr, Ipv4Addr, SocketAddrV4},
     Protocol, Sn, SocketCommand, SocketMode, SocketStatus,
+    net::{Eui48Addr, Ipv4Addr, SocketAddrV4},
 };
 use crate::qtype::Qtype;
-use crate::{read_labels, Query, Response};
+use crate::{Query, Response, read_labels};
 use w5500_hl::{
-    io::{Read, Seek, SeekFrom},
     Error, Hostname, Udp, UdpReader, UdpWriter,
+    io::{Read, Seek, SeekFrom},
 };
 
 const MDNS_PORT: u16 = 5353;

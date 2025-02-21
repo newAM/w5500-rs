@@ -1,7 +1,7 @@
 use std::convert::Infallible;
-use w5500_hl::ll::{Registers, Sn, SocketCommand, SOCKETS};
-use w5500_hl::net::{Ipv4Addr, SocketAddrV4};
 use w5500_hl::Common;
+use w5500_hl::ll::{Registers, SOCKETS, Sn, SocketCommand};
+use w5500_hl::net::{Ipv4Addr, SocketAddrV4};
 
 mod local_addr {
     use super::*;

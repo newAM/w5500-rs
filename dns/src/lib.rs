@@ -19,7 +19,7 @@
 //! ```no_run
 //! # let mut w5500 = w5500_regsim::W5500::default();
 //! # let random_number: u64 = 0;
-//! use w5500_dns::{hl::block, ll::Sn, servers, Client as DnsClient, Hostname, Response};
+//! use w5500_dns::{Client as DnsClient, Hostname, Response, hl::block, ll::Sn, servers};
 //!
 //! const DNS_SOCKET: Sn = Sn::Sn3;
 //! const DNS_SRC_PORT: u16 = 45917;
@@ -76,12 +76,12 @@ pub use header::ResponseCode;
 use header::{Header, Qr};
 pub use hl::Hostname;
 use hl::{
-    io::{Read, Seek, SeekFrom, Write},
     Error, Udp, UdpReader, UdpWriter,
+    io::{Read, Seek, SeekFrom, Write},
 };
 use ll::{
-    net::{Ipv4Addr, SocketAddrV4},
     Sn,
+    net::{Ipv4Addr, SocketAddrV4},
 };
 pub use qclass::Qclass;
 pub use qtype::Qtype;
@@ -461,7 +461,7 @@ impl Client {
     ///
     /// ```
     /// # let random_number: u64 = 0;
-    /// use w5500_dns::{ll::Sn, servers, Client};
+    /// use w5500_dns::{Client, ll::Sn, servers};
     ///
     /// const DNS_SRC_PORT: u16 = 45917;
     ///
@@ -483,7 +483,7 @@ impl Client {
     ///
     /// ```
     /// # let random_number: u64 = 0;
-    /// use w5500_dns::{ll::Sn, servers, Client};
+    /// use w5500_dns::{Client, ll::Sn, servers};
     ///
     /// const DNS_SRC_PORT: u16 = 45917;
     ///
@@ -505,7 +505,7 @@ impl Client {
     ///
     /// ```
     /// # let random_number: u64 = 0;
-    /// use w5500_dns::{ll::Sn, servers, Client};
+    /// use w5500_dns::{Client, ll::Sn, servers};
     ///
     /// const DNS_SRC_PORT: u16 = 45917;
     ///

@@ -7,9 +7,10 @@
 use rand_core::{OsRng, TryRngCore};
 use std::time::{Duration, Instant};
 use w5500_dns::{
+    Client, Hostname,
     hl::{Error, Udp},
     ll::{Registers, Sn, VERSION},
-    servers as dns_servers, Client, Hostname,
+    servers as dns_servers,
 };
 use w5500_regsim::W5500;
 

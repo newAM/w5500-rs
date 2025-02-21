@@ -39,10 +39,10 @@ pub use w5500_hl as hl;
 pub use w5500_hl::ll;
 
 use hl::{
-    io::{Read, Write},
     Common, Error, Udp, UdpReader, UdpWriter,
+    io::{Read, Write},
 };
-use ll::{net::SocketAddrV4, Registers, Sn, SocketInterrupt, SocketInterruptMask};
+use ll::{Registers, Sn, SocketInterrupt, SocketInterruptMask, net::SocketAddrV4};
 
 #[cfg(feature = "chrono")]
 pub use chrono;
@@ -83,11 +83,11 @@ impl Client {
     ///
     /// ```
     /// use w5500_sntp::{
-    ///     ll::{
-    ///         net::{Ipv4Addr, SocketAddrV4},
-    ///         Sn,
-    ///     },
     ///     Client, DST_PORT,
+    ///     ll::{
+    ///         Sn,
+    ///         net::{Ipv4Addr, SocketAddrV4},
+    ///     },
     /// };
     ///
     /// const SNTP_SRC_PORT: u16 = 123;
@@ -111,11 +111,11 @@ impl Client {
     /// ```no_run
     /// # let mut w5500 = w5500_regsim::W5500::default();
     /// use w5500_sntp::{
-    ///     ll::{
-    ///         net::{Ipv4Addr, SocketAddrV4},
-    ///         Sn,
-    ///     },
     ///     Client, DST_PORT,
+    ///     ll::{
+    ///         Sn,
+    ///         net::{Ipv4Addr, SocketAddrV4},
+    ///     },
     /// };
     ///
     /// const SNTP_SRC_PORT: u16 = 123;
@@ -157,11 +157,11 @@ impl Client {
     /// ```no_run
     /// # let mut w5500 = w5500_regsim::W5500::default();
     /// use w5500_sntp::{
-    ///     ll::{
-    ///         net::{Ipv4Addr, SocketAddrV4},
-    ///         Sn,
-    ///     },
     ///     Client, DST_PORT,
+    ///     ll::{
+    ///         Sn,
+    ///         net::{Ipv4Addr, SocketAddrV4},
+    ///     },
     /// };
     ///
     /// const SNTP_SRC_PORT: u16 = 123;
@@ -232,12 +232,12 @@ impl Client {
     /// ```no_run
     /// # let mut w5500 = w5500_regsim::W5500::default();
     /// use w5500_sntp::{
+    ///     Client, DST_PORT, Reply,
     ///     hl::Error,
     ///     ll::{
-    ///         net::{Ipv4Addr, SocketAddrV4},
     ///         Sn,
+    ///         net::{Ipv4Addr, SocketAddrV4},
     ///     },
-    ///     Client, Reply, DST_PORT,
     /// };
     ///
     /// const SNTP_SRC_PORT: u16 = 123;

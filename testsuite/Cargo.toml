@@ -1,9 +1,11 @@
 [package]
 name = "testsuite"
 version = "0.1.0"
-authors = ["Alex Martens <alex@thinglab.org>"]
 publish = false
-edition = "2021"
+authors.workspace = true
+edition.workspace = true
+repository.workspace = true
+license.workspace = true
 
 [dependencies]
 ftdi-embedded-hal = { version = "0.22.0", features = ["libftd2xx", "libftd2xx-static"] }

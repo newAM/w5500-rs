@@ -1,9 +1,11 @@
 [package]
 name = "w5500-tls-afl"
 version = "0.0.0"
-authors = ["Alex Martens <alex@thinglab.org>"]
 publish = false
-edition = "2021"
+authors.workspace = true
+edition.workspace = true
+repository.workspace = true
+license.workspace = true
 
 [dependencies]
 afl = "0.15"

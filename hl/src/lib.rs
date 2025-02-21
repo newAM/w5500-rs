@@ -32,12 +32,12 @@
 //! ```no_run
 //! # use ehm::eh1 as h;
 //! # let mut w5500 = w5500_ll::eh1::vdm::W5500::new(h::spi::Mock::new(&[]));
+//! use w5500_hl::Udp;
 //! use w5500_hl::ll::{
-//!     net::{Ipv4Addr, SocketAddrV4},
 //!     Registers,
 //!     Sn::Sn0,
+//!     net::{Ipv4Addr, SocketAddrV4},
 //! };
-//! use w5500_hl::Udp;
 //!
 //! // open Sn0 as a UDP socket on port 1234
 //! w5500.udp_bind(Sn0, 1234)?;
@@ -54,11 +54,11 @@
 //! ```no_run
 //! # use ehm::eh1 as h;
 //! # let mut w5500 = w5500_ll::eh1::vdm::W5500::new(h::spi::Mock::new(&[]));
-//! use w5500_hl::ll::{
-//!     net::{Ipv4Addr, SocketAddrV4},
-//!     Registers, Sn,
-//! };
 //! use w5500_hl::Tcp;
+//! use w5500_hl::ll::{
+//!     Registers, Sn,
+//!     net::{Ipv4Addr, SocketAddrV4},
+//! };
 //!
 //! const MQTT_SOCKET: Sn = Sn::Sn0;
 //! const MQTT_SOURCE_PORT: u16 = 33650;
@@ -74,11 +74,11 @@
 //! ```no_run
 //! # use ehm::eh1 as h;
 //! # let mut w5500 = w5500_ll::eh1::vdm::W5500::new(h::spi::Mock::new(&[]));
-//! use w5500_hl::ll::{
-//!     net::{Ipv4Addr, SocketAddrV4},
-//!     Registers, Sn,
-//! };
 //! use w5500_hl::Tcp;
+//! use w5500_hl::ll::{
+//!     Registers, Sn,
+//!     net::{Ipv4Addr, SocketAddrV4},
+//! };
 //!
 //! const HTTP_SOCKET: Sn = Sn::Sn1;
 //! const HTTP_PORT: u16 = 80;
@@ -103,7 +103,7 @@ mod udp;
 
 pub use hostname::{Hostname, TryFromStrError};
 pub use ll::net;
-use ll::{Registers, Sn, SocketCommand, SocketStatus, SOCKETS};
+use ll::{Registers, SOCKETS, Sn, SocketCommand, SocketStatus};
 pub use tcp::{Tcp, TcpReader, TcpWriter};
 pub use udp::{Udp, UdpHeader, UdpReader, UdpWriter};
 pub use w5500_ll as ll;
@@ -217,8 +217,8 @@ pub trait Common: Registers {
     ///
     /// ```no_run
     /// # let mut w5500 = w5500_ll::eh1::vdm::W5500::new(ehm::eh1::spi::Mock::new(&[]));
-    /// use w5500_hl::ll::{Registers, Sn::Sn0};
     /// use w5500_hl::Common;
+    /// use w5500_hl::ll::{Registers, Sn::Sn0};
     ///
     /// w5500.close(Sn0)?;
     /// # Ok::<(), embedded_hal::spi::ErrorKind>(())

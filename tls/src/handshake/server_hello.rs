@@ -1,8 +1,8 @@
 use crate::{
-    cipher_suites::CipherSuite,
-    crypto::p256::{public_key_from_sec1_bytes, PublicKey},
-    io::CircleReader,
     AlertDescription, ExtensionType, NamedGroup, TlsVersion,
+    cipher_suites::CipherSuite,
+    crypto::p256::{PublicKey, public_key_from_sec1_bytes},
+    io::CircleReader,
 };
 const P256_KEY_LEN: usize = 65;
 

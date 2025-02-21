@@ -1,8 +1,8 @@
-use crate::{write_variable_byte_integer, CtrlPkt, Error};
+use crate::{CtrlPkt, Error, write_variable_byte_integer};
 use core::{cmp::min, marker::PhantomData, mem::size_of};
 use w5500_hl::{
-    io::{Read, Seek, SeekFrom, Write},
     Error as HlError,
+    io::{Read, Seek, SeekFrom, Write},
 };
 
 pub fn send_publish<E, Writer: Write<E>>(

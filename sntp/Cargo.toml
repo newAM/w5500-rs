@@ -1,15 +1,14 @@
 [package]
 name = "w5500-sntp"
 version = "0.5.0"
-authors = ["Alex Martens <alex@thinglab.org>"]
-edition = "2021"
-repository = "https://github.com/newAM/w5500-rs"
-license = "MIT"
+authors.workspace = true
+edition.workspace = true
+repository.workspace = true
+license.workspace = true
 description = "SNTP client for the Wiznet W5500 internet offload chip."
 readme = "README.md"
 keywords = ["sntp", "W5500", "wiznet"]
 categories = ["embedded", "hardware-support", "no-std"]
-homepage = "https://github.com/newAM/w5500-rs"
 
 [features]
 chrono = ["dep:chrono"]

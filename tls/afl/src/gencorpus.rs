@@ -2,7 +2,7 @@ mod shared;
 
 use shared::{HOST, HOSTNAME, KEY, SPORT};
 use std::{fs::File, thread::sleep, time::Duration};
-use w5500_fuzz::{NotRng, FUZZ_SN};
+use w5500_fuzz::{FUZZ_SN, NotRng};
 use w5500_regsim::W5500;
 use w5500_tls::{Client, Event};
 

@@ -1,8 +1,8 @@
 use std::convert::Infallible;
 use w5500_hl::{Error, Udp};
 use w5500_ll::{
-    net::{Ipv4Addr, SocketAddrV4},
     Protocol, Registers, Sn, SocketCommand, SocketMode, SocketStatus,
+    net::{Ipv4Addr, SocketAddrV4},
 };
 
 /// Tests debug asserts that ensure the socket is opened as UDP.

@@ -1,5 +1,5 @@
-use w5500_ll::eh1::fdm::W5500;
 use w5500_ll::Registers;
+use w5500_ll::eh1::fdm::W5500;
 
 #[test]
 fn fdm_nothing() {

@@ -12,8 +12,8 @@ use std::{thread::sleep, time::Duration};
 
 use w5500_hl::Tcp;
 use w5500_ll::{
-    net::{Ipv4Addr, SocketAddrV4},
     Registers, Sn, SocketInterrupt, VERSION,
+    net::{Ipv4Addr, SocketAddrV4},
 };
 use w5500_regsim::W5500;
 

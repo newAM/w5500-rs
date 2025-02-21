@@ -72,14 +72,14 @@ pub use alert::{Alert, AlertDescription, AlertLevel};
 use core::{cmp::min, convert::Infallible};
 use extension::ExtensionType;
 use handshake::{
-    client_hello::{self, NamedGroup},
     HandshakeType,
+    client_hello::{self, NamedGroup},
 };
 use hl::{
+    Common, Error as HlError, Hostname, Tcp, TcpReader, TcpWriter,
     io::{Read, Seek, Write},
     ll::{BufferSize, Registers, Sn, SocketInterrupt, SocketInterruptMask},
     net::SocketAddrV4,
-    Common, Error as HlError, Hostname, Tcp, TcpReader, TcpWriter,
 };
 use io::Buffer;
 pub use io::{TlsReader, TlsWriter};
@@ -88,8 +88,8 @@ pub use rand_core;
 use rand_core::{CryptoRng, RngCore};
 use record::{ContentType, RecordHeader};
 use sha2::{
-    digest::{generic_array::GenericArray, typenum::U32},
     Sha256,
+    digest::{generic_array::GenericArray, typenum::U32},
 };
 pub use w5500_hl as hl;
 pub use w5500_hl::ll;
@@ -279,14 +279,15 @@ impl<'hn, 'psk, 'b, const N: usize> Client<'hn, 'psk, 'b, N> {
     /// # Example
     ///
     /// ```
+    /// # #![allow(static_mut_refs)]
     /// # const MY_KEY: [u8; 1] = [0];
     /// use w5500_tls::{
     ///     Client,
     ///     {
     ///         hl::Hostname,
     ///         ll::{
-    ///             net::{Ipv4Addr, SocketAddrV4},
     ///             Sn,
+    ///             net::{Ipv4Addr, SocketAddrV4},
     ///         },
     ///     },
     /// };
@@ -463,7 +464,7 @@ impl<'hn, 'psk, 'b, const N: usize> Client<'hn, 'psk, 'b, N> {
                         w5500,
                         AlertDescription::InternalError,
                         monotonic_secs,
-                    ))
+                    ));
                 }
             };
             if sn_rx_rsr >= RecordHeader::LEN as u16 {
@@ -1123,6 +1124,7 @@ impl<'hn, 'psk, 'b, const N: usize> Client<'hn, 'psk, 'b, N> {
     /// # Example
     ///
     /// ```
+    /// # #![allow(static_mut_refs)]
     /// # const MY_KEY: [u8; 1] = [0];
     /// use w5500_tls::{
     ///     Client,

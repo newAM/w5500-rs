@@ -1,12 +1,12 @@
 // This module contains ugly code because I did a lot in `const` functions,
 // which limits what functions I can use.
 
-use hmac::digest::generic_array::{typenum::U32, GenericArray};
+use hmac::digest::generic_array::{GenericArray, typenum::U32};
 use w5500_hl::Hostname;
 
 use crate::{
-    cipher_suites::CipherSuite, extension::ExtensionType, key_schedule::KeySchedule, ContentType,
-    TlsVersion,
+    ContentType, TlsVersion, cipher_suites::CipherSuite, extension::ExtensionType,
+    key_schedule::KeySchedule,
 };
 use core::mem::size_of;
 use sha2::Sha256;

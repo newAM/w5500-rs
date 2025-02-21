@@ -1,10 +1,10 @@
 use mqttbytes::{
+    Protocol::V5,
+    QoS,
     v5::{
         ConnAck, Connect, ConnectProperties, ConnectReturnCode, Packet, Publish, RetainForwardRule,
         SubAck as MbSubAck, Subscribe, SubscribeFilter, SubscribeReasonCode,
     },
-    Protocol::V5,
-    QoS,
 };
 use std::{
     io::{Read, Write},
@@ -13,11 +13,11 @@ use std::{
 };
 use w5500_hl::TcpReader;
 use w5500_mqtt::{
+    Client, ClientId, Error, Event, SRC_PORT, SubAck, SubAckReasonCode,
     ll::{
-        net::{Ipv4Addr, SocketAddrV4},
         Registers, Sn,
+        net::{Ipv4Addr, SocketAddrV4},
     },
-    Client, ClientId, Error, Event, SubAck, SubAckReasonCode, SRC_PORT,
 };
 use w5500_regsim::W5500;
 

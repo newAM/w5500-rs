@@ -1,11 +1,12 @@
 use crate::{
+    Error, TcpReader,
     io::{Read, Seek, SeekFrom, Write},
-    port_is_unique, Error, TcpReader,
+    port_is_unique,
 };
 use core::cmp::min;
 use w5500_ll::{
-    net::{Ipv4Addr, SocketAddrV4},
     Protocol, Registers, Sn, SocketCommand, SocketMode, SocketStatus, TxPtrs,
+    net::{Ipv4Addr, SocketAddrV4},
 };
 
 /// W5500 UDP Header.
@@ -54,10 +55,10 @@ impl UdpHeader {
 /// # use ehm::eh1 as h;
 /// # let mut w5500 = w5500_ll::eh1::vdm::W5500::new(h::spi::Mock::new(&[]));
 /// use w5500_hl::{
+///     Udp, UdpReader,
 ///     io::Read,
 ///     ll::{Registers, Sn::Sn0},
 ///     net::{Ipv4Addr, SocketAddrV4},
-///     Udp, UdpReader,
 /// };
 ///
 /// const DEST: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::new(192, 0, 2, 1), 8081);
@@ -137,10 +138,10 @@ impl<W5500: Registers> Read<W5500::Error> for UdpReader<'_, W5500> {
 /// # use ehm::eh1 as h;
 /// # let mut w5500 = w5500_ll::eh1::vdm::W5500::new(h::spi::Mock::new(&[]));
 /// use w5500_hl::{
+///     Udp, UdpWriter,
 ///     io::Write,
 ///     ll::{Registers, Sn::Sn0},
 ///     net::{Ipv4Addr, SocketAddrV4},
-///     Udp, UdpWriter,
 /// };
 ///
 /// const DEST: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::new(192, 0, 2, 1), 8081);
@@ -248,9 +249,9 @@ impl<W: Registers> UdpReader<'_, W> {
     /// ```no_run
     /// # let mut w5500 = w5500_ll::eh1::vdm::W5500::new(ehm::eh1::spi::Mock::new(&[]));
     /// use w5500_hl::{
+    ///     Udp, UdpHeader, UdpReader,
     ///     ll::{Registers, Sn::Sn0},
     ///     net::{Ipv4Addr, SocketAddrV4},
-    ///     Udp, UdpHeader, UdpReader,
     /// };
     ///
     /// const DEST: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::new(192, 0, 2, 1), 8081);
@@ -313,8 +314,8 @@ pub trait Udp: Registers {
     ///
     /// ```no_run
     /// # let mut w5500 = w5500_ll::eh1::vdm::W5500::new(ehm::eh1::spi::Mock::new(&[]));
-    /// use w5500_hl::ll::{Registers, Sn::Sn0};
     /// use w5500_hl::Udp;
+    /// use w5500_hl::ll::{Registers, Sn::Sn0};
     ///
     /// w5500.udp_bind(Sn0, 8080)?;
     /// # Ok::<(), embedded_hal::spi::ErrorKind>(())
@@ -374,9 +375,8 @@ pub trait Udp: Registers {
     /// ```no_run
     /// # let mut w5500 = w5500_ll::eh1::vdm::W5500::new(ehm::eh1::spi::Mock::new(&[]));
     /// use w5500_hl::{
-    ///     block,
+    ///     Udp, block,
     ///     ll::{Registers, Sn::Sn0},
-    ///     Udp,
     /// };
     ///
     /// w5500.udp_bind(Sn0, 8080)?;
@@ -454,9 +454,8 @@ pub trait Udp: Registers {
     /// ```no_run
     /// # let mut w5500 = w5500_ll::eh1::vdm::W5500::new(ehm::eh1::spi::Mock::new(&[]));
     /// use w5500_hl::{
-    ///     block,
+    ///     Udp, block,
     ///     ll::{Registers, Sn::Sn0},
-    ///     Udp,
     /// };
     ///
     /// w5500.udp_bind(Sn0, 8080)?;
@@ -532,9 +531,8 @@ pub trait Udp: Registers {
     /// ```no_run
     /// # let mut w5500 = w5500_ll::eh1::vdm::W5500::new(ehm::eh1::spi::Mock::new(&[]));
     /// use w5500_hl::{
-    ///     block,
+    ///     Udp, UdpHeader, block,
     ///     ll::{Registers, Sn::Sn0},
-    ///     Udp, UdpHeader,
     /// };
     /// // global_allocator is currently available on nightly for embedded rust
     /// extern crate alloc;
@@ -583,9 +581,9 @@ pub trait Udp: Registers {
     /// ```no_run
     /// # let mut w5500 = w5500_ll::eh1::vdm::W5500::new(ehm::eh1::spi::Mock::new(&[]));
     /// use w5500_hl::{
+    ///     Udp,
     ///     ll::{Registers, Sn::Sn0},
     ///     net::{Ipv4Addr, SocketAddrV4},
-    ///     Udp,
     /// };
     ///
     /// const DEST: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::new(192, 0, 2, 1), 8081);
@@ -623,9 +621,9 @@ pub trait Udp: Registers {
     /// ```no_run
     /// # let mut w5500 = w5500_ll::eh1::vdm::W5500::new(ehm::eh1::spi::Mock::new(&[]));
     /// use w5500_hl::{
+    ///     Udp,
     ///     ll::{Registers, Sn::Sn0},
     ///     net::{Ipv4Addr, SocketAddrV4},
-    ///     Udp,
     /// };
     ///
     /// const DEST: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::new(192, 0, 2, 1), 8081);
@@ -663,9 +661,9 @@ pub trait Udp: Registers {
     /// ```no_run
     /// # let mut w5500 = w5500_ll::eh1::vdm::W5500::new(ehm::eh1::spi::Mock::new(&[]));
     /// use w5500_hl::{
+    ///     Udp,
     ///     ll::{Registers, Sn::Sn0},
     ///     net::{Ipv4Addr, SocketAddrV4},
-    ///     Udp,
     /// };
     ///
     /// const DEST: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::new(192, 0, 2, 1), 8081);
@@ -714,9 +712,9 @@ pub trait Udp: Registers {
     /// ```no_run
     /// # let mut w5500 = w5500_ll::eh1::vdm::W5500::new(ehm::eh1::spi::Mock::new(&[]));
     /// use w5500_hl::{
+    ///     Udp,
     ///     ll::{Registers, Sn::Sn0},
     ///     net::{Ipv4Addr, SocketAddrV4},
-    ///     Udp,
     /// };
     ///
     /// const DEST: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::new(192, 0, 2, 1), 8081);

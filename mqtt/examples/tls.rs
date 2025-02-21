@@ -13,13 +13,13 @@ use std::{
     time::{Duration, Instant},
 };
 use w5500_mqtt::{
+    Event,
     hl::Hostname,
     ll::{
-        net::{Ipv4Addr, SocketAddrV4},
         Sn,
+        net::{Ipv4Addr, SocketAddrV4},
     },
     tls::Client,
-    Event,
 };
 use w5500_regsim::W5500;
 

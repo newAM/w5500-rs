@@ -1,10 +1,11 @@
 use crate::{
+    Error,
     io::{Read, Seek, SeekFrom, Write},
-    port_is_unique, Error,
+    port_is_unique,
 };
 use core::cmp::min;
 use w5500_ll::{
-    net::SocketAddrV4, Protocol, Registers, Sn, SocketCommand, SocketMode, SocketStatus, TxPtrs,
+    Protocol, Registers, Sn, SocketCommand, SocketMode, SocketStatus, TxPtrs, net::SocketAddrV4,
 };
 
 /// Streaming reader for a TCP socket buffer.
@@ -19,10 +20,10 @@ use w5500_ll::{
 /// # use ehm::eh1 as h;
 /// # let mut w5500 = w5500_ll::eh1::vdm::W5500::new(h::spi::Mock::new(&[]));
 /// use w5500_hl::{
+///     Tcp, TcpReader,
 ///     io::Read,
 ///     ll::{Registers, Sn, SocketInterrupt},
 ///     net::{Ipv4Addr, SocketAddrV4},
-///     Tcp, TcpReader,
 /// };
 ///
 /// const MQTT_SOCKET: Sn = Sn::Sn0;
@@ -134,10 +135,10 @@ impl<W5500: Registers> Read<W5500::Error> for TcpReader<'_, W5500> {
 /// # use ehm::eh1 as h;
 /// # let mut w5500 = w5500_ll::eh1::vdm::W5500::new(h::spi::Mock::new(&[]));
 /// use w5500_hl::{
+///     Tcp, TcpWriter,
 ///     io::Write,
 ///     ll::{Registers, Sn, SocketInterrupt},
 ///     net::{Ipv4Addr, SocketAddrV4},
-///     Tcp, TcpWriter,
 /// };
 ///
 /// const MQTT_SOCKET: Sn = Sn::Sn0;
@@ -258,9 +259,9 @@ pub trait Tcp: Registers {
     /// ```no_run
     /// # let mut w5500 = w5500_ll::eh1::vdm::W5500::new(ehm::eh1::spi::Mock::new(&[]));
     /// use w5500_hl::{
+    ///     Tcp,
     ///     ll::{Registers, Sn, SocketInterrupt},
     ///     net::{Ipv4Addr, SocketAddrV4},
-    ///     Tcp,
     /// };
     ///
     /// const MQTT_SOCKET: Sn = Sn::Sn0;
@@ -337,9 +338,9 @@ pub trait Tcp: Registers {
     /// ```no_run
     /// # let mut w5500 = w5500_ll::eh1::vdm::W5500::new(ehm::eh1::spi::Mock::new(&[]));
     /// use w5500_hl::{
+    ///     Tcp,
     ///     ll::{Registers, Sn, SocketInterrupt},
     ///     net::{Ipv4Addr, SocketAddrV4},
-    ///     Tcp,
     /// };
     /// // global_allocator is currently avaliable on nightly for embedded rust
     /// extern crate alloc;
@@ -414,9 +415,9 @@ pub trait Tcp: Registers {
     /// ```no_run
     /// # let mut w5500 = w5500_ll::eh1::vdm::W5500::new(ehm::eh1::spi::Mock::new(&[]));
     /// use w5500_hl::{
+    ///     Tcp,
     ///     ll::{Registers, Sn, SocketInterrupt},
     ///     net::{Ipv4Addr, SocketAddrV4},
-    ///     Tcp,
     /// };
     ///
     /// const MQTT_SOCKET: Sn = Sn::Sn0;
@@ -475,9 +476,9 @@ pub trait Tcp: Registers {
     /// ```no_run
     /// # let mut w5500 = w5500_ll::eh1::vdm::W5500::new(ehm::eh1::spi::Mock::new(&[]));
     /// use w5500_hl::{
+    ///     Tcp,
     ///     ll::{Registers, Sn, SocketInterrupt},
     ///     net::{Ipv4Addr, SocketAddrV4},
-    ///     Tcp,
     /// };
     ///
     /// const MQTT_SOCKET: Sn = Sn::Sn0;
@@ -535,9 +536,9 @@ pub trait Tcp: Registers {
     /// ```no_run
     /// # let mut w5500 = w5500_ll::eh1::vdm::W5500::new(ehm::eh1::spi::Mock::new(&[]));
     /// use w5500_hl::{
+    ///     Tcp,
     ///     ll::{Registers, Sn, SocketInterrupt},
     ///     net::{Ipv4Addr, SocketAddrV4},
-    ///     Tcp,
     /// };
     ///
     /// const MQTT_SOCKET: Sn = Sn::Sn0;

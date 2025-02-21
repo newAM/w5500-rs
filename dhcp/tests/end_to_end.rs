@@ -4,11 +4,11 @@ use dhcproto::v4::{
 };
 use std::net::UdpSocket;
 use w5500_dhcp::{
-    ll::{
-        net::{Eui48Addr, Ipv4Addr},
-        Sn,
-    },
     Client, Hostname,
+    ll::{
+        Sn,
+        net::{Eui48Addr, Ipv4Addr},
+    },
 };
 use w5500_hl::net::SocketAddrV4;
 use w5500_regsim::{Registers, W5500};

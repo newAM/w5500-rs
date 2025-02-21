@@ -1,8 +1,8 @@
 use w5500_hl::{
+    Error, Hostname, Udp, UdpReader, UdpWriter,
     io::{Read, Seek, SeekFrom, Write},
     ll::{Registers, Sn},
     net::{Eui48Addr, Ipv4Addr, SocketAddrV4},
-    Error, Hostname, Udp, UdpReader, UdpWriter,
 };
 
 /// DHCP options.

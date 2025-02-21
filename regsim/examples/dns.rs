@@ -13,12 +13,12 @@ use std::{
 };
 
 use w5500_hl::{
-    io::{Read, Write},
     Error, Udp, UdpReader, UdpWriter,
+    io::{Read, Write},
 };
 use w5500_ll::{
-    net::{Ipv4Addr, SocketAddrV4},
     Registers, Sn, VERSION,
+    net::{Ipv4Addr, SocketAddrV4},
 };
 use w5500_regsim::W5500;
 

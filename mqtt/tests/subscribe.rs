@@ -3,8 +3,8 @@
 mod fixture;
 use fixture::Fixture;
 use mqttbytes::{
-    v5::{Packet, Publish, UnsubAck, UnsubAckReason, Unsubscribe},
     QoS,
+    v5::{Packet, Publish, UnsubAck, UnsubAckReason, Unsubscribe},
 };
 use w5500_mqtt::{Event, UnSubAck, UnSubAckReasonCode};
 

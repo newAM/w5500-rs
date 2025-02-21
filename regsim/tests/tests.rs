@@ -1,4 +1,4 @@
-use w5500_ll::{Reg, Registers, Sn, SnReg, COMMON_BLOCK_OFFSET, VERSION};
+use w5500_ll::{COMMON_BLOCK_OFFSET, Reg, Registers, Sn, SnReg, VERSION};
 use w5500_regsim::W5500;
 
 #[test]

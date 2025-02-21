@@ -3,15 +3,15 @@
 mod fixture;
 use fixture::Fixture;
 use mqttbytes::{
-    v5::{Connect, ConnectProperties, ConnectReturnCode, Packet},
     Protocol::V5,
+    v5::{Connect, ConnectProperties, ConnectReturnCode, Packet},
 };
 use w5500_mqtt::{
-    ll::{
-        net::{Ipv4Addr, SocketAddrV4},
-        Sn::Sn0,
-    },
     Client, ConnectReasonCode, Error, Event, SRC_PORT,
+    ll::{
+        Sn::Sn0,
+        net::{Ipv4Addr, SocketAddrV4},
+    },
 };
 
 #[test]
