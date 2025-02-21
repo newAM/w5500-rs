@@ -6,10 +6,10 @@
 
 use std::time::{Duration, Instant};
 use w5500_dns::{
-    hl::{net::Eui48Addr, Error},
+    Hostname,
+    hl::{Error, net::Eui48Addr},
     ll::{Registers, Sn, VERSION},
     mdns::Client as MdnsClient,
-    Hostname,
 };
 use w5500_regsim::W5500;
 

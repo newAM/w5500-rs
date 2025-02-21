@@ -24,3 +24,9 @@ default-members = [
     "sntp",
     "tls",
 ]
+
+[workspace.package]
+edition = "2024"
+authors = ["Alex Martens <alex@thinglab.org>"]
+repository = "https://github.com/newAM/w5500-rs"
+license = "MIT"

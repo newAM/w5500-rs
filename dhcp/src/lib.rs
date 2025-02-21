@@ -28,18 +28,18 @@ mod pkt;
 mod rand;
 
 use hl::{
+    Common, Error, Udp, UdpReader,
     io::Seek,
     ll::{
-        net::{Eui48Addr, Ipv4Addr},
         LinkStatus, PhyCfg, Registers, Sn, SocketInterrupt, SocketInterruptMask,
+        net::{Eui48Addr, Ipv4Addr},
     },
     net::SocketAddrV4,
-    Common, Error, Udp, UdpReader,
 };
 pub use w5500_hl as hl;
 pub use w5500_hl::ll;
 
-use pkt::{send_dhcp_discover, send_dhcp_request, MsgType, PktDe};
+use pkt::{MsgType, PktDe, send_dhcp_discover, send_dhcp_request};
 pub use w5500_hl::Hostname;
 
 /// DHCP destination port.
@@ -80,8 +80,8 @@ pub enum State {
 /// ```no_run
 /// use rand_core::TryRngCore;
 /// use w5500_dhcp::{
-///     ll::{net::Eui48Addr, Sn},
 ///     Client, Hostname,
+///     ll::{Sn, net::Eui48Addr},
 /// };
 /// # let mut w5500 = w5500_regsim::W5500::default();
 /// # let mut rng = rand_core::OsRng;
@@ -158,8 +158,8 @@ impl<'a> Client<'a> {
     /// ```
     /// use rand_core::TryRngCore;
     /// use w5500_dhcp::{
-    ///     ll::{net::Eui48Addr, Sn},
     ///     Client, Hostname,
+    ///     ll::{Sn, net::Eui48Addr},
     /// };
     /// # let mut rng = rand_core::OsRng;
     ///
@@ -208,8 +208,8 @@ impl<'a> Client<'a> {
     /// ```
     /// use rand_core::TryRngCore;
     /// use w5500_dhcp::{
-    ///     ll::{net::Eui48Addr, Sn},
     ///     Client, Hostname,
+    ///     ll::{Sn, net::Eui48Addr},
     /// };
     /// # let mut rng = rand_core::OsRng;
     ///
@@ -233,8 +233,8 @@ impl<'a> Client<'a> {
     /// ```
     /// use rand_core::TryRngCore;
     /// use w5500_dhcp::{
-    ///     ll::{net::Eui48Addr, Sn},
     ///     Client, Hostname,
+    ///     ll::{Sn, net::Eui48Addr},
     /// };
     /// # let mut rng = rand_core::OsRng;
     ///

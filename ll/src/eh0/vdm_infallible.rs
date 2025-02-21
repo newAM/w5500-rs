@@ -8,7 +8,7 @@
 //!
 //! [`Registers`]: crate::Registers
 
-use crate::spi::{vdm_header, AccessMode};
+use crate::spi::{AccessMode, vdm_header};
 use core::convert::Infallible;
 use eh0::digital::v2::OutputPin;
 

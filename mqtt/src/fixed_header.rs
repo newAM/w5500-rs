@@ -1,6 +1,6 @@
 use crate::{
-    data::{decode_variable_byte_integer, DeserError},
     CtrlPkt,
+    data::{DeserError, decode_variable_byte_integer},
 };
 
 #[derive(Debug)]

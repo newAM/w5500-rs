@@ -1,6 +1,6 @@
 use w5500_ll::{
-    spi::{vdm_header, AccessMode},
     Sn,
+    spi::{AccessMode, vdm_header},
 };
 
 macro_rules! vdm_header_tests {

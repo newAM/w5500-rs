@@ -1,7 +1,7 @@
 mod shared;
 
 use shared::{HOST, HOSTNAME, KEY, SPORT};
-use w5500_fuzz::{NotRng, FUZZ_SN, W5500};
+use w5500_fuzz::{FUZZ_SN, NotRng, W5500};
 use w5500_tls::{Client, Error, Event};
 
 fn main() {

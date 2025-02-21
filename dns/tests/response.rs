@@ -1,13 +1,13 @@
 use core::convert::Infallible;
 use w5500_dns::{
+    Client, DST_PORT, Qclass, Qtype, RData, ResourceRecord, ServiceData,
     hl::{
-        ll::{
-            net::{Ipv4Addr, SocketAddrV4},
-            Registers, Sn, SocketStatus,
-        },
         UdpHeader,
+        ll::{
+            Registers, Sn, SocketStatus,
+            net::{Ipv4Addr, SocketAddrV4},
+        },
     },
-    Client, Qclass, Qtype, RData, ResourceRecord, ServiceData, DST_PORT,
 };
 
 const SRC_PORT: u16 = 12345;

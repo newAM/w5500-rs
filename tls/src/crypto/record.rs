@@ -1,8 +1,8 @@
 use crate::{
+    AlertDescription, GCM_TAG_LEN,
     crypto::Aes128Gcm,
     io::Buffer,
     record::{ContentType, RecordHeader},
-    AlertDescription, GCM_TAG_LEN,
 };
 use core::cmp::min;
 use subtle::ConstantTimeEq;

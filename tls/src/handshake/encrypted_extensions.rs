@@ -1,4 +1,4 @@
-use crate::{io::CircleReader, AlertDescription, ExtensionType};
+use crate::{AlertDescription, ExtensionType, io::CircleReader};
 use core::cmp::min;
 
 /// Encrypted extensions message.

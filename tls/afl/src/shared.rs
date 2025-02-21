@@ -1,6 +1,6 @@
 use w5500_tls::hl::{
-    net::{Ipv4Addr, SocketAddrV4},
     Hostname,
+    net::{Ipv4Addr, SocketAddrV4},
 };
 
 // Change these for your network

@@ -13,11 +13,11 @@
 //! # fn monotonic_secs() -> u32 { 0 }
 //! # let mut w5500 = w5500_regsim::W5500::default();
 //! use w5500_mqtt::{
+//!     Client, ClientId, DST_PORT, Event, SRC_PORT,
 //!     ll::{
-//!         net::{Ipv4Addr, SocketAddrV4},
 //!         Sn,
+//!         net::{Ipv4Addr, SocketAddrV4},
 //!     },
-//!     Client, ClientId, Event, DST_PORT, SRC_PORT,
 //! };
 //!
 //! let mut client: Client = Client::new(
@@ -79,18 +79,18 @@ pub mod tls;
 pub use w5500_tls;
 
 pub use client_id::ClientId;
-use connect::send_connect;
 pub use connect::ConnectReasonCode;
+use connect::send_connect;
 use hl::{
-    io::{Read, Seek, Write},
-    ll::{net::SocketAddrV4, Registers, Sn, SocketInterrupt, SocketInterruptMask},
     Error as HlError, Tcp, TcpReader, TcpWriter,
+    io::{Read, Seek, Write},
+    ll::{Registers, Sn, SocketInterrupt, SocketInterruptMask, net::SocketAddrV4},
 };
-use publish::send_publish;
 pub use publish::PublishReader;
+use publish::send_publish;
 use recv::recv;
-use subscribe::{send_subscribe, send_unsubscribe};
 pub use subscribe::{SubAck, SubAckReasonCode, UnSubAck, UnSubAckReasonCode};
+use subscribe::{send_subscribe, send_unsubscribe};
 pub use w5500_hl as hl;
 pub use w5500_hl::ll;
 
@@ -340,11 +340,11 @@ impl<'a> Client<'a> {
     ///
     /// ```
     /// use w5500_mqtt::{
-    ///     ll::{
-    ///         net::{Ipv4Addr, SocketAddrV4},
-    ///         Sn,
-    ///     },
     ///     Client, DST_PORT, SRC_PORT,
+    ///     ll::{
+    ///         Sn,
+    ///         net::{Ipv4Addr, SocketAddrV4},
+    ///     },
     /// };
     ///
     /// let client: Client = Client::new(
@@ -376,11 +376,11 @@ impl<'a> Client<'a> {
     ///
     /// ```
     /// use w5500_mqtt::{
-    ///     ll::{
-    ///         net::{Ipv4Addr, SocketAddrV4},
-    ///         Sn,
-    ///     },
     ///     Client, ClientId, DST_PORT, SRC_PORT,
+    ///     ll::{
+    ///         Sn,
+    ///         net::{Ipv4Addr, SocketAddrV4},
+    ///     },
     /// };
     ///
     /// let mut client: Client = Client::new(
@@ -559,11 +559,11 @@ impl<'a> Client<'a> {
     /// # fn monotonic_secs() -> u32 { 0 }
     /// # let mut w5500 = w5500_regsim::W5500::default();
     /// use w5500_mqtt::{
+    ///     Client, ClientId, DST_PORT, Event, SRC_PORT,
     ///     ll::{
-    ///         net::{Ipv4Addr, SocketAddrV4},
     ///         Sn,
+    ///         net::{Ipv4Addr, SocketAddrV4},
     ///     },
-    ///     Client, ClientId, Event, DST_PORT, SRC_PORT,
     /// };
     ///
     /// let mut client: Client = Client::new(
@@ -607,11 +607,11 @@ impl<'a> Client<'a> {
     /// # fn monotonic_secs() -> u32 { 0 }
     /// # let mut w5500 = w5500_regsim::W5500::default();
     /// use w5500_mqtt::{
+    ///     Client, ClientId, DST_PORT, Event, SRC_PORT,
     ///     ll::{
-    ///         net::{Ipv4Addr, SocketAddrV4},
     ///         Sn,
+    ///         net::{Ipv4Addr, SocketAddrV4},
     ///     },
-    ///     Client, ClientId, Event, DST_PORT, SRC_PORT,
     /// };
     ///
     /// let mut client: Client = Client::new(

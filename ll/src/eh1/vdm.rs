@@ -9,7 +9,7 @@
 //! [`embedded-hal`]: https://github.com/rust-embedded/embedded-hal
 //! [`Registers`]: crate::Registers
 
-use crate::spi::{vdm_header, AccessMode};
+use crate::spi::{AccessMode, vdm_header};
 use eh1::spi::ErrorType;
 
 /// W5500 blocking variable data length implementation.

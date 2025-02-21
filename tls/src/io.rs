@@ -1,6 +1,6 @@
 use crate::{
-    crypto::encrypt_record_inplace, handshake::HandshakeHeader, key_schedule::KeySchedule,
-    AlertDescription, ContentType,
+    AlertDescription, ContentType, crypto::encrypt_record_inplace, handshake::HandshakeHeader,
+    key_schedule::KeySchedule,
 };
 use core::{
     cmp::{self, min},
@@ -8,9 +8,9 @@ use core::{
 };
 use sha2::{Digest, Sha256};
 use w5500_hl::{
+    Error as HlError,
     io::{Read, Seek, SeekFrom, Write},
     ll::{Registers, Sn},
-    Error as HlError,
 };
 
 /// Helper to read from a circular buffer expressed as two memory ranges
@@ -125,6 +125,7 @@ impl<'a> CircleReader<'a> {
 /// # Example
 ///
 /// ```no_run
+/// # #![allow(static_mut_refs)]
 /// # let mut rng = rand_core::OsRng;
 /// # fn monotonic_secs() -> u32 { 0 }
 /// # const MY_KEY: [u8; 1] = [0];
@@ -132,10 +133,10 @@ impl<'a> CircleReader<'a> {
 /// use w5500_tls::{
 ///     Client, Event, TlsWriter,
 ///     {
-///         hl::{io::Write, Hostname},
+///         hl::{Hostname, io::Write},
 ///         ll::{
-///             net::{Ipv4Addr, SocketAddrV4},
 ///             Sn,
+///             net::{Ipv4Addr, SocketAddrV4},
 ///         },
 ///     },
 /// };
@@ -261,6 +262,7 @@ impl<W5500: Registers> Write<W5500::Error> for TlsWriter<'_, '_, W5500> {
 /// # Example
 ///
 /// ```no_run
+/// # #![allow(static_mut_refs)]
 /// # let mut rng = rand_core::OsRng;
 /// # fn monotonic_secs() -> u32 { 0 }
 /// # const MY_KEY: [u8; 1] = [0];
@@ -268,10 +270,10 @@ impl<W5500: Registers> Write<W5500::Error> for TlsWriter<'_, '_, W5500> {
 /// use w5500_tls::{
 ///     Client, Event, TlsReader,
 ///     {
-///         hl::{io::Read, Hostname},
+///         hl::{Hostname, io::Read},
 ///         ll::{
-///             net::{Ipv4Addr, SocketAddrV4},
 ///             Sn,
+///             net::{Ipv4Addr, SocketAddrV4},
 ///         },
 ///     },
 /// };

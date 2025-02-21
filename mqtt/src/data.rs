@@ -59,7 +59,7 @@ pub fn encode_variable_byte_integer(mut integer: u32) -> ([u8; 4], usize) {
 
 #[cfg(test)]
 mod test {
-    use super::{decode_variable_byte_integer, encode_variable_byte_integer, DeserError};
+    use super::{DeserError, decode_variable_byte_integer, encode_variable_byte_integer};
 
     #[test]
     fn decode_variable_byte_positive_path() {

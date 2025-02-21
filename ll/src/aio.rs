@@ -1,8 +1,8 @@
 //! Asynchronous W5500 traits.
 use crate::{
-    BufferSize, Eui48Addr, Interrupt, Ipv4Addr, Mode, PhyCfg, Reg, RxPtrs, Sn, SnReg, SocketAddrV4,
-    SocketCommand, SocketInterrupt, SocketInterruptMask, SocketMode, SocketStatus, TxPtrs,
-    COMMON_BLOCK_OFFSET,
+    BufferSize, COMMON_BLOCK_OFFSET, Eui48Addr, Interrupt, Ipv4Addr, Mode, PhyCfg, Reg, RxPtrs, Sn,
+    SnReg, SocketAddrV4, SocketCommand, SocketInterrupt, SocketInterruptMask, SocketMode,
+    SocketStatus, TxPtrs,
 };
 
 /// Asynchronous register IO.
@@ -43,7 +43,7 @@ pub trait Registers {
     /// #   ehm::eh1::spi::Transaction::read(0),
     /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
-    /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Mode};
+    /// use w5500_ll::{Mode, aio::Registers, eh1::vdm::W5500};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let mode: Mode = w5500.mr().await?;
@@ -70,7 +70,7 @@ pub trait Registers {
     /// #   ehm::eh1::spi::Transaction::write(w5500_ll::Mode::WOL_MASK),
     /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
-    /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Mode};
+    /// use w5500_ll::{Mode, aio::Registers, eh1::vdm::W5500};
     ///
     /// const MODE: Mode = Mode::DEFAULT.enable_wol();
     /// let mut w5500 = W5500::new(spi);
@@ -374,7 +374,7 @@ pub trait Registers {
     /// #   ehm::eh1::spi::Transaction::read(0),
     /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
-    /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Interrupt};
+    /// use w5500_ll::{Interrupt, aio::Registers, eh1::vdm::W5500};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let ir: Interrupt = w5500.ir().await?;
@@ -407,7 +407,7 @@ pub trait Registers {
     /// #   ehm::eh1::spi::Transaction::write(0),
     /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
-    /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Interrupt};
+    /// use w5500_ll::{Interrupt, aio::Registers, eh1::vdm::W5500};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let ir: Interrupt = w5500.ir().await?;
@@ -434,7 +434,7 @@ pub trait Registers {
     /// #   ehm::eh1::spi::Transaction::read(0),
     /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
-    /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Interrupt};
+    /// use w5500_ll::{Interrupt, aio::Registers, eh1::vdm::W5500};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let imr: Interrupt = w5500.imr().await?;
@@ -461,7 +461,7 @@ pub trait Registers {
     /// ```
     /// # #[tokio::main(flavor = "current_thread")]
     /// # async fn main() -> Result<(), eh1::spi::ErrorKind> {
-    /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Interrupt};
+    /// use w5500_ll::{Interrupt, aio::Registers, eh1::vdm::W5500};
     /// # let spi = ehm::eh1::spi::Mock::new(&[
     /// #   ehm::eh1::spi::Transaction::transaction_start(),
     /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x16, 0x04]),
@@ -499,7 +499,7 @@ pub trait Registers {
     /// #   ehm::eh1::spi::Transaction::read(0),
     /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
-    /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, SOCKETS};
+    /// use w5500_ll::{SOCKETS, aio::Registers, eh1::vdm::W5500};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let sir = w5500.sir().await?;
@@ -1053,7 +1053,7 @@ pub trait Registers {
     /// #   ehm::eh1::spi::Transaction::read(0b10111000),
     /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
-    /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, PhyCfg};
+    /// use w5500_ll::{PhyCfg, aio::Registers, eh1::vdm::W5500};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let phy_cfg: PhyCfg = w5500.phycfgr().await?;
@@ -1080,7 +1080,7 @@ pub trait Registers {
     /// #   ehm::eh1::spi::Transaction::write(0b11111000),
     /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
-    /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, OperationMode, PhyCfg};
+    /// use w5500_ll::{OperationMode, PhyCfg, aio::Registers, eh1::vdm::W5500};
     ///
     /// const PHY_CFG: PhyCfg = PhyCfg::DEFAULT.set_opmdc(OperationMode::Auto);
     /// let mut w5500 = W5500::new(spi);
@@ -1137,7 +1137,7 @@ pub trait Registers {
     /// #   ehm::eh1::spi::Transaction::read(0),
     /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
-    /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn, SocketMode};
+    /// use w5500_ll::{Sn, SocketMode, aio::Registers, eh1::vdm::W5500};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let socket_mode = w5500.sn_mr(Sn::Sn0).await?;
@@ -1163,7 +1163,7 @@ pub trait Registers {
     /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x01]),
     /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
-    /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Protocol, Sn, SocketMode};
+    /// use w5500_ll::{Protocol, Sn, SocketMode, aio::Registers, eh1::vdm::W5500};
     ///
     /// const SOCKET_MODE: SocketMode = SocketMode::DEFAULT.set_protocol(Protocol::Tcp);
     /// let mut w5500 = W5500::new(spi);
@@ -1199,7 +1199,7 @@ pub trait Registers {
     /// #   ehm::eh1::spi::Transaction::read(0),
     /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
-    /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn, SocketCommand};
+    /// use w5500_ll::{Sn, SocketCommand, aio::Registers, eh1::vdm::W5500};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// w5500.set_sn_cr(Sn::Sn0, SocketCommand::Open).await?;
@@ -1225,7 +1225,7 @@ pub trait Registers {
     /// #   ehm::eh1::spi::Transaction::write(0x01),
     /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
-    /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn, SocketCommand};
+    /// use w5500_ll::{Sn, SocketCommand, aio::Registers, eh1::vdm::W5500};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// w5500.set_sn_cr(Sn::Sn0, SocketCommand::Open).await?;
@@ -1249,7 +1249,7 @@ pub trait Registers {
     /// #   ehm::eh1::spi::Transaction::read(0),
     /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
-    /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn};
+    /// use w5500_ll::{Sn, aio::Registers, eh1::vdm::W5500};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let socket_interrupts = w5500.sn_ir(Sn::Sn0).await?;
@@ -1282,7 +1282,7 @@ pub trait Registers {
     /// #   ehm::eh1::spi::Transaction::write(0),
     /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
-    /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn, SocketInterrupt};
+    /// use w5500_ll::{Sn, SocketInterrupt, aio::Registers, eh1::vdm::W5500};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let socket_interrupts: SocketInterrupt = w5500.sn_ir(Sn::Sn0).await?;
@@ -1301,7 +1301,7 @@ pub trait Registers {
     /// #   ehm::eh1::spi::Transaction::write(SocketInterrupt::SENDOK_MASK),
     /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
-    /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn, SocketInterrupt};
+    /// use w5500_ll::{Sn, SocketInterrupt, aio::Registers, eh1::vdm::W5500};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// w5500
@@ -1341,7 +1341,7 @@ pub trait Registers {
     /// #   ehm::eh1::spi::Transaction::read(0),
     /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
-    /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn, SocketStatus};
+    /// use w5500_ll::{Sn, SocketStatus, aio::Registers, eh1::vdm::W5500};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let sn_sr = w5500.sn_sr(Sn::Sn0).await?;
@@ -1373,7 +1373,7 @@ pub trait Registers {
     /// #   ehm::eh1::spi::Transaction::read_vec(vec![0, 0]),
     /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
-    /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn, SocketMode};
+    /// use w5500_ll::{Sn, SocketMode, aio::Registers, eh1::vdm::W5500};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let socket_port: u16 = w5500.sn_port(Sn::Sn0).await?;
@@ -1400,7 +1400,7 @@ pub trait Registers {
     /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 68]),
     /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
-    /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn};
+    /// use w5500_ll::{Sn, aio::Registers, eh1::vdm::W5500};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// w5500.set_sn_port(Sn::Sn0, 68).await?;
@@ -1428,7 +1428,7 @@ pub trait Registers {
     /// #   ehm::eh1::spi::Transaction::read_vec(vec![0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF]),
     /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
-    /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn};
+    /// use w5500_ll::{Sn, aio::Registers, eh1::vdm::W5500};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let dhar = w5500.sn_dhar(Sn::Sn0).await?;
@@ -1456,7 +1456,7 @@ pub trait Registers {
     /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x12, 0x34, 0x00, 0x00, 0x00, 0x00]),
     /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
-    /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, net::Eui48Addr, Sn};
+    /// use w5500_ll::{Sn, aio::Registers, eh1::vdm::W5500, net::Eui48Addr};
     ///
     /// let dhar = Eui48Addr::new(0x12, 0x34, 0x00, 0x00, 0x00, 0x00);
     /// let mut w5500 = W5500::new(spi);
@@ -1494,7 +1494,7 @@ pub trait Registers {
     /// #   ehm::eh1::spi::Transaction::read_vec(vec![0, 0, 0, 0]),
     /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
-    /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, net::Ipv4Addr, Sn};
+    /// use w5500_ll::{Sn, aio::Registers, eh1::vdm::W5500, net::Ipv4Addr};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let dipr = w5500.sn_dipr(Sn::Sn0).await?;
@@ -1523,7 +1523,7 @@ pub trait Registers {
     /// #   ehm::eh1::spi::Transaction::write_vec(vec![192, 168, 0, 11]),
     /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
-    /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, net::Ipv4Addr, Sn};
+    /// use w5500_ll::{Sn, aio::Registers, eh1::vdm::W5500, net::Ipv4Addr};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// w5500
@@ -1563,7 +1563,7 @@ pub trait Registers {
     /// #   ehm::eh1::spi::Transaction::read_vec(vec![0, 0]),
     /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
-    /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn, SocketMode};
+    /// use w5500_ll::{Sn, SocketMode, aio::Registers, eh1::vdm::W5500};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let socket_destination_port: u16 = w5500.sn_dport(Sn::Sn0).await?;
@@ -1591,7 +1591,7 @@ pub trait Registers {
     /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 67]),
     /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
-    /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn};
+    /// use w5500_ll::{Sn, aio::Registers, eh1::vdm::W5500};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// w5500.set_sn_dport(Sn::Sn0, 67).await?;
@@ -1619,10 +1619,10 @@ pub trait Registers {
     /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{
+    ///     Sn,
     ///     aio::Registers,
     ///     eh1::vdm::W5500,
     ///     net::{Ipv4Addr, SocketAddrV4},
-    ///     Sn,
     /// };
     ///
     /// let mut w5500 = W5500::new(spi);
@@ -1656,10 +1656,10 @@ pub trait Registers {
     /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
     /// use w5500_ll::{
+    ///     Sn,
     ///     aio::Registers,
     ///     eh1::vdm::W5500,
     ///     net::{Ipv4Addr, SocketAddrV4},
-    ///     Sn,
     /// };
     ///
     /// let addr: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::new(192, 168, 0, 11), 67);
@@ -1724,7 +1724,7 @@ pub trait Registers {
     /// #   ehm::eh1::spi::Transaction::read_vec(vec![0x00, 0x00]),
     /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
-    /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn};
+    /// use w5500_ll::{Sn, aio::Registers, eh1::vdm::W5500};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let sn__mssr: u16 = w5500.sn_mssr(Sn::Sn0).await?;
@@ -1751,7 +1751,7 @@ pub trait Registers {
     /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x05, 0xB4]),
     /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
-    /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn};
+    /// use w5500_ll::{Sn, aio::Registers, eh1::vdm::W5500};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// w5500.set_sn_mssr(Sn::Sn0, 1460).await?;
@@ -1783,7 +1783,7 @@ pub trait Registers {
     /// #   ehm::eh1::spi::Transaction::read(0),
     /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
-    /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn};
+    /// use w5500_ll::{Sn, aio::Registers, eh1::vdm::W5500};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let tos: u8 = w5500.sn_tos(Sn::Sn0).await?;
@@ -1810,7 +1810,7 @@ pub trait Registers {
     /// #   ehm::eh1::spi::Transaction::write(0x01),
     /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
-    /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn};
+    /// use w5500_ll::{Sn, aio::Registers, eh1::vdm::W5500};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// w5500.set_sn_tos(Sn::Sn0, 1).await?;
@@ -1838,7 +1838,7 @@ pub trait Registers {
     /// #   ehm::eh1::spi::Transaction::read(0x80),
     /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
-    /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn};
+    /// use w5500_ll::{Sn, aio::Registers, eh1::vdm::W5500};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let ttl: u8 = w5500.sn_ttl(Sn::Sn0).await?;
@@ -1865,7 +1865,7 @@ pub trait Registers {
     /// #   ehm::eh1::spi::Transaction::write(0x80),
     /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
-    /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn};
+    /// use w5500_ll::{Sn, aio::Registers, eh1::vdm::W5500};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// w5500.set_sn_ttl(Sn::Sn0, 0x80).await?;
@@ -1905,7 +1905,7 @@ pub trait Registers {
     /// #   ehm::eh1::spi::Transaction::read(0x02),
     /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
-    /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, BufferSize, Sn};
+    /// use w5500_ll::{BufferSize, Sn, aio::Registers, eh1::vdm::W5500};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let sn_rxbuf_size = w5500.sn_rxbuf_size(Sn::Sn0).await?;
@@ -1937,7 +1937,7 @@ pub trait Registers {
     /// #   ehm::eh1::spi::Transaction::write(1),
     /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
-    /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, BufferSize, Sn};
+    /// use w5500_ll::{BufferSize, Sn, aio::Registers, eh1::vdm::W5500};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// w5500.set_sn_rxbuf_size(Sn::Sn0, BufferSize::KB1).await?;
@@ -1978,7 +1978,7 @@ pub trait Registers {
     /// #   ehm::eh1::spi::Transaction::read(0x02),
     /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
-    /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, BufferSize, Sn};
+    /// use w5500_ll::{BufferSize, Sn, aio::Registers, eh1::vdm::W5500};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let sn_txbuf_size = w5500.sn_txbuf_size(Sn::Sn0).await?;
@@ -2010,7 +2010,7 @@ pub trait Registers {
     /// #   ehm::eh1::spi::Transaction::write(1),
     /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
-    /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, BufferSize, Sn};
+    /// use w5500_ll::{BufferSize, Sn, aio::Registers, eh1::vdm::W5500};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// w5500.set_sn_txbuf_size(Sn::Sn0, BufferSize::KB1).await?;
@@ -2056,7 +2056,7 @@ pub trait Registers {
     /// #   ehm::eh1::spi::Transaction::read_vec(vec![0x08, 0x00]),
     /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
-    /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn, SocketMode};
+    /// use w5500_ll::{Sn, SocketMode, aio::Registers, eh1::vdm::W5500};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let sn_tx_fsr: u16 = w5500.sn_tx_fsr(Sn::Sn0).await?;
@@ -2099,7 +2099,7 @@ pub trait Registers {
     /// #   ehm::eh1::spi::Transaction::read_vec(vec![0, 0]),
     /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
-    /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn, SocketMode};
+    /// use w5500_ll::{Sn, SocketMode, aio::Registers, eh1::vdm::W5500};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let sn_tx_rd: u16 = w5500.sn_tx_rd(Sn::Sn0).await?;
@@ -2138,7 +2138,7 @@ pub trait Registers {
     /// #   ehm::eh1::spi::Transaction::read_vec(vec![0, 0]),
     /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
-    /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn};
+    /// use w5500_ll::{Sn, aio::Registers, eh1::vdm::W5500};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let sn_tx_wr: u16 = w5500.sn_tx_wr(Sn::Sn0).await?;
@@ -2194,7 +2194,7 @@ pub trait Registers {
     /// #   ehm::eh1::spi::Transaction::read_vec(vec![0, 0]),
     /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
-    /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn};
+    /// use w5500_ll::{Sn, aio::Registers, eh1::vdm::W5500};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let sn_rx_rsr: u16 = w5500.sn_rx_rsr(Sn::Sn0).await?;
@@ -2232,7 +2232,7 @@ pub trait Registers {
     /// #   ehm::eh1::spi::Transaction::read_vec(vec![0, 0]),
     /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
-    /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn};
+    /// use w5500_ll::{Sn, aio::Registers, eh1::vdm::W5500};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let sn_rx_rd: u16 = w5500.sn_rx_rd(Sn::Sn0).await?;
@@ -2270,7 +2270,7 @@ pub trait Registers {
     /// #   ehm::eh1::spi::Transaction::read_vec(vec![0, 0]),
     /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
-    /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn};
+    /// use w5500_ll::{Sn, aio::Registers, eh1::vdm::W5500};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let sn_rx_wr: u16 = w5500.sn_rx_wr(Sn::Sn0).await?;
@@ -2310,7 +2310,7 @@ pub trait Registers {
     /// #   ehm::eh1::spi::Transaction::read(0xFF),
     /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
-    /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn, SocketInterruptMask};
+    /// use w5500_ll::{Sn, SocketInterruptMask, aio::Registers, eh1::vdm::W5500};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let sn_imr: SocketInterruptMask = w5500.sn_imr(Sn::Sn0).await?;
@@ -2336,7 +2336,7 @@ pub trait Registers {
     /// #   ehm::eh1::spi::Transaction::write(0xE0),
     /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
-    /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn, SocketInterruptMask};
+    /// use w5500_ll::{Sn, SocketInterruptMask, aio::Registers, eh1::vdm::W5500};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// w5500
@@ -2364,7 +2364,7 @@ pub trait Registers {
     /// #   ehm::eh1::spi::Transaction::read_vec(vec![0x40, 0x00]),
     /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
-    /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn};
+    /// use w5500_ll::{Sn, aio::Registers, eh1::vdm::W5500};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let frag: u16 = w5500.sn_frag(Sn::Sn0).await?;
@@ -2392,7 +2392,7 @@ pub trait Registers {
     /// #   ehm::eh1::spi::Transaction::write_vec(vec![0x00, 0x00]),
     /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
-    /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn};
+    /// use w5500_ll::{Sn, aio::Registers, eh1::vdm::W5500};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// w5500.set_sn_frag(Sn::Sn0, 0).await?;
@@ -2434,7 +2434,7 @@ pub trait Registers {
     /// #   ehm::eh1::spi::Transaction::read(0),
     /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
-    /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn};
+    /// use w5500_ll::{Sn, aio::Registers, eh1::vdm::W5500};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// let sn_kpalvtr: u8 = w5500.sn_kpalvtr(Sn::Sn0).await?;
@@ -2462,7 +2462,7 @@ pub trait Registers {
     /// #   ehm::eh1::spi::Transaction::write(0x0A),
     /// #   ehm::eh1::spi::Transaction::transaction_end(),
     /// # ]);
-    /// use w5500_ll::{aio::Registers, eh1::vdm::W5500, Sn};
+    /// use w5500_ll::{Sn, aio::Registers, eh1::vdm::W5500};
     ///
     /// let mut w5500 = W5500::new(spi);
     /// // 50s keep alive timer

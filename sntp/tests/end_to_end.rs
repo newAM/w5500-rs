@@ -1,11 +1,11 @@
 use std::net::UdpSocket;
 use w5500_regsim::W5500;
 use w5500_sntp::{
-    ll::{
-        net::{Ipv4Addr, SocketAddrV4},
-        Sn,
-    },
     Client, LeapIndicator, Stratum,
+    ll::{
+        Sn,
+        net::{Ipv4Addr, SocketAddrV4},
+    },
 };
 
 struct Server {

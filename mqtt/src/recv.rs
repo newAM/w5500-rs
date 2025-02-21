@@ -1,9 +1,9 @@
 use w5500_hl::io::{Read, Seek, SeekFrom};
 
 use crate::{
-    data::DeserError, fixed_header::FixedHeader, ConnectReasonCode, CtrlPkt, Error, Event,
-    PublishReader, State, StateTimeout, SubAck, SubAckReasonCode, UnSubAck, UnSubAckReasonCode,
-    PROPERTY_LEN_LEN,
+    ConnectReasonCode, CtrlPkt, Error, Event, PROPERTY_LEN_LEN, PublishReader, State, StateTimeout,
+    SubAck, SubAckReasonCode, UnSubAck, UnSubAckReasonCode, data::DeserError,
+    fixed_header::FixedHeader,
 };
 
 pub(crate) fn recv<E, Reader: Read<E> + Seek>(

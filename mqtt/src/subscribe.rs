@@ -1,7 +1,7 @@
 use crate::{
-    write_variable_byte_integer, CtrlPkt, FILTER_LEN_LEN, PACKET_ID_LEN, PROPERTY_LEN_LEN,
+    CtrlPkt, FILTER_LEN_LEN, PACKET_ID_LEN, PROPERTY_LEN_LEN, write_variable_byte_integer,
 };
-use w5500_hl::{io::Write, Error as HlError};
+use w5500_hl::{Error as HlError, io::Write};
 
 /// Subscribe acknowledgment codes.
 ///

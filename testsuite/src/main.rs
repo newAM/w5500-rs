@@ -1,6 +1,6 @@
 use ftdi_embedded_hal::{
-    libftd2xx::{self, Ft232h},
     Delay, FtHal, SpiDevice,
+    libftd2xx::{self, Ft232h},
 };
 use rand_core::{OsRng, RngCore};
 use std::{
@@ -12,15 +12,15 @@ use w5500_dhcp::{Client as DhcpClient, Hostname, State as DhcpState};
 use w5500_dns::Client as DnsClient;
 use w5500_hl::Tcp;
 use w5500_ll::{
+    Registers, Sn, VERSION,
     eh1::{reset, vdm::W5500},
     net::{Eui48Addr, Ipv4Addr, SocketAddrV4},
-    Registers, Sn, VERSION,
 };
 use w5500_mqtt::{
     Client as MqttClient, ClientId, Error as MqttError, Event as MqttEvent,
     SRC_PORT as MQTT_SRC_PORT,
 };
-use w5500_sntp::{chrono, Client as SntpClient, Timestamp};
+use w5500_sntp::{Client as SntpClient, Timestamp, chrono};
 use w5500_tls::{Client as TlsClient, Event as TlsEvent};
 
 // change this for your network

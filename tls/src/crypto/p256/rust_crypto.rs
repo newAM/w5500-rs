@@ -1,5 +1,5 @@
 use super::SharedSecret;
-pub use p256::{ecdh::EphemeralSecret, PublicKey};
+pub use p256::{PublicKey, ecdh::EphemeralSecret};
 use rand_core::{CryptoRng, RngCore};
 
 pub fn public_key_from_sec1_bytes(bytes: &[u8; 65]) -> Option<PublicKey> {

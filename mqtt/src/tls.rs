@@ -54,20 +54,20 @@
 //! [`w5500-tls`]: https://github.com/newAM/w5500-rs/blob/main/tls/README.md
 
 use crate::{
+    ClientId, Error, Event, State, StateTimeout, TIMEOUT_SECS,
     connect::send_connect,
     hl::{
-        ll::{net::SocketAddrV4, Registers, Sn},
         Error as HlError, Hostname,
+        ll::{Registers, Sn, net::SocketAddrV4},
     },
     publish::send_publish,
     recv::recv,
     subscribe::{send_subscribe, send_unsubscribe},
-    ClientId, Error, Event, State, StateTimeout, TIMEOUT_SECS,
 };
 use core::convert::Infallible;
 use w5500_tls::{
-    rand_core::{CryptoRng, RngCore},
     Client as TlsClient, Error as TlsError, Event as TlsEvent, TlsReader, TlsWriter,
+    rand_core::{CryptoRng, RngCore},
 };
 
 /// Default MQTT TLS destination port.
@@ -109,16 +109,17 @@ impl<'id, 'hn, 'psk, 'b, const N: usize> Client<'id, 'hn, 'psk, 'b, N> {
     /// # Example
     ///
     /// ```
+    /// # #![allow(static_mut_refs)]
     /// # fn load_identity_from_memory() -> &'static [u8] { &[] }
     /// # fn load_key_from_memory() -> &'static [u8] { &[] }
     /// use w5500_mqtt::{
+    ///     SRC_PORT,
     ///     hl::Hostname,
     ///     ll::{
-    ///         net::{Ipv4Addr, SocketAddrV4},
     ///         Sn,
+    ///         net::{Ipv4Addr, SocketAddrV4},
     ///     },
     ///     tls::{Client, DST_PORT},
-    ///     SRC_PORT,
     /// };
     ///
     /// static mut RXBUF: [u8; 2048] = [0; 2048];
