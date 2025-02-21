@@ -186,7 +186,7 @@ pub fn send_subscribe<E, Writer: Write<E>>(
         let remaining_len: u32 =
             PACKET_ID_LEN + u32::from(PROPERTY_LEN_LEN) + u32::from(filter_len);
 
-        writer.write_all(&[(CtrlPkt::SUBSCRIBE as u8) << 4 | 0b0010])?;
+        writer.write_all(&[((CtrlPkt::SUBSCRIBE as u8) << 4) | 0b0010])?;
         write_variable_byte_integer(&mut writer, remaining_len)?;
         writer.write_all(&[
             // packet identifier
@@ -230,7 +230,7 @@ pub fn send_unsubscribe<E, Writer: Write<E>>(
         let remaining_len: u32 =
             PACKET_ID_LEN + u32::from(PROPERTY_LEN_LEN) + u32::from(filter_len);
 
-        writer.write_all(&[(CtrlPkt::UNSUBSCRIBE as u8) << 4 | 0b0010])?;
+        writer.write_all(&[((CtrlPkt::UNSUBSCRIBE as u8) << 4) | 0b0010])?;
         write_variable_byte_integer(&mut writer, remaining_len)?;
         writer.write_all(&[
             // packet identifier
