@@ -80,8 +80,8 @@ fn dhcp_poll_bound(ta: &mut TestArgs) {
     }
 }
 
-struct TestArgs<'a> {
-    w5500: W5500<&'a SpiDevice<Ft232h>>,
+struct TestArgs {
+    w5500: W5500<SpiDevice<Ft232h>>,
     mono: Monotonic,
     dhcp_client: DhcpClient<'static>,
     mqtt_client: MqttClient<'static>,
@@ -338,7 +338,7 @@ fn main() {
 
     reset(&mut rst, &mut Delay::new()).unwrap();
 
-    let mut w5500 = W5500::new(&spi);
+    let mut w5500 = W5500::new(spi);
 
     // sanity check
     assert_eq!(w5500.version().unwrap(), VERSION);
