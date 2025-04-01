@@ -28,7 +28,7 @@ sha2 = { version = "0.10", default-features = false }
 subtle = { version = "2", default-features = false }
 
 # optional
-defmt = { version = "0.3.8", features = ["ip_in_core"], optional = true }
+defmt = { version = "1.0.1", features = ["ip_in_core"], optional = true }
 log = { version = "0.4", optional = true }
 p256-cm4 = { version = "0.3", optional = true }
 

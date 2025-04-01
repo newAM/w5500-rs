@@ -16,7 +16,7 @@ eh0 = ["w5500-ll/eh0"]
 eh1 = ["w5500-ll/eh1"]
 
 [dependencies]
-defmt = { version = "0.3.8", features = ["ip_in_core"], optional = true }
+defmt = { version = "1.0.1", features = ["ip_in_core"], optional = true }
 w5500-ll = { path = "../ll", version = "0.13.0" }
 
 [dev-dependencies]

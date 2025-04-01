@@ -16,7 +16,7 @@ eh1 = ["dep:eh1"]
 eha1 = ["dep:eha1", "dep:eh1"]
 
 [dependencies]
-defmt = { version = "0.3.8", features = ["ip_in_core"], optional = true }
+defmt = { version = "1.0.1", features = ["ip_in_core"], optional = true }
 eh0 = { package = "embedded-hal", version = "0.2.7", optional = true }
 eh1 = { package = "embedded-hal", version = "1", optional = true }
 eha1 = { package = "embedded-hal-async", version = "1", optional = true }
