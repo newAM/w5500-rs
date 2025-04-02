@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Changed
 - Updated the edition from 2021 to 2024.
+- Updated `defmt` from `0.3.8` to `1.0.1`.
 
 ## [0.13.0] - 2024-06-09
 ### Changed
