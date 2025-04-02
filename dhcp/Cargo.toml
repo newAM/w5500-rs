@@ -17,7 +17,7 @@ eh1 = ["w5500-hl/eh1"]
 
 [dependencies]
 w5500-hl = { path = "../hl", version = "0.12.0" }
-defmt = { version = "0.3.8", features = ["ip_in_core"], optional = true }
+defmt = { version = "1.0.1", features = ["ip_in_core"], optional = true }
 log = { version = "0.4", optional = true }
 
 [dev-dependencies]
