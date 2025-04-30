@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated the edition from 2021 to 2024.
 - Updated `defmt` from `0.3.8` to `1.0.1`.
 
+### Fixed
+- Fixed `ApplicationData` being accepted before the handshake has completed.
+
 ## [0.4.0] - 2024-06-09
 ### Changed
 - Updated `w5500-hl` dependency from `0.11.0` to `0.12.0`.

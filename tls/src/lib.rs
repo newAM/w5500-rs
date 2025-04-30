@@ -843,7 +843,18 @@ impl<'hn, 'psk, 'b, const N: usize> Client<'hn, 'psk, 'b, N> {
                     Ok(None)
                 }
             }
-            ContentType::ApplicationData => Ok(Some(Event::ApplicationData)),
+            ContentType::ApplicationData => {
+                if self.state == State::SendFinished {
+                    Ok(Some(Event::ApplicationData))
+                } else {
+                    error!("unexpected ApplicationData in state {:?}", self.state);
+                    Err(self.send_fatal_alert(
+                        w5500,
+                        AlertDescription::UnexpectedMessage,
+                        monotonic_secs,
+                    ))
+                }
+            }
         };
 
         if matches!(header.content_type(), ContentType::ApplicationData) {
