@@ -844,7 +844,7 @@ impl<'hn, 'psk, 'b, const N: usize> Client<'hn, 'psk, 'b, N> {
                 }
             }
             ContentType::ApplicationData => {
-                if self.state == State::SendFinished {
+                if self.state == State::Connected {
                     Ok(Some(Event::ApplicationData))
                 } else {
                     error!("unexpected ApplicationData in state {:?}", self.state);
