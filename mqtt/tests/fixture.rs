@@ -195,7 +195,7 @@ impl Fixture {
     pub fn client_process(
         &mut self,
     ) -> Result<
-        Event<<W5500 as Registers>::Error, TcpReader<W5500>>,
+        Event<<W5500 as Registers>::Error, TcpReader<'_, W5500>>,
         Error<<W5500 as Registers>::Error>,
     > {
         self.client

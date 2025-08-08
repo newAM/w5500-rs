@@ -467,10 +467,10 @@ impl<'hn, 'psk, 'b, const N: usize> Client<'hn, 'psk, 'b, N> {
                     ));
                 }
             };
-            if sn_rx_rsr >= RecordHeader::LEN as u16 {
-                if let Some(event) = self.recv(w5500, monotonic_secs)? {
-                    return Ok(event);
-                }
+            if sn_rx_rsr >= RecordHeader::LEN as u16
+                && let Some(event) = self.recv(w5500, monotonic_secs)?
+            {
+                return Ok(event);
             }
 
             if matches!(self.state, State::SendFinished) {
