@@ -581,7 +581,7 @@ pub trait Tcp: Registers {
     /// # Example
     ///
     /// See [`TcpReader`].
-    fn tcp_reader(&mut self, sn: Sn) -> Result<TcpReader<Self>, Error<Self::Error>>
+    fn tcp_reader(&mut self, sn: Sn) -> Result<TcpReader<'_, Self>, Error<Self::Error>>
     where
         Self: Sized,
     {
@@ -614,7 +614,7 @@ pub trait Tcp: Registers {
     /// # Example
     ///
     /// See [`TcpWriter`].
-    fn tcp_writer(&mut self, sn: Sn) -> Result<TcpWriter<Self>, Self::Error>
+    fn tcp_writer(&mut self, sn: Sn) -> Result<TcpWriter<'_, Self>, Self::Error>
     where
         Self: Sized,
     {

@@ -379,7 +379,7 @@ impl<'a> Client<'a> {
             w5500: &mut W5500,
             sn: Sn,
             xid: u32,
-        ) -> Result<Option<PktDe<W5500>>, Error<W5500::Error>> {
+        ) -> Result<Option<PktDe<'_, W5500>>, Error<W5500::Error>> {
             let reader: UdpReader<W5500> = match w5500.udp_reader(sn) {
                 Ok(r) => r,
                 Err(Error::WouldBlock) => return Ok(None),

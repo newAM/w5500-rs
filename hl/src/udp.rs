@@ -764,7 +764,7 @@ pub trait Udp: Registers {
     /// # Example
     ///
     /// See [`UdpReader`].
-    fn udp_reader(&mut self, sn: Sn) -> Result<UdpReader<Self>, Error<Self::Error>>
+    fn udp_reader(&mut self, sn: Sn) -> Result<UdpReader<'_, Self>, Error<Self::Error>>
     where
         Self: Sized,
     {
@@ -807,7 +807,7 @@ pub trait Udp: Registers {
     /// # Example
     ///
     /// See [`UdpWriter`].
-    fn udp_writer(&mut self, sn: Sn) -> Result<UdpWriter<Self>, Self::Error>
+    fn udp_writer(&mut self, sn: Sn) -> Result<UdpWriter<'_, Self>, Self::Error>
     where
         Self: Sized,
     {

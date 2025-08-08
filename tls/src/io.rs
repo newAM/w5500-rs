@@ -658,7 +658,7 @@ impl<'b, const N: usize> Buffer<'b, N> {
     pub(crate) fn pop_handshake_record(
         &mut self,
         hash: &mut Sha256,
-    ) -> Result<Option<(HandshakeHeader, CircleReader)>, AlertDescription> {
+    ) -> Result<Option<(HandshakeHeader, CircleReader<'_>)>, AlertDescription> {
         let hs_hdr: [u8; HandshakeHeader::LEN] = match self.read_head() {
             Some(hs_hdr) => hs_hdr,
             // fragment is not long enough to contain handshake type + length

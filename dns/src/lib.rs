@@ -310,7 +310,7 @@ impl<W5500: Udp> Response<'_, W5500> {
     ///
     /// If any error occurs the entire response should be discarded,
     /// and you should not continue to call `next_rr`.
-    pub fn next_rr(&mut self) -> Result<Option<ResourceRecord>, Error<W5500::Error>> {
+    pub fn next_rr(&mut self) -> Result<Option<ResourceRecord<'_>>, Error<W5500::Error>> {
         if self.rr_idx >= self.rr_count() {
             Ok(None)
         } else {
