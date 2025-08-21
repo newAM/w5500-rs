@@ -11,7 +11,7 @@ keywords = ["tls", "W5500", "wiznet"]
 categories = ["embedded", "hardware-support", "no-std"]
 
 [features]
-defmt = ["w5500-hl/defmt", "dep:defmt", "heapless/defmt-03"]
+defmt = ["w5500-hl/defmt", "dep:defmt", "heapless/defmt"]
 eh0 = ["w5500-hl/eh0"]
 eh1 = ["w5500-hl/eh1"]
 
@@ -19,7 +19,7 @@ eh1 = ["w5500-hl/eh1"]
 w5500-hl = { path = "../hl", version = "0.12.0" }
 
 cfg-if = "1"
-heapless = { version = "0.8", default-features = false }
+heapless = { version = "0.9", default-features = false }
 hkdf = { version = "0.12", default-features = false }
 hmac = { version = "0.12", default-features = false }
 p256 = { version = "0.13", default-features = false, features = ["arithmetic", "ecdh"] }
