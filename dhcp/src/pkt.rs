@@ -554,7 +554,7 @@ impl<W: Registers> PktDe<'_, W> {
             Some(len) => len,
             None => return Ok(None),
         };
-        if option_size % 4 != 0 || option_size < 4 {
+        if !option_size.is_multiple_of(4) || option_size < 4 {
             warn!(
                 "malformed option {} size is {} expected non-zero multiple of 4",
                 option as u8, option_size
