@@ -8,13 +8,14 @@
 //! **Note:** This will communicate with external network services.
 
 use core::panic;
-use std::{thread::sleep, time::Duration};
+use std::{
+    net::{SocketAddr, ToSocketAddrs},
+    thread::sleep,
+    time::Duration,
+};
 
 use w5500_hl::Tcp;
-use w5500_ll::{
-    Registers, Sn, SocketInterrupt, VERSION,
-    net::{Ipv4Addr, SocketAddrV4},
-};
+use w5500_ll::{Registers, Sn, SocketInterrupt, VERSION, net::SocketAddrV4};
 use w5500_regsim::W5500;
 
 // socket to use for the MQTT client, any socket will work
@@ -25,40 +26,6 @@ const MQTT_SOURCE_PORT: u16 = 33650;
 const MQTT_CONNECT: [u8; 14] = [
     0x10, 0x0C, 0x00, 0x04, b'M', b'Q', b'T', b'T', 0x04, 0x02, 0x0E, 0x10, 0x00, 0x00,
 ];
-
-// we are going to cheat and use a real DNS crate for this lookup
-// see the DNS example for how you would acomplish somthing similar with the
-// W5500
-fn mqtt_server_addr() -> SocketAddrV4 {
-    use std::str::FromStr;
-    use trust_dns_client::client::{Client, SyncClient};
-    use trust_dns_client::op::DnsResponse;
-    use trust_dns_client::rr::{DNSClass, Name, RData, Record, RecordType};
-    use trust_dns_client::udp::UdpClientConnection;
-
-    let address = "1.1.1.1:53".parse().unwrap();
-    let conn = UdpClientConnection::new(address).unwrap();
-    let client = SyncClient::new(conn);
-    let name = Name::from_str("broker.hivemq.com.").unwrap();
-    let response: DnsResponse = client.query(&name, DNSClass::IN, RecordType::A).unwrap();
-    let answers: &[Record] = response.answers();
-
-    if let Some(RData::A(ip)) = answers[0].data() {
-        // this conversion occurs because there are no core networking types
-        // see: https://github.com/rust-lang/rfcs/pull/2832
-        SocketAddrV4::new(
-            Ipv4Addr::new(
-                ip.octets()[0],
-                ip.octets()[1],
-                ip.octets()[2],
-                ip.octets()[3],
-            ),
-            1883,
-        )
-    } else {
-        panic!("unexpected result for DNS query");
-    }
-}
 
 fn main() {
     // this is for register simulation logging
@@ -76,7 +43,14 @@ fn main() {
     // the register simulation allows us to cheat a little since your PC
     // (hopefully) already has a valid IP/MAC/Gateway/subnet mask
 
-    let mqtt_server = mqtt_server_addr();
+    let mqtt_server: SocketAddrV4 = "broker.hivemq.com.:443"
+        .to_socket_addrs()
+        .expect("Failed to resolve address for broker.hivemq.com")
+        .find_map(|addr| match addr {
+            SocketAddr::V4(v4) => Some(v4),
+            SocketAddr::V6(_) => None,
+        })
+        .expect("Failed to resolve an IPv4 address for broker.hivemq.com");
 
     let mut w5500: W5500 = W5500::default();
     // sanity check
