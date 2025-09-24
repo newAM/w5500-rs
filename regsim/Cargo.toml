@@ -15,7 +15,6 @@ log = "0.4"
 w5500-ll = { path = "../ll", version = "0.13.0" }
 
 [dev-dependencies]
-trust-dns-client = "0.23"
 w5500-hl.path = "../hl"
 stderrlog = "0.6"
 httparse = { version = "1", default-features = false }
