@@ -49,7 +49,7 @@
 //! [`eh0`]: https://docs.rs/w5500-ll/latest/w5500_ll/eh0/index.html
 //! [`eh1`]: https://docs.rs/w5500-ll/latest/w5500_ll/eh1/index.html
 //! [`Registers`]: https://docs.rs/w5500-ll/latest/w5500_ll/trait.Registers.html
-#![cfg_attr(docsrs, feature(doc_cfg), feature(doc_auto_cfg))]
+#![cfg_attr(docsrs, feature(doc_cfg))]
 #![no_std]
 #![allow(async_fn_in_trait)] // https://github.com/rust-embedded/embedded-hal/pull/515#issuecomment-1763525962
 #![forbid(unsafe_code)]

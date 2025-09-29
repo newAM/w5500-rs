@@ -55,7 +55,7 @@
 //! [`w5500-hl`]: https://crates.io/crates/w5500-hl
 //! [`w5500-tls`]: https://crates.io/crates/w5500-tls
 //! [Wiznet W5500]: https://docs.wiznet.io/Product/iEthernet/W5500/overview
-#![cfg_attr(docsrs, feature(doc_cfg), feature(doc_auto_cfg))]
+#![cfg_attr(docsrs, feature(doc_cfg))]
 #![cfg_attr(not(test), no_std)]
 #![deny(unsafe_code)]
 #![warn(missing_docs)]
