@@ -66,7 +66,7 @@
 //! [`std::net`]: https://doc.rust-lang.org/std/net/index.html
 //! [`w5500-hl`]: https://crates.io/crates/w5500-hl
 //! [`w5500_ll::Registers`]: https://docs.rs/w5500-ll/latest/w5500_ll/trait.Registers.html
-#![cfg_attr(docsrs, feature(doc_cfg), feature(doc_auto_cfg))]
+#![cfg_attr(docsrs, feature(doc_cfg))]
 
 use std::{
     fs::File,
