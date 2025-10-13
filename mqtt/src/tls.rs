@@ -174,28 +174,24 @@ impl<'id, 'hn, 'psk, 'b, const N: usize> Client<'id, 'hn, 'psk, 'b, N> {
         rng: &mut R,
         monotonic_secs: u32,
     ) -> Result<Event<Infallible, TlsReader<'b, 'ptr>>, Error<W5500::Error>> {
-        // FIXME: what type is returned when it breaks?
-        #[allow(clippy::never_loop)]
-        loop {
-            match self.tls.process(w5500, rng, monotonic_secs) {
-                Err(TlsError::Server(alert)) => return Err(Error::ServerAlert(alert)),
-                Err(TlsError::Client(alert)) => return Err(Error::ClientAlert(alert)),
-                Err(TlsError::UnexpectedDisconnect) => return Err(Error::Disconnect),
-                Err(TlsError::TcpTimeout) => return Err(Error::TcpTimeout),
-                Err(TlsError::StateTimeout(tls_state)) => {
-                    info!("TLS state timeout {:?}", tls_state);
-                    return Err(Error::StateTimeout(State::WaitConAck));
-                }
-                Err(TlsError::NotConnected) => unreachable!(),
-                Ok(TlsEvent::CallAfter(after)) => return Ok(Event::CallAfter(after)),
-                Ok(TlsEvent::ApplicationData) => break,
-                Ok(TlsEvent::HandshakeFinished) => {
-                    let call_after: u32 = self.send_connect(w5500, monotonic_secs)?;
-                    return Ok(Event::CallAfter(call_after));
-                }
-                Ok(TlsEvent::Disconnect) => return Err(Error::Disconnect),
-                Ok(TlsEvent::None) => break,
+        match self.tls.process(w5500, rng, monotonic_secs) {
+            Err(TlsError::Server(alert)) => return Err(Error::ServerAlert(alert)),
+            Err(TlsError::Client(alert)) => return Err(Error::ClientAlert(alert)),
+            Err(TlsError::UnexpectedDisconnect) => return Err(Error::Disconnect),
+            Err(TlsError::TcpTimeout) => return Err(Error::TcpTimeout),
+            Err(TlsError::StateTimeout(tls_state)) => {
+                info!("TLS state timeout {:?}", tls_state);
+                return Err(Error::StateTimeout(State::WaitConAck));
             }
+            Err(TlsError::NotConnected) => unreachable!(),
+            Ok(TlsEvent::CallAfter(after)) => return Ok(Event::CallAfter(after)),
+            Ok(TlsEvent::ApplicationData) => (),
+            Ok(TlsEvent::HandshakeFinished) => {
+                let call_after: u32 = self.send_connect(w5500, monotonic_secs)?;
+                return Ok(Event::CallAfter(call_after));
+            }
+            Ok(TlsEvent::Disconnect) => return Err(Error::Disconnect),
+            Ok(TlsEvent::None) => (),
         }
 
         match self.tls.reader() {

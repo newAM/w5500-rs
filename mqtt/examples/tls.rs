@@ -6,7 +6,7 @@
 //!
 //! **Note:** This will communicate with local network services.
 
-use rand_core::OsRng;
+use rand_chacha::{ChaCha20Rng, rand_core::SeedableRng};
 use std::{
     str::from_utf8,
     thread::sleep,
@@ -59,9 +59,10 @@ fn main() {
     ];
     let mut client: Client<1024> =
         Client::new(TLS_SN, SPORT, HOSTNAME, HOST, b"test", &KEY, &mut rxbuf);
+    let mut rng: ChaCha20Rng = ChaCha20Rng::try_from_os_rng().unwrap();
 
     loop {
-        match client.process(&mut w5500, &mut OsRng, monotonic_secs(start)) {
+        match client.process(&mut w5500, &mut rng, monotonic_secs(start)) {
             Ok(Event::CallAfter(_)) => (),
             Ok(Event::Publish(mut reader)) => {
                 let mut payload_buf: [u8; 128] = [0; 128];

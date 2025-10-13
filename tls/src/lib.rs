@@ -89,7 +89,7 @@ use rand_core::{CryptoRng, RngCore};
 use record::{ContentType, RecordHeader};
 use sha2::{
     Sha256,
-    digest::{generic_array::GenericArray, typenum::U32},
+    digest::{array::Array, typenum::U32},
 };
 pub use w5500_hl as hl;
 pub use w5500_hl::ll;
@@ -930,7 +930,7 @@ impl<'hn, 'psk, 'b, const N: usize> Client<'hn, 'psk, 'b, N> {
         &mut self,
         w5500: &mut W5500,
     ) -> Result<(), AlertDescription> {
-        let verify_data: GenericArray<u8, U32> = self.key_schedule.client_finished_verify_data();
+        let verify_data: Array<u8, U32> = self.key_schedule.client_finished_verify_data();
         let data: [u8; 36] = handshake::client_finished(&verify_data);
 
         self.send_encrypted_record(w5500, ContentType::Handshake, &data)

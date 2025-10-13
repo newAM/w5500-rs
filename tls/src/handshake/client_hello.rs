@@ -1,7 +1,7 @@
 // This module contains ugly code because I did a lot in `const` functions,
 // which limits what functions I can use.
 
-use hmac::digest::generic_array::{GenericArray, typenum::U32};
+use hmac::digest::array::{Array, typenum::U32};
 use w5500_hl::Hostname;
 
 use crate::{
@@ -512,8 +512,7 @@ impl ClientHelloWriter<'_> {
     }
 
     pub fn write_binder(&mut self, psk: &[u8], truncated_transcript_hash: Sha256) {
-        let binder: GenericArray<u8, U32> =
-            self.key_schedule.binder(psk, truncated_transcript_hash);
+        let binder: Array<u8, U32> = self.key_schedule.binder(psk, truncated_transcript_hash);
         self.copy_from_slice(&binder);
     }
 }

@@ -13,14 +13,14 @@ use crate::{
 };
 use core::mem::size_of;
 use hkdf::Hkdf;
-use hmac::Mac;
+use hmac::{KeyInit as _, Mac};
 use rand_core::{CryptoRng, RngCore};
 use sha2::{
     Digest, Sha256,
     digest::{
         OutputSizeUser,
-        crypto_common::generic_array::{ArrayLength, GenericArray},
-        typenum::{U12, U32, Unsigned},
+        crypto_common::array::{Array, ArraySize},
+        typenum::{U12, U16, U32, Unsigned},
     },
 };
 
@@ -75,13 +75,13 @@ fn hkdf_label(len: u16, label: &[u8], context: &[u8]) -> heapless::Vec<u8, HKDF_
 /// HKDF-Expand-Label(Secret, Label, Context, Length) =
 ///     HKDF-Expand(Secret, HkdfLabel, Length)
 /// ```
-pub(crate) fn hkdf_expand_label<N: ArrayLength<u8>>(
+pub(crate) fn hkdf_expand_label<N: ArraySize>(
     secret: &Hkdf<Sha256>,
     label: &[u8],
     context: &[u8],
-) -> GenericArray<u8, N> {
+) -> Array<u8, N> {
     let label: heapless::Vec<u8, HKDF_LABEL_LEN_MAX> = hkdf_label(N::to_u16(), label, context);
-    let mut okm: GenericArray<u8, N> = Default::default();
+    let mut okm: Array<u8, N> = Default::default();
     secret.expand(&label, &mut okm).unwrap();
     okm
 }
@@ -101,14 +101,14 @@ pub(crate) fn derive_secret(
     secret: &Hkdf<Sha256>,
     label: &[u8],
     context: &[u8],
-) -> GenericArray<u8, <Sha256 as OutputSizeUser>::OutputSize> {
+) -> Array<u8, <Sha256 as OutputSizeUser>::OutputSize> {
     let label: heapless::Vec<u8, HKDF_LABEL_LEN_MAX> = hkdf_label(
         <Sha256 as OutputSizeUser>::OutputSize::to_u16(),
         label,
         context,
     );
 
-    let mut okm: GenericArray<u8, _> = Default::default();
+    let mut okm: Array<u8, _> = Default::default();
     secret.expand(&label, &mut okm).unwrap();
     okm
 }
@@ -136,7 +136,7 @@ pub struct KeySchedule {
     write_record_sequence_number: u64,
 
     hkdf: Hkdf<Sha256>,
-    secret: GenericArray<u8, U32>,
+    secret: Array<u8, U32>,
 
     client_traffic_secret: Option<Hkdf<Sha256>>,
     server_traffic_secret: Option<Hkdf<Sha256>>,
@@ -144,9 +144,9 @@ pub struct KeySchedule {
 
 impl Default for KeySchedule {
     fn default() -> Self {
-        let (_, hkdf): (GenericArray<u8, _>, Hkdf<Sha256>) =
+        let (_, hkdf): (Array<u8, _>, Hkdf<Sha256>) =
             Hkdf::<Sha256>::extract(Some(&ZEROS_OF_HASH_LEN), &ZEROS_OF_HASH_LEN);
-        let secret: GenericArray<u8, _> = derive_secret(&hkdf, b"derived", &EMPTY_HASH);
+        let secret: Array<u8, _> = derive_secret(&hkdf, b"derived", &EMPTY_HASH);
 
         Self {
             client_secret: None,
@@ -198,7 +198,7 @@ impl KeySchedule {
         self.transcript_hash.update(data)
     }
 
-    pub fn transcript_hash_bytes(&self) -> GenericArray<u8, U32> {
+    pub fn transcript_hash_bytes(&self) -> Array<u8, U32> {
         self.transcript_hash.clone().finalize()
     }
 
@@ -223,16 +223,11 @@ impl KeySchedule {
 
     fn binder_key(&mut self, psk: &[u8]) -> Hkdf<Sha256> {
         (self.secret, self.hkdf) = Hkdf::<Sha256>::extract(Some(&ZEROS_OF_HASH_LEN), psk);
-        let binder_key: GenericArray<u8, U32> =
-            derive_secret(&self.hkdf, b"ext binder", &EMPTY_HASH);
+        let binder_key: Array<u8, U32> = derive_secret(&self.hkdf, b"ext binder", &EMPTY_HASH);
         Hkdf::<Sha256>::from_prk(&binder_key).unwrap()
     }
 
-    pub fn binder(
-        &mut self,
-        psk: &[u8],
-        truncated_transcript_hash: Sha256,
-    ) -> GenericArray<u8, U32> {
+    pub fn binder(&mut self, psk: &[u8], truncated_transcript_hash: Sha256) -> Array<u8, U32> {
         let binder_key: Hkdf<Sha256> = self.binder_key(psk);
 
         // The PskBinderEntry is computed in the same way as the Finished
@@ -241,7 +236,7 @@ impl KeySchedule {
         // being offered (see Section 7.1).
         //
         // finished_key = HKDF-Expand-Label(BaseKey, "finished", "", Hash.length)
-        let key: GenericArray<u8, U32> = hkdf_expand_label(&binder_key, b"finished", &[]);
+        let key: Array<u8, U32> = hkdf_expand_label(&binder_key, b"finished", &[]);
 
         let mut hmac = hmac::Hmac::<Sha256>::new_from_slice(&key).unwrap();
         hmac.update(&truncated_transcript_hash.finalize());
@@ -249,8 +244,8 @@ impl KeySchedule {
     }
 
     pub fn initialize_early_secret(&mut self) {
-        let transcript_hash_bytes: GenericArray<u8, _> = self.transcript_hash_bytes();
-        let client_secret: GenericArray<u8, _> =
+        let transcript_hash_bytes: Array<u8, _> = self.transcript_hash_bytes();
+        let client_secret: Array<u8, _> =
             derive_secret(&self.hkdf, b"c e traffic", &transcript_hash_bytes);
         self.client_traffic_secret
             .replace(Hkdf::<Sha256>::from_prk(&client_secret).unwrap());
@@ -267,13 +262,13 @@ impl KeySchedule {
         let shared_secret = self.shared_secret().unwrap();
         (self.secret, self.hkdf) = Hkdf::<Sha256>::extract(Some(&self.secret), &shared_secret);
 
-        let transcript_hash_bytes: GenericArray<u8, _> = self.transcript_hash_bytes();
-        let client_secret: GenericArray<u8, _> =
+        let transcript_hash_bytes: Array<u8, _> = self.transcript_hash_bytes();
+        let client_secret: Array<u8, _> =
             derive_secret(&self.hkdf, b"c hs traffic", &transcript_hash_bytes);
         self.client_traffic_secret
             .replace(Hkdf::<Sha256>::from_prk(&client_secret).unwrap());
 
-        let server_secret: GenericArray<u8, _> =
+        let server_secret: Array<u8, _> =
             derive_secret(&self.hkdf, b"s hs traffic", &transcript_hash_bytes);
         self.server_traffic_secret
             .replace(Hkdf::<Sha256>::from_prk(&server_secret).unwrap());
@@ -287,13 +282,13 @@ impl KeySchedule {
     pub fn initialize_master_secret(&mut self) {
         (self.secret, self.hkdf) = Hkdf::<Sha256>::extract(Some(&self.secret), &ZEROS_OF_HASH_LEN);
 
-        let transcript_hash_bytes: GenericArray<u8, _> = self.transcript_hash_bytes();
-        let client_secret: GenericArray<u8, _> =
+        let transcript_hash_bytes: Array<u8, _> = self.transcript_hash_bytes();
+        let client_secret: Array<u8, _> =
             derive_secret(&self.hkdf, b"c ap traffic", &transcript_hash_bytes);
         self.client_traffic_secret
             .replace(Hkdf::<Sha256>::from_prk(&client_secret).unwrap());
 
-        let server_secret: GenericArray<u8, _> =
+        let server_secret: Array<u8, _> =
             derive_secret(&self.hkdf, b"s ap traffic", &transcript_hash_bytes);
         self.server_traffic_secret
             .replace(Hkdf::<Sha256>::from_prk(&server_secret).unwrap());
@@ -318,13 +313,13 @@ impl KeySchedule {
     pub fn update_traffic_secret(&mut self) {
         (self.secret, self.hkdf) = Hkdf::<Sha256>::extract(Some(&self.secret), &ZEROS_OF_HASH_LEN);
 
-        let transcript_hash_bytes: GenericArray<u8, _> = self.transcript_hash_bytes();
-        let client_secret: GenericArray<u8, _> =
+        let transcript_hash_bytes: Array<u8, _> = self.transcript_hash_bytes();
+        let client_secret: Array<u8, _> =
             derive_secret(&self.hkdf, b"traffic upd", &transcript_hash_bytes);
         self.client_traffic_secret
             .replace(Hkdf::<Sha256>::from_prk(&client_secret).unwrap());
 
-        let server_secret: GenericArray<u8, _> =
+        let server_secret: Array<u8, _> =
             derive_secret(&self.hkdf, b"traffic upd", &transcript_hash_bytes);
         self.server_traffic_secret
             .replace(Hkdf::<Sha256>::from_prk(&server_secret).unwrap());
@@ -342,14 +337,14 @@ impl KeySchedule {
     pub fn client_key_and_nonce(&self) -> Option<([u8; 16], [u8; 12])> {
         let traffic_secret = self.client_traffic_secret.as_ref()?;
 
-        let key: [u8; 16] = hkdf_expand_label(traffic_secret, b"key", &[]).into();
-        let mut iv: GenericArray<u8, U12> = hkdf_expand_label(traffic_secret, b"iv", &[]);
+        let key: Array<u8, U16> = hkdf_expand_label(traffic_secret, b"key", &[]);
+        let mut iv: Array<u8, U12> = hkdf_expand_label(traffic_secret, b"iv", &[]);
         self.write_record_sequence_number
             .to_be_bytes()
             .iter()
             .enumerate()
             .for_each(|(idx, byte)| iv[idx + 4] ^= byte);
-        Some((key, iv.into()))
+        Some((key.into(), iv.into()))
     }
 
     /// Get the server key and nonce.
@@ -364,14 +359,14 @@ impl KeySchedule {
     pub fn server_key_and_nonce(&self) -> Option<([u8; 16], [u8; 12])> {
         let traffic_secret = self.server_traffic_secret.as_ref()?;
 
-        let key: [u8; 16] = hkdf_expand_label(traffic_secret, b"key", &[]).into();
-        let mut iv: GenericArray<u8, U12> = hkdf_expand_label(traffic_secret, b"iv", &[]);
+        let key: Array<u8, U16> = hkdf_expand_label(traffic_secret, b"key", &[]);
+        let mut iv: Array<u8, U12> = hkdf_expand_label(traffic_secret, b"iv", &[]);
         self.read_record_sequence_number
             .to_be_bytes()
             .iter()
             .enumerate()
             .for_each(|(idx, byte)| iv[idx + 4] ^= byte);
-        Some((key, iv.into()))
+        Some((key.into(), iv.into()))
     }
 
     /// # References
@@ -392,7 +387,7 @@ impl KeySchedule {
     ///                          Certificate*, CertificateVerify*))
     /// ```
     pub fn verify_server_finished(&self, finished: &[u8; 32]) -> Result<(), AlertDescription> {
-        let key: GenericArray<u8, U32> = hkdf_expand_label(
+        let key: Array<u8, U32> = hkdf_expand_label(
             self.server_traffic_secret.as_ref().unwrap(),
             b"finished",
             &[],
@@ -408,8 +403,8 @@ impl KeySchedule {
             .map_err(|_| AlertDescription::DecryptError)
     }
 
-    pub fn client_finished_verify_data(&self) -> GenericArray<u8, U32> {
-        let key: GenericArray<u8, U32> = hkdf_expand_label(
+    pub fn client_finished_verify_data(&self) -> Array<u8, U32> {
+        let key: Array<u8, U32> = hkdf_expand_label(
             self.client_traffic_secret.as_ref().unwrap(),
             b"finished",
             &[],
