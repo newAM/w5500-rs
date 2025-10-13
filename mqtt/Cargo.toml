@@ -28,7 +28,7 @@ w5500-tls = { path = "../tls", version = "0.4.0", optional = true }
 bytes = "1"
 log = "0.4"
 mqttbytes = "0.6"
-rand_core = { version = "0.6", features = ["getrandom"] }
+rand_chacha = "0.9"
 stderrlog = "0.6"
 w5500-regsim.path = "../regsim"
 

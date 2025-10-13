@@ -2,7 +2,10 @@ use ftdi_embedded_hal::{
     Delay, FtHal, SpiDevice,
     libftd2xx::{self, Ft232h},
 };
-use rand_core::{OsRng, RngCore};
+use rand_chacha::{
+    ChaCha20Rng,
+    rand_core::{RngCore, SeedableRng},
+};
 use std::{
     process::Command,
     thread::sleep,
@@ -85,6 +88,7 @@ struct TestArgs {
     mono: Monotonic,
     dhcp_client: DhcpClient<'static>,
     mqtt_client: MqttClient<'static>,
+    rng: ChaCha20Rng,
 }
 
 macro_rules! test {
@@ -187,7 +191,7 @@ fn mqtt_disconnect(ta: &mut TestArgs) {
 }
 
 fn dns_query(ta: &mut TestArgs) {
-    let dns_seed: u64 = OsRng.next_u64();
+    let dns_seed: u64 = ta.rng.next_u64();
     let mut dns_client: DnsClient = DnsClient::new(
         DNS_SN,
         16385,
@@ -301,7 +305,7 @@ fn tls_handshake(ta: &mut TestArgs) {
 
     let start: Instant = Instant::now();
     loop {
-        let event = tls_client.process(&mut ta.w5500, &mut OsRng, ta.mono.monotonic_secs());
+        let event = tls_client.process(&mut ta.w5500, &mut ta.rng, ta.mono.monotonic_secs());
 
         match event {
             Ok(TlsEvent::CallAfter(_)) => (),
@@ -349,7 +353,9 @@ fn main() {
     // reduce log spam from polling for link up
     sleep(Duration::from_secs(2));
 
-    let dhcp_seed: u64 = OsRng.next_u64();
+    let mut rng: ChaCha20Rng = ChaCha20Rng::try_from_os_rng().unwrap();
+
+    let dhcp_seed: u64 = rng.next_u64();
 
     let mono: Monotonic = Monotonic::default();
     let mut args: TestArgs = TestArgs {
@@ -357,6 +363,7 @@ fn main() {
         mono,
         dhcp_client: DhcpClient::new(DHCP_SN, dhcp_seed, MAC_ADDRESS, HOSTNAME),
         mqtt_client: MqttClient::new(MQTT_SN, MQTT_SRC_PORT, MQTT_SERVER),
+        rng,
     };
 
     for (idx, (f, name)) in TESTS.iter().enumerate() {
