@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Updated the edition from 2021 to 2024.
 - Updated `defmt` from `0.3.8` to `1.0.1`.
+- Updated `rand_core` from `0.6` to `0.9`.
 
 ### Fixed
 - Fixed `ApplicationData` being accepted before the handshake has completed.
