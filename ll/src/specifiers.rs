@@ -354,11 +354,12 @@ impl TryFrom<u8> for SocketCommand {
 ///
 /// [`SocketMode::protocol`]: crate::SocketMode::protocol
 /// [`sn_mr`]: crate::Registers::sn_mr
-#[derive(Copy, Clone, Eq, PartialEq, Debug, PartialOrd, Ord, Hash)]
+#[derive(Default, Copy, Clone, Eq, PartialEq, Debug, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
 #[repr(u8)]
 pub enum Protocol {
     /// Closed.
+    #[default]
     Closed = 0b0000,
     /// TCP.
     Tcp = 0b0001,
@@ -403,11 +404,6 @@ impl From<Protocol> for u8 {
         val as u8
     }
 }
-impl Default for Protocol {
-    fn default() -> Self {
-        Self::Closed
-    }
-}
 impl TryFrom<u8> for Protocol {
     type Error = u8;
     fn try_from(val: u8) -> Result<Self, u8> {
@@ -421,7 +417,7 @@ impl TryFrom<u8> for Protocol {
 ///
 /// [`PhyCfg::opmdc`]: crate::PhyCfg::opmdc
 /// [`phycfgr`]: crate::Registers::phycfgr
-#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Debug, Hash)]
+#[derive(Default, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Debug, Hash)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
 #[repr(u8)]
 pub enum OperationMode {
@@ -438,6 +434,7 @@ pub enum OperationMode {
     /// Power down mode.
     PowerDown = 0b110,
     /// All capable. Auto-negotiation enabled.
+    #[default]
     Auto = 0b111,
 }
 impl OperationMode {
@@ -489,11 +486,6 @@ impl OperationMode {
 impl From<OperationMode> for u8 {
     fn from(val: OperationMode) -> u8 {
         val as u8
-    }
-}
-impl Default for OperationMode {
-    fn default() -> Self {
-        Self::Auto
     }
 }
 
