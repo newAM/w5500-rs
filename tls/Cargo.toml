@@ -19,12 +19,13 @@ eh1 = ["w5500-hl/eh1"]
 w5500-hl = { path = "../hl", version = "0.12.0" }
 
 cfg-if = "1"
+crypto-bigint = "=0.7.0-rc.9" # needed to keep rand_core at 0.9
 heapless = { version = "0.9", default-features = false }
-hkdf = { version = "0.13.0-rc.2", default-features = false }
-hmac = { version = "0.13.0-rc.2", default-features = false }
-p256 = { version = "0.14.0-rc.0", default-features = false, features = ["arithmetic", "ecdh"] }
+hkdf = { version = "=0.13.0-rc.2", default-features = false }
+hmac = { version = "=0.13.0-rc.2", default-features = false }
+p256 = { version = "=0.14.0-rc.0", default-features = false, features = ["arithmetic", "ecdh"] }
 rand_core = { version = "0.9", default-features = false }
-sha2 = { version = "0.11.0-rc.2", default-features = false }
+sha2 = { version = "=0.11.0-rc.2", default-features = false }
 subtle = { version = "2", default-features = false }
 
 # optional
