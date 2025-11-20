@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     env: {"RUSTFLAGS": "-D warnings"}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: dtolnay/rust-toolchain@stable
       - run: cargo build
       - run: cargo build --all-features
@@ -32,7 +32,7 @@ jobs:
           - "thumbv6m-none-eabi"
           - "thumbv7em-none-eabi"
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: dtolnay/rust-toolchain@stable
         with:
           target: ${{ matrix.target }}
@@ -76,7 +76,7 @@ jobs:
     runs-on: ubuntu-latest
     env: {"RUSTFLAGS": "-D warnings"}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: dtolnay/rust-toolchain@stable
       - run: cargo test-all
 
@@ -84,7 +84,7 @@ jobs:
     name: Clippy
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy
@@ -94,7 +94,7 @@ jobs:
     name: Format
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: dtolnay/rust-toolchain@nightly
         with:
           components: rustfmt
@@ -105,7 +105,7 @@ jobs:
     runs-on: ubuntu-latest
     env: {"RUSTDOCFLAGS": "-D warnings --cfg docsrs"}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: dtolnay/rust-toolchain@nightly
       - name: rustdoc
         run: |
@@ -136,7 +136,7 @@ jobs:
       - rustdoc
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: dtolnay/rust-toolchain@nightly
       - name: Publish
         run: |
@@ -157,7 +157,7 @@ jobs:
       - rustdoc
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: dtolnay/rust-toolchain@nightly
       - name: Publish
         run: |
@@ -178,7 +178,7 @@ jobs:
       - rustdoc
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: dtolnay/rust-toolchain@nightly
       - name: Publish
         run: |
@@ -199,7 +199,7 @@ jobs:
       - rustdoc
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: dtolnay/rust-toolchain@nightly
       - name: Publish
         run: |
@@ -220,7 +220,7 @@ jobs:
       - rustdoc
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: dtolnay/rust-toolchain@nightly
       - name: Publish
         run: |
@@ -241,7 +241,7 @@ jobs:
       - rustdoc
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: dtolnay/rust-toolchain@nightly
       - name: Publish
         run: |
@@ -262,7 +262,7 @@ jobs:
       - rustdoc
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: dtolnay/rust-toolchain@nightly
       - name: Publish
         run: |
@@ -283,7 +283,7 @@ jobs:
       - rustdoc
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: dtolnay/rust-toolchain@nightly
       - name: Publish
         run: |
