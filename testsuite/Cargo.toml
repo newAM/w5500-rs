@@ -8,7 +8,7 @@ repository.workspace = true
 license.workspace = true
 
 [dependencies]
-ftdi-embedded-hal = { version = "0.23", features = ["libftd2xx", "libftd2xx-static"] }
+ftdi-embedded-hal = { version = "0.24", features = ["libftd2xx", "libftd2xx-static"] }
 log = "0.4"
 rand_chacha = { version = "0.9", features = ["os_rng"] }
 stderrlog = "0.6"
