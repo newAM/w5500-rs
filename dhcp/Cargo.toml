@@ -22,8 +22,8 @@ log = { version = "0.4", optional = true }
 
 [dev-dependencies]
 dhcproto = "0.14"
-rand_chacha = "0.9"
-rand_core = { version = "0.9", features = ["os_rng"] }
+rand_chacha = "0.10"
+rand_core = "0.10"
 stderrlog = "0.6"
 w5500-hl.path = "../hl"
 w5500-regsim.path = "../regsim"

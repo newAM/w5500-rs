@@ -10,7 +10,7 @@ license.workspace = true
 [dependencies]
 ftdi-embedded-hal = { version = "0.24", features = ["libftd2xx", "libftd2xx-static"] }
 log = "0.4"
-rand_chacha = { version = "0.9", features = ["os_rng"] }
+rand_chacha = "0.10"
 stderrlog = "0.6"
 
 w5500-dhcp = { path = "../dhcp", features = ["eh1", "log"] }

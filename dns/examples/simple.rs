@@ -4,7 +4,8 @@
 //!
 //! **Note:** This will communicate with external network services.
 
-use rand_core::{OsRng, TryRngCore};
+use rand_core::TryRng;
+use std::io::Read as _;
 use std::time::{Duration, Instant};
 use w5500_dns::{
     Client, Hostname,
@@ -19,6 +20,38 @@ const DNS_SOCKET: Sn = Sn::Sn3;
 
 // this is ignored by the register simulation
 const DNS_SOURCE_PORT: u16 = 45917;
+
+#[derive(Debug)]
+pub struct LinuxRng {
+    file: std::fs::File,
+}
+
+impl LinuxRng {
+    pub fn new() -> std::io::Result<Self> {
+        let f = std::fs::File::open("/dev/urandom")?;
+        Ok(LinuxRng { file: f })
+    }
+}
+
+impl TryRng for LinuxRng {
+    type Error = std::io::Error;
+
+    fn try_next_u32(&mut self) -> Result<u32, Self::Error> {
+        let mut buf = [0u8; 4];
+        self.try_fill_bytes(&mut buf)?;
+        Ok(u32::from_le_bytes(buf))
+    }
+
+    fn try_next_u64(&mut self) -> Result<u64, Self::Error> {
+        let mut buf = [0u8; 8];
+        self.try_fill_bytes(&mut buf)?;
+        Ok(u64::from_le_bytes(buf))
+    }
+
+    fn try_fill_bytes(&mut self, dest: &mut [u8]) -> Result<(), Self::Error> {
+        self.file.read_exact(dest)
+    }
+}
 
 fn main() {
     // this enables the logging built into the register simulator
@@ -35,7 +68,8 @@ fn main() {
         .udp_bind(DNS_SOCKET, DNS_SOURCE_PORT)
         .expect("failed to bind");
 
-    let random_number: u64 = OsRng
+    let random_number: u64 = LinuxRng::new()
+        .expect("Failed to create LinuxRng")
         .try_next_u64()
         .expect("Failed to generate random number");
 

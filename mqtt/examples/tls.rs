@@ -59,7 +59,13 @@ fn main() {
     ];
     let mut client: Client<1024> =
         Client::new(TLS_SN, SPORT, HOSTNAME, HOST, b"test", &KEY, &mut rxbuf);
-    let mut rng: ChaCha20Rng = ChaCha20Rng::try_from_os_rng().unwrap();
+    let mut rand_buf: [u8; 8] = [0; 8];
+    std::io::Read::read_exact(
+        &mut std::fs::File::open("/dev/urandom").expect("Failed to open /dev/urandom"),
+        &mut rand_buf,
+    )
+    .expect("Failed to read 8 bytes from /dev/urandom");
+    let mut rng: ChaCha20Rng = ChaCha20Rng::seed_from_u64(u64::from_le_bytes(rand_buf));
 
     loop {
         match client.process(&mut w5500, &mut rng, monotonic_secs(start)) {

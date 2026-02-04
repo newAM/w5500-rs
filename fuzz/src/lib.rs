@@ -93,21 +93,24 @@ impl NotRng {
     }
 }
 
-impl rand_core::RngCore for NotRng {
+impl rand_core::TryRng for NotRng {
+    type Error = rand_core::Infallible;
+
     #[inline]
-    fn next_u32(&mut self) -> u32 {
-        self.next_byte().into()
+    fn try_next_u32(&mut self) -> Result<u32, Self::Error> {
+        Ok(self.next_byte().into())
     }
 
     #[inline]
-    fn next_u64(&mut self) -> u64 {
-        self.next_byte().into()
+    fn try_next_u64(&mut self) -> Result<u64, Self::Error> {
+        Ok(self.next_byte().into())
     }
 
     #[inline]
-    fn fill_bytes(&mut self, dest: &mut [u8]) {
+    fn try_fill_bytes(&mut self, dest: &mut [u8]) -> Result<(), Self::Error> {
         dest.iter_mut().for_each(|b| *b = self.next_byte());
+        Ok(())
     }
 }
 
-impl rand_core::CryptoRng for NotRng {}
+impl rand_core::TryCryptoRng for NotRng {}

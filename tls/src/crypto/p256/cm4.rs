@@ -1,4 +1,4 @@
-use rand_core::{CryptoRng, RngCore};
+use rand_core::{CryptoRng, Rng};
 
 #[derive(Default)]
 pub struct PublicKey {
@@ -14,7 +14,7 @@ pub fn public_key_from_sec1_bytes(bytes: &[u8; 65]) -> Option<PublicKey> {
 pub type EphemeralSecret = [u32; 8];
 
 #[allow(unsafe_code)]
-pub fn keygen<R: RngCore + CryptoRng>(rng: &mut R) -> (EphemeralSecret, [u8; 65]) {
+pub fn keygen<R: Rng + CryptoRng>(rng: &mut R) -> (EphemeralSecret, [u8; 65]) {
     let mut private_key: [u32; 8] = [0; 8];
     let mut public_x: [u32; 8] = [0; 8];
     let mut public_y: [u32; 8] = [0; 8];
