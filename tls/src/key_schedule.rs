@@ -14,12 +14,12 @@ use crate::{
 use core::mem::size_of;
 use hkdf::Hkdf;
 use hmac::{KeyInit as _, Mac};
-use rand_core::{CryptoRng, RngCore};
+use rand_core::{CryptoRng, Rng};
 use sha2::{
     Digest, Sha256,
     digest::{
         OutputSizeUser,
-        crypto_common::array::{Array, ArraySize},
+        common::array::{Array, ArraySize},
         typenum::{U12, U16, U32, Unsigned},
     },
 };
@@ -188,7 +188,7 @@ impl KeySchedule {
 
     /// Create a new ephemeral client secret, and return the public key bytes
     /// as an uncompressed SEC1 encoded point.
-    pub fn new_client_secret<R: RngCore + CryptoRng>(&mut self, rng: &mut R) -> [u8; 65] {
+    pub fn new_client_secret<R: Rng + CryptoRng>(&mut self, rng: &mut R) -> [u8; 65] {
         let (private, public) = crate::crypto::p256::keygen(rng);
         self.client_secret.replace(private);
         public

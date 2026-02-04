@@ -78,13 +78,14 @@ pub enum State {
 /// # Example
 ///
 /// ```no_run
-/// use rand_core::TryRngCore;
+/// use rand_core::TryRng;
 /// use w5500_dhcp::{
 ///     Client, Hostname,
 ///     ll::{Sn, net::Eui48Addr},
 /// };
 /// # let mut w5500 = w5500_regsim::W5500::default();
-/// # let mut rng = rand_core::OsRng;
+/// # use rand_core::SeedableRng;
+/// # let mut rng = rand_chacha::ChaCha20Rng::seed_from_u64(0);
 /// # fn this_is_where_you_setup_the_w5500_int_pin_for_a_falling_edge_trigger() { }
 /// # fn monotonic_seconds() -> u32 { 0 }
 ///
@@ -156,12 +157,13 @@ impl<'a> Client<'a> {
     /// # Example
     ///
     /// ```
-    /// use rand_core::TryRngCore;
+    /// use rand_core::TryRng;
     /// use w5500_dhcp::{
     ///     Client, Hostname,
     ///     ll::{Sn, net::Eui48Addr},
     /// };
-    /// # let mut rng = rand_core::OsRng;
+    /// # use rand_core::SeedableRng;
+    /// # let mut rng = rand_chacha::ChaCha20Rng::seed_from_u64(0);
     ///
     /// const DHCP_SN: Sn = Sn::Sn0;
     /// // locally administered MAC address
@@ -206,12 +208,13 @@ impl<'a> Client<'a> {
     /// Set a 10 second timeout.
     ///
     /// ```
-    /// use rand_core::TryRngCore;
+    /// use rand_core::TryRng;
     /// use w5500_dhcp::{
     ///     Client, Hostname,
     ///     ll::{Sn, net::Eui48Addr},
     /// };
-    /// # let mut rng = rand_core::OsRng;
+    /// # use rand_core::SeedableRng;
+    /// # let mut rng = rand_chacha::ChaCha20Rng::seed_from_u64(0);
     ///
     /// const HOSTNAME: Hostname = Hostname::new_unwrapped("example");
     /// let mut dhcp: Client = Client::new(
@@ -231,12 +234,13 @@ impl<'a> Client<'a> {
     /// # Example
     ///
     /// ```
-    /// use rand_core::TryRngCore;
+    /// use rand_core::TryRng;
     /// use w5500_dhcp::{
     ///     Client, Hostname,
     ///     ll::{Sn, net::Eui48Addr},
     /// };
-    /// # let mut rng = rand_core::OsRng;
+    /// # use rand_core::SeedableRng;
+    /// # let mut rng = rand_chacha::ChaCha20Rng::seed_from_u64(0);
     ///
     /// const HOSTNAME: Hostname = Hostname::new_unwrapped("example");
     /// let dhcp: Client = Client::new(

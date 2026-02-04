@@ -67,7 +67,7 @@ use crate::{
 use core::convert::Infallible;
 use w5500_tls::{
     Client as TlsClient, Error as TlsError, Event as TlsEvent, TlsReader, TlsWriter,
-    rand_core::{CryptoRng, RngCore},
+    rand_core::{CryptoRng, Rng},
 };
 
 /// Default MQTT TLS destination port.
@@ -168,7 +168,7 @@ impl<'id, 'hn, 'psk, 'b, const N: usize> Client<'id, 'hn, 'psk, 'b, N> {
     }
 
     /// Process the MQTT client.
-    pub fn process<'w, 'ptr, W5500: Registers, R: RngCore + CryptoRng>(
+    pub fn process<'w, 'ptr, W5500: Registers, R: Rng + CryptoRng>(
         &'ptr mut self,
         w5500: &'w mut W5500,
         rng: &mut R,

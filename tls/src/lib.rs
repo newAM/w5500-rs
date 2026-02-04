@@ -85,7 +85,7 @@ use io::Buffer;
 pub use io::{TlsReader, TlsWriter};
 use key_schedule::KeySchedule;
 pub use rand_core;
-use rand_core::{CryptoRng, RngCore};
+use rand_core::{CryptoRng, Rng};
 use record::{ContentType, RecordHeader};
 use sha2::{
     Sha256,
@@ -384,7 +384,7 @@ impl<'hn, 'psk, 'b, const N: usize> Client<'hn, 'psk, 'b, N> {
     ///   an infallible software RNG.
     /// * `monotonic_secs` Monotonically increasing (never decreasing) seconds
     ///   since an epoch (typically system boot).
-    pub fn process<W5500: Registers, R: RngCore + CryptoRng>(
+    pub fn process<W5500: Registers, R: Rng + CryptoRng>(
         &mut self,
         w5500: &mut W5500,
         rng: &mut R,
@@ -538,7 +538,7 @@ impl<'hn, 'psk, 'b, const N: usize> Client<'hn, 'psk, 'b, N> {
     ///     Extension extensions<8..2^16-1>;
     /// } ClientHello;
     /// ```
-    fn send_client_hello<W5500: Registers, R: RngCore + CryptoRng>(
+    fn send_client_hello<W5500: Registers, R: Rng + CryptoRng>(
         &mut self,
         w5500: &mut W5500,
         rng: &mut R,

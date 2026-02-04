@@ -8,5 +8,5 @@ repository.workspace = true
 license.workspace = true
 
 [dependencies]
-rand_core = "0.9"
+rand_core = "0.10"
 w5500-ll.path = "../ll"

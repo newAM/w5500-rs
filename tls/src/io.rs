@@ -127,7 +127,7 @@ impl<'a> CircleReader<'a> {
 /// ```no_run
 /// # #![allow(static_mut_refs)]
 /// # use rand_core::{SeedableRng as _};
-/// # let mut rng = rand_chacha::ChaCha20Rng::try_from_os_rng().unwrap();
+/// # let mut rng = rand_chacha::ChaCha20Rng::seed_from_u64(0);
 /// # fn monotonic_secs() -> u32 { 0 }
 /// # const MY_KEY: [u8; 1] = [0];
 /// # let mut w5500 = w5500_regsim::W5500::default();
@@ -265,7 +265,7 @@ impl<W5500: Registers> Write<W5500::Error> for TlsWriter<'_, '_, W5500> {
 /// ```no_run
 /// # #![allow(static_mut_refs)]
 /// # use rand_core::{SeedableRng as _};
-/// # let mut rng = rand_chacha::ChaCha20Rng::try_from_os_rng().unwrap();
+/// # let mut rng = rand_chacha::ChaCha20Rng::seed_from_u64(0);
 /// # fn monotonic_secs() -> u32 { 0 }
 /// # const MY_KEY: [u8; 1] = [0];
 /// # let mut w5500 = w5500_regsim::W5500::default();

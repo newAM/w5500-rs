@@ -4,7 +4,7 @@ use ftdi_embedded_hal::{
 };
 use rand_chacha::{
     ChaCha20Rng,
-    rand_core::{RngCore, SeedableRng},
+    rand_core::{Rng, SeedableRng},
 };
 use std::{
     process::Command,
@@ -353,7 +353,13 @@ fn main() {
     // reduce log spam from polling for link up
     sleep(Duration::from_secs(2));
 
-    let mut rng: ChaCha20Rng = ChaCha20Rng::try_from_os_rng().unwrap();
+    let mut rand_buf: [u8; 8] = [0; 8];
+    std::io::Read::read_exact(
+        &mut std::fs::File::open("/dev/urandom").expect("Failed to open /dev/urandom"),
+        &mut rand_buf,
+    )
+    .expect("Failed to read 8 bytes from /dev/urandom");
+    let mut rng: ChaCha20Rng = ChaCha20Rng::seed_from_u64(u64::from_le_bytes(rand_buf));
 
     let dhcp_seed: u64 = rng.next_u64();
 

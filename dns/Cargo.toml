@@ -22,7 +22,7 @@ log = { version = "0.4", optional = true }
 
 [dev-dependencies]
 log = "0.4"
-rand_core = { version = "0.9", features = ["os_rng"] }
+rand_core = "0.10.0"
 stderrlog = "0.6"
 w5500-regsim.path = "../regsim"
 
