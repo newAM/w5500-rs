@@ -18,6 +18,9 @@ eh1 = ["w5500-hl/eh1"]
 [dependencies]
 w5500-hl = { path = "../hl", version = "0.12.0" }
 
+# needs to be held back for p256 rc compatibility
+elliptic-curve = "=0.14.0-rc.29"
+
 cfg-if = "1"
 heapless = { version = "0.9", default-features = false }
 hkdf = { version = "0.13.0", default-features = false }
