@@ -1,10 +1,11 @@
 pub type SharedSecret = [u8; 32];
 
-cfg_if::cfg_if! {
-    if #[cfg(feature = "p256-cm4")] {
+cfg_select! {
+    feature = "p256-cm4" => {
         mod cm4;
         pub use cm4::*;
-    } else {
+    }
+    _ => {
         mod rust_crypto;
         pub use rust_crypto::*;
     }
