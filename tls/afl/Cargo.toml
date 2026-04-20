@@ -8,7 +8,7 @@ repository.workspace = true
 license.workspace = true
 
 [dependencies]
-afl = "0.17"
+afl = "0.18"
 rand_core = "0.10"
 stderrlog = "0.6"
 w5500-fuzz.path = "../../fuzz"
