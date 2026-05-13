@@ -404,7 +404,7 @@ impl W5500 {
                     log::error!("[{sn:?}] ignoring OPEN command, MACRAW can only be used on Sn0")
                 }
             }
-            Err(x) => log::error!("[{sn:?}] ignoring OPEN command, invalid protocol bits {x:#02X}"),
+            Err(x) => log::error!("[{sn:?}] ignoring OPEN command, invalid protocol bits {x:#X}"),
         }
         Ok(())
     }
@@ -1041,7 +1041,7 @@ impl W5500 {
                         socket.rx_buf.resize(bs.size_in_bytes(), 0);
                         bs
                     }
-                    Err(e) => panic!("RX buffer size of {e:#02X} is invalid"),
+                    Err(e) => panic!("RX buffer size of {e:#X} is invalid"),
                 }
             }
             Ok(SnReg::TXBUF_SIZE) => {
@@ -1050,7 +1050,7 @@ impl W5500 {
                         socket.tx_buf.resize(bs.size_in_bytes(), 0);
                         bs
                     }
-                    Err(e) => panic!("TX buffer size of {e:#02X} is invalid"),
+                    Err(e) => panic!("TX buffer size of {e:#X} is invalid"),
                 }
             }
             Ok(SnReg::TX_FSR0) => (),

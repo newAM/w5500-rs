@@ -46,8 +46,8 @@ pub(crate) fn recv_encrypted_extensions(reader: &mut CircleReader) -> Result<(),
                 reader.read_exact(&mut buf[..read_len.into()])?;
 
                 warn!(
-                    "server_name is unused: {:?}",
-                    core::str::from_utf8(&buf[..read_len.into()])
+                    "server_name is unused: {}",
+                    core::str::from_utf8(&buf[..read_len.into()]).unwrap_or("invalid UTF8")
                 );
 
                 // RFCs are weird and there are valid hostnames longer than DNS
