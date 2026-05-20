@@ -21,7 +21,7 @@ defmt = { version = "1.0.1", features = ["ip_in_core"], optional = true }
 log = { version = "0.4", optional = true }
 
 [dev-dependencies]
-dhcproto = "0.14"
+dhcproto = "0.15"
 rand_chacha = "0.10"
 rand_core = "0.10"
 stderrlog = "0.6"
