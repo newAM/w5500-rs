@@ -972,15 +972,14 @@ impl<'hn, 'psk, 'b, const N: usize> Client<'hn, 'psk, 'b, N> {
         let mut cipher = crate::crypto::Aes128Gcm::new(&key, &nonce, &header);
 
         // write the record data in 128-bit chunks
-        let mut chunks = data.chunks_exact(16);
-        for chunk in &mut chunks {
-            let mut mut_chunck: [u8; 16] = chunk.try_into().unwrap();
-            cipher.encrypt_block_inplace(&mut mut_chunck);
-            writer.write_all(&mut_chunck)?;
+        let (chunks, rem) = data.as_chunks::<16>();
+        for chunk in chunks {
+            let mut buf = *chunk;
+            cipher.encrypt_block_inplace(&mut buf);
+            writer.write_all(&buf)?;
         }
 
         // write the remaining data
-        let rem = chunks.remainder();
         let mut padded_block: [u8; 16] = [0; 16];
         padded_block[..rem.len()].copy_from_slice(rem);
         // append the content type

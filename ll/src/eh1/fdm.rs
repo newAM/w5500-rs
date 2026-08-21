@@ -69,24 +69,23 @@ where
     type Error = SPI::Error;
 
     /// Read from the W5500.
-    #[allow(clippy::while_let_on_iterator)]
     fn read(&mut self, mut address: u16, block: u8, data: &mut [u8]) -> Result<(), Self::Error> {
-        let mut chunks = data.chunks_exact_mut(4);
-        while let Some(chunk) = chunks.next() {
+        let (chunks4, rest) = data.as_chunks_mut::<4>();
+        for chunk in chunks4 {
             let header = spi::fdm_header_4b(address, block, AccessMode::Read);
             self.spi.write(&header)?;
             self.spi.read(chunk)?;
             address = address.wrapping_add(4);
         }
-        let mut chunks = chunks.into_remainder().chunks_exact_mut(2);
-        while let Some(chunk) = chunks.next() {
+        let (chunks2, rest) = rest.as_chunks_mut::<2>();
+        for chunk in chunks2 {
             let header = spi::fdm_header_2b(address, block, AccessMode::Read);
             self.spi.write(&header)?;
             self.spi.read(chunk)?;
             address = address.wrapping_add(2);
         }
-        let mut chunks = chunks.into_remainder().chunks_exact_mut(1);
-        while let Some(chunk) = chunks.next() {
+        let (chunks1, _rest) = rest.as_chunks_mut::<1>();
+        for chunk in chunks1 {
             let header = spi::fdm_header_1b(address, block, AccessMode::Read);
             self.spi.write(&header)?;
             self.spi.read(chunk)?;
@@ -97,24 +96,23 @@ where
     }
 
     /// Write to the W5500.
-    #[allow(clippy::while_let_on_iterator)]
     fn write(&mut self, mut address: u16, block: u8, data: &[u8]) -> Result<(), Self::Error> {
-        let mut chunks = data.chunks_exact(4);
-        while let Some(chunk) = chunks.next() {
+        let (chunks4, rest) = data.as_chunks::<4>();
+        for chunk in chunks4 {
             let header = spi::fdm_header_4b(address, block, AccessMode::Write);
             self.spi.write(&header)?;
             self.spi.write(chunk)?;
             address = address.wrapping_add(4);
         }
-        let mut chunks = chunks.remainder().chunks_exact(2);
-        while let Some(chunk) = chunks.next() {
+        let (chunks2, rest) = rest.as_chunks::<2>();
+        for chunk in chunks2 {
             let header = spi::fdm_header_2b(address, block, AccessMode::Write);
             self.spi.write(&header)?;
             self.spi.write(chunk)?;
             address = address.wrapping_add(2);
         }
-        let mut chunks = chunks.remainder().chunks_exact(1);
-        while let Some(chunk) = chunks.next() {
+        let (chunks1, _rest) = rest.as_chunks::<1>();
+        for chunk in chunks1 {
             let header = spi::fdm_header_1b(address, block, AccessMode::Write);
             self.spi.write(&header)?;
             self.spi.write(chunk)?;
