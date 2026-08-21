@@ -89,15 +89,12 @@ impl Aes128Gcm {
     }
 
     pub fn decrypt_inplace(&mut self, data: &mut [u8]) {
-        let mut chunks = data.chunks_exact_mut(16);
+        let (chunks, rem) = data.as_chunks_mut::<16>();
 
-        (&mut chunks).for_each(|chunk| {
-            let chunk: &mut [u8; 16] = chunk.try_into().unwrap();
+        for chunk in chunks {
             self.ghash.update(chunk);
             self.decrypt_block_inplace_inner(chunk);
-        });
-
-        let rem = chunks.into_remainder();
+        }
 
         if !rem.is_empty() {
             let mut padded_block: [u8; 16] = [0; 16];
