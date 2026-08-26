@@ -182,3 +182,88 @@ async fn bind_to_peer_also_writes_the_destination() {
     w5500.udp_bind_to_peer(SOCKET, PORT, &PEER).await.unwrap();
     w5500.free().done();
 }
+
+/// Builds the expectations for a successful 188-byte receive.
+///
+/// Returns the expectation list and the payload bytes it will deliver.
+fn recv_exact_expectations(
+    socket: Sn,
+    read_pointer: u16,
+    header_payload_len: u16,
+    payload_len: usize,
+) -> (Vec<SpiTransaction<u8>>, Vec<u8>, usize) {
+    let frame_len: u16 = 8 + header_payload_len;
+    // Counts reads addressed at the socket RX buffer block. This is the
+    // quantity optimization O1 is about.
+    let mut rx_buffer_reads: usize = 0;
+
+    let mut frame_bytes: Vec<u8> = vec![192, 168, 0, 1, 0xC0, 0x30];
+    frame_bytes.extend(header_payload_len.to_be_bytes());
+    frame_bytes.extend((0..payload_len).map(|index| index as u8));
+
+    let mut expectations: Vec<SpiTransaction<u8>> = Vec::new();
+    // 1. One combined read of Sn_RX_RSR and Sn_RX_RD (they are adjacent).
+    let mut pointers: Vec<u8> = (8 + header_payload_len).to_be_bytes().to_vec();
+    pointers.extend(read_pointer.to_be_bytes());
+    expectations.extend(read_transaction(
+        SnReg::RX_RSR0.addr(),
+        socket.block(),
+        pointers,
+    ));
+    // 2. THE single buffer read: header and payload in one transaction.
+    expectations.extend(read_transaction(
+        read_pointer,
+        socket.rx_block(),
+        frame_bytes.clone(),
+    ));
+    rx_buffer_reads += 1;
+    // 3. Advance the read pointer past the whole frame.
+    expectations.extend(write_transaction(
+        SnReg::RX_RD0.addr(),
+        socket.block(),
+        read_pointer.wrapping_add(frame_len).to_be_bytes().to_vec(),
+    ));
+    // 4. RECV command.
+    expectations.extend(write_transaction(
+        SnReg::CR.addr(),
+        socket.block(),
+        vec![SocketCommand::Recv.into()],
+    ));
+
+    (expectations, frame_bytes[8..].to_vec(), rx_buffer_reads)
+}
+
+#[tokio::test(flavor = "current_thread")]
+async fn recv_exact_issues_one_buffer_read() {
+    const SOCKET: Sn = Sn::Sn6;
+    const READ_POINTER: u16 = 0x1234;
+
+    let (expectations, expected_payload, rx_buffer_reads) =
+        recv_exact_expectations(SOCKET, READ_POINTER, 180, 180);
+
+    // The proof of optimization O1: exactly ONE read addressed at the socket RX
+    // buffer block, carrying header and payload together. The generic path
+    // issues two — see `recv_from_generic_issues_two_buffer_reads`.
+    //
+    // This assertion alone is not the proof: it describes the expectation list.
+    // `Mock::done()` below is what proves the driver issued exactly these
+    // transactions and no others.
+    assert_eq!(
+        rx_buffer_reads, 1,
+        "receive must fetch header and payload in one SPI transaction"
+    );
+
+    let mut w5500 = W5500::new(SpiMock::new(&expectations));
+    let mut frame: UdpFrame<188> = UdpFrame::new();
+
+    w5500.udp_recv_exact(SOCKET, &mut frame).await.unwrap();
+
+    assert_eq!(
+        frame.origin(),
+        SocketAddrV4::new(Ipv4Addr::new(192, 168, 0, 1), 49200)
+    );
+    assert_eq!(frame.payload(), expected_payload.as_slice());
+    // Mock::done() fails if any expectation went unused, so this also asserts
+    // that no additional SPI transaction was issued.
+    w5500.free().done();
+}

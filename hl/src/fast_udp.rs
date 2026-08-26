@@ -11,6 +11,7 @@
 
 use w5500_ll::{Protocol, Sn, SocketCommand, SocketMode, SocketStatus, net::SocketAddrV4};
 
+use crate::Error;
 use crate::udp::UdpHeader;
 use w5500_ll::Registers;
 #[cfg(feature = "eha1")]
@@ -163,6 +164,86 @@ pub trait FastUdp: Registers {
     ) -> Result<(), Self::Error> {
         self.udp_bind(socket, port).await?;
         self.set_sn_dest(socket, peer).await
+    }
+
+    /// Receive one datagram into `frame`, header and payload in a single SPI
+    /// transaction.
+    ///
+    /// The W5500 socket RX buffer is contiguous with auto-increment (W5500
+    /// datasheet section 4.2), so the 8-byte header and the payload are read
+    /// together and the header is deserialized in place. Combined with the
+    /// adjacent-register read of `Sn_RX_RSR`/`Sn_RX_RD`, a receive costs **four**
+    /// SPI transactions where the generic path costs six.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::WouldBlock`] if no complete datagram is buffered. Cheap and
+    ///   non-fatal: intended to be called at a fixed cadence. There is no
+    ///   internal retry loop.
+    /// - [`Error::UnexpectedLength`] if the datagram payload is not exactly
+    ///   `UdpFrame::<FRAME_LEN>::PAYLOAD_LEN` bytes. The datagram is discarded
+    ///   and the socket stays usable — it is never truncated silently.
+    /// - [`Error::Other`] for register IO failures.
+    ///
+    async fn udp_recv_exact<const FRAME_LEN: usize>(
+        &mut self,
+        socket: Sn,
+        frame: &mut UdpFrame<FRAME_LEN>,
+    ) -> Result<(), Error<Self::Error>> {
+        const { assert!(FRAME_LEN > UDP_FRAME_HEADER_LEN) };
+
+        let expected_payload_len: u16 = (FRAME_LEN - UDP_FRAME_HEADER_LEN) as u16;
+        let frame_len: u16 = FRAME_LEN as u16;
+
+        let pointers = self.sn_rx_ptrs(socket).await?;
+        if pointers.rsr < UdpHeader::LEN {
+            return Err(Error::WouldBlock);
+        }
+
+
+        if pointers.rsr < frame_len {
+            return self
+                .recv_resync_short(socket, pointers.rsr, pointers.rd, expected_payload_len)
+                .await;
+        }
+
+        self.sn_rx_buf(socket, pointers.rd, frame.buffer_mut())
+            .await?;
+
+        let received_payload_len: u16 = frame.header_payload_len();
+        let consumed: u16 = UdpHeader::LEN.wrapping_add(received_payload_len);
+        self.set_sn_rx_rd(socket, pointers.rd.wrapping_add(consumed))
+            .await?;
+        self.set_sn_cr(socket, SocketCommand::Recv).await?;
+
+        if received_payload_len != expected_payload_len {
+            return Err(Error::UnexpectedLength {
+                expected: expected_payload_len,
+                received: received_payload_len,
+            });
+        }
+        Ok(())
+    }
+
+    /// Cold path: fewer bytes buffered than a full frame.
+    ///
+    /// `#[doc(hidden)]` is expressed as `cfg_attr(doc, ..)` here: written as a
+    /// bare `#[doc(hidden)]`, `maybe-async-cfg`'s default `doctests` feature
+    /// misparses it as a `#[doc = "..."]` line following the doc comment
+    /// above and fails to compile. Gating it behind `cfg_attr(doc, ..)` keeps
+    /// the attribute's path as `cfg_attr`, which that pass does not touch, and
+    /// is equivalent for rustdoc's purposes: `doc(hidden)` only affects
+    /// generated documentation, and `cfg(doc)` is set exactly when rustdoc is
+    /// building it.
+    #[cfg_attr(doc, doc(hidden))]
+    async fn recv_resync_short(
+        &mut self,
+        _socket: Sn,
+        _received_size: u16,
+        _read_pointer: u16,
+        _expected_payload_len: u16,
+    ) -> Result<(), Error<Self::Error>> {
+        Err(Error::WouldBlock)
     }
 }
 
