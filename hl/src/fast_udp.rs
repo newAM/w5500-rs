@@ -168,6 +168,87 @@ pub trait FastUdp: Registers {
         self.set_sn_dest(socket, peer).await
     }
 
+    /// Send to the destination previously set by
+    /// [`FastUdp::udp_bind_to_peer`] or [`w5500_ll::Registers::set_sn_dest`].
+    ///
+    /// Does **not** write `Sn_DIPR`/`Sn_DPORT`, saving two SPI transactions per
+    /// call compared with [`FastUdp::udp_send_to`] (optimization O3).
+    ///
+    /// # Limitations
+    ///
+    /// Transmits `min(payload.len(), free_size)` bytes and returns that count:
+    /// a payload larger than the free TX buffer is **silently truncated**, the
+    /// same behaviour as [`crate::Udp::udp_send`]. For fixed-size datagrams use
+    /// [`FastUdp::udp_send_exact`], which refuses instead.
+    async fn udp_send(&mut self, socket: Sn, payload: &[u8]) -> Result<u16, Self::Error> {
+        let payload_len: u16 = payload.len().try_into().unwrap_or(u16::MAX);
+        let pointers = self.sn_tx_ptrs(socket).await?;
+        let transmit_len: u16 = min(payload_len, pointers.fsr);
+        if transmit_len != 0 {
+            self.set_sn_tx_buf(socket, pointers.wr, &payload[..usize::from(transmit_len)])
+                .await?;
+            self.set_sn_tx_wr(socket, pointers.wr.wrapping_add(transmit_len))
+                .await?;
+            self.set_sn_cr(socket, SocketCommand::Send).await?;
+        }
+        Ok(transmit_len)
+    }
+
+    /// Send all of `payload` or nothing.
+    ///
+    /// Four SPI transactions. Unlike [`FastUdp::udp_send`] this never transmits
+    /// a truncated datagram: a partial fixed-size command packet is a protocol
+    /// error, not a smaller valid packet.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::OutOfMemory`] if the TX buffer cannot hold the whole payload.
+    ///   Nothing is transmitted and no pointer is advanced.
+    /// - [`Error::UnexpectedLength`] if `payload` exceeds `u16::MAX` bytes.
+    /// - [`Error::Other`] for register IO failures.
+    async fn udp_send_exact(
+        &mut self,
+        socket: Sn,
+        payload: &[u8],
+    ) -> Result<(), Error<Self::Error>> {
+        let payload_len: u16 = match payload.len().try_into() {
+            Ok(payload_len) => payload_len,
+            Err(_) => {
+                return Err(Error::UnexpectedLength {
+                    expected: u16::MAX,
+                    received: u16::MAX,
+                });
+            }
+        };
+
+        let pointers = self.sn_tx_ptrs(socket).await?;
+        if pointers.fsr < payload_len {
+            return Err(Error::OutOfMemory);
+        }
+
+        self.set_sn_tx_buf(socket, pointers.wr, payload).await?;
+        self.set_sn_tx_wr(socket, pointers.wr.wrapping_add(payload_len))
+            .await?;
+        self.set_sn_cr(socket, SocketCommand::Send).await?;
+        Ok(())
+    }
+
+    /// Set the destination, then send.
+    ///
+    /// Writes `Sn_DIPR` and `Sn_DPORT` on **every** call. With a single fixed
+    /// peer prefer [`FastUdp::udp_bind_to_peer`] once at initialization
+    /// followed by [`FastUdp::udp_send_exact`] in the loop, which saves two SPI
+    /// transactions per datagram (optimization O3).
+    async fn udp_send_to(
+        &mut self,
+        socket: Sn,
+        payload: &[u8],
+        peer: &SocketAddrV4,
+    ) -> Result<u16, Self::Error> {
+        self.set_sn_dest(socket, peer).await?;
+        self.udp_send(socket, payload).await
+    }
+
     /// Receive one datagram into `frame`, header and payload in a single SPI
     /// transaction.
     ///

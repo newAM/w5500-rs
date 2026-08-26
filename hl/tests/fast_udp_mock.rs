@@ -478,3 +478,90 @@ async fn recv_from_generic_issues_two_buffer_reads() {
     assert_eq!(payload_buffer.as_slice(), payload.as_slice());
     w5500.free().done();
 }
+
+/// Eight little-endian f32 motor commands, 32 bytes.
+///
+/// The register interface is big-endian but the payload is little-endian
+/// (spec section 7.4). 1.0f32 is 0x3F800000, which little-endian is
+/// [0x00, 0x00, 0x80, 0x3F] — reversed if a `to_be_bytes` slipped in, so this
+/// test discriminates rather than merely passing.
+fn motor_command_bytes() -> Vec<u8> {
+    let commands: [f32; 8] = [1.0, 2.0, 0.5, -1.0, 0.0, 100.0, -0.25, 3.5];
+    let mut bytes: Vec<u8> = Vec::with_capacity(32);
+    for command in commands {
+        bytes.extend(command.to_le_bytes());
+    }
+    bytes
+}
+
+#[tokio::test(flavor = "current_thread")]
+async fn send_exact_writes_little_endian_payload_in_four_transactions() {
+    const SOCKET: Sn = Sn::Sn6;
+    const WRITE_POINTER: u16 = 0x0500;
+    let payload = motor_command_bytes();
+    assert_eq!(payload.len(), 32);
+    assert_eq!(
+        &payload[..4],
+        &[0x00, 0x00, 0x80, 0x3F],
+        "1.0f32 little-endian"
+    );
+
+    let mut expectations: Vec<SpiTransaction<u8>> = Vec::new();
+    // One combined read of Sn_TX_FSR, Sn_TX_RD and Sn_TX_WR (6 bytes).
+    let mut pointers: Vec<u8> = 2048u16.to_be_bytes().to_vec(); // free size
+    pointers.extend(0u16.to_be_bytes()); // read pointer, unused
+    pointers.extend(WRITE_POINTER.to_be_bytes());
+    expectations.extend(read_transaction(
+        SnReg::TX_FSR0.addr(),
+        SOCKET.block(),
+        pointers,
+    ));
+    expectations.extend(write_transaction(
+        WRITE_POINTER,
+        SOCKET.tx_block(),
+        payload.clone(),
+    ));
+    expectations.extend(write_transaction(
+        SnReg::TX_WR0.addr(),
+        SOCKET.block(),
+        WRITE_POINTER.wrapping_add(32).to_be_bytes().to_vec(),
+    ));
+    expectations.extend(write_transaction(
+        SnReg::CR.addr(),
+        SOCKET.block(),
+        vec![SocketCommand::Send.into()],
+    ));
+    // Notably absent: any write to Sn_DIPR or Sn_DPORT (optimization O3).
+
+    let mut w5500 = W5500::new(SpiMock::new(&expectations));
+    w5500.udp_send_exact(SOCKET, &payload).await.unwrap();
+    w5500.free().done();
+}
+
+/// A partial send must be refused outright, not transmitted truncated.
+#[tokio::test(flavor = "current_thread")]
+async fn send_exact_refuses_rather_than_truncating() {
+    const SOCKET: Sn = Sn::Sn6;
+    let payload = motor_command_bytes();
+
+    let mut expectations: Vec<SpiTransaction<u8>> = Vec::new();
+    // Only 16 bytes free for a 32-byte datagram.
+    let mut pointers: Vec<u8> = 16u16.to_be_bytes().to_vec();
+    pointers.extend(0u16.to_be_bytes());
+    pointers.extend(0x0500u16.to_be_bytes());
+    expectations.extend(read_transaction(
+        SnReg::TX_FSR0.addr(),
+        SOCKET.block(),
+        pointers,
+    ));
+    // No buffer write, no TX_WR update, no SEND command.
+
+    let mut w5500 = W5500::new(SpiMock::new(&expectations));
+    let result = w5500.udp_send_exact(SOCKET, &payload).await;
+
+    assert!(
+        matches!(result, Err(w5500_hl::Error::OutOfMemory)),
+        "got {result:?}"
+    );
+    w5500.free().done();
+}
