@@ -112,6 +112,40 @@ impl<const FRAME_LEN: usize> UdpFrame<FRAME_LEN> {
     }
 }
 
+/// # Example
+///
+/// The fixed-peer, fixed-size hot loop this module exists for:
+///
+/// ```no_run
+/// # let mut w5500 = w5500_ll::eh1::vdm::W5500::new(ehm::eh1::spi::Mock::new(&[]));
+/// use w5500_hl::{
+///     Error,
+///     fast_udp::{FastUdp, UdpFrame},
+///     ll::{
+///         Sn::Sn6,
+///         net::{Ipv4Addr, SocketAddrV4},
+///     },
+/// };
+///
+/// const PEER: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::new(192, 168, 0, 1), 49200);
+///
+/// // Destination written once, never in the loop.
+/// w5500.udp_bind_to_peer(Sn6, 49200, &PEER)?;
+///
+/// // Frame allocated once, reused every cycle.
+/// let mut frame: UdpFrame<188> = UdpFrame::new();
+/// loop {
+///     match w5500.udp_recv_exact(Sn6, &mut frame) {
+///         Ok(()) => {
+///             let _payload: &[u8] = frame.payload(); // exactly 180 bytes
+///         }
+///         Err(Error::WouldBlock) => {} // nothing this cycle
+///         Err(_) => {}                 // log, never panic
+///     }
+///     # break;
+/// }
+/// # Ok::<(), w5500_hl::Error<_>>(())
+/// ```
 #[maybe_async_cfg::maybe(
     sync(keep_self),
     async(

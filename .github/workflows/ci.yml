@@ -67,10 +67,23 @@ jobs:
       - run: cargo build --target ${{ matrix.target }} -p w5500-sntp --features num-rational
       - run: cargo build --target ${{ matrix.target }} -p w5500-mqtt --features w5500-tls
       - run: cargo build --target ${{ matrix.target }} -p w5500-ll   --features eha1
+      - run: cargo build --target ${{ matrix.target }} -p w5500-hl   --features eha1
       - run: cargo build --target ${{ matrix.target }} -p w5500-tls  --features p256-cm4
         if: ${{ matrix.target == 'thumbv7em-none-eabi' }}
       - run: cargo build --target ${{ matrix.target }} -p w5500-mqtt --features w5500-tls,p256-cm4
         if: ${{ matrix.target == 'thumbv7em-none-eabi' }}
+
+  build_examples:
+    name: Build RP2040 examples
+    runs-on: ubuntu-latest
+    env: { "RUSTFLAGS": "-D warnings" }
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          target: thumbv6m-none-eabi
+      # --locked so dependency drift fails loudly instead of being rewritten.
+      - run: cargo build --release --locked --manifest-path examples/rp2040/Cargo.toml
 
   test:
     name: Test
