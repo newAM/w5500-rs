@@ -67,7 +67,9 @@ def run(arguments):
     sent_count = 0
     received_count = 0
     timeout_count = 0
-    round_trips_us = []
+    round_trips_count = 0
+    round_trips_sum = 0.0
+    round_trips_max = 0.0
     next_send = time.monotonic()
 
     try:
@@ -79,24 +81,36 @@ def run(arguments):
 
             payload = build_payload(sequence_number, pattern)
             send_time = time.monotonic()
-            sock.sendto(payload, device_address)
-            sent_count += 1
-            sequence_number += 1
 
+            # Try to send the datagram
             try:
-                reply_bytes, _ = sock.recvfrom(4096)
-                received_count += 1
-                round_trips_us.append((time.monotonic() - send_time) * 1e6)
-                commands = decode_reply(reply_bytes)
-                if commands is None:
-                    print(f"reply was {len(reply_bytes)} bytes, expected {REPLY_LEN}")
-                elif arguments.mode == "echo" and received_count <= 3:
-                    formatted = ", ".join(f"{value:.4f}" for value in commands)
-                    print(f"reply {received_count}: [{formatted}]")
-            except socket.timeout:
+                sock.sendto(payload, device_address)
+            except (ConnectionResetError, OSError):
                 timeout_count += 1
                 if arguments.mode != "soak":
-                    print(f"timeout waiting for reply to sequence {sequence_number - 1}")
+                    print(f"socket error sending to {device_address}")
+            else:
+                # Receive reply only if send succeeded
+                try:
+                    reply_bytes, _ = sock.recvfrom(4096)
+                    received_count += 1
+                    rtt_us = (time.monotonic() - send_time) * 1e6
+                    round_trips_count += 1
+                    round_trips_sum += rtt_us
+                    round_trips_max = max(round_trips_max, rtt_us)
+                    commands = decode_reply(reply_bytes)
+                    if commands is None:
+                        print(f"reply was {len(reply_bytes)} bytes, expected {REPLY_LEN}")
+                    elif arguments.mode == "echo" and received_count <= 3:
+                        formatted = ", ".join(f"{value:.4f}" for value in commands)
+                        print(f"reply {received_count}: [{formatted}]")
+                except (socket.timeout, ConnectionResetError, OSError):
+                    timeout_count += 1
+                    if arguments.mode != "soak":
+                        print(f"timeout waiting for reply to sequence {sequence_number}")
+
+            sent_count += 1
+            sequence_number += 1
 
             if interval:
                 next_send += interval
@@ -108,12 +122,12 @@ def run(arguments):
                     next_send = time.monotonic()
 
             if arguments.mode == "soak" and sent_count % (arguments.rate or 1) == 0:
-                report(sent_count, received_count, timeout_count, round_trips_us)
+                report(sent_count, received_count, timeout_count, round_trips_count, round_trips_sum, round_trips_max)
     except KeyboardInterrupt:
         print("\ninterrupted")
 
     print("\n--- final ---")
-    report(sent_count, received_count, timeout_count, round_trips_us)
+    report(sent_count, received_count, timeout_count, round_trips_count, round_trips_sum, round_trips_max)
     # The host's own view of loss, independent of the firmware's counters.
     lost = sent_count - received_count
     if lost:
@@ -123,13 +137,12 @@ def run(arguments):
     return 0
 
 
-def report(sent_count, received_count, timeout_count, round_trips_us):
-    if round_trips_us:
-        worst = max(round_trips_us)
-        mean = sum(round_trips_us) / len(round_trips_us)
+def report(sent_count, received_count, timeout_count, round_trips_count, round_trips_sum, round_trips_max):
+    if round_trips_count > 0:
+        mean = round_trips_sum / round_trips_count
         print(
             f"sent {sent_count}, received {received_count}, timeouts {timeout_count}, "
-            f"rtt mean {mean:.0f} us, worst {worst:.0f} us"
+            f"rtt mean {mean:.0f} us, worst {round_trips_max:.0f} us"
         )
     else:
         print(f"sent {sent_count}, received {received_count}, timeouts {timeout_count}")
