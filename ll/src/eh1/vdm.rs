@@ -20,17 +20,14 @@ pub struct W5500<SPI> {
     spi: SPI,
 }
 
-impl<SPI, E> W5500<SPI>
-where
-    SPI: eh1::spi::SpiDevice<Error = E>,
-{
+impl<SPI> W5500<SPI> {
     /// Creates a new `W5500` driver from a SPI device.
     ///
     /// # Example
     ///
     /// ```
     /// # use ehm::eh1 as hal;
-    /// # let spi = hal::spi::Mock::new(&[]);
+    /// # let spi = hal::spi::Mock::<u8>::new(&[]);
     /// use w5500_ll::eh1::vdm::W5500;
     ///
     /// let mut w5500: W5500<_> = W5500::new(spi);
@@ -47,7 +44,7 @@ where
     ///
     /// ```
     /// # use ehm::eh1 as hal;
-    /// # let spi = hal::spi::Mock::new(&[]);
+    /// # let spi = hal::spi::Mock::<u8>::new(&[]);
     /// use w5500_ll::eh1::vdm::W5500;
     ///
     /// let mut w5500 = W5500::new(spi);
