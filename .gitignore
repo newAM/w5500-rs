@@ -24,3 +24,6 @@ corpus
 coverage
 in
 out
+
+# examples/rp2040 pins its own Cargo.lock for reproducible builds
+!examples/rp2040/Cargo.lock

@@ -13,16 +13,14 @@ use embassy_sync::blocking_mutex::raw::NoopRawMutex;
 use embassy_sync::mutex::Mutex;
 use embassy_time::Timer;
 use static_cell::StaticCell;
-use w5500_ll::eh1::embedded_hal_async::spi::{Operation, SpiDevice as AsyncSpiDevice};
-use w5500_ll::spi::{AccessMode, vdm_header};
 use w5500_ll::{
     Sn,
-    aio::Registers,
     net::{Eui48Addr, Ipv4Addr, SocketAddrV4},
 };
 
 pub type Bus = Mutex<NoopRawMutex, Spi<'static, SPI0, Async>>;
 pub type Device = SharedSpiDevice<'static, NoopRawMutex, Spi<'static, SPI0, Async>, Output<'static>>;
+pub type W5500Device = w5500_ll::eh1::vdm::W5500<Device>;
 pub type UsbDriver = Driver<'static, USB>;
 
 /// The concrete error type a register call on a [`Device`] can return.
@@ -33,44 +31,6 @@ pub type SpiError = embassy_embedded_hal::shared_bus::SpiDeviceError<
     embassy_rp::spi::Error,
     core::convert::Infallible,
 >;
-
-/// Async variable-data-length W5500 driver over a [`Device`].
-///
-/// `w5500_ll::eh1::vdm::W5500::new` cannot be used here: its constructor is
-/// bounded on `embedded_hal::spi::SpiDevice` (the *blocking* trait), even
-/// though its `w5500_ll::aio::Registers` impl only needs
-/// `embedded_hal_async::spi::SpiDevice`. `Device` -- an
-/// `embassy_embedded_hal` shared-bus device built on async DMA SPI -- only
-/// ever implements the async trait, so that constructor bound can never be
-/// satisfied for it. This reimplements the same variable-data-length framing
-/// (`w5500_ll::spi::vdm_header`, matching `w5500_ll::eh1::vdm`'s async
-/// `Registers` impl byte for byte) directly against the async trait instead.
-pub struct W5500Device {
-    spi: Device,
-}
-
-impl W5500Device {
-    /// Wraps a [`Device`] for W5500 register access.
-    pub fn new(spi: Device) -> Self {
-        W5500Device { spi }
-    }
-}
-
-impl Registers for W5500Device {
-    type Error = SpiError;
-
-    async fn read(&mut self, address: u16, block: u8, data: &mut [u8]) -> Result<(), Self::Error> {
-        let header = vdm_header(address, block, AccessMode::Read);
-        let mut operations = [Operation::Write(&header), Operation::Read(data)];
-        AsyncSpiDevice::transaction(&mut self.spi, &mut operations).await
-    }
-
-    async fn write(&mut self, address: u16, block: u8, data: &[u8]) -> Result<(), Self::Error> {
-        let header = vdm_header(address, block, AccessMode::Write);
-        let mut operations = [Operation::Write(&header), Operation::Write(data)];
-        AsyncSpiDevice::transaction(&mut self.spi, &mut operations).await
-    }
-}
 
 static SPI_BUS: StaticCell<Bus> = StaticCell::new();
 
