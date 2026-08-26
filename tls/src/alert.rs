@@ -260,6 +260,7 @@ impl AlertDescription {
         match e {
             w5500_hl::Error::UnexpectedEof => AlertDescription::DecodeError,
             w5500_hl::Error::OutOfMemory => AlertDescription::InternalError,
+            w5500_hl::Error::UnexpectedLength { .. } => AlertDescription::DecodeError,
             w5500_hl::Error::Other(_) => AlertDescription::InternalError,
             // technically unreachable, but this can occur if there is
             // a bit flip on the SPI bus
