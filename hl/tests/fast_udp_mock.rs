@@ -410,3 +410,71 @@ async fn recv_exact_rejects_and_discards_an_undersized_datagram() {
     );
     w5500.free().done();
 }
+
+/// The generic path keeps upstream's two-read behaviour. This is the contrast
+/// case for `recv_exact_issues_one_buffer_read`: it proves the one-transaction
+/// claim is specific to the fast path, not an accident of the mock helper.
+#[tokio::test(flavor = "current_thread")]
+async fn recv_from_generic_issues_two_buffer_reads() {
+    const SOCKET: Sn = Sn::Sn6;
+    const READ_POINTER: u16 = 0x1234;
+    const PAYLOAD_LEN: u16 = 180;
+
+    let mut expectations: Vec<SpiTransaction<u8>> = Vec::new();
+    let mut rx_buffer_reads: usize = 0;
+
+    let mut pointers: Vec<u8> = (8 + PAYLOAD_LEN).to_be_bytes().to_vec();
+    pointers.extend(READ_POINTER.to_be_bytes());
+    expectations.extend(read_transaction(
+        SnReg::RX_RSR0.addr(),
+        SOCKET.block(),
+        pointers,
+    ));
+    // Read one: the 8-byte header.
+    let mut header: Vec<u8> = vec![192, 168, 0, 1, 0xC0, 0x30];
+    header.extend(PAYLOAD_LEN.to_be_bytes());
+    expectations.extend(read_transaction(READ_POINTER, SOCKET.rx_block(), header));
+    rx_buffer_reads += 1;
+    // Read two: the payload, at the advanced pointer.
+    let payload: Vec<u8> = (0..PAYLOAD_LEN).map(|index| index as u8).collect();
+    expectations.extend(read_transaction(
+        READ_POINTER.wrapping_add(8),
+        SOCKET.rx_block(),
+        payload.clone(),
+    ));
+    rx_buffer_reads += 1;
+    expectations.extend(write_transaction(
+        SnReg::RX_RD0.addr(),
+        SOCKET.block(),
+        READ_POINTER
+            .wrapping_add(8 + PAYLOAD_LEN)
+            .to_be_bytes()
+            .to_vec(),
+    ));
+    expectations.extend(write_transaction(
+        SnReg::CR.addr(),
+        SOCKET.block(),
+        vec![SocketCommand::Recv.into()],
+    ));
+
+    assert_eq!(
+        rx_buffer_reads, 2,
+        "the generic path reads header and payload separately"
+    );
+
+    let mut w5500 = W5500::new(SpiMock::new(&expectations));
+    let mut payload_buffer = [0u8; 180];
+
+    let (received_len, origin) = w5500
+        .udp_recv_from(SOCKET, &mut payload_buffer)
+        .await
+        .unwrap();
+
+    assert_eq!(received_len, PAYLOAD_LEN);
+    assert_eq!(
+        origin,
+        SocketAddrV4::new(Ipv4Addr::new(192, 168, 0, 1), 49200)
+    );
+    assert_eq!(payload_buffer.as_slice(), payload.as_slice());
+    w5500.free().done();
+}

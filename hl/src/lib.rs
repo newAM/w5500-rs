@@ -98,11 +98,11 @@
 #![cfg_attr(not(test), no_std)]
 #![allow(async_fn_in_trait)] // https://github.com/rust-embedded/embedded-hal/pull/515#issuecomment-1763525962
 
+pub mod fast_udp;
 mod hostname;
 pub mod io;
 mod tcp;
 mod udp;
-pub mod fast_udp;
 
 pub use hostname::{Hostname, TryFromStrError};
 pub use ll::net;

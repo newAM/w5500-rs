@@ -9,6 +9,8 @@
 //! [`w5500_ll::Registers`], and `FastUdpAsync` over
 //! [`w5500_ll::aio::Registers`] behind the `eha1` feature.
 
+use core::cmp::min;
+
 use w5500_ll::{Protocol, Sn, SocketCommand, SocketMode, SocketStatus, net::SocketAddrV4};
 
 use crate::Error;
@@ -269,6 +271,117 @@ pub trait FastUdp: Registers {
             expected: expected_payload_len,
             received: header.len,
         })
+    }
+
+    /// Generic two-read receive, for callers who do not know the datagram size.
+    ///
+    /// Behaviourally identical to [`crate::Udp::udp_recv_from`], **including
+    /// silent truncation** when `payload_buffer` is smaller than the datagram.
+    /// Prefer [`FastUdp::udp_recv_exact`] when the size is known: it is one SPI
+    /// transaction cheaper and cannot truncate.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::WouldBlock`], [`Error::Other`].
+    async fn udp_recv_from(
+        &mut self,
+        socket: Sn,
+        payload_buffer: &mut [u8],
+    ) -> Result<(u16, SocketAddrV4), Error<Self::Error>> {
+        let pointers = self.sn_rx_ptrs(socket).await?;
+        let available: u16 = match pointers.rsr.checked_sub(UdpHeader::LEN) {
+            Some(available) => available,
+            None => return Err(Error::WouldBlock),
+        };
+
+        let mut header_bytes: [u8; UdpHeader::LEN_USIZE] = [0; UdpHeader::LEN_USIZE];
+        self.sn_rx_buf(socket, pointers.rd, &mut header_bytes)
+            .await?;
+        let header = UdpHeader::deser(header_bytes);
+
+        if available < header.len {
+            return Err(Error::WouldBlock);
+        }
+
+        let payload_pointer: u16 = pointers.rd.wrapping_add(UdpHeader::LEN);
+        let read_size: u16 = min(
+            header.len,
+            payload_buffer.len().try_into().unwrap_or(u16::MAX),
+        );
+        if read_size != 0 {
+            self.sn_rx_buf(
+                socket,
+                payload_pointer,
+                &mut payload_buffer[..usize::from(read_size)],
+            )
+            .await?;
+        }
+
+        let consumed: u16 = UdpHeader::LEN.wrapping_add(header.len);
+        self.set_sn_rx_rd(socket, pointers.rd.wrapping_add(consumed))
+            .await?;
+        self.set_sn_cr(socket, SocketCommand::Recv).await?;
+        Ok((read_size, header.origin))
+    }
+
+    /// Receive into a caller-provided frame buffer of runtime length, using a
+    /// single SPI transaction when the datagram fits.
+    ///
+    /// For callers whose datagram size is not a compile-time constant but who
+    /// still want the single-transaction receive. Returns the payload as a
+    /// borrowed slice of `frame_buffer`, so nothing is copied.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::WouldBlock`], [`Error::Other`].
+    /// - [`Error::UnexpectedLength`] if the datagram does not fit in
+    ///   `frame_buffer`. The datagram is consumed.
+    async fn udp_recv_from_into<'buf>(
+        &mut self,
+        socket: Sn,
+        frame_buffer: &'buf mut [u8],
+    ) -> Result<(&'buf [u8], SocketAddrV4), Error<Self::Error>> {
+        if frame_buffer.len() <= UDP_FRAME_HEADER_LEN {
+            return Err(Error::UnexpectedLength {
+                expected: 0,
+                received: 0,
+            });
+        }
+
+        let pointers = self.sn_rx_ptrs(socket).await?;
+        if pointers.rsr < UdpHeader::LEN {
+            return Err(Error::WouldBlock);
+        }
+
+        let capacity: u16 = frame_buffer.len().try_into().unwrap_or(u16::MAX);
+        let read_len: usize = usize::from(min(pointers.rsr, capacity));
+        self.sn_rx_buf(socket, pointers.rd, &mut frame_buffer[..read_len])
+            .await?;
+
+        let mut header_bytes: [u8; UdpHeader::LEN_USIZE] = [0; UdpHeader::LEN_USIZE];
+        header_bytes.copy_from_slice(&frame_buffer[..UdpHeader::LEN_USIZE]);
+        let header = UdpHeader::deser(header_bytes);
+
+        if pointers.rsr.wrapping_sub(UdpHeader::LEN) < header.len {
+            return Err(Error::WouldBlock);
+        }
+
+        let consumed: u16 = UdpHeader::LEN.wrapping_add(header.len);
+        self.set_sn_rx_rd(socket, pointers.rd.wrapping_add(consumed))
+            .await?;
+        self.set_sn_cr(socket, SocketCommand::Recv).await?;
+
+        let payload_end: usize = UDP_FRAME_HEADER_LEN + usize::from(header.len);
+        if payload_end > frame_buffer.len() {
+            return Err(Error::UnexpectedLength {
+                expected: (frame_buffer.len() - UDP_FRAME_HEADER_LEN) as u16,
+                received: header.len,
+            });
+        }
+        Ok((
+            &frame_buffer[UDP_FRAME_HEADER_LEN..payload_end],
+            header.origin,
+        ))
     }
 }
 
