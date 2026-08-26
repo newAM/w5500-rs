@@ -29,22 +29,6 @@ fn write_transaction(address: u16, block: u8, payload: Vec<u8>) -> Vec<SpiTransa
     ]
 }
 
-#[tokio::test(flavor = "current_thread")]
-async fn async_trait_is_callable() {
-    const SOCKET: Sn = Sn::Sn6;
-    let expectations = read_transaction(
-        SnReg::SR.addr(),
-        SOCKET.block(),
-        vec![SocketStatus::Udp.into()],
-    );
-    let mut w5500 = W5500::new(SpiMock::new(&expectations));
-
-    let status = w5500.udp_socket_status(SOCKET).await.unwrap();
-
-    assert_eq!(status, Ok(SocketStatus::Udp));
-    w5500.free().done();
-}
-
 #[test]
 fn unexpected_length_error_exists() {
     let error: w5500_hl::Error<core::convert::Infallible> = w5500_hl::Error::UnexpectedLength {
@@ -96,4 +80,105 @@ fn frame_payload_starts_after_the_header() {
     ]);
 
     assert_eq!(frame.payload(), &[0xDE, 0xAD, 0xBE, 0xEF]);
+}
+
+use w5500_ll::{Protocol, SocketCommand, SocketMode};
+
+#[tokio::test(flavor = "current_thread")]
+async fn bind_opens_a_udp_socket() {
+    const SOCKET: Sn = Sn::Sn6;
+    const PORT: u16 = 49200;
+
+    let mut expectations: Vec<SpiTransaction<u8>> = Vec::new();
+    // CLOSE, then one status read reporting Closed.
+    expectations.extend(write_transaction(
+        SnReg::CR.addr(),
+        SOCKET.block(),
+        vec![SocketCommand::Close.into()],
+    ));
+    expectations.extend(read_transaction(
+        SnReg::SR.addr(),
+        SOCKET.block(),
+        vec![SocketStatus::Closed.into()],
+    ));
+    // Local port, big-endian.
+    expectations.extend(write_transaction(
+        SnReg::PORT0.addr(),
+        SOCKET.block(),
+        PORT.to_be_bytes().to_vec(),
+    ));
+    // Socket mode: protocol field = UDP. This is the hardware socket engine,
+    // not MACRAW.
+    expectations.extend(write_transaction(
+        SnReg::MR.addr(),
+        SOCKET.block(),
+        vec![SocketMode::DEFAULT.set_protocol(Protocol::Udp).into()],
+    ));
+    // OPEN, then one status read reporting Udp.
+    expectations.extend(write_transaction(
+        SnReg::CR.addr(),
+        SOCKET.block(),
+        vec![SocketCommand::Open.into()],
+    ));
+    expectations.extend(read_transaction(
+        SnReg::SR.addr(),
+        SOCKET.block(),
+        vec![SocketStatus::Udp.into()],
+    ));
+
+    let mut w5500 = W5500::new(SpiMock::new(&expectations));
+    w5500.udp_bind(SOCKET, PORT).await.unwrap();
+    w5500.free().done();
+}
+
+#[tokio::test(flavor = "current_thread")]
+async fn bind_to_peer_also_writes_the_destination() {
+    const SOCKET: Sn = Sn::Sn6;
+    const PORT: u16 = 49200;
+    const PEER: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::new(192, 168, 0, 1), 49200);
+
+    let mut expectations: Vec<SpiTransaction<u8>> = Vec::new();
+    expectations.extend(write_transaction(
+        SnReg::CR.addr(),
+        SOCKET.block(),
+        vec![SocketCommand::Close.into()],
+    ));
+    expectations.extend(read_transaction(
+        SnReg::SR.addr(),
+        SOCKET.block(),
+        vec![SocketStatus::Closed.into()],
+    ));
+    expectations.extend(write_transaction(
+        SnReg::PORT0.addr(),
+        SOCKET.block(),
+        PORT.to_be_bytes().to_vec(),
+    ));
+    expectations.extend(write_transaction(
+        SnReg::MR.addr(),
+        SOCKET.block(),
+        vec![SocketMode::DEFAULT.set_protocol(Protocol::Udp).into()],
+    ));
+    expectations.extend(write_transaction(
+        SnReg::CR.addr(),
+        SOCKET.block(),
+        vec![SocketCommand::Open.into()],
+    ));
+    expectations.extend(read_transaction(
+        SnReg::SR.addr(),
+        SOCKET.block(),
+        vec![SocketStatus::Udp.into()],
+    ));
+    // Destination IP and port, written once at bind time (optimization O3).
+    //
+    // `Registers::set_sn_dest` (ll/src/aio.rs) issues a single 6-byte write
+    // starting at DIPR0 covering DIPR0..=DPORT1, not two separate writes.
+    expectations.extend(write_transaction(
+        SnReg::DIPR0.addr(),
+        SOCKET.block(),
+        vec![192, 168, 0, 1, 0xC0, 0x30],
+    ));
+
+    let mut w5500 = W5500::new(SpiMock::new(&expectations));
+    w5500.udp_bind_to_peer(SOCKET, PORT, &PEER).await.unwrap();
+    w5500.free().done();
 }

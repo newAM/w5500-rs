@@ -9,7 +9,7 @@
 //! [`w5500_ll::Registers`], and `FastUdpAsync` over
 //! [`w5500_ll::aio::Registers`] behind the `eha1` feature.
 
-use w5500_ll::{Sn, SocketStatus, net::SocketAddrV4};
+use w5500_ll::{Protocol, Sn, SocketCommand, SocketMode, SocketStatus, net::SocketAddrV4};
 
 use crate::udp::UdpHeader;
 use w5500_ll::Registers;
@@ -111,15 +111,80 @@ impl<const FRAME_LEN: usize> UdpFrame<FRAME_LEN> {
 
 #[maybe_async_cfg::maybe(
     sync(keep_self),
-    async(feature = "eha1", idents(Registers(async = "RegistersAsync")))
+    async(
+        feature = "eha1",
+        idents(
+            Registers(async = "RegistersAsync"),
+            yield_once(async = "yield_once_async")
+        )
+    )
 )]
 pub trait FastUdp: Registers {
-    /// Provisional method proving the code-generation mechanism.
+    /// Open `socket` as a UDP socket bound to `port`.
     ///
-    /// Replaced by the real API in later tasks.
-    async fn udp_socket_status(&mut self, socket: Sn) -> Result<Result<SocketStatus, u8>, Self::Error> {
-        self.sn_sr(socket).await
+    /// Uses the W5500 hardware socket engine: `Sn_MR` protocol field is set to
+    /// UDP (W5500 datasheet section 5.2). MACRAW is never used.
+    ///
+    /// # Blocking
+    ///
+    /// Spins on `Sn_SR` twice, yielding to the executor between polls. This is
+    /// an initialization-path cost only; the datasheet guarantees the status
+    /// changes after CLOSE and after OPEN, so neither loop is unbounded in
+    /// practice. It is a busy-yield: it does not block other tasks, but it does
+    /// not idle the CPU either.
+    async fn udp_bind(&mut self, socket: Sn, port: u16) -> Result<(), Self::Error> {
+        self.set_sn_cr(socket, SocketCommand::Close).await?;
+        while self.sn_sr(socket).await? != Ok(SocketStatus::Closed) {
+            yield_once().await;
+        }
+
+        self.set_sn_port(socket, port).await?;
+        const UDP_MODE: SocketMode = SocketMode::DEFAULT.set_protocol(Protocol::Udp);
+        self.set_sn_mr(socket, UDP_MODE).await?;
+        self.set_sn_cr(socket, SocketCommand::Open).await?;
+        while self.sn_sr(socket).await? != Ok(SocketStatus::Udp) {
+            yield_once().await;
+        }
+        Ok(())
     }
+
+    /// Open `socket` as a UDP socket bound to `port`, with its destination
+    /// fixed to `peer`.
+    ///
+    /// For the single-fixed-peer case. After this call use
+    /// [`FastUdp::udp_send`] or [`FastUdp::udp_send_exact`] in the hot loop:
+    /// they never rewrite `Sn_DIPR`/`Sn_DPORT`, saving two SPI transactions per
+    /// send compared with [`FastUdp::udp_send_to`].
+    async fn udp_bind_to_peer(
+        &mut self,
+        socket: Sn,
+        port: u16,
+        peer: &SocketAddrV4,
+    ) -> Result<(), Self::Error> {
+        self.udp_bind(socket, port).await?;
+        self.set_sn_dest(socket, peer).await
+    }
+}
+
+/// No-op in the blocking build: the sync spin loop busy-waits without
+/// yielding to anything.
+///
+/// Paired with [`yield_once_async`] via `maybe-async-cfg`'s `idents` renaming
+/// on [`FastUdp::udp_bind`], so the sync half of the trait never references
+/// the async-only yield helper.
+fn yield_once() {}
+
+/// Yield to the executor once, re-arming immediately.
+///
+/// Executor-agnostic: no `embassy-time` or other runtime dependency. Used only
+/// on the initialization path in [`FastUdp::udp_bind`].
+#[cfg(feature = "eha1")]
+async fn yield_once_async() {
+    core::future::poll_fn(|context| {
+        context.waker().wake_by_ref();
+        core::task::Poll::Pending
+    })
+    .await
 }
 
 #[maybe_async_cfg::maybe(
