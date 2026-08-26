@@ -44,3 +44,18 @@ async fn async_trait_is_callable() {
     assert_eq!(status, Ok(SocketStatus::Udp));
     w5500.free().done();
 }
+
+#[test]
+fn unexpected_length_error_exists() {
+    let error: w5500_hl::Error<core::convert::Infallible> = w5500_hl::Error::UnexpectedLength {
+        expected: 180,
+        received: 179,
+    };
+    match error {
+        w5500_hl::Error::UnexpectedLength { expected, received } => {
+            assert_eq!(expected, 180);
+            assert_eq!(received, 179);
+        }
+        _ => panic!("wrong variant"),
+    }
+}

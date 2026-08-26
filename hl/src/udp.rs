@@ -28,11 +28,11 @@ impl UdpHeader {
     // * 4 bytes origin IP
     // * 2 bytes origin port
     // * 2 bytes size
-    const LEN: u16 = 8;
-    const LEN_USIZE: usize = Self::LEN as usize;
+    pub(crate) const LEN: u16 = 8;
+    pub(crate) const LEN_USIZE: usize = Self::LEN as usize;
 
     /// Deserialize a UDP header.
-    fn deser(buf: [u8; Self::LEN_USIZE]) -> UdpHeader {
+    pub(crate) fn deser(buf: [u8; Self::LEN_USIZE]) -> UdpHeader {
         UdpHeader {
             origin: SocketAddrV4::new(
                 Ipv4Addr::new(buf[0], buf[1], buf[2], buf[3]),

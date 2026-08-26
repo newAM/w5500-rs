@@ -145,6 +145,21 @@ pub enum Error<E> {
     UnexpectedEof,
     /// A write operation ran out of memory in the socket buffer.
     OutOfMemory,
+    /// A datagram did not have the exact length the caller required.
+    ///
+    /// Returned by fixed-size receive operations such as
+    /// `FastUdp::udp_recv_exact` instead of silently truncating the
+    /// datagram.
+    ///
+    /// Distinct from [`Error::UnexpectedEof`], which means "fewer bytes than
+    /// requested"; this variant also covers a datagram that is *longer* than
+    /// expected.
+    UnexpectedLength {
+        /// Payload length the caller required, in bytes.
+        expected: u16,
+        /// Payload length the datagram actually carried, in bytes.
+        received: u16,
+    },
     /// The operation needs to block to complete, but the blocking operation was
     /// requested to not occur.
     ///
