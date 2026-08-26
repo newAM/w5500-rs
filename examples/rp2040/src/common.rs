@@ -65,7 +65,7 @@ pub const SOCKET: Sn = Sn::Sn6;
 pub const PAYLOAD_LEN: usize = 180;
 /// Frame length: the 8-byte W5500 receive header plus the payload.
 pub const FRAME_LEN: usize = 188;
-/// Outbound payload: 8 × f32 motor commands.
+/// Outbound payload: 8 × f32 control values.
 pub const REPLY_LEN: usize = 32;
 
 /// The f32 pattern the host places at [`payload::PATTERN_OFFSET`].
@@ -109,11 +109,11 @@ pub mod payload {
     }
 }
 
-/// Encode 8 motor commands as 32 little-endian bytes.
+/// Encode 8 control values as 32 little-endian bytes.
 ///
 /// Used by `echo`, `endian` and `latency` for the production reply format.
 /// `soak` does **not** use this: its reply carries telemetry for the host's
-/// independent cross-check instead of motor commands. See
+/// independent cross-check instead of control values. See
 /// `soak::encode_diagnostic_reply`.
 pub fn encode_reply(commands: &[f32; 8]) -> [u8; REPLY_LEN] {
     let mut reply: [u8; REPLY_LEN] = [0; REPLY_LEN];

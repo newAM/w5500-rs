@@ -534,7 +534,7 @@ async fn recv_from_generic_issues_two_buffer_reads() {
     w5500.free().done();
 }
 
-/// Eight little-endian f32 motor commands, 32 bytes.
+/// Eight little-endian f32 control values, 32 bytes.
 ///
 /// The register interface is big-endian but the payload is little-endian
 /// (spec section 7.4). 1.0f32 is 0x3F800000, which little-endian is

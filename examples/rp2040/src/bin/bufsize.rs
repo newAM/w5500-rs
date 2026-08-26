@@ -7,8 +7,8 @@
 //! and socket 6 is given a larger share.
 //!
 //! **Not the maximum share, deliberately.** A 16 KiB receive buffer would hold
-//! roughly 87 datagrams; on a real-time rig a deep buffer is actively harmful,
-//! because falling behind then means processing *stale* simulator state rather
+//! roughly 87 datagrams; on a real-time system a deep buffer is actively harmful,
+//! because falling behind then means processing *stale* input rather
 //! than dropping a cycle and re-syncing. 4 KiB is about 21 datagrams of slack:
 //! enough to ride out a scheduling hiccup, small enough that staleness stays
 //! bounded. The `soak` binary drains to the newest datagram for the same reason.

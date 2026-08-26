@@ -16,7 +16,7 @@
 //!
 //! The boundary under test: **W5500 registers are big-endian** (datasheet
 //! section 4.1 -- ports, lengths and pointers are all `from_be_bytes`), while
-//! **the simulator payload is little-endian**. The driver must not confuse them.
+//! **the datagram payload is little-endian**. The driver must not confuse them.
 #![no_std]
 #![no_main]
 

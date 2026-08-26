@@ -28,7 +28,7 @@ const FRAME_LEN: usize = 188;
 async fn receives_a_real_datagram_and_replies() {
     let mut w5500 = w5500_regsim::W5500::default();
 
-    // The host end, standing in for the flight simulator.
+    // The host end, standing in for the remote peer.
     let peer_socket = UdpSocket::bind("127.0.0.1:0").expect("bind host socket");
     let peer_address = match peer_socket.local_addr().expect("host addr") {
         std::net::SocketAddr::V4(address) => address,
@@ -77,7 +77,7 @@ async fn receives_a_real_datagram_and_replies() {
     assert_eq!(frame.payload(), outbound.as_slice());
     assert_eq!(frame.origin().port(), peer.port());
 
-    // Reply with 32 bytes of little-endian f32, as the rig does.
+    // Reply with 32 bytes of little-endian f32, as the application does.
     let commands: [f32; 8] = [1.0, 2.0, 0.5, -1.0, 0.0, 100.0, -0.25, 3.5];
     let mut reply: [u8; 32] = [0; 32];
     for (index, command) in commands.iter().enumerate() {

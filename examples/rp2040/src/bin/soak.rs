@@ -14,7 +14,7 @@
 //! # Drain to latest
 //!
 //! Each cycle drains every buffered datagram and acts on the newest. On a
-//! real-time rig, falling behind and then processing stale simulator state is
+//! real-time system, falling behind and then processing stale input is
 //! worse than skipping a cycle: the control loop would be reacting to the
 //! past. Draining also self-corrects after a scheduling hiccup instead of
 //! accumulating an ever-growing backlog.

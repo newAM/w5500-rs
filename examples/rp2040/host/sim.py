@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Host companion for the W5500 RP2040 diagnostics.
 
-Stands in for the 6DOF flight simulator: sends 180-byte datagrams at a fixed
+Stands in for the remote peer: sends 180-byte datagrams at a fixed
 rate and receives replies. Standard library only.
 
 Outbound payload layout (all little-endian), matching src/common.rs:
@@ -11,8 +11,8 @@ Outbound payload layout (all little-endian), matching src/common.rs:
     offset 44  filler 0xA5 to 180 bytes
 
 Reply layout depends on mode:
-  - `echo`/`endian`: the production format, 8xf32 motor commands.
-  - `soak`: a diagnostic frame, NOT motor commands --
+  - `echo`/`endian`: the application format, 8xf32 control values.
+  - `soak`: a diagnostic frame, NOT control values --
         offset 0   u32  firmware's last received sequence number
         offset 4   u32  firmware's total received-datagram count
         offset 8   reserved, zero, to 32 bytes
@@ -58,7 +58,7 @@ def build_payload(sequence_number, pattern):
 
 
 def decode_reply(reply_bytes):
-    """Decodes an echo/endian 32-byte reply into 8 motor commands."""
+    """Decodes an echo/endian 32-byte reply into 8 control values."""
     if len(reply_bytes) != REPLY_LEN:
         return None
     return struct.unpack("<8f", reply_bytes)

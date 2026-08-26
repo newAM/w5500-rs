@@ -43,9 +43,9 @@ requested value in the source is what the peripheral produced — measure it.
 ## Network
 
 Device `192.168.0.10/24`, gateway `192.168.0.1`, socket 6, port 49200. Peer
-(the simulator, or `host/sim.py`) at `192.168.0.1:49200`. Inbound datagrams are
+(the peer application, or `host/sim.py`) at `192.168.0.1:49200`. Inbound datagrams are
 exactly 180 bytes; outbound are exactly 32 bytes. `echo`, `endian` and
-`latency` fill those 32 bytes with the production 8xf32 motor-command format.
+`latency` fill those 32 bytes with the application's 8xf32 control-value format.
 **`soak` does not** — see [`soak`'s diagnostic reply](#soaks-diagnostic-reply)
 below.
 
@@ -57,7 +57,7 @@ they run on the chip's 2 KiB-per-socket default.
 ## Binaries
 
 Run them in this order — each rung's verdict is only meaningful once the ones
-above it pass, and each needs progressively more of the rig connected.
+above it pass, and each needs progressively more of the setup connected.
 
 | Binary | Needs | What it proves |
 |---|---|---|
@@ -131,7 +131,7 @@ re-baselining` on the firmware side rather than a false FAIL.
 
 ## Host companion
 
-`host/sim.py` stands in for the flight simulator. Python 3, standard library
+`host/sim.py` stands in for the remote peer. Python 3, standard library
 only, and it is committed and runnable today:
 
 ```sh
@@ -217,7 +217,7 @@ has been run.
 ## Design notes
 
 - `bufsize`/`soak` give socket 6 only 4 KiB of RX buffer, deliberately, not the
-  chip's maximum. A deep buffer on a real-time rig is a liability: falling
+  chip's maximum. A deep buffer on a real-time system is a liability: falling
   behind then means acting on *stale* datagrams that piled up rather than
   dropping a cycle and re-syncing to the present. 4 KiB is enough slack to
   absorb a scheduling hiccup while keeping any staleness bounded.
