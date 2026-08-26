@@ -59,3 +59,41 @@ fn unexpected_length_error_exists() {
         _ => panic!("wrong variant"),
     }
 }
+
+use w5500_hl::fast_udp::{UDP_FRAME_HEADER_LEN, UdpFrame};
+use w5500_ll::net::{Ipv4Addr, SocketAddrV4};
+
+#[test]
+fn frame_reports_payload_length() {
+    assert_eq!(UDP_FRAME_HEADER_LEN, 8);
+    assert_eq!(UdpFrame::<188>::PAYLOAD_LEN, 180);
+
+    let frame: UdpFrame<188> = UdpFrame::new();
+    assert_eq!(frame.payload().len(), 180);
+}
+
+/// The W5500 receive header is big-endian (W5500 datasheet section 4.2).
+///
+/// The port and length bytes here are deliberately asymmetric: 0xC030 read as
+/// little-endian would be 0x30C0 (12480, not 49200), and 0x00B4 would be
+/// 0xB400 (46080, not 180). A `from_le_bytes` slip cannot pass this test.
+#[test]
+fn frame_decodes_big_endian_origin() {
+    let mut frame: UdpFrame<188> = UdpFrame::new();
+    frame.buffer_for_test()[..8].copy_from_slice(&[192, 168, 0, 1, 0xC0, 0x30, 0x00, 0xB4]);
+
+    assert_eq!(
+        frame.origin(),
+        SocketAddrV4::new(Ipv4Addr::new(192, 168, 0, 1), 49200)
+    );
+}
+
+#[test]
+fn frame_payload_starts_after_the_header() {
+    let mut frame: UdpFrame<12> = UdpFrame::new();
+    frame.buffer_for_test().copy_from_slice(&[
+        192, 168, 0, 1, 0xC0, 0x30, 0x00, 0x04, 0xDE, 0xAD, 0xBE, 0xEF,
+    ]);
+
+    assert_eq!(frame.payload(), &[0xDE, 0xAD, 0xBE, 0xEF]);
+}
