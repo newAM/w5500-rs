@@ -267,3 +267,146 @@ async fn recv_exact_issues_one_buffer_read() {
     // that no additional SPI transaction was issued.
     w5500.free().done();
 }
+
+/// `rsr` below the header length means nothing has arrived: one transaction,
+/// then WouldBlock.
+#[tokio::test(flavor = "current_thread")]
+async fn recv_exact_would_block_when_buffer_is_empty() {
+    const SOCKET: Sn = Sn::Sn6;
+    for received_size in [0u16, 1, 7] {
+        let mut pointers: Vec<u8> = received_size.to_be_bytes().to_vec();
+        pointers.extend(0x1234u16.to_be_bytes());
+        let expectations = read_transaction(SnReg::RX_RSR0.addr(), SOCKET.block(), pointers);
+
+        let mut w5500 = W5500::new(SpiMock::new(&expectations));
+        let mut frame: UdpFrame<188> = UdpFrame::new();
+
+        let result = w5500.udp_recv_exact(SOCKET, &mut frame).await;
+
+        assert!(
+            matches!(result, Err(w5500_hl::Error::WouldBlock)),
+            "rsr={received_size} should be WouldBlock, got {result:?}"
+        );
+        w5500.free().done();
+    }
+}
+
+/// The header has arrived but the payload has not: still WouldBlock, and the
+/// read pointer must not move.
+#[tokio::test(flavor = "current_thread")]
+async fn recv_exact_would_block_while_datagram_is_still_arriving() {
+    const SOCKET: Sn = Sn::Sn6;
+    const READ_POINTER: u16 = 0x1234;
+
+    for received_size in [8u16, 100, 187] {
+        let mut expectations: Vec<SpiTransaction<u8>> = Vec::new();
+        let mut pointers: Vec<u8> = received_size.to_be_bytes().to_vec();
+        pointers.extend(READ_POINTER.to_be_bytes());
+        expectations.extend(read_transaction(
+            SnReg::RX_RSR0.addr(),
+            SOCKET.block(),
+            pointers,
+        ));
+        // Cold path reads only the 8-byte header to disambiguate.
+        let mut header: Vec<u8> = vec![192, 168, 0, 1, 0xC0, 0x30];
+        header.extend(180u16.to_be_bytes());
+        expectations.extend(read_transaction(READ_POINTER, SOCKET.rx_block(), header));
+
+        let mut w5500 = W5500::new(SpiMock::new(&expectations));
+        let mut frame: UdpFrame<188> = UdpFrame::new();
+
+        let result = w5500.udp_recv_exact(SOCKET, &mut frame).await;
+
+        assert!(
+            matches!(result, Err(w5500_hl::Error::WouldBlock)),
+            "rsr={received_size} should be WouldBlock, got {result:?}"
+        );
+        w5500.free().done();
+    }
+}
+
+/// A datagram longer than the frame must be rejected AND consumed, so the
+/// socket is not wedged by one malformed packet.
+#[tokio::test(flavor = "current_thread")]
+async fn recv_exact_rejects_and_discards_an_oversized_datagram() {
+    const SOCKET: Sn = Sn::Sn6;
+    const READ_POINTER: u16 = 0x1234;
+
+    // A header claiming 181 bytes, arriving in a 188-byte frame. `rsr` is 189,
+    // so the hot path runs and reads a full 188-byte frame, but the header
+    // disagrees with the caller's fixed size.
+    //
+    // The helper already derives the pointer advance from the *header's* length
+    // (8 + 181 = 189), which is exactly the behaviour under test: the driver
+    // must skip what the datagram actually occupies, not what the caller wanted.
+    let (expectations, _, _) = recv_exact_expectations(SOCKET, READ_POINTER, 181, 180);
+
+    let mut w5500 = W5500::new(SpiMock::new(&expectations));
+    let mut frame: UdpFrame<188> = UdpFrame::new();
+
+    let result = w5500.udp_recv_exact(SOCKET, &mut frame).await;
+
+    assert!(
+        matches!(
+            result,
+            Err(w5500_hl::Error::UnexpectedLength {
+                expected: 180,
+                received: 181
+            })
+        ),
+        "got {result:?}"
+    );
+    // done() proves RX_RD advanced and RECV was issued despite the error.
+    w5500.free().done();
+}
+
+/// A datagram shorter than the frame, fully arrived, is also a length error —
+/// and must likewise be consumed.
+#[tokio::test(flavor = "current_thread")]
+async fn recv_exact_rejects_and_discards_an_undersized_datagram() {
+    const SOCKET: Sn = Sn::Sn6;
+    const READ_POINTER: u16 = 0x1234;
+    const SHORT_PAYLOAD_LEN: u16 = 179;
+
+    let mut expectations: Vec<SpiTransaction<u8>> = Vec::new();
+    let mut pointers: Vec<u8> = (8 + SHORT_PAYLOAD_LEN).to_be_bytes().to_vec();
+    pointers.extend(READ_POINTER.to_be_bytes());
+    expectations.extend(read_transaction(
+        SnReg::RX_RSR0.addr(),
+        SOCKET.block(),
+        pointers,
+    ));
+    let mut header: Vec<u8> = vec![192, 168, 0, 1, 0xC0, 0x30];
+    header.extend(SHORT_PAYLOAD_LEN.to_be_bytes());
+    expectations.extend(read_transaction(READ_POINTER, SOCKET.rx_block(), header));
+    expectations.extend(write_transaction(
+        SnReg::RX_RD0.addr(),
+        SOCKET.block(),
+        READ_POINTER
+            .wrapping_add(8 + SHORT_PAYLOAD_LEN)
+            .to_be_bytes()
+            .to_vec(),
+    ));
+    expectations.extend(write_transaction(
+        SnReg::CR.addr(),
+        SOCKET.block(),
+        vec![SocketCommand::Recv.into()],
+    ));
+
+    let mut w5500 = W5500::new(SpiMock::new(&expectations));
+    let mut frame: UdpFrame<188> = UdpFrame::new();
+
+    let result = w5500.udp_recv_exact(SOCKET, &mut frame).await;
+
+    assert!(
+        matches!(
+            result,
+            Err(w5500_hl::Error::UnexpectedLength {
+                expected: 180,
+                received: 179
+            })
+        ),
+        "got {result:?}"
+    );
+    w5500.free().done();
+}

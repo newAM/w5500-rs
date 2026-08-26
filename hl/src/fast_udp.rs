@@ -184,7 +184,6 @@ pub trait FastUdp: Registers {
     ///   `UdpFrame::<FRAME_LEN>::PAYLOAD_LEN` bytes. The datagram is discarded
     ///   and the socket stays usable — it is never truncated silently.
     /// - [`Error::Other`] for register IO failures.
-    ///
     async fn udp_recv_exact<const FRAME_LEN: usize>(
         &mut self,
         socket: Sn,
@@ -199,7 +198,6 @@ pub trait FastUdp: Registers {
         if pointers.rsr < UdpHeader::LEN {
             return Err(Error::WouldBlock);
         }
-
 
         if pointers.rsr < frame_len {
             return self
@@ -225,7 +223,16 @@ pub trait FastUdp: Registers {
         Ok(())
     }
 
-    /// Cold path: fewer bytes buffered than a full frame.
+    /// Cold path: `Sn_RX_RSR` shows fewer bytes than a full frame.
+    ///
+    /// The received size alone cannot distinguish "the datagram is still
+    /// arriving" from "a short datagram has fully arrived", so the 8-byte
+    /// header is read to decide. This costs one extra SPI transaction and never
+    /// occurs when every datagram is the expected size.
+    ///
+    /// A short datagram is **consumed** rather than left in place: leaving it
+    /// would wedge the socket, since every later call would take this same path
+    /// and find the same undersized datagram forever.
     ///
     /// `#[doc(hidden)]` is expressed as `cfg_attr(doc, ..)` here: written as a
     /// bare `#[doc(hidden)]`, `maybe-async-cfg`'s default `doctests` feature
@@ -238,12 +245,30 @@ pub trait FastUdp: Registers {
     #[cfg_attr(doc, doc(hidden))]
     async fn recv_resync_short(
         &mut self,
-        _socket: Sn,
-        _received_size: u16,
-        _read_pointer: u16,
-        _expected_payload_len: u16,
+        socket: Sn,
+        received_size: u16,
+        read_pointer: u16,
+        expected_payload_len: u16,
     ) -> Result<(), Error<Self::Error>> {
-        Err(Error::WouldBlock)
+        let mut header_bytes: [u8; UdpHeader::LEN_USIZE] = [0; UdpHeader::LEN_USIZE];
+        self.sn_rx_buf(socket, read_pointer, &mut header_bytes)
+            .await?;
+        let header = UdpHeader::deser(header_bytes);
+
+        // Not all of the datagram the header describes has been buffered yet.
+        if received_size.wrapping_sub(UdpHeader::LEN) < header.len {
+            return Err(Error::WouldBlock);
+        }
+
+        let consumed: u16 = UdpHeader::LEN.wrapping_add(header.len);
+        self.set_sn_rx_rd(socket, read_pointer.wrapping_add(consumed))
+            .await?;
+        self.set_sn_cr(socket, SocketCommand::Recv).await?;
+
+        Err(Error::UnexpectedLength {
+            expected: expected_payload_len,
+            received: header.len,
+        })
     }
 }
 
@@ -270,6 +295,9 @@ async fn yield_once_async() {
 
 #[maybe_async_cfg::maybe(
     sync(keep_self),
-    async(feature = "eha1", idents(Registers(async = "RegistersAsync"), FastUdp(async = "FastUdpAsync")))
+    async(
+        feature = "eha1",
+        idents(Registers(async = "RegistersAsync"), FastUdp(async = "FastUdpAsync"))
+    )
 )]
 impl<RegisterAccess> FastUdp for RegisterAccess where RegisterAccess: Registers {}
