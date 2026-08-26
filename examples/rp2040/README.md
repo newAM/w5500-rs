@@ -44,7 +44,15 @@ requested value in the source is what the peripheral produced — measure it.
 
 Device `192.168.0.10/24`, gateway `192.168.0.1`, socket 6, port 49200. Peer
 (the simulator, or `host/sim.py`) at `192.168.0.1:49200`. Inbound datagrams are
-exactly 180 bytes; outbound are exactly 32 bytes of little-endian `f32`.
+exactly 180 bytes; outbound are exactly 32 bytes. `echo`, `endian` and
+`latency` fill those 32 bytes with the production 8xf32 motor-command format.
+**`soak` does not** — see [`soak`'s diagnostic reply](#soaks-diagnostic-reply)
+below.
+
+Only `soak` and `bufsize` size the socket buffers (socket 6 gets 4 KiB RX / 2
+KiB TX, every other socket zeroed — see [Design notes](#design-notes)).
+`echo`, `endian` and `latency` never touch `Sn_RXBUF_SIZE`/`Sn_TXBUF_SIZE`, so
+they run on the chip's 2 KiB-per-socket default.
 
 ## Binaries
 
@@ -85,14 +93,41 @@ constants compiled into itself. It checks two independent things:
   little-endian payload arrived intact at the right offsets — a check `echo`
   cannot perform because it never compares against anything external.
 
+### `soak`'s diagnostic reply
+
+`soak` sends only every fifth received datagram (100 Hz replies against 500 Hz
+inbound), so it cannot be a 1:1 echo. Its 32-byte reply is instead a
+diagnostic frame, all little-endian:
+
+| Bytes | Content |
+|---|---|
+| 0..4 | Firmware's last received sequence number (`u32`) |
+| 4..8 | Firmware's total received-datagram count (`u32`) |
+| 8..32 | Reserved, zero |
+
+This is a deliberate departure from the production 8xf32 motor-command format
+`echo`, `endian` and `latency` still send — `soak`'s job is to carry telemetry
+for `host/sim.py`'s independent cross-check (below), not to exercise the
+motor-command encoding path. That path stays covered by the other three
+binaries.
+
 ### `soak`'s verdict needs both sides to agree
 
-`soak`'s own drop counter reading zero is not, by itself, evidence of zero
-drops: firmware that fails to notice a dropped datagram also has no way to
-report one. The verdict requires **both** the firmware's own counters (zero
-wrong-length datagrams, zero skipped sequence numbers) **and** `host/sim.py`
-independently reporting no sequence-gap loss on its side of the link. Only
-agreement between the two independently-counting ends is meaningful.
+`soak`'s own counters reading zero is not, by itself, evidence of zero drops:
+firmware that fails to notice a dropped datagram also has no way to report
+one. The verdict requires **both**:
+
+- the firmware's own counters (zero wrong-length datagrams, zero
+  `skipped_sequences` — see `soak.rs`'s module doc for how that differs from
+  `drained_extra`, the deliberately-discarded count from drain-to-latest), and
+- `host/sim.py --mode soak` reporting `HOST-DECODED SEQUENCE GAPS: 0`, decoded
+  independently from the diagnostic reply's sequence and received-count
+  fields, with the firmware's reported received count matching the host's
+  sent count.
+
+Only agreement between the two independently-counting ends is meaningful. A
+mid-run restart of `host/sim.py` is expected to log `peer restarted,
+re-baselining` on the firmware side rather than a false FAIL.
 
 ## Host companion
 
@@ -105,9 +140,13 @@ python3 host/sim.py --mode endian                     # the known f32 pattern
 python3 host/sim.py --mode soak --rate 500 --seconds 600
 ```
 
-It counts sequence gaps itself, independently of anything the firmware
-reports, and it survives socket errors rather than crashing — a peer that
-stops responding is counted as loss, not treated as a fatal error.
+In `soak` mode it decodes sequence gaps from the diagnostic reply itself,
+independently of anything the firmware's own counters say, and it survives
+socket errors rather than crashing. `echo` and `endian` reply 1:1, so
+`sim.py` sends and blocks for a reply in lockstep there; `soak` replies only
+every fifth received datagram, so lockstep would collapse the achieved send
+rate to roughly 1/s — `soak` mode instead drives sends strictly at `--rate`
+and drains whatever replies are available non-blockingly each iteration.
 
 ## Logging: USB serial, no probe required
 
@@ -153,7 +192,9 @@ cargo run --release --bin bufsize    # expect: Sn6 RX KB4 / TX KB2 accepted
 cargo run --release --bin echo       # expect: datagrams received, 0 wrong length
 cargo run --release --bin endian     # expect: endian: PASS, 0 byte-order faults
 cargo run --release --bin latency    # expect: a worst-case cycle figure, comfortably under the 2 ms budget
-cargo run --release --bin soak       # expect: ALL OK, 0 skipped, 0 wrong-length (leave running >= 10 min)
+cargo run --release --bin soak       # expect: ALL OK, 0 skipped, 0 wrong-length, and
+                                      # host/sim.py --mode soak reporting
+                                      # HOST-DECODED SEQUENCE GAPS: 0 (leave running >= 10 min)
 ```
 
 None of this has run on real hardware yet — these are expected outcomes on
