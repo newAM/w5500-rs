@@ -27,6 +27,19 @@ use w5500_ll::aio::Registers as RegistersAsync;
 /// header.
 pub const UDP_FRAME_HEADER_LEN: usize = UdpHeader::LEN_USIZE;
 
+/// Maximum number of times `FastUdp::udp_bind` polls `Sn_SR` while waiting
+/// for it to reach the status a CLOSE or OPEN command should produce.
+///
+/// A bound exists because this was *not* always true in practice: a failed
+/// OPEN has been observed live to leave `Sn_SR` at `Closed` indefinitely,
+/// which would otherwise spin the second loop below at 100% CPU forever. On
+/// a target with no debug probe attached that is an invisible hang at
+/// initialization, before any diagnostic can print a line. 10,000 polls, at
+/// one `yield_once` per pass, is far beyond how long a real CLOSE or OPEN
+/// takes to settle (W5500 datasheet section 4.2), while still failing fast
+/// and diagnosably (`Error::SocketState`) if the socket engine is wedged.
+const SN_SR_POLL_LIMIT: u32 = 10_000;
+
 /// A W5500 UDP receive frame: the 8-byte header followed by exactly
 /// `FRAME_LEN - UDP_FRAME_HEADER_LEN` payload bytes.
 ///
@@ -144,7 +157,7 @@ impl<const FRAME_LEN: usize> UdpFrame<FRAME_LEN> {
 ///     }
 ///     # break;
 /// }
-/// # Ok::<(), w5500_hl::Error<_>>(())
+/// # Ok::<(), Error<embedded_hal::spi::ErrorKind>>(())
 /// ```
 #[maybe_async_cfg::maybe(
     sync(keep_self),
@@ -164,14 +177,34 @@ pub trait FastUdp: Registers {
     ///
     /// # Blocking
     ///
-    /// Spins on `Sn_SR` twice, yielding to the executor between polls. This is
-    /// an initialization-path cost only; the datasheet guarantees the status
-    /// changes after CLOSE and after OPEN, so neither loop is unbounded in
-    /// practice. It is a busy-yield: it does not block other tasks, but it does
+    /// Spins on `Sn_SR` twice, yielding to the executor between polls. Each
+    /// loop is bounded by `SN_SR_POLL_LIMIT` polls: a failed OPEN has been
+    /// observed to leave `Sn_SR` at `Closed` indefinitely, and an unbounded
+    /// loop here would be an invisible, unrecoverable hang at initialization
+    /// on a target with no debug probe. This is an initialization-path cost
+    /// only. It is a busy-yield: it does not block other tasks, but it does
     /// not idle the CPU either.
-    async fn udp_bind(&mut self, socket: Sn, port: u16) -> Result<(), Self::Error> {
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::SocketState`] if `Sn_SR` does not reach the expected
+    ///   status within `SN_SR_POLL_LIMIT` polls.
+    /// - [`Error::Other`] for register IO failures.
+    async fn udp_bind(&mut self, socket: Sn, port: u16) -> Result<(), Error<Self::Error>> {
         self.set_sn_cr(socket, SocketCommand::Close).await?;
-        while self.sn_sr(socket).await? != Ok(SocketStatus::Closed) {
+        let mut poll_count: u32 = 0;
+        loop {
+            let status = self.sn_sr(socket).await?;
+            if status == Ok(SocketStatus::Closed) {
+                break;
+            }
+            poll_count += 1;
+            if poll_count >= SN_SR_POLL_LIMIT {
+                return Err(Error::SocketState {
+                    expected: SocketStatus::Closed,
+                    actual: status,
+                });
+            }
             yield_once().await;
         }
 
@@ -179,7 +212,19 @@ pub trait FastUdp: Registers {
         const UDP_MODE: SocketMode = SocketMode::DEFAULT.set_protocol(Protocol::Udp);
         self.set_sn_mr(socket, UDP_MODE).await?;
         self.set_sn_cr(socket, SocketCommand::Open).await?;
-        while self.sn_sr(socket).await? != Ok(SocketStatus::Udp) {
+        let mut poll_count: u32 = 0;
+        loop {
+            let status = self.sn_sr(socket).await?;
+            if status == Ok(SocketStatus::Udp) {
+                break;
+            }
+            poll_count += 1;
+            if poll_count >= SN_SR_POLL_LIMIT {
+                return Err(Error::SocketState {
+                    expected: SocketStatus::Udp,
+                    actual: status,
+                });
+            }
             yield_once().await;
         }
         Ok(())
@@ -190,22 +235,23 @@ pub trait FastUdp: Registers {
     ///
     /// For the single-fixed-peer case. After this call use
     /// [`FastUdp::udp_send`] or [`FastUdp::udp_send_exact`] in the hot loop:
-    /// they never rewrite `Sn_DIPR`/`Sn_DPORT`, saving two SPI transactions per
+    /// they never rewrite `Sn_DIPR`/`Sn_DPORT`, saving one SPI transaction per
     /// send compared with [`FastUdp::udp_send_to`].
     async fn udp_bind_to_peer(
         &mut self,
         socket: Sn,
         port: u16,
         peer: &SocketAddrV4,
-    ) -> Result<(), Self::Error> {
+    ) -> Result<(), Error<Self::Error>> {
         self.udp_bind(socket, port).await?;
-        self.set_sn_dest(socket, peer).await
+        self.set_sn_dest(socket, peer).await?;
+        Ok(())
     }
 
     /// Send to the destination previously set by
     /// [`FastUdp::udp_bind_to_peer`] or [`w5500_ll::Registers::set_sn_dest`].
     ///
-    /// Does **not** write `Sn_DIPR`/`Sn_DPORT`, saving two SPI transactions per
+    /// Does **not** write `Sn_DIPR`/`Sn_DPORT`, saving one SPI transaction per
     /// call compared with [`FastUdp::udp_send_to`] (optimization O3).
     ///
     /// # Limitations
@@ -236,9 +282,11 @@ pub trait FastUdp: Registers {
     ///
     /// # Errors
     ///
-    /// - [`Error::OutOfMemory`] if the TX buffer cannot hold the whole payload.
-    ///   Nothing is transmitted and no pointer is advanced.
-    /// - [`Error::UnexpectedLength`] if `payload` exceeds `u16::MAX` bytes.
+    /// - [`Error::OutOfMemory`] if the TX buffer cannot hold the whole
+    ///   payload, including if `payload` exceeds `u16::MAX` bytes (the W5500
+    ///   TX buffer is at most 16 KiB per socket, so such a payload could
+    ///   never fit regardless of free space). Nothing is transmitted and no
+    ///   pointer is advanced.
     /// - [`Error::Other`] for register IO failures.
     async fn udp_send_exact(
         &mut self,
@@ -247,12 +295,7 @@ pub trait FastUdp: Registers {
     ) -> Result<(), Error<Self::Error>> {
         let payload_len: u16 = match payload.len().try_into() {
             Ok(payload_len) => payload_len,
-            Err(_) => {
-                return Err(Error::UnexpectedLength {
-                    expected: u16::MAX,
-                    received: u16::MAX,
-                });
-            }
+            Err(_) => return Err(Error::OutOfMemory),
         };
 
         let pointers = self.sn_tx_ptrs(socket).await?;
@@ -271,8 +314,8 @@ pub trait FastUdp: Registers {
     ///
     /// Writes `Sn_DIPR` and `Sn_DPORT` on **every** call. With a single fixed
     /// peer prefer [`FastUdp::udp_bind_to_peer`] once at initialization
-    /// followed by [`FastUdp::udp_send_exact`] in the loop, which saves two SPI
-    /// transactions per datagram (optimization O3).
+    /// followed by [`FastUdp::udp_send_exact`] in the loop, which saves one SPI
+    /// transaction per datagram (optimization O3).
     async fn udp_send_to(
         &mut self,
         socket: Sn,
@@ -326,6 +369,15 @@ pub trait FastUdp: Registers {
             .await?;
 
         let received_payload_len: u16 = frame.header_payload_len();
+        // Guards against a corrupted length field (e.g. a bit flip on the SPI
+        // bus) advancing `Sn_RX_RD` past `Sn_RX_WR`: once that happens
+        // `Sn_RX_RSR` reports roughly 64 KiB forever and every later call
+        // misreads garbage as a header, permanently wedging the socket. The
+        // cold path (`recv_resync_short`) and the generic receive paths below
+        // carry the same check.
+        if pointers.rsr.wrapping_sub(UdpHeader::LEN) < received_payload_len {
+            return Err(Error::WouldBlock);
+        }
         let consumed: u16 = UdpHeader::LEN.wrapping_add(received_payload_len);
         self.set_sn_rx_rd(socket, pointers.rd.wrapping_add(consumed))
             .await?;
@@ -451,6 +503,10 @@ pub trait FastUdp: Registers {
     /// - [`Error::WouldBlock`], [`Error::Other`].
     /// - [`Error::UnexpectedLength`] if the datagram does not fit in
     ///   `frame_buffer`. The datagram is consumed.
+    /// - [`Error::UnexpectedLength`] with `expected: 0, received: 0` if
+    ///   `frame_buffer` is not even large enough to hold the 8-byte header
+    ///   (`frame_buffer.len() <= UDP_FRAME_HEADER_LEN`). No register IO is
+    ///   performed in this case, so nothing is consumed.
     async fn udp_recv_from_into<'buf>(
         &mut self,
         socket: Sn,

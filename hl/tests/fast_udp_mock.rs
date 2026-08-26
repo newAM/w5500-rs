@@ -360,6 +360,61 @@ async fn recv_exact_rejects_and_discards_an_oversized_datagram() {
     w5500.free().done();
 }
 
+/// A header claiming far more payload than `Sn_RX_RSR` reports available must
+/// be rejected before the read pointer moves, not advanced blindly.
+///
+/// This is the corrupted-length-field case: a single bit flip on the SPI bus
+/// can turn a real length into something wildly larger. Advancing `Sn_RX_RD`
+/// by that bogus amount would push it past `Sn_RX_WR`; `Sn_RX_RSR` would then
+/// report roughly 64 KiB forever, and every later call would misread garbage
+/// as a header — a permanent, silent wedge with no probe to observe it. The
+/// hot path must instead treat this as "nothing usable arrived yet".
+#[tokio::test(flavor = "current_thread")]
+async fn recv_exact_rejects_an_impossible_header_length() {
+    const SOCKET: Sn = Sn::Sn6;
+    const READ_POINTER: u16 = 0x1234;
+    const RECEIVED_SIZE: u16 = 300;
+    const CLAIMED_PAYLOAD_LEN: u16 = 1000;
+
+    // rsr (300) is at least a full 188-byte frame, so the hot path runs and
+    // reads the whole frame in one transaction. The header inside it then
+    // claims a payload of 1000 bytes -- far more than `rsr` could possibly
+    // hold.
+    let mut expectations: Vec<SpiTransaction<u8>> = Vec::new();
+    let mut pointers: Vec<u8> = RECEIVED_SIZE.to_be_bytes().to_vec();
+    pointers.extend(READ_POINTER.to_be_bytes());
+    expectations.extend(read_transaction(
+        SnReg::RX_RSR0.addr(),
+        SOCKET.block(),
+        pointers,
+    ));
+
+    let mut frame_bytes: Vec<u8> = vec![192, 168, 0, 1, 0xC0, 0x30];
+    frame_bytes.extend(CLAIMED_PAYLOAD_LEN.to_be_bytes());
+    frame_bytes.extend((0..180u16).map(|index| index as u8));
+    expectations.extend(read_transaction(
+        READ_POINTER,
+        SOCKET.rx_block(),
+        frame_bytes,
+    ));
+
+    // Deliberately no RX_RD write and no CR write in the expectation list:
+    // `Mock::done()` below fails if the driver issues either, which is
+    // exactly what blindly advancing on an impossible length would do.
+
+    let mut w5500 = W5500::new(SpiMock::new(&expectations));
+    let mut frame: UdpFrame<188> = UdpFrame::new();
+
+    let result = w5500.udp_recv_exact(SOCKET, &mut frame).await;
+
+    assert!(
+        matches!(result, Err(w5500_hl::Error::WouldBlock)),
+        "got {result:?}"
+    );
+    // done() proves no RX_RD write and no RECV command were issued.
+    w5500.free().done();
+}
+
 /// A datagram shorter than the frame, fully arrived, is also a length error —
 /// and must likewise be consumed.
 #[tokio::test(flavor = "current_thread")]
