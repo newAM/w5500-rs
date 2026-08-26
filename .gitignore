@@ -27,3 +27,6 @@ out
 
 # examples/rp2040 pins its own Cargo.lock for reproducible builds
 !examples/rp2040/Cargo.lock
+
+# superpowers artifacts (specs, plans) are local-only
+docs/superpowers/
