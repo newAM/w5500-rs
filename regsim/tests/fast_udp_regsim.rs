@@ -117,40 +117,68 @@ async fn wrong_length_datagram_does_not_wedge_the_socket() {
         .await
         .expect("bind");
 
-    // Wrong length first, correct length second.
+    let mut frame: UdpFrame<FRAME_LEN> = UdpFrame::new();
+
+    // Send ONLY the short datagram first, and poll until the cold path
+    // (`recv_resync_short`) actually reports it. This is a deliberate
+    // synchronization point: `udp_recv_exact` only takes the cold path while
+    // `Sn_RX_RSR < FRAME_LEN` (188). If the correct 180-byte datagram were
+    // sent up front too, both would typically land before the first poll,
+    // `Sn_RX_RSR` would already be 375 (>= 188), and the very first call
+    // would take the *hot* path instead -- re-deriving the header at the
+    // still-unadvanced `Sn_RX_RD` and performing its own consume. That hot
+    // path would silently mask a broken cold path: both the length error and
+    // the eventual success would be observed regardless of whether
+    // `recv_resync_short` itself ever advanced `Sn_RX_RD` / issued `RECV`.
+    // Waiting here for the length error to be observed guarantees the cold
+    // path ran on its own and is the only thing that could have consumed the
+    // short datagram.
     peer_socket
         .send_to(&[0u8; 179], format!("127.0.0.1:{PORT}"))
         .expect("send short");
+
+    let mut short_datagram_attempts_remaining = 2000;
+    loop {
+        match w5500.udp_recv_exact(SOCKET, &mut frame).await {
+            Err(Error::UnexpectedLength { expected, received }) => {
+                assert_eq!(expected, 180);
+                assert_eq!(received, 179);
+                break;
+            }
+            Err(Error::WouldBlock) => {
+                short_datagram_attempts_remaining -= 1;
+                assert!(
+                    short_datagram_attempts_remaining > 0,
+                    "the short datagram never arrived"
+                );
+                std::thread::sleep(std::time::Duration::from_millis(1));
+            }
+            other => panic!("unexpected result while awaiting the short datagram: {other:?}"),
+        }
+    }
+
+    // Only now, after the cold path has run and (if the driver is correct)
+    // consumed the short datagram on its own, send the correct-length
+    // datagram and confirm the socket was left usable.
     peer_socket
         .send_to(&[0u8; 180], format!("127.0.0.1:{PORT}"))
         .expect("send correct");
 
-    let mut frame: UdpFrame<FRAME_LEN> = UdpFrame::new();
-    let mut saw_length_error = false;
-    let mut saw_success = false;
-
-    for _ in 0..2000 {
+    let mut correct_datagram_attempts_remaining = 2000;
+    loop {
         match w5500.udp_recv_exact(SOCKET, &mut frame).await {
-            Ok(()) => {
-                saw_success = true;
-                break;
+            Ok(()) => break,
+            Err(Error::WouldBlock) => {
+                correct_datagram_attempts_remaining -= 1;
+                assert!(
+                    correct_datagram_attempts_remaining > 0,
+                    "the socket wedged: the 180-byte datagram never arrived"
+                );
+                std::thread::sleep(std::time::Duration::from_millis(1));
             }
-            Err(Error::UnexpectedLength { expected, received }) => {
-                assert_eq!(expected, 180);
-                assert_eq!(received, 179);
-                saw_length_error = true;
+            Err(other) => {
+                panic!("unexpected result while awaiting the correct datagram: {other:?}")
             }
-            Err(Error::WouldBlock) => std::thread::sleep(std::time::Duration::from_millis(1)),
-            Err(other) => panic!("unexpected error: {other:?}"),
         }
     }
-
-    assert!(
-        saw_length_error,
-        "the 179-byte datagram should have been rejected"
-    );
-    assert!(
-        saw_success,
-        "the socket wedged: the 180-byte datagram never arrived"
-    );
 }
