@@ -96,6 +96,7 @@
 //! [Wiznet W5500]: https://docs.wiznet.io/Product/iEthernet/W5500/overview
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![cfg_attr(not(test), no_std)]
+#![allow(async_fn_in_trait)] // https://github.com/rust-embedded/embedded-hal/pull/515#issuecomment-1763525962
 
 mod hostname;
 pub mod io;
