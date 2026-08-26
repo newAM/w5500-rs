@@ -110,6 +110,11 @@ pub mod payload {
 }
 
 /// Encode 8 motor commands as 32 little-endian bytes.
+///
+/// Used by `echo`, `endian` and `latency` for the production reply format.
+/// `soak` does **not** use this: its reply carries telemetry for the host's
+/// independent cross-check instead of motor commands. See
+/// `soak::encode_diagnostic_reply`.
 pub fn encode_reply(commands: &[f32; 8]) -> [u8; REPLY_LEN] {
     let mut reply: [u8; REPLY_LEN] = [0; REPLY_LEN];
     for (index, command) in commands.iter().enumerate() {
