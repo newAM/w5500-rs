@@ -13,6 +13,7 @@
 #![no_main]
 
 #[path = "../common.rs"]
+#[allow(dead_code)]
 mod common;
 
 use embassy_executor::Spawner;
