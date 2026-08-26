@@ -168,6 +168,20 @@ pub enum Error<E> {
     ///
     /// [`nb`]: (https://docs.rs/nb/latest/nb/index.html)
     WouldBlock,
+    /// A socket did not reach the expected state within a bounded number of
+    /// polls.
+    ///
+    /// Returned by `FastUdp::udp_bind` when `Sn_SR` (W5500 datasheet section
+    /// 4.2) fails to settle at the status a CLOSE or OPEN command should
+    /// produce. A failed OPEN can leave `Sn_SR` at `Closed` indefinitely, so
+    /// this is reported rather than polled forever.
+    SocketState {
+        /// The status the caller was waiting for.
+        expected: SocketStatus,
+        /// The last status actually observed, or the raw byte if it did not
+        /// decode to a known [`SocketStatus`].
+        actual: Result<SocketStatus, u8>,
+    },
     /// Errors from the [`Registers`] trait implementation.
     Other(E),
 }

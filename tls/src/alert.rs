@@ -268,6 +268,10 @@ impl AlertDescription {
                 error!("W5500 unexpectedly blocked");
                 AlertDescription::InternalError
             }
+            // unreachable from this crate: TLS never calls `FastUdp::udp_bind`.
+            // Kept exhaustive because `w5500_hl::Error` is not
+            // `#[non_exhaustive]`.
+            w5500_hl::Error::SocketState { .. } => AlertDescription::InternalError,
         }
     }
 }
