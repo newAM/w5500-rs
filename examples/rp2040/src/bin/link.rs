@@ -77,7 +77,8 @@ async fn main(spawner: Spawner) {
             Err(error) => error!("GAR read failed: {error:?}"),
         }
         match w5500.shar().await {
-            Ok(mac) => info!("SHAR  = {mac}"),
+            Ok(mac) if mac == common::MAC => info!("SHAR  = {mac} (matches)"),
+            Ok(mac) => error!("SHAR  = {mac}, expected {}", common::MAC),
             Err(error) => error!("SHAR read failed: {error:?}"),
         }
 
