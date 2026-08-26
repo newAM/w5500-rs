@@ -24,6 +24,7 @@
 //! * `defmt`: Passthrough to [`w5500-ll`].
 //! * `eh0`: Passthrough to [`w5500-ll`].
 //! * `eh1`: Passthrough to [`w5500-ll`].
+//! * `eha1`: Enable the asynchronous `FastUdpAsync` trait. Passthrough to [`w5500-ll`].
 //!
 //! # Examples
 //!
@@ -100,6 +101,7 @@ mod hostname;
 pub mod io;
 mod tcp;
 mod udp;
+pub mod fast_udp;
 
 pub use hostname::{Hostname, TryFromStrError};
 pub use ll::net;

@@ -14,15 +14,18 @@ categories = ["embedded", "hardware-support", "no-std"]
 defmt = ["w5500-ll/defmt", "dep:defmt"]
 eh0 = ["w5500-ll/eh0"]
 eh1 = ["w5500-ll/eh1"]
+eha1 = ["w5500-ll/eha1"]
 
 [dependencies]
 defmt = { version = "1.0.1", features = ["ip_in_core"], optional = true }
 w5500-ll = { path = "../ll", version = "0.13.0" }
+maybe-async-cfg = "=0.2.4"
 
 [dev-dependencies]
 embedded-hal = "1"
-w5500-ll = { path = "../ll", version = "0.13.0", features = ["eh1", "defmt"] }
+w5500-ll = { path = "../ll", version = "0.13.0", features = ["eh1", "eha1", "defmt"] }
 ehm = { package = "embedded-hal-mock", version = "0.11.1", features = ["eh0", "eh1", "embedded-hal-async"] }
+tokio = { version = "1.21.2", features = ["rt", "macros"] }
 
 [package.metadata.docs.rs]
 all-features = true
