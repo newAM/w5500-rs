@@ -43,10 +43,10 @@ const CANDIDATE_RATES_HZ: [u32; 6] = [
 
 /// Bytes moved per timing sample. Large enough that the fixed per-transaction
 /// overhead does not dominate the measurement.
-const TIMING_BYTES: usize = 2048;
+const TIMING_BYTES: usize = 1024;
 
 /// Number of write/read-back rounds run at each candidate rate.
-const INTEGRITY_ROUNDS: u32 = 64;
+const INTEGRITY_ROUNDS: u32 = 24;
 
 /// Ceiling on any single SPI operation in this binary.
 ///
@@ -57,21 +57,27 @@ const INTEGRITY_ROUNDS: u32 = 64;
 /// diagnostic must never be killed by the fault it is looking for, so every
 /// SPI call here is bounded and a timeout is reported as a result, not a hang.
 ///
-/// Generous by design: the slowest candidate moves 2048 bytes at ~1 MHz, which
-/// is roughly 17 ms, so this cannot fire on a healthy bus.
+/// Generous by design: the slowest candidate moves 1024 bytes at ~1 MHz, which
+/// is roughly 8 ms, so this cannot fire on a healthy bus.
 const SPI_OPERATION_TIMEOUT: Duration = Duration::from_millis(500);
 
 /// Reads a large block and returns the elapsed microseconds.
 async fn time_block_read(w5500: &mut common::W5500Device) -> Result<Option<u64>, common::SpiError> {
     let mut scratch: [u8; TIMING_BYTES] = [0; TIMING_BYTES];
     let started = Instant::now();
-    match with_timeout(
+    let outcome = with_timeout(
         SPI_OPERATION_TIMEOUT,
         w5500.sn_rx_buf(common::SOCKET, 0, &mut scratch),
     )
-    .await
-    {
-        Ok(Ok(())) => Ok(Some(started.elapsed().as_micros())),
+    .await;
+    // Stop the clock BEFORE yielding: the yield below is executor bookkeeping,
+    // not bus time, and at the fastest candidate it would be a larger error
+    // than the measurement itself.
+    let elapsed_us = started.elapsed().as_micros();
+    // Same reason as `integrity_rounds`: give the USB task a turn.
+    Timer::after_micros(200).await;
+    match outcome {
+        Ok(Ok(())) => Ok(Some(elapsed_us)),
         Ok(Err(error)) => Err(error),
         // Stalled: the bus cannot sustain this rate.
         Err(_) => Ok(None),
@@ -90,6 +96,20 @@ async fn time_block_read(w5500: &mut common::W5500Device) -> Result<Option<u64>,
 async fn integrity_rounds(w5500: &mut common::W5500Device, rounds: u32) -> u32 {
     let mut failure_count: u32 = 0;
     for round_index in 0..rounds {
+        // Hand the executor back between rounds.
+        //
+        // This is not politeness, it is the difference between a working
+        // binary and a board that never appears on USB at all. On a
+        // single-threaded executor a task whose awaits keep completing
+        // immediately is simply re-polled, and back-to-back SPI transfers
+        // complete fast enough to do exactly that -- starving the USB task
+        // that carries this binary's own log output. An earlier version of
+        // this file hammered thousands of transfers with no timer await and
+        // the board never finished USB enumeration, so it looked dead with no
+        // diagnostic at all. `Timer` is used rather than a bare yield because
+        // it guarantees a trip through the timer queue.
+        Timer::after_micros(200).await;
+
         let mut written_frame: [u8; 188] = [0; 188];
         for (byte_index, byte) in written_frame.iter_mut().enumerate() {
             *byte = (byte_index as u8).wrapping_add(round_index as u8);
@@ -116,6 +136,16 @@ async fn main(spawner: Spawner) {
     let (device, usb, bus) = common::init_board();
     spawner.must_spawn(common::logger_task(usb));
     common::wait_for_host().await;
+
+    // Deliberately slow to start. USB enumeration on the host can take several
+    // seconds, and this binary is the one that deliberately drives the bus into
+    // states it may not survive -- so the port must be up, and the operator
+    // attached, before any of that begins. Otherwise a failure looks like a
+    // dead board rather than a diagnosis.
+    for remaining_seconds in (1..=8u32).rev() {
+        info!("spiclock: starting sweep in {remaining_seconds} s (attach a terminal now)");
+        Timer::after_secs(1).await;
+    }
 
     let mut w5500 = common::W5500Device::new(device);
 

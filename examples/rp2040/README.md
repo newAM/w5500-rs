@@ -40,6 +40,19 @@ wire, not the rate requested, and sweeps a range of candidate rates to find the
 highest one that still round-trips 188-byte frames cleanly. Do not assume the
 requested value in the source is what the peripheral produced — measure it.
 
+`spiclock` waits 8 seconds before it starts, counting down over the serial
+port. That is deliberate: USB enumeration takes a few seconds, and this is the
+one binary that drives the bus into states it may not survive, so the port must
+be up and a terminal attached before any of that begins.
+
+It also yields to the executor between SPI transfers. On a single-threaded
+embassy executor a task whose awaits keep completing immediately is simply
+re-polled, and back-to-back DMA transfers do exactly that — starving the USB
+task that carries this binary's own output. An earlier version hammered
+thousands of transfers with no timer await, and the board never finished
+enumerating: it looked dead, with no diagnostic at all. If you extend this
+binary, keep a `Timer` await in any loop that issues many transfers.
+
 Every SPI operation in `spiclock` is wrapped in a timeout. A clock the board
 cannot sustain does not return an error: the transfer simply stalls, the DMA
 future never completes, and the executor stops polling — which starves the USB
