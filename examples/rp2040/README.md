@@ -275,10 +275,51 @@ cargo run --release --bin soak       # expect: ALL OK, 0 skipped, 0 wrong-length
                                       # HOST-DECODED SEQUENCE GAPS: 0 (leave running >= 10 min)
 ```
 
-None of this has run on real hardware yet — these are expected outcomes on
-working hardware, not measured results. `latency` in particular exists to
-produce the acceptance-criterion number; there is no figure to quote until it
-has been run.
+## Measured results
+
+Run on hardware on 2026-08-27: RP2040 + W5500 at 31.25 MHz SPI, direct link to a
+Windows host. Every binary above passes. These are measurements, not estimates.
+
+| Measurement | Result |
+|---|---|
+| `identify` | `VERSIONR = 0x04`, register round trip OK |
+| `link` | UP, 100 Mbps, full duplex |
+| `endian` | PASS — 0 byte-order faults |
+| `latency` worst cycle | **402 µs** (receive 218 µs, send 181 µs) |
+| `soak` 600 s @ 500 Hz | **297,957 datagrams, 0 lost**, worst cycle **612 µs** |
+| `soak` 60 s @ 1000 Hz | **59,590 datagrams, 0 lost**, worst cycle **996 µs** |
+
+The soak verdict rests on both ends agreeing independently: the firmware's own
+`rx` total equalled the host's `sent` total exactly (297,957 = 297,957) and the
+host's separately-decoded sequence-gap count was 0. `skipped`, `wrong-length`,
+`other` and `socket errors` were all 0 throughout.
+
+Worst cycle settled rather than drifted — 447 µs early, then 606, 609, 611, and
+612 µs, gaining a single microsecond over the final 460 seconds. That is the
+tail of the distribution filling in, not a leak.
+
+**At 1000 Hz — twice the design rate — it still loses nothing**, at half the
+cycle budget. About half the datagrams are deliberately discarded there
+(`drained-extra`), which is correct: a 2 ms cycle fed at 1 kHz receives two
+datagrams per cycle and drops the older one to stay current.
+
+### On the 612 µs figure
+
+The design estimate was ~107 µs, derived from byte counts plus a per-transaction
+allowance. The real number is roughly 6× that, and the difference is embassy's
+per-SPI-transaction cost on a Cortex-M0+ — DMA setup, the shared-bus mutex, and
+the executor round trip — which dominates the ~53 µs of actual bus time in a
+188-byte frame. The estimate was wrong in the safe direction, and 612 µs is
+still under a third of the 2 ms budget, but do not size a tighter cycle from the
+byte-count arithmetic alone: measure it.
+
+### SPI clock ceiling
+
+`spiclock` on this board: clean through 31.25 MHz, and `VERSIONR` reads `0x02`
+instead of `0x04` at 62.5 MHz — corrupt, so that rate is unusable here. It also
+confirmed the divider behaviour: 31.25 MHz and 50 MHz requests measured within
+0.6% of each other, i.e. the same rate, because 50 MHz rounds down. 31.25 MHz is
+the highest clean rate and is what `common::SPI_FREQUENCY_HZ` uses.
 
 ## Interpreting failures
 
