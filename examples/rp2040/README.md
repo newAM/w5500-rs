@@ -53,6 +53,15 @@ thousands of transfers with no timer await, and the board never finished
 enumerating: it looked dead, with no diagnostic at all. If you extend this
 binary, keep a `Timer` await in any loop that issues many transfers.
 
+One caveat on reading its output: `measured` is **end-to-end throughput, not
+the SCK rate**. It divides the bytes moved by the duration of the whole call, so
+per-transfer DMA setup and chip-select framing are amortised into the figure and
+it always reads below the true clock — on this hardware roughly 75-85% of it.
+That is fine for what the binary is for: comparing candidate rates and finding
+the ceiling. Do not quote it as the bus frequency. Two requested rates that
+measure within a percent of each other are the same rate, which is how a
+request the divider cannot reach reveals itself.
+
 Every SPI operation in `spiclock` is wrapped in a timeout. A clock the board
 cannot sustain does not return an error: the transfer simply stalls, the DMA
 future never completes, and the executor stops polling — which starves the USB

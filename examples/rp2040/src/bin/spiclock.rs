@@ -223,6 +223,11 @@ async fn main(spawner: Spawner) {
         info!("spiclock: use the highest rate with all rounds clean in common::SPI_FREQUENCY_HZ");
         info!("note: a request the divider cannot reach is rounded DOWN, so");
         info!("      'requested' and 'measured' differing is expected, not a fault");
+        info!("note: 'measured' is end-to-end throughput, not the SCK rate. It");
+        info!("      divides the bytes moved by the WHOLE call, so per-transfer");
+        info!("      DMA setup and chip-select framing are amortised into it and");
+        info!("      it always reads BELOW the true clock. Use it to compare rates");
+        info!("      and find the ceiling, not as an absolute SCK measurement.");
 
         // Leave the bus at the crate default, so this binary is not
         // order-dependent with respect to the ones after it.
