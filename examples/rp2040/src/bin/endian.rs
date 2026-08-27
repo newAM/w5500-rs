@@ -92,8 +92,8 @@ async fn main(spawner: Spawner) {
                 let payload = frame.payload();
 
                 // Check 1: the origin address, decoded from the big-endian
-                // W5500 receive header. A little-endian misread of port 49200
-                // (0xC030) would give 12480 (0x30C0).
+                // W5500 receive header. A little-endian misread of port 8888
+                // (0x22B8) would give 47138 (0xB822).
                 let origin = frame.origin();
                 let origin_ok = origin.port() == common::PEER.port();
                 if !origin_ok {

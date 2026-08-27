@@ -25,7 +25,7 @@ mod common;
 
 use embassy_executor::Spawner;
 use embassy_rp::spi::{Config as SpiConfig, Phase, Polarity};
-use embassy_time::{Instant, Timer};
+use embassy_time::{Duration, Instant, Timer, with_timeout};
 use log::{error, info, warn};
 use panic_halt as _;
 use w5500_ll::{VERSION, aio::Registers};
@@ -48,12 +48,34 @@ const TIMING_BYTES: usize = 2048;
 /// Number of write/read-back rounds run at each candidate rate.
 const INTEGRITY_ROUNDS: u32 = 64;
 
+/// Ceiling on any single SPI operation in this binary.
+///
+/// A clock the board cannot sustain does not politely return an error: the
+/// transfer stalls, the DMA future never resolves, and the executor stops
+/// polling — which starves the USB logger and makes the serial port vanish, so
+/// the operator sees the board "die" with no clue which rate did it. A
+/// diagnostic must never be killed by the fault it is looking for, so every
+/// SPI call here is bounded and a timeout is reported as a result, not a hang.
+///
+/// Generous by design: the slowest candidate moves 2048 bytes at ~1 MHz, which
+/// is roughly 17 ms, so this cannot fire on a healthy bus.
+const SPI_OPERATION_TIMEOUT: Duration = Duration::from_millis(500);
+
 /// Reads a large block and returns the elapsed microseconds.
-async fn time_block_read(w5500: &mut common::W5500Device) -> Result<u64, common::SpiError> {
+async fn time_block_read(w5500: &mut common::W5500Device) -> Result<Option<u64>, common::SpiError> {
     let mut scratch: [u8; TIMING_BYTES] = [0; TIMING_BYTES];
     let started = Instant::now();
-    w5500.sn_rx_buf(common::SOCKET, 0, &mut scratch).await?;
-    Ok(started.elapsed().as_micros())
+    match with_timeout(
+        SPI_OPERATION_TIMEOUT,
+        w5500.sn_rx_buf(common::SOCKET, 0, &mut scratch),
+    )
+    .await
+    {
+        Ok(Ok(())) => Ok(Some(started.elapsed().as_micros())),
+        Ok(Err(error)) => Err(error),
+        // Stalled: the bus cannot sustain this rate.
+        Err(_) => Ok(None),
+    }
 }
 
 /// Writes a pattern to the socket TX buffer and reads it back, `rounds` times.
@@ -74,16 +96,16 @@ async fn integrity_rounds(w5500: &mut common::W5500Device, rounds: u32) -> u32 {
         }
         let mut read_back_frame: [u8; 188] = [0; 188];
 
-        let round_trip_result = async {
+        let round_trip_result = with_timeout(SPI_OPERATION_TIMEOUT, async {
             w5500.set_sn_tx_buf(common::SOCKET, 0, &written_frame).await?;
             w5500.sn_tx_buf(common::SOCKET, 0, &mut read_back_frame).await
-        }
+        })
         .await;
 
         match round_trip_result {
-            Ok(()) if read_back_frame == written_frame => {}
-            Ok(()) => failure_count += 1,
-            Err(_) => failure_count += 1,
+            Ok(Ok(())) if read_back_frame == written_frame => {}
+            // A stall counts as a failure: an unusable rate is not a clean one.
+            Ok(Ok(())) | Ok(Err(_)) | Err(_) => failure_count += 1,
         }
     }
     failure_count
@@ -101,6 +123,11 @@ async fn main(spawner: Spawner) {
         info!("--- spiclock: measuring achieved rate and integrity ceiling ---");
 
         for requested_hz in CANDIDATE_RATES_HZ {
+            // Printed BEFORE the switch, and flushed, so that if this rate does
+            // wedge the bus the last line on the wire names the culprit.
+            info!("trying {requested_hz} Hz ...");
+            Timer::after_millis(50).await;
+
             let mut spi_config = SpiConfig::default();
             spi_config.frequency = requested_hz;
             spi_config.phase = Phase::CaptureOnFirstTransition;
@@ -108,22 +135,38 @@ async fn main(spawner: Spawner) {
             bus.lock().await.set_config(&spi_config);
 
             // Confirm the chip still answers at all before trusting a timing.
-            match w5500.version().await {
+            let version_result = with_timeout(SPI_OPERATION_TIMEOUT, w5500.version()).await;
+            let version_result = match version_result {
+                Ok(inner) => inner,
+                Err(_) => {
+                    error!(
+                        "{requested_hz} Hz: VERSIONR read STALLED -- the bus cannot sustain this rate"
+                    );
+                    restore_default_clock(bus).await;
+                    continue;
+                }
+            };
+            match version_result {
                 Ok(version) if version == VERSION => {}
                 Ok(version) => {
                     warn!(
                         "{requested_hz} Hz: VERSIONR = 0x{version:02X} -- chip not responding correctly"
                     );
+                    restore_default_clock(bus).await;
                     continue;
                 }
                 Err(error) => {
                     warn!("{requested_hz} Hz: VERSIONR read failed: {error:?}");
+                    restore_default_clock(bus).await;
                     continue;
                 }
             }
 
             match time_block_read(&mut w5500).await {
-                Ok(elapsed_us) if elapsed_us > 0 => {
+                Ok(None) => error!(
+                    "{requested_hz} Hz: block read STALLED -- the bus cannot sustain this rate"
+                ),
+                Ok(Some(elapsed_us)) if elapsed_us > 0 => {
                     // Bits moved includes the 3-byte VDM header.
                     let bits_moved = ((TIMING_BYTES + 3) * 8) as u64;
                     let measured_hz = bits_moved.saturating_mul(1_000_000) / elapsed_us;
@@ -139,23 +182,35 @@ async fn main(spawner: Spawner) {
                         );
                     }
                 }
-                Ok(_) => warn!("{requested_hz} Hz: timing too short to measure"),
+                Ok(Some(_)) => warn!("{requested_hz} Hz: timing too short to measure"),
                 Err(error) => warn!("{requested_hz} Hz: block read failed: {error:?}"),
             }
+
+            // Never carry a suspect clock into the next candidate's probe.
+            restore_default_clock(bus).await;
         }
 
         info!("spiclock: use the highest rate with all rounds clean in common::SPI_FREQUENCY_HZ");
         info!("note: a request the divider cannot reach is rounded DOWN, so");
         info!("      'requested' and 'measured' differing is expected, not a fault");
 
-        // Leave the bus at the crate default before the next sweep, so this
-        // binary is not order-dependent with respect to the ones after it.
-        let mut restore_config = SpiConfig::default();
-        restore_config.frequency = common::SPI_FREQUENCY_HZ;
-        restore_config.phase = Phase::CaptureOnFirstTransition;
-        restore_config.polarity = Polarity::IdleLow;
-        bus.lock().await.set_config(&restore_config);
+        // Leave the bus at the crate default, so this binary is not
+        // order-dependent with respect to the ones after it.
+        restore_default_clock(bus).await;
 
         Timer::after_secs(5).await;
     }
+}
+
+/// Puts the bus back on [`common::SPI_FREQUENCY_HZ`].
+///
+/// Called after every candidate rate, not just at the end of a sweep: a rate
+/// the board cannot sustain must not still be in force when the next probe
+/// runs, or one bad rate would make every rate after it look broken.
+async fn restore_default_clock(bus: &'static common::Bus) {
+    let mut restore_config = SpiConfig::default();
+    restore_config.frequency = common::SPI_FREQUENCY_HZ;
+    restore_config.phase = Phase::CaptureOnFirstTransition;
+    restore_config.polarity = Polarity::IdleLow;
+    bus.lock().await.set_config(&restore_config);
 }

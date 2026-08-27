@@ -310,10 +310,13 @@ def report_soak(sent_count, reply_count, socket_error_count, device_last_sequenc
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--mode", choices=["echo", "endian", "soak"], default="echo")
-    parser.add_argument("--device", default="192.168.0.10")
-    parser.add_argument("--port", type=int, default=49200)
-    parser.add_argument("--bind", default="192.168.0.1")
-    parser.add_argument("--bind-port", type=int, default=49200)
+    # 8888 rather than a high port: Windows reserves large UDP ranges for
+    # Hyper-V (see `netsh int ipv4 show excludedportrange protocol=udp`), and a
+    # bind inside one fails with no obvious cause. 8888 is outside them.
+    parser.add_argument("--device", default="192.168.0.10", help="the RP2040's IP")
+    parser.add_argument("--port", type=int, default=8888, help="the RP2040's UDP port")
+    parser.add_argument("--bind", default="192.168.0.1", help="this PC's IP on the link")
+    parser.add_argument("--bind-port", type=int, default=8888, help="this PC's UDP port")
     parser.add_argument("--rate", type=int, default=500)
     parser.add_argument("--count", type=int, default=0)
     parser.add_argument("--seconds", type=float, default=0.0)

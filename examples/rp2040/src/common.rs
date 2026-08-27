@@ -57,8 +57,8 @@ pub const MAC: Eui48Addr = Eui48Addr::new(0x02, 0x00, 0x00, 0x00, 0x00, 0x10);
 pub const DEVICE_IP: Ipv4Addr = Ipv4Addr::new(192, 168, 0, 10);
 pub const SUBNET: Ipv4Addr = Ipv4Addr::new(255, 255, 255, 0);
 pub const GATEWAY: Ipv4Addr = Ipv4Addr::new(192, 168, 0, 1);
-pub const PEER: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::new(192, 168, 0, 1), 49200);
-pub const DEVICE_PORT: u16 = 49200;
+pub const PEER: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::new(192, 168, 0, 1), 8888);
+pub const DEVICE_PORT: u16 = 8888;
 pub const SOCKET: Sn = Sn::Sn6;
 
 /// Inbound payload length. Anything else is a protocol error.

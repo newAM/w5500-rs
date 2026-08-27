@@ -40,14 +40,70 @@ wire, not the rate requested, and sweeps a range of candidate rates to find the
 highest one that still round-trips 188-byte frames cleanly. Do not assume the
 requested value in the source is what the peripheral produced — measure it.
 
+Every SPI operation in `spiclock` is wrapped in a timeout. A clock the board
+cannot sustain does not return an error: the transfer simply stalls, the DMA
+future never completes, and the executor stops polling — which starves the USB
+logger, so the serial port vanishes and the board looks dead with no clue which
+rate did it. Bounding each call turns that into a printed `STALLED` line, and
+the bus is restored to the default rate after every candidate so one bad rate
+cannot make the rates after it look broken. A diagnostic should not be killed by
+the fault it is looking for.
+
 ## Network
 
-Device `192.168.0.10/24`, gateway `192.168.0.1`, socket 6, port 49200. Peer
-(the peer application, or `host/sim.py`) at `192.168.0.1:49200`. Inbound datagrams are
-exactly 180 bytes; outbound are exactly 32 bytes. `echo`, `endian` and
-`latency` fill those 32 bytes with the application's 8xf32 control-value format.
-**`soak` does not** — see [`soak`'s diagnostic reply](#soaks-diagnostic-reply)
-below.
+There are two machines on this link and it matters which address is which.
+
+| | Address | UDP port |
+|---|---|---|
+| **The board** (RP2040 + W5500) | `192.168.0.10` | `8888` |
+| **Your PC** (running `host/sim.py`) | `192.168.0.1` | `8888` |
+
+The board's address is compiled in — `common::DEVICE_IP`, `common::DEVICE_PORT`.
+It does **not** use DHCP, so it has that address the moment it boots and nothing
+needs to assign it one. `common::PEER` is `192.168.0.1:8888`, meaning the board
+sends every reply to your PC at that address.
+
+**Your PC does not get `192.168.0.1` automatically.** Nothing on this link hands
+out addresses, so you must set it statically on whichever interface the cable is
+plugged into — the USB-Ethernet adapter or NIC facing the board:
+
+- **Windows:** Settings → Network → *that adapter* → Edit IP assignment →
+  Manual → IPv4 on → IP `192.168.0.1`, subnet mask `255.255.255.0`. Leave
+  gateway and DNS blank.
+  Or: `netsh interface ip set address name="Ethernet" static 192.168.0.1 255.255.255.0`
+- **Linux:** `sudo ip addr add 192.168.0.1/24 dev eth0`
+- **macOS:** System Settings → Network → *that adapter* → Details → TCP/IP →
+  Configure IPv4: Manually → `192.168.0.1`, mask `255.255.255.0`
+
+A direct board-to-PC cable is fine; modern NICs auto-MDI-X, so no crossover
+cable is needed. If you go through a switch, keep the subnet clear of a router
+already using `192.168.0.x`, or change all three constants together.
+
+Then `host/sim.py` needs no arguments — its defaults already match the table:
+it binds `192.168.0.1:8888` and sends to `192.168.0.10:8888`. Override with
+`--bind` / `--bind-port` (your PC) and `--device` / `--port` (the board) if you
+changed the constants.
+
+### Why port 8888
+
+Not an arbitrary choice. Windows reserves large UDP ranges for Hyper-V, and a
+bind inside one fails with no useful error — the earlier default, `49200`, sits
+inside `49152-49251` on a typical Windows host and simply would not bind. Check
+yours with:
+
+```sh
+netsh int ipv4 show excludedportrange protocol=udp
+```
+
+`8888` is outside those ranges. If you change it, change `common::DEVICE_PORT`
+and `common::PEER` together and re-flash — the board's port is compiled in.
+
+### Payload sizes
+
+Inbound datagrams are exactly 180 bytes; outbound are exactly 32 bytes. `echo`,
+`endian` and `latency` fill those 32 bytes with the application's 8xf32
+control-value format. **`soak` does not** — see
+[`soak`'s diagnostic reply](#soaks-diagnostic-reply) below.
 
 Only `soak` and `bufsize` size the socket buffers (socket 6 gets 4 KiB RX / 2
 KiB TX, every other socket zeroed — see [Design notes](#design-notes)).
@@ -62,7 +118,7 @@ above it pass, and each needs progressively more of the setup connected.
 | Binary | Needs | What it proves |
 |---|---|---|
 | `identify` | SPI wiring only | `VERSIONR == 0x04` and a socket register round trip — the data lines carry arbitrary bytes, not a stuck level. **Run first on new hardware.** |
-| `spiclock` | SPI wiring only | The rate actually achieved vs. requested, and the highest rate that stays clean over 64 bulk round trips. |
+| `spiclock` | SPI wiring only | The rate actually achieved vs. requested, and the highest rate that stays clean over 64 bulk round trips. Every SPI call is time-bounded, so a rate the board cannot sustain is reported as `STALLED` rather than hanging the binary. |
 | `link` | Ethernet cable | PHY link/speed/duplex, and the network registers (`SHAR`/`SIPR`/`SUBR`/`GAR`) read back from the chip rather than trusted from the write. |
 | `bufsize` | SPI wiring only | Per-socket buffer allocation is accepted by the chip. |
 | `echo` | Cable + `sim.py` | First end-to-end datagram: receive 180 bytes, send 32 back. |
@@ -186,7 +242,7 @@ the report loop.
 
 ```sh
 cargo run --release --bin identify   # expect: VERSIONR = 0x04, socket round trip OK
-cargo run --release --bin spiclock   # expect: measured rate per candidate, integrity rounds clean
+cargo run --release --bin spiclock   # expect: measured rate per candidate; STALLED above the board's ceiling is a result, not a crash
 cargo run --release --bin link       # expect: link: UP, speed/duplex reported
 cargo run --release --bin bufsize    # expect: Sn6 RX KB4 / TX KB2 accepted
 cargo run --release --bin echo       # expect: datagrams received, 0 wrong length
@@ -208,6 +264,7 @@ has been run.
 |---|---|
 | `VERSIONR` reads `0x00`/`0xFF` | Data-line wiring (MISO/MOSI swapped or floating), CS, or power |
 | `identify` passes, `spiclock` corrupts above some rate | Bus over-clocked for this board's trace lengths — back off to the last clean rate |
+| `spiclock` reports `STALLED` at some rate | The bus stops transferring entirely there. Same remedy: use the highest rate below it that is clean |
 | `link: DOWN` | Cable, magnetics, or PHY power — nothing to do with this crate |
 | `echo` times out while `link` is UP | IP/peer configuration mismatch, or `host/sim.py` is not running |
 | `echo` passes but `endian` fails | A real byte-order bug in the driver or payload handling |

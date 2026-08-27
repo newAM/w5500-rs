@@ -140,10 +140,10 @@ impl<const FRAME_LEN: usize> UdpFrame<FRAME_LEN> {
 ///     },
 /// };
 ///
-/// const PEER: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::new(192, 168, 0, 1), 49200);
+/// const PEER: SocketAddrV4 = SocketAddrV4::new(Ipv4Addr::new(192, 168, 0, 1), 8888);
 ///
 /// // Destination written once, never in the loop.
-/// w5500.udp_bind_to_peer(Sn6, 49200, &PEER)?;
+/// w5500.udp_bind_to_peer(Sn6, 8888, &PEER)?;
 ///
 /// // Frame allocated once, reused every cycle.
 /// let mut frame: UdpFrame<188> = UdpFrame::new();
