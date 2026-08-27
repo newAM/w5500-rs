@@ -14,12 +14,13 @@ use embassy_sync::mutex::Mutex;
 use embassy_time::Timer;
 use static_cell::StaticCell;
 use w5500_ll::{
-    Sn,
     net::{Eui48Addr, Ipv4Addr, SocketAddrV4},
+    Sn,
 };
 
 pub type Bus = Mutex<NoopRawMutex, Spi<'static, SPI0, Async>>;
-pub type Device = SharedSpiDevice<'static, NoopRawMutex, Spi<'static, SPI0, Async>, Output<'static>>;
+pub type Device =
+    SharedSpiDevice<'static, NoopRawMutex, Spi<'static, SPI0, Async>, Output<'static>>;
 pub type W5500Device = w5500_ll::eh1::vdm::W5500<Device>;
 pub type UsbDriver = Driver<'static, USB>;
 

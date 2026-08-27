@@ -28,7 +28,7 @@ use embassy_executor::Spawner;
 use embassy_time::Timer;
 use log::{error, info};
 use panic_halt as _;
-use w5500_ll::{BufferSize, Sn, aio::Registers};
+use w5500_ll::{aio::Registers, BufferSize, Sn};
 
 const RX_ALLOCATION: BufferSize = BufferSize::KB4;
 const TX_ALLOCATION: BufferSize = BufferSize::KB2;
@@ -85,12 +85,17 @@ async fn main(spawner: Spawner) {
                     }
                 }
                 (rx_result, tx_result) => {
-                    error!("{socket:?}: buffer size read back invalid: {rx_result:?} {tx_result:?}");
+                    error!(
+                        "{socket:?}: buffer size read back invalid: {rx_result:?} {tx_result:?}"
+                    );
                 }
             }
         }
 
-        info!("bufsize: socket {:?} has RX {RX_ALLOCATION:?}, TX {TX_ALLOCATION:?}", common::SOCKET);
+        info!(
+            "bufsize: socket {:?} has RX {RX_ALLOCATION:?}, TX {TX_ALLOCATION:?}",
+            common::SOCKET
+        );
         Timer::after_secs(5).await;
     }
 }

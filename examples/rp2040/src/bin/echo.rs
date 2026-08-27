@@ -23,8 +23,8 @@ use embassy_time::{Duration, Ticker, Timer};
 use log::{error, info, warn};
 use panic_halt as _;
 use w5500_hl::{
-    Error,
     fast_udp::{FastUdpAsync, UdpFrame},
+    Error,
 };
 use w5500_ll::aio::Registers;
 

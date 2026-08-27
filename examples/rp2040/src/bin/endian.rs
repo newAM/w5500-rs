@@ -32,15 +32,19 @@ use embassy_time::{Duration, Ticker, Timer};
 use log::{error, info, warn};
 use panic_halt as _;
 use w5500_hl::{
-    Error,
     fast_udp::{FastUdpAsync, UdpFrame},
+    Error,
 };
 use w5500_ll::aio::Registers;
 
 /// f32 equality within a tolerance, so a soft-float rounding difference is not
 /// reported as an endianness fault. A byte-order error is never this close.
 fn approximately_equal(left: f32, right: f32) -> bool {
-    let difference = if left > right { left - right } else { right - left };
+    let difference = if left > right {
+        left - right
+    } else {
+        right - left
+    };
     difference < 0.0001
 }
 
@@ -114,9 +118,7 @@ async fn main(spawner: Spawner) {
                             .enumerate()
                         {
                             if !approximately_equal(*actual, *expected) {
-                                error!(
-                                    "endian: pattern[{index}] = {actual}, expected {expected}"
-                                );
+                                error!("endian: pattern[{index}] = {actual}, expected {expected}");
                                 all_match = false;
                             }
                         }

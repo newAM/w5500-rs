@@ -19,7 +19,7 @@ use embassy_executor::Spawner;
 use embassy_time::Timer;
 use log::{error, info, warn};
 use panic_halt as _;
-use w5500_ll::{LinkStatus, aio::Registers};
+use w5500_ll::{aio::Registers, LinkStatus};
 
 /// Applies the static network configuration from `common`.
 async fn configure_network(w5500: &mut common::W5500Device) -> Result<(), common::SpiError> {

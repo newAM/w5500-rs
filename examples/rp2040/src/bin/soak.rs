@@ -64,10 +64,10 @@ use embassy_time::{Duration, Instant, Ticker, Timer};
 use log::{error, info, warn};
 use panic_halt as _;
 use w5500_hl::{
-    Error,
     fast_udp::{FastUdpAsync, UdpFrame},
+    Error,
 };
-use w5500_ll::{BufferSize, Sn, aio::Registers};
+use w5500_ll::{aio::Registers, BufferSize, Sn};
 
 /// Send every fifth cycle: 500 Hz in, 100 Hz out.
 const SEND_EVERY_N_CYCLES: u32 = 5;
@@ -240,7 +240,7 @@ async fn main(spawner: Spawner) {
             last_sequence = Some(sequence);
         }
 
-        if cycle_index % SEND_EVERY_N_CYCLES == 0 {
+        if cycle_index.is_multiple_of(SEND_EVERY_N_CYCLES) {
             let reply = encode_diagnostic_reply(last_sequence.unwrap_or(0), received_total);
             match w5500.udp_send_exact(common::SOCKET, &reply).await {
                 Ok(()) => sent_total = sent_total.saturating_add(1),

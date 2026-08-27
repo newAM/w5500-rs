@@ -25,7 +25,7 @@ use embassy_executor::Spawner;
 use embassy_time::Timer;
 use log::{error, info, warn};
 use panic_halt as _;
-use w5500_ll::{Sn, VERSION, aio::Registers};
+use w5500_ll::{aio::Registers, Sn, VERSION};
 
 #[embassy_executor::main]
 async fn main(spawner: Spawner) {

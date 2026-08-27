@@ -21,8 +21,8 @@ use embassy_time::{Duration, Instant, Ticker, Timer};
 use log::{error, info, warn};
 use panic_halt as _;
 use w5500_hl::{
-    Error,
     fast_udp::{FastUdpAsync, UdpFrame},
+    Error,
 };
 use w5500_ll::aio::Registers;
 
@@ -60,7 +60,10 @@ async fn main(spawner: Spawner) {
             Timer::after_secs(5).await;
         }
     }
-    info!("latency: measuring at {} Hz requested SPI clock", common::SPI_FREQUENCY_HZ);
+    info!(
+        "latency: measuring at {} Hz requested SPI clock",
+        common::SPI_FREQUENCY_HZ
+    );
 
     let mut frame: UdpFrame<{ common::FRAME_LEN }> = UdpFrame::new();
     let commands: [f32; 8] = [1.0, 2.0, 0.5, -1.0, 0.0, 100.0, -0.25, 3.5];

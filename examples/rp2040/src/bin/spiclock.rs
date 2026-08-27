@@ -25,19 +25,15 @@ mod common;
 
 use embassy_executor::Spawner;
 use embassy_rp::spi::{Config as SpiConfig, Phase, Polarity};
-use embassy_time::{Duration, Instant, Timer, with_timeout};
+use embassy_time::{with_timeout, Duration, Instant, Timer};
 use log::{error, info, warn};
 use panic_halt as _;
-use w5500_ll::{VERSION, aio::Registers};
+use w5500_ll::{aio::Registers, VERSION};
 
 /// Rates to try, in Hz. `embassy-rp` rounds each down to what the divider can
 /// reach, which is exactly what this binary exists to expose.
 const CANDIDATE_RATES_HZ: [u32; 6] = [
-    1_000_000,
-    8_000_000,
-    16_000_000,
-    31_250_000,
-    50_000_000, // rounds down to 31.25 MHz
+    1_000_000, 8_000_000, 16_000_000, 31_250_000, 50_000_000, // rounds down to 31.25 MHz
     62_500_000,
 ];
 
@@ -117,8 +113,12 @@ async fn integrity_rounds(w5500: &mut common::W5500Device, rounds: u32) -> u32 {
         let mut read_back_frame: [u8; 188] = [0; 188];
 
         let round_trip_result = with_timeout(SPI_OPERATION_TIMEOUT, async {
-            w5500.set_sn_tx_buf(common::SOCKET, 0, &written_frame).await?;
-            w5500.sn_tx_buf(common::SOCKET, 0, &mut read_back_frame).await
+            w5500
+                .set_sn_tx_buf(common::SOCKET, 0, &written_frame)
+                .await?;
+            w5500
+                .sn_tx_buf(common::SOCKET, 0, &mut read_back_frame)
+                .await
         })
         .await;
 
