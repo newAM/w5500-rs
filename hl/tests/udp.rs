@@ -1,7 +1,7 @@
 use std::convert::Infallible;
 use w5500_hl::{Error, Udp};
 use w5500_ll::{
-    Protocol, Registers, Sn, SocketCommand, SocketMode, SocketStatus,
+    Protocol, Registers, RxPtrs, Sn, SocketCommand, SocketMode, SocketStatus,
     net::{Ipv4Addr, SocketAddrV4},
 };
 
@@ -14,8 +14,8 @@ mod socket_status_debug_assert {
     impl Registers for MockRegisters {
         type Error = Infallible;
 
-        fn sn_rx_rsr(&mut self, _socket: Sn) -> Result<u16, Self::Error> {
-            Ok(1024)
+        fn sn_rx_ptrs(&mut self, _socket: Sn) -> Result<RxPtrs, Self::Error> {
+            Ok(RxPtrs { rsr: 1024, rd: 0 })
         }
 
         fn sn_sr(&mut self, _socket: Sn) -> Result<Result<SocketStatus, u8>, Self::Error> {
@@ -81,8 +81,8 @@ mod udp_would_block_header {
     impl Registers for MockRegisters {
         type Error = Infallible;
 
-        fn sn_rx_rsr(&mut self, _socket: Sn) -> Result<u16, Self::Error> {
-            Ok(5)
+        fn sn_rx_ptrs(&mut self, _socket: Sn) -> Result<RxPtrs, Self::Error> {
+            Ok(RxPtrs { rsr: 5, rd: 0 })
         }
 
         fn read(&mut self, _address: u16, _block: u8, _data: &mut [u8]) -> Result<(), Self::Error> {

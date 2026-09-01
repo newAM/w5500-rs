@@ -4,7 +4,7 @@ use w5500_dns::{
     hl::{
         UdpHeader,
         ll::{
-            Registers, Sn, SocketStatus,
+            Registers, RxPtrs, Sn, SocketStatus,
             net::{Ipv4Addr, SocketAddrV4},
         },
     },
@@ -49,13 +49,12 @@ impl Registers for MockW5500 {
         Ok(Ok(SocketStatus::Udp))
     }
 
-    fn sn_rx_rsr(&mut self, _: Sn) -> Result<u16, Self::Error> {
+    fn sn_rx_ptrs(&mut self, _: Sn) -> Result<RxPtrs, Self::Error> {
         const W5500_UDP_HEADER_LEN: u16 = 8;
-        Ok(W5500_UDP_HEADER_LEN + (self.data.len() as u16))
-    }
-
-    fn sn_rx_rd(&mut self, _: Sn) -> Result<u16, Self::Error> {
-        Ok(0)
+        Ok(RxPtrs {
+            rsr: W5500_UDP_HEADER_LEN + (self.data.len() as u16),
+            rd: 0,
+        })
     }
 
     fn sn_rx_buf(&mut self, _: Sn, ptr: u16, buf: &mut [u8]) -> Result<(), Self::Error> {
