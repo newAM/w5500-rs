@@ -5,7 +5,7 @@ use crate::{
 };
 use core::cmp::min;
 use w5500_ll::{
-    Protocol, Registers, Sn, SocketCommand, SocketMode, SocketStatus, TxPtrs,
+    Protocol, Registers, RxPtrs, Sn, SocketCommand, SocketMode, SocketStatus, TxPtrs,
     net::{Ipv4Addr, SocketAddrV4},
 };
 
@@ -400,7 +400,8 @@ pub trait Udp: Registers {
         sn: Sn,
         buf: &mut [u8],
     ) -> Result<(u16, SocketAddrV4), Error<Self::Error>> {
-        let rsr: u16 = match self.sn_rx_rsr(sn)?.checked_sub(UdpHeader::LEN) {
+        let rx_ptrs: RxPtrs = self.sn_rx_ptrs(sn)?;
+        let rsr: u16 = match rx_ptrs.rsr.checked_sub(UdpHeader::LEN) {
             Some(rsr) => rsr,
             // nothing to recieve
             None => return Err(Error::WouldBlock),
@@ -408,7 +409,7 @@ pub trait Udp: Registers {
 
         debug_assert_eq!(self.sn_sr(sn)?, Ok(SocketStatus::Udp));
 
-        let mut ptr: u16 = self.sn_rx_rd(sn)?;
+        let mut ptr: u16 = rx_ptrs.rd;
         let mut header: [u8; UdpHeader::LEN_USIZE] = [0; UdpHeader::LEN_USIZE];
         self.sn_rx_buf(sn, ptr, &mut header)?;
         ptr = ptr.wrapping_add(UdpHeader::LEN);
@@ -482,7 +483,8 @@ pub trait Udp: Registers {
         sn: Sn,
         buf: &mut [u8],
     ) -> Result<(u16, UdpHeader), Error<Self::Error>> {
-        let rsr: u16 = match self.sn_rx_rsr(sn)?.checked_sub(UdpHeader::LEN) {
+        let rx_ptrs: RxPtrs = self.sn_rx_ptrs(sn)?;
+        let rsr: u16 = match rx_ptrs.rsr.checked_sub(UdpHeader::LEN) {
             Some(rsr) => rsr,
             // nothing to recieve
             None => return Err(Error::WouldBlock),
@@ -490,7 +492,7 @@ pub trait Udp: Registers {
 
         debug_assert_eq!(self.sn_sr(sn)?, Ok(SocketStatus::Udp));
 
-        let mut ptr: u16 = self.sn_rx_rd(sn)?;
+        let mut ptr: u16 = rx_ptrs.rd;
         let mut header: [u8; UdpHeader::LEN_USIZE] = [0; UdpHeader::LEN_USIZE];
         self.sn_rx_buf(sn, ptr, &mut header)?;
         ptr = ptr.wrapping_add(UdpHeader::LEN);
@@ -549,16 +551,16 @@ pub trait Udp: Registers {
     /// # Ok::<(), w5500_hl::Error<_>>(())
     /// ```
     fn udp_peek_from_header(&mut self, sn: Sn) -> Result<UdpHeader, Error<Self::Error>> {
-        let rsr: u16 = self.sn_rx_rsr(sn)?;
+        let rx_ptrs: RxPtrs = self.sn_rx_ptrs(sn)?;
 
         // nothing to recieve
-        if rsr < UdpHeader::LEN {
+        if rx_ptrs.rsr < UdpHeader::LEN {
             return Err(Error::WouldBlock);
         }
 
         debug_assert_eq!(self.sn_sr(sn)?, Ok(SocketStatus::Udp));
 
-        let ptr: u16 = self.sn_rx_rd(sn)?;
+        let ptr: u16 = rx_ptrs.rd;
         let mut header: [u8; UdpHeader::LEN_USIZE] = [0; UdpHeader::LEN_USIZE];
         self.sn_rx_buf(sn, ptr, &mut header)?;
         Ok(UdpHeader::deser(header))
@@ -770,13 +772,14 @@ pub trait Udp: Registers {
     {
         debug_assert_eq!(self.sn_sr(sn)?, Ok(SocketStatus::Udp));
 
-        let rsr: u16 = match self.sn_rx_rsr(sn)?.checked_sub(UdpHeader::LEN) {
+        let rx_ptrs: RxPtrs = self.sn_rx_ptrs(sn)?;
+        let rsr: u16 = match rx_ptrs.rsr.checked_sub(UdpHeader::LEN) {
             Some(rsr) => rsr,
             // nothing to recieve
             None => return Err(Error::WouldBlock),
         };
 
-        let sn_rx_rd: u16 = self.sn_rx_rd(sn)?;
+        let sn_rx_rd: u16 = rx_ptrs.rd;
         let mut header: [u8; UdpHeader::LEN_USIZE] = [0; UdpHeader::LEN_USIZE];
         self.sn_rx_buf(sn, sn_rx_rd, &mut header)?;
         let header: UdpHeader = UdpHeader::deser(header);
