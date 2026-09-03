@@ -15,7 +15,7 @@ log = "0.4"
 w5500-ll = { path = "../ll", version = "0.13.0" }
 
 [dev-dependencies]
-w5500-hl.path = "../hl"
+w5500-hl = { path = "../hl", features = ["eha1"] }
 stderrlog = "0.6"
 httparse = { version = "1", default-features = false }
 tokio = { version = "1.21.1", features = ["rt", "macros"] }

@@ -24,6 +24,7 @@
 //! * `defmt`: Passthrough to [`w5500-ll`].
 //! * `eh0`: Passthrough to [`w5500-ll`].
 //! * `eh1`: Passthrough to [`w5500-ll`].
+//! * `eha1`: Enable the asynchronous `FastUdpAsync` trait. Passthrough to [`w5500-ll`].
 //!
 //! # Examples
 //!
@@ -95,7 +96,9 @@
 //! [Wiznet W5500]: https://docs.wiznet.io/Product/iEthernet/W5500/overview
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![cfg_attr(not(test), no_std)]
+#![allow(async_fn_in_trait)] // https://github.com/rust-embedded/embedded-hal/pull/515#issuecomment-1763525962
 
+pub mod fast_udp;
 mod hostname;
 pub mod io;
 mod tcp;
@@ -142,6 +145,21 @@ pub enum Error<E> {
     UnexpectedEof,
     /// A write operation ran out of memory in the socket buffer.
     OutOfMemory,
+    /// A datagram did not have the exact length the caller required.
+    ///
+    /// Returned by fixed-size receive operations such as
+    /// `FastUdp::udp_recv_exact` instead of silently truncating the
+    /// datagram.
+    ///
+    /// Distinct from [`Error::UnexpectedEof`], which means "fewer bytes than
+    /// requested"; this variant also covers a datagram that is *longer* than
+    /// expected.
+    UnexpectedLength {
+        /// Payload length the caller required, in bytes.
+        expected: u16,
+        /// Payload length the datagram actually carried, in bytes.
+        received: u16,
+    },
     /// The operation needs to block to complete, but the blocking operation was
     /// requested to not occur.
     ///
@@ -150,6 +168,20 @@ pub enum Error<E> {
     ///
     /// [`nb`]: (https://docs.rs/nb/latest/nb/index.html)
     WouldBlock,
+    /// A socket did not reach the expected state within a bounded number of
+    /// polls.
+    ///
+    /// Returned by `FastUdp::udp_bind` when `Sn_SR` (W5500 datasheet section
+    /// 4.2) fails to settle at the status a CLOSE or OPEN command should
+    /// produce. A failed OPEN can leave `Sn_SR` at `Closed` indefinitely, so
+    /// this is reported rather than polled forever.
+    SocketState {
+        /// The status the caller was waiting for.
+        expected: SocketStatus,
+        /// The last status actually observed, or the raw byte if it did not
+        /// decode to a known [`SocketStatus`].
+        actual: Result<SocketStatus, u8>,
+    },
     /// Errors from the [`Registers`] trait implementation.
     Other(E),
 }
