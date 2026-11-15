@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Fixed `UIPR1`, `UIPR2`, and `UIPR3` in `TryFrom<u16> for Reg` returning `Err(addr)`.
+- Fixed `SnReg::is_ro` returning incorrectly for `RX_WR0` and `RX_WR1`.
 
 ## [0.13.0] - 2024-06-09
 ### Changed
