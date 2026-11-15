@@ -58,11 +58,7 @@ impl<'a> Hostname<'a> {
             }
 
             let last_byte_label: u8 = hostname.as_bytes()[end - 1];
-            if last_byte_label == b'-' {
-                return false;
-            }
-
-            true
+            last_byte_label != b'-'
         }
 
         let mut idx: usize = 0;
