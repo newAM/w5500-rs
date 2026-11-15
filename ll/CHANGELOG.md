@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated the edition from 2021 to 2024.
 - Updated `defmt` from `0.3.8` to `1.0.1`.
 
+### Fixed
+- Fixed `UIPR1`, `UIPR2`, and `UIPR3` in `TryFrom<u16> for Reg` returning `Err(addr)`.
+
 ## [0.13.0] - 2024-06-09
 ### Changed
 - Updated `embedded-hal` from `1.0.0-rc.11` to `1`.
