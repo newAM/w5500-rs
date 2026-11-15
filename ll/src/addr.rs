@@ -380,6 +380,8 @@ impl SnReg {
                 | Self::TX_RD1
                 | Self::RX_RSR0
                 | Self::RX_RSR1
+                | Self::RX_WR0
+                | Self::RX_WR1
         )
     }
 }
