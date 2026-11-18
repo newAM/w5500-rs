@@ -67,10 +67,43 @@ jobs:
       - run: cargo build --target ${{ matrix.target }} -p w5500-sntp --features num-rational
       - run: cargo build --target ${{ matrix.target }} -p w5500-mqtt --features w5500-tls
       - run: cargo build --target ${{ matrix.target }} -p w5500-ll   --features eha1
+      - run: cargo build --target ${{ matrix.target }} -p w5500-hl   --features eha1
       - run: cargo build --target ${{ matrix.target }} -p w5500-tls  --features p256-cm4
         if: ${{ matrix.target == 'thumbv7em-none-eabi' }}
       - run: cargo build --target ${{ matrix.target }} -p w5500-mqtt --features w5500-tls,p256-cm4
         if: ${{ matrix.target == 'thumbv7em-none-eabi' }}
+
+  build_examples:
+    name: Build RP2040 examples
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: thumbv6m-none-eabi
+          components: clippy
+      # `working-directory`, NOT `--manifest-path`. Cargo discovers
+      # `.cargo/config.toml` from the current directory, not from the manifest,
+      # so building from the repo root silently ignores
+      # examples/rp2040/.cargo/config.toml -- losing both the
+      # `target = thumbv6m-none-eabi` setting and the linker scripts, and
+      # building these `no_std` binaries for the host instead.
+      #
+      # There is deliberately no `RUSTFLAGS: -D warnings` on this job either:
+      # the RUSTFLAGS environment variable *replaces* `target.*.rustflags`
+      # rather than adding to them, so setting it here would drop `-Tlink.x`
+      # and friends and produce a bogus artifact. Warnings are denied via the
+      # clippy step below, which passes the flag to clippy directly.
+      #
+      # --locked so dependency drift fails loudly instead of being rewritten.
+      - run: cargo build --release --locked
+        working-directory: examples/rp2040
+      # examples/rp2040 declares its own [workspace], so the root clippy and
+      # format jobs cannot reach it. `--bins` rather than `--all-targets`:
+      # test targets need libtest, which thumbv6m-none-eabi has no prebuilt
+      # copy of. The eight binaries are the whole crate.
+      - run: cargo clippy --bins --release --locked -- -D warnings
+        working-directory: examples/rp2040
 
   test:
     name: Test
@@ -100,6 +133,11 @@ jobs:
         with:
           components: rustfmt
       - run: cargo +nightly fmt -- --check
+      # examples/rp2040 declares its own [workspace], so the check above does
+      # not reach it. Same nightly toolchain, because the repo's rustfmt.toml
+      # sets `format_code_in_doc_comments`, which is nightly-only.
+      - run: cargo +nightly fmt -- --check
+        working-directory: examples/rp2040
 
   rustdoc:
     name: rustdoc

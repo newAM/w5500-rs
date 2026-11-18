@@ -1,0 +1,17 @@
+[build]
+target = "thumbv6m-none-eabi"
+
+[target.thumbv6m-none-eabi]
+# No debug probe on this board: `elf2uf2-rs -d` converts the ELF to a UF2 and
+# copies it to the mounted RPI-RP2 drive. Hold BOOTSEL while plugging the
+# board in (or while tapping RESET) before `cargo run`.
+#
+# Add `-s` to have cargo open the serial port itself right after flashing
+# (`elf2uf2-rs -d -s`) instead of using a separate terminal. It holds the COM
+# port exclusively, so pick one or the other -- not both.
+runner = "elf2uf2-rs -d"
+rustflags = [
+    "-C", "link-arg=-Tlink.x",
+    "-C", "link-arg=-Tlink-rp.x",
+    "-C", "link-arg=--nmagic",
+]

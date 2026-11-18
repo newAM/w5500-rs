@@ -31,3 +31,32 @@ Embedded rust support for the [Wiznet W5500] SPI internet offload chip.
 [`w5500-regsim`]: https://github.com/newAM/w5500-rs/tree/main/regsim
 [`w5500-sntp`]: https://github.com/newAM/w5500-rs/tree/main/sntp
 [`w5500-tls`]: https://github.com/newAM/w5500-rs/tree/main/tls
+
+## Fork delta
+
+This fork adds an async, fixed-size UDP fast path for hard-real-time use. It is
+kept deliberately small so it can be re-synced with upstream.
+
+- `w5500-hl` gains `fast_udp`: a `FastUdp` trait, plus `FastUdpAsync` behind the
+  new `eha1` feature, generated from the same source by `maybe-async-cfg`.
+- Receive costs **four** SPI transactions instead of six: `sn_rx_ptrs` reads
+  `Sn_RX_RSR` and `Sn_RX_RD` together in one 4-byte read (they are adjacent
+  registers), and the 8-byte header and the payload are read in a single
+  transaction. Send costs **four** instead of five.
+- `udp_send_to` costs one extra transaction over `udp_send`: `set_sn_dest`
+  issues a single combined 6-byte write to `Sn_DIPR`, since the IP and port
+  registers are contiguous.
+- `udp_recv_exact` and `udp_send_exact` return `Error::UnexpectedLength` or
+  `Error::OutOfMemory` rather than silently truncating a fixed-size datagram.
+- Changes to existing upstream files: `hl/src/lib.rs` (module declaration,
+  feature doc, one `Error` variant, and `#![allow(async_fn_in_trait)]`
+  mirroring `ll/src/lib.rs`), `hl/src/udp.rs` (three items widened to
+  `pub(crate)`), `hl/Cargo.toml` (the new `eha1` feature and its
+  dependencies), `tls/src/alert.rs` (one match arm, required because `Error`
+  is not `#[non_exhaustive]`), `ll/src/eh1/vdm.rs` (the `{new, free}` impl
+  block un-bounded so an async-only SPI device can construct a `W5500` at
+  all — without this the async layer is unusable), and `.gitignore`.
+- Upstream's `Udp` trait, TCP, DHCP, DNS, MQTT and SNTP are untouched.
+- `w5500-regsim` already implemented `w5500_ll::aio::Registers`, so no shim
+  was needed: the async path is validated on the host against real UDP
+  sockets.
